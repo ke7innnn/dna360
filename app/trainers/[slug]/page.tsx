@@ -58,13 +58,10 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
                   />
                 </div>
                 
-                <div className="relative z-10 w-full rounded-lg overflow-hidden border-4 border-[#1a1a1a] shadow-2xl">
-                  <Image
+                <div className="relative z-10 w-full overflow-hidden rounded-sm shadow-2xl">
+                  <img
                     src={trainer.imageDetail}
                     alt={trainer.name}
-                    width={600}
-                    height={800}
-                    unoptimized
                     className="w-full h-auto object-cover"
                   />
                 </div>
