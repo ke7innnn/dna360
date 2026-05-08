@@ -1,0 +1,372 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@300;400;600&display=swap');
+
+:root {
+  --teal: #00c8c8;
+  --teal-dark: #009999;
+  --bg-dark: #0a0a0a;
+  --bg-card: #1a1a1e;
+  --bg-section: #111111;
+  --bg-charcoal: #1c1c1c;
+  --text-white: #ffffff;
+  --text-grey: #cccccc;
+  --text-muted: #999999;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-white);
+  font-family: 'Open Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--teal);
+  border-radius: 3px;
+}
+
+/* Teal accent underline */
+.teal-underline {
+  position: relative;
+  display: inline-block;
+}
+.teal-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--teal);
+}
+
+/* Section headings */
+.section-heading {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+}
+
+.section-subheading {
+  font-family: 'Open Sans', sans-serif;
+  color: var(--text-grey);
+  text-align: center;
+}
+
+/* Teal text */
+.text-teal {
+  color: var(--teal) !important;
+}
+
+/* Teal button */
+.btn-teal {
+  background-color: var(--teal);
+  color: #000;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 32px;
+  border: 2px solid var(--teal);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+.btn-teal:hover {
+  background-color: transparent;
+  color: var(--teal);
+}
+
+/* Dark bg sections */
+.bg-dark-card {
+  background-color: var(--bg-card);
+}
+
+/* Why choose card layout */
+.why-card {
+  background-color: #1e1e2e;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.why-card:hover {
+  box-shadow: 0 0 20px rgba(0, 200, 200, 0.3);
+}
+.why-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Services card */
+.service-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.service-card .overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+  transition: all 0.4s ease;
+}
+.service-card:hover .overlay {
+  background: linear-gradient(to top, rgba(0,200,200,0.5) 0%, rgba(0,0,0,0.5) 100%);
+}
+.service-card .service-name {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+/* Teal border box (about section) */
+.teal-border-box {
+  border: 2px solid var(--teal);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 40px;
+}
+
+/* Testimonial section */
+.testimonial-quote {
+  font-family: 'Open Sans', sans-serif;
+  font-style: italic;
+  color: var(--text-grey);
+  line-height: 1.8;
+}
+
+/* Stats section */
+.stats-section {
+  background: linear-gradient(135deg, #0a3d3d, #005555, #007070);
+}
+
+/* Footer */
+.footer-bg {
+  background-color: #0d0d0d;
+  border-top: 2px solid var(--teal);
+}
+
+/* Animated counter */
+.counter-number {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 4rem;
+  color: #fff;
+  line-height: 1;
+}
+
+/* Nav dropdown */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  background: rgba(10, 10, 10, 0.97);
+  border-top: 2px solid var(--teal);
+  z-index: 1000;
+  overflow: hidden;
+}
+.dropdown-menu a {
+  display: block;
+  padding: 10px 20px;
+  color: #ccc;
+  font-size: 0.9rem;
+  font-family: 'Open Sans', sans-serif;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: all 0.2s;
+}
+.dropdown-menu a:hover {
+  color: var(--teal);
+  background: rgba(0,200,200,0.05);
+  padding-left: 28px;
+}
+
+/* Hero pagination dots */
+.hero-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.hero-dot.active {
+  background: var(--teal);
+  width: 28px;
+  border-radius: 5px;
+}
+
+/* Video section */
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border: none;
+}
+
+/* 3D Flip Card */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+.group:hover .flip-front {
+  transform: rotateY(-180deg);
+}
+.group:hover .flip-back {
+  transform: rotateY(0deg);
+}
+.flip-front, .flip-back {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+
+/* ============================================================
+   SERVICE FLIP CARDS  (matches dna360.in/services.php exactly)
+   ============================================================ */
+
+/* Outer wrapper — sets up 3-D context */
+.service-card-wrap {
+  perspective: 800px;
+}
+
+/* The flipping container */
+.service-flip-card {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.service-card-wrap:hover .service-flip-card {
+  transform: rotateY(180deg);
+}
+
+/* Shared face styles */
+.service-flip-front,
+.service-flip-back {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.service-flip-front {
+  transform: rotateY(0deg);
+}
+
+.service-flip-back {
+  transform: rotateY(180deg);
+}
+
+.service-flip-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
+}
+
+.service-flip-overlay-dark {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.service-flip-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 20px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.service-flip-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.3;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+.service-flip-btn {
+  display: inline-block;
+  padding: 9px 26px;
+  border: 2px solid #00c8c8;
+  color: #ffffff;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  background: transparent;
+  transition: background 0.25s, color 0.25s;
+}
+
+.service-flip-btn:hover {
+  background: #00c8c8;
+  color: #000;
+}
