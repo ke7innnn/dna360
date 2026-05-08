@@ -46,25 +46,12 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
               
               {/* Left Column: Image */}
-              <div className="lg:col-span-5 relative">
-                {/* Yellow abstract square graphic in background */}
-                <div className="absolute -top-6 -left-6 w-[80%] h-[80%] z-0 opacity-20">
-                  <Image
-                    src="/images/square-yellow.svg"
-                    alt="Decorative square"
-                    fill
-                    unoptimized
-                    className="object-contain"
-                  />
-                </div>
-                
-                <div className="relative z-10 w-full overflow-hidden rounded-sm shadow-2xl">
-                  <img
-                    src={trainer.imageDetail}
-                    alt={trainer.name}
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
+              <div className="lg:col-span-5">
+                <img
+                  src={trainer.imageDetail}
+                  alt={trainer.name}
+                  className="w-full h-auto object-cover"
+                />
               </div>
 
               {/* Right Column: Info */}
