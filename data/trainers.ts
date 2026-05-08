@@ -35,7 +35,7 @@ export const trainers: Trainer[] = [
       '2)recovery after operating knee or back injuries',
       '3)customizing right diet for diabetic, thyroid, pcod or pcos clients.'
     ],
-    imageMain: '/images/trainer/afzal-shah-2.jpg',
+    imageMain: '/images/trainer/afzal-shah.jpg',
     imageDetail: '/images/trainer/afzal-shah.jpg'
   },
   {
@@ -57,7 +57,7 @@ export const trainers: Trainer[] = [
       '2)recovery after operating knee or back injuries',
       '3)customizing right diet for diabetic, thyroid, pcod or pcos clients.'
     ],
-    imageMain: '/images/trainer/kunal-chavan-2.jpg',
+    imageMain: '/images/trainer/kunal-chavan.jpg',
     imageDetail: '/images/trainer/kunal-chavan.jpg'
   },
   {
@@ -75,7 +75,7 @@ export const trainers: Trainer[] = [
       'Functional training',
       'Calisthenics'
     ],
-    imageMain: '/images/trainer/mayur-chakke-2.jpg',
+    imageMain: '/images/trainer/mayur-chakke.jpg',
     imageDetail: '/images/trainer/mayur-chakke.jpg'
   },
   {
@@ -197,7 +197,7 @@ export const trainers: Trainer[] = [
       'Facia release',
       'Nutrition plan'
     ],
-    imageMain: '/images/trainer/mandar-shirke-2.jpg',
+    imageMain: '/images/trainer/mandar-shirke.jpg',
     imageDetail: '/images/trainer/mandar-shirke.jpg'
   },
   {
@@ -211,7 +211,7 @@ export const trainers: Trainer[] = [
       'Tabono Fitness and Wellness 1 year personal trainer'
     ],
     specialties: [],
-    imageMain: '/images/trainer/siddhesh-walavankar-2.jpg',
+    imageMain: '/images/trainer/siddhesh-walavankar.jpg',
     imageDetail: '/images/trainer/siddhesh-walavankar.jpg'
   }
 ]
