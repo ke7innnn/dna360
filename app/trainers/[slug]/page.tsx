@@ -50,7 +50,7 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
                 <img
                   src={trainer.imageDetail}
                   alt={trainer.name}
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover brightness-110 contrast-105"
                 />
               </div>
 
