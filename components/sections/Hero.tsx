@@ -12,7 +12,7 @@ const slides = [
     headingAccent: 'Room',
     ctaLabel: 'Read More',
     ctaHref: '/about',
-    bg: 'http://www.dna360.in/assets/img/home2-about.jpg',
+    bg: '/images/home2-about.jpg',
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const slides = [
     headingAccent: 'Trial Pass',
     ctaLabel: 'Contact Us',
     ctaHref: '/contact',
-    bg: 'http://www.dna360.in/assets/img/home2-about-2.jpg',
+    bg: '/images/home2-about-2.jpg',
   },
 ]
 

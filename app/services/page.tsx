@@ -14,7 +14,7 @@ export default function ServicesPage() {
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/service-header-image.jpg)' }}
+          style={{ backgroundImage: 'url(/images/service-header-image.jpg)' }}
         >
           <div className="absolute inset-0 bg-black/60" />
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
@@ -32,7 +32,7 @@ export default function ServicesPage() {
         <section
           className="py-20 px-4"
           style={{
-            backgroundImage: 'url(http://www.dna360.in/assets/img/bg-programs.jpg)',
+            backgroundImage: 'url(/images/bg-programs.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}

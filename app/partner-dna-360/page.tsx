@@ -27,18 +27,18 @@ const rightServices = [
 ]
 
 const beforeImages = [
-  'http://www.dna360.in/assets/img/franchise/before-drawings-01.jpg',
-  'http://www.dna360.in/assets/img/franchise/before-drawings-02.jpg',
-  'http://www.dna360.in/assets/img/franchise/before-drawings-03.jpg',
-  'http://www.dna360.in/assets/img/franchise/before-drawings-04.jpg',
-  'http://www.dna360.in/assets/img/franchise/before-drawings-05.jpg'
+  '/images/franchise/before-drawings-01.jpg',
+  '/images/franchise/before-drawings-02.jpg',
+  '/images/franchise/before-drawings-03.jpg',
+  '/images/franchise/before-drawings-04.jpg',
+  '/images/franchise/before-drawings-05.jpg'
 ]
 
 const afterImages = [
-  'http://www.dna360.in/assets/img/franchise/after-drawings-01.jpg',
-  'http://www.dna360.in/assets/img/franchise/after-drawings-02.jpg',
-  'http://www.dna360.in/assets/img/franchise/after-drawings-03.jpg',
-  'http://www.dna360.in/assets/img/franchise/after-drawings-04.jpg'
+  '/images/franchise/after-drawings-01.jpg',
+  '/images/franchise/after-drawings-02.jpg',
+  '/images/franchise/after-drawings-03.jpg',
+  '/images/franchise/after-drawings-04.jpg'
 ]
 
 const fadeUp = {
@@ -50,22 +50,22 @@ const testimonials = [
   {
     name: 'Siddhanth Suryavanshi',
     text: '“DNA 360 is not just a fitness center. its a complete experience. I’ve trained in various gyms over the last 28 years and i can confidently bet that DNA 360 is one of the finest in India. The amount of personalised plans \u0026 attention given to members is one of its kinds. its Super spacious, which is a rarity in mumbai \u0026 also filled with top of the line equipments. Definitely worth every penny invested.”',
-    image: 'http://www.dna360.in/assets/img/testimonials-siddhaanth.png'
+    image: '/images/testimonials-siddhaanth.png'
   },
   {
     name: 'Sumona Chakravarti',
     text: '“Hi, I’m at Powai’s largest fitness studio, DNA 360 and of course it has your largest reformer Pilates studio. It’s extremely well – equipped with latest equipment from across the world - Life Fitness, Hammer Strength, Merrithew Pilates. It also has a meditation room \u0026 ice bath so it kind of caters to all your fitness lifestyle requirements.”',
-    image: 'http://www.dna360.in/assets/img/sumona-chakravarti.png'
+    image: '/images/sumona-chakravarti.png'
   },
   {
     name: 'Rohit shetty',
     text: '“Hi, this is Rohit Shetty and I would like to share my personal experience at Mumbai’s best integrated fitness centre. The fitness centre is equipped with amazing cardio set up and strength training machines all from Life Fitness \u0026 Hammer Strength and few of them are very unique and cannot be found in Mumbai. It also has a spinning studio with latest version Life Fitness IC5 bikes with virtual image function. They also have a special studio for reformer Pilates which is an advanced form of Pilates and it also a pretty huge group activity studio.”',
-    image: 'http://www.dna360.in/assets/img/rohit-shetty.png'
+    image: '/images/rohit-shetty.png'
   },
   {
     name: 'Surbhi Chandna',
     text: '“Hi, I\'m surbhi chandna and I\'m at Mumbai\'s one of the largest pilates studio and my personal favourite gym, DNA 360 at hiranandani powai. You know this beastly 13,000 sft facility is eqquiped with best in bio-mechanics Merrithew Pilates to Life Fitness and Hammer Strength. Ask me what I love the most, it\'s pilates you know it strengthens my core, tones my body and it also works on the tiniest of the muscles. If you really want to enjoy nice healthy regimen, then DNA 360 is your to fitness centre. They have some amazing facilities they have the ice bath, meditation centre also when have those cravings you can have tasty bites at their healthy cafe. So checkin at DNA 360 and book your session right away.”',
-    image: 'http://www.dna360.in/assets/img/surbhi-chandna.png'
+    image: '/images/surbhi-chandna.png'
   }
 ]
 
@@ -77,7 +77,7 @@ export default function PartnerDNA360Page() {
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/header-image.jpg)' }}
+          style={{ backgroundImage: 'url(/images/header-image.jpg)' }}
         >
           <div className="absolute inset-0 bg-black/60"></div>
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
@@ -109,7 +109,7 @@ export default function PartnerDNA360Page() {
                 {/* Image 1 (Top Left) */}
                 <div className="absolute top-0 left-0 w-[80%] h-[60%] z-10 shadow-xl">
                   <Image
-                    src="http://www.dna360.in/assets/img/franchise-top-1.jpg"
+                    src="/images/franchise-top-1.jpg"
                     alt="Partner DNA 360 Front Desk"
                     fill
                     unoptimized
@@ -120,7 +120,7 @@ export default function PartnerDNA360Page() {
                 {/* Image 2 (Bottom Right) */}
                 <div className="absolute bottom-0 right-0 w-[65%] h-[60%] z-20 shadow-2xl border-4 border-[#1a1a1a]">
                   <Image
-                    src="http://www.dna360.in/assets/img/franchise-top-2.jpg"
+                    src="/images/franchise-top-2.jpg"
                     alt="Partner DNA 360 Gym Area"
                     fill
                     unoptimized
@@ -357,7 +357,7 @@ export default function PartnerDNA360Page() {
         {/* Testimonials Slider Section */}
         <section 
           className="relative py-24 px-4 bg-cover bg-center overflow-hidden"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/bg-testimonials.jpg)' }}
+          style={{ backgroundImage: 'url(/images/bg-testimonials.jpg)' }}
         >
           <div className="absolute inset-0 bg-black/70"></div>
           <div className="max-w-4xl mx-auto relative z-10 text-center">

@@ -115,7 +115,7 @@ export default function Stats() {
         >
           <div className="relative w-40 h-24 mb-2">
             <Image
-              src="http://www.dna360.in/assets/img/equipment.gif"
+              src="/images/equipment.gif"
               alt="Equipment Partner"
               fill
               unoptimized

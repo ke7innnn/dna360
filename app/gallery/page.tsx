@@ -6,10 +6,10 @@ import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/sections/Footer'
 
-// Array of 53 image URLs from the original site
-const galleryImages = Array.from({ length: 53 }, (_, i) => {
-  const num = (i + 1).toString().padStart(2, '0')
-  return `http://www.dna360.in/assets/img/gallery/${num}.jpg`
+// Gallery images 10-30 (1-9 returned 404 on original site)
+const galleryImages = Array.from({ length: 21 }, (_, i) => {
+  const num = (i + 10).toString().padStart(2, '0')
+  return `/images/gallery/${num}.jpg`
 })
 
 const containerVariants = {

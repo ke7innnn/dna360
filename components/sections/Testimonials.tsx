@@ -8,28 +8,28 @@ const testimonials = [
   {
     id: 1,
     name: 'Siddhanth Suryavanshi',
-    img: 'http://www.dna360.in/assets/img/testimonials-siddhaanth.png',
+    img: '/images/testimonials-siddhaanth.png',
     quote:
       '"DNA 360 is not just a fitness center, it\'s a complete experience. I\'ve trained in various gyms over the last 28 years and I can confidently bet that DNA 360 is one of the finest in India. The amount of personalised plans & attention given to members is one of its kinds. It\'s super spacious, which is a rarity in Mumbai & also filled with top of the line equipments. Definitely worth every penny invested."',
   },
   {
     id: 2,
     name: 'Sumona Chakravarti',
-    img: 'http://www.dna360.in/assets/img/sumona-chakravarti.png',
+    img: '/images/sumona-chakravarti.png',
     quote:
       '"Hi, I\'m at Powai\'s largest fitness studio, DNA 360 and of course it has your largest reformer Pilates studio. It\'s extremely well-equipped with latest equipment from across the world – Life Fitness, Hammer Strength, Merrithew Pilates. It also has a meditation room & ice bath so it kind of caters to all your fitness lifestyle requirements."',
   },
   {
     id: 3,
     name: 'Rohit Shetty',
-    img: 'http://www.dna360.in/assets/img/rohit-shetty.png',
+    img: '/images/rohit-shetty.png',
     quote:
       '"Hi, this is Rohit Shetty and I would like to share my personal experience at Mumbai\'s best integrated fitness centre. The fitness centre is equipped with amazing cardio setup and strength training machines all from Life Fitness & Hammer Strength. They also have a special studio for reformer Pilates and a pretty huge group activity studio."',
   },
   {
     id: 4,
     name: 'Surbhi Chandna',
-    img: 'http://www.dna360.in/assets/img/surbhi-chandna.png',
+    img: '/images/surbhi-chandna.png',
     quote:
       '"Hi, I\'m Surbhi Chandna and I\'m at Mumbai\'s one of the largest pilates studio and my personal favourite gym, DNA 360 at Hiranandani Powai. This beastly 13,000 sqft facility is equipped with best-in-bio-mechanics Merrithew Pilates to Life Fitness and Hammer Strength. DNA 360 is your go-to fitness centre!"',
   },

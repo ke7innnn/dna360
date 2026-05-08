@@ -25,7 +25,7 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/trainer-header-image.jpg)' }}
+          style={{ backgroundImage: 'url(/images/trainer-header-image.jpg)' }}
         >
           <div className="absolute inset-0 bg-black/60"></div>
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
@@ -50,7 +50,7 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
                 {/* Yellow abstract square graphic in background */}
                 <div className="absolute -top-6 -left-6 w-[80%] h-[80%] z-0 opacity-20">
                   <Image
-                    src="http://www.dna360.in/assets/img/square-yellow.svg"
+                    src="/images/square-yellow.svg"
                     alt="Decorative square"
                     fill
                     unoptimized

@@ -35,7 +35,7 @@ export default function About() {
         >
           <div className="relative w-full h-[300px] lg:h-[400px]">
             <Image
-              src="http://www.dna360.in/assets/img/home2-about.jpg"
+              src="/images/home2-about.jpg"
               alt="DNA 360 Gym Floor"
               fill
               unoptimized
@@ -44,7 +44,7 @@ export default function About() {
           </div>
           <div className="relative w-full h-[200px] lg:h-[280px]">
             <Image
-              src="http://www.dna360.in/assets/img/home2-about-2.jpg"
+              src="/images/home2-about-2.jpg"
               alt="DNA 360 Treadmills"
               fill
               unoptimized

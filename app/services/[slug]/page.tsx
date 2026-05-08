@@ -85,7 +85,7 @@ export default function ServiceDetailPage() {
                 <div className="absolute -bottom-24 left-1/2 transform -translate-x-1/2 hidden lg:flex justify-center w-full z-30">
                   <Link href="/contact" className="hover:scale-105 transition-transform">
                     <Image
-                      src="http://www.dna360.in/assets/img/enquire-now.png"
+                      src="/images/enquire-now.png"
                       alt="Enquire Now"
                       width={220}
                       height={65}
@@ -149,7 +149,7 @@ export default function ServiceDetailPage() {
                 <div className="mt-16 flex justify-center lg:hidden">
                   <Link href="/contact" className="block hover:scale-105 transition-transform">
                     <Image
-                      src="http://www.dna360.in/assets/img/enquire-now.png"
+                      src="/images/enquire-now.png"
                       alt="Enquire Now"
                       width={220}
                       height={65}

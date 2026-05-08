@@ -10,52 +10,52 @@ const offerings = [
   {
     title: 'The best of internationally acclaimed fitness equipment',
     description: 'Calibrated cardio and spinning from LifeFitness (USA), optimum flexibility and conditioning from Merrithew Pilates (Canada) and patented performance strength from Hammer Strength (USA).',
-    image: 'http://www.dna360.in/assets/img/about-acclaimed-trainers.jpg'
+    image: '/images/about-acclaimed-trainers.jpg'
   },
   {
     title: 'On-floor DJ with JBL Harman designed sound',
     description: 'Workout to the eclectic and vitalising beats by DNA 360’s on-floor DJ accompanied with high fidelity JBL Harman designed sound.',
-    image: 'http://www.dna360.in/assets/img/about-dj.jpg'
+    image: '/images/about-dj.jpg'
   },
   {
     title: 'Cafe DNA by DNA 360',
     description: 'Tantalise your taste buds with a sumptuous menu curated by our chefs fulfilling your nutritional requirements without compromising on taste.',
-    image: 'http://www.dna360.in/assets/img/about-dna-cafe.jpg'
+    image: '/images/about-dna-cafe.jpg'
   },
   {
     title: 'Ice Bath',
     description: 'Speed up your muscle recovery and rejuvenate like top athletes in the ice bath after a high intensity workout.',
-    image: 'http://www.dna360.in/assets/img/about-Ice-bath.jpg'
+    image: '/images/about-Ice-bath.jpg'
   },
   {
     title: 'Steam Shower',
     description: 'Relax and rejuvenate with DNA 360’s steam shower. Let your skin breathe through every pore.',
-    image: 'http://www.dna360.in/assets/img/about-steam-shower.jpg'
+    image: '/images/about-steam-shower.jpg'
   },
   {
     title: 'Spa',
     description: 'Revitalise with deep tissue and specialty massages from DNA 360’s professional massage therapists trained in the art of healing and relaxation.',
-    image: 'http://www.dna360.in/assets/img/about-spa.jpg'
+    image: '/images/about-spa.jpg'
   },
   {
     title: 'In-house Meditation Room',
     description: 'Focus, relax and lose your senses in the tranquillity of DNA 360’s sound absorbing Meditation room.',
-    image: 'http://www.dna360.in/assets/img/about-meditation-room.jpg'
+    image: '/images/about-meditation-room.jpg'
   },
   {
     title: 'Sports Nutritionist',
     description: 'Get a full body assessment and composition analysis from DNA 360’s Sports Nutritionist for enhanced overall performance and improved endurance.',
-    image: 'http://www.dna360.in/assets/img/about-sports-nutritionist.jpg'
+    image: '/images/about-sports-nutritionist.jpg'
   },
   {
     title: 'Hitachi purified air',
     description: 'Recharge your senses with every breath that you take within DNA 360’s centres, purified by DNA 360’s 70 ton Hitachi fresh air conditioning system. It uses scroll compressors and mesh filtration to deliver excellent air quality at 20 micron.',
-    image: 'http://www.dna360.in/assets/img/about-hitachi.jpg'
+    image: '/images/about-hitachi.jpg'
   },
   {
     title: 'Assessment Room',
     description: 'It offers dedicated physical fitness assessment rooms are available for trainers to assess the five components of fitness: body composition, cardio-respiratory fitness, muscle strength, muscle endurance, and flexibility. Additional equipment like In - Body equipement helps to discover body mass index which further assist the person to work on those important areas which requires consistent training.',
-    image: 'http://www.dna360.in/assets/img/about-assessment-room.jpg'
+    image: '/images/about-assessment-room.jpg'
   }
 ]
 
@@ -72,7 +72,7 @@ export default function AboutPage() {
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/header-image.jpg)' }}
+          style={{ backgroundImage: 'url(/images/header-image.jpg)' }}
         >
           <div className="absolute inset-0 bg-black/60"></div>
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
@@ -104,7 +104,7 @@ export default function AboutPage() {
                 {/* Image 1 (Top Left) */}
                 <div className="absolute top-0 left-0 w-[80%] h-[60%] z-10 shadow-xl">
                   <Image
-                    src="http://www.dna360.in/assets/img/about-top-1.jpg"
+                    src="/images/about-top-1.jpg"
                     alt="About DNA 360 Gym"
                     fill
                     unoptimized
@@ -115,7 +115,7 @@ export default function AboutPage() {
                 {/* Image 2 (Bottom Right) */}
                 <div className="absolute bottom-0 right-0 w-[65%] h-[60%] z-20 shadow-2xl border-4 border-[#1a1a1a]">
                   <Image
-                    src="http://www.dna360.in/assets/img/about-top-2.jpg"
+                    src="/images/about-top-2.jpg"
                     alt="About DNA 360 Facilities"
                     fill
                     unoptimized

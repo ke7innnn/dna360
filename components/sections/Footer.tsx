@@ -22,7 +22,7 @@ export default function Footer() {
           <div>
             <div className="mb-5">
               <Image
-                src="http://www.dna360.in/assets/img/logo-2.png"
+                src="/images/logo-2.png"
                 alt="DNA 360 Fitness Logo"
                 width={80}
                 height={80}

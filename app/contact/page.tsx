@@ -55,7 +55,7 @@ export default function ContactPage() {
       <Navbar />
       <main className="bg-[#0a0a0a] min-h-screen pt-[70px]">
         {/* Banner Section */}
-        <section className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center" style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/contact-header-image.jpg)' }}>
+        <section className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center" style={{ backgroundImage: 'url(/images/contact-header-image.jpg)' }}>
           <div className="absolute inset-0 bg-black/60"></div>
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
             <h1 className="text-4xl lg:text-5xl font-black font-montserrat uppercase tracking-wider mb-2 md:mb-0">Contacts</h1>

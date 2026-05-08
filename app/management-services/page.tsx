@@ -32,7 +32,7 @@ export default function ManagementServicesPage() {
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/service-header-image.jpg)' }}
+          style={{ backgroundImage: 'url(/images/service-header-image.jpg)' }}
         >
           <div className="absolute inset-0 bg-black/60"></div>
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
@@ -66,7 +66,7 @@ export default function ManagementServicesPage() {
                 {/* Image 1 (Top Left) */}
                 <div className="absolute top-0 left-0 w-[80%] h-[60%] z-10 bg-white shadow-xl">
                   <Image
-                    src="http://www.dna360.in/assets/img/franchise/management-services-01.jpg"
+                    src="/images/franchise/management-services-01.jpg"
                     alt="Management Services Graphic"
                     fill
                     unoptimized
@@ -77,7 +77,7 @@ export default function ManagementServicesPage() {
                 {/* Image 2 (Bottom Right) */}
                 <div className="absolute bottom-0 right-0 w-[65%] h-[60%] z-20 shadow-2xl border-4 border-[#1a1a1a]">
                   <Image
-                    src="http://www.dna360.in/assets/img/franchise/management-services-02.jpg"
+                    src="/images/franchise/management-services-02.jpg"
                     alt="Management Services Gym"
                     fill
                     unoptimized

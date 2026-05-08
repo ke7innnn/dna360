@@ -7,25 +7,25 @@ const features = [
   {
     id: 'top-notch',
     title: 'Top-Notch Equipment',
-    img: 'http://www.dna360.in/assets/img/top-notch.jpg',
+    img: '/images/top-notch.jpg',
     desc: 'Train on the best equipment in use at Powai – from Merrithew Pilates to LifeFitness Spinning & Cardio and patented Hammer Strength.',
   },
   {
     id: 'hygiene',
     title: 'Hygiene & Cleanliness',
-    img: 'http://www.dna360.in/assets/img/hygiene-clean.jpg',
+    img: '/images/hygiene-clean.jpg',
     desc: 'ISO standards, including separate rest rooms, shower and changing room for staff; only facility in Powai with such focus.',
   },
   {
     id: 'space',
     title: 'Unfettered Space',
-    img: 'http://www.dna360.in/assets/img/unfettered-space.jpg',
+    img: '/images/unfettered-space.jpg',
     desc: 'Enjoy the unique expanse of the 13,000 sq.ft. largest fitness facility of its kind in Mumbai with entry via 2000 sq.ft lobby and a bank of 8 lifts.',
   },
   {
     id: 'studios',
     title: 'Individual Studios',
-    img: 'http://www.dna360.in/assets/img/individual-studios.jpg',
+    img: '/images/individual-studios.jpg',
     desc: 'Exclusive dedicated studios for Pilates, Spinning and other group classes.',
   },
 ]

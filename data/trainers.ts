@@ -35,8 +35,8 @@ export const trainers: Trainer[] = [
       '2)recovery after operating knee or back injuries',
       '3)customizing right diet for diabetic, thyroid, pcod or pcos clients.'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/afzal-shah-2.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/afzal-shah.jpg'
+    imageMain: '/images/trainer/afzal-shah-2.jpg',
+    imageDetail: '/images/trainer/afzal-shah.jpg'
   },
   {
     slug: 'kunal-chavan',
@@ -57,8 +57,8 @@ export const trainers: Trainer[] = [
       '2)recovery after operating knee or back injuries',
       '3)customizing right diet for diabetic, thyroid, pcod or pcos clients.'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/kunal-chavan-2.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/kunal-chavan.jpg'
+    imageMain: '/images/trainer/kunal-chavan-2.jpg',
+    imageDetail: '/images/trainer/kunal-chavan.jpg'
   },
   {
     slug: 'mayur-chakke',
@@ -75,8 +75,8 @@ export const trainers: Trainer[] = [
       'Functional training',
       'Calisthenics'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/mayur-chakke-2.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/mayur-chakke.jpg'
+    imageMain: '/images/trainer/mayur-chakke-2.jpg',
+    imageDetail: '/images/trainer/mayur-chakke.jpg'
   },
   {
     slug: 'nishant-tawade',
@@ -93,8 +93,8 @@ export const trainers: Trainer[] = [
       'Dynamic streching',
       'Functional training'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/nishant-tawade.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/nishant-tawade.jpg'
+    imageMain: '/images/trainer/nishant-tawade.jpg',
+    imageDetail: '/images/trainer/nishant-tawade.jpg'
   },
   {
     slug: 'omkar-khamkar',
@@ -111,8 +111,8 @@ export const trainers: Trainer[] = [
       'Cardio respiratory and interval',
       'Resistance training'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/omkar-khamkar.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/omkar-khamkar.jpg'
+    imageMain: '/images/trainer/omkar-khamkar.jpg',
+    imageDetail: '/images/trainer/omkar-khamkar.jpg'
   },
   {
     slug: 'aniket-jadhav',
@@ -132,8 +132,8 @@ export const trainers: Trainer[] = [
       'Resistance training',
       'Time under tension training'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/aniket-jadhav.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/aniket-jadhav.jpg'
+    imageMain: '/images/trainer/aniket-jadhav.jpg',
+    imageDetail: '/images/trainer/aniket-jadhav.jpg'
   },
   {
     slug: 'vaibhav-mulik',
@@ -154,8 +154,8 @@ export const trainers: Trainer[] = [
       'cardio respiratory and interval',
       'resistance training'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/vaibhav-mulik.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/vaibhav-mulik.jpg'
+    imageMain: '/images/trainer/vaibhav-mulik.jpg',
+    imageDetail: '/images/trainer/vaibhav-mulik.jpg'
   },
   {
     slug: 'hemant-shirke',
@@ -174,8 +174,8 @@ export const trainers: Trainer[] = [
       'Muscle gain workout',
       'Weight loss programme'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/hemant-shirke.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/hemant-shirke.jpg'
+    imageMain: '/images/trainer/hemant-shirke.jpg',
+    imageDetail: '/images/trainer/hemant-shirke.jpg'
   },
   {
     slug: 'mandar-shirke',
@@ -197,8 +197,8 @@ export const trainers: Trainer[] = [
       'Facia release',
       'Nutrition plan'
     ],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/mandar-shirke-2.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/mandar-shirke.jpg'
+    imageMain: '/images/trainer/mandar-shirke-2.jpg',
+    imageDetail: '/images/trainer/mandar-shirke.jpg'
   },
   {
     slug: 'siddhesh-walavankar',
@@ -211,7 +211,7 @@ export const trainers: Trainer[] = [
       'Tabono Fitness and Wellness 1 year personal trainer'
     ],
     specialties: [],
-    imageMain: 'http://www.dna360.in/assets/img/trainer/siddhesh-walavankar-2.jpg',
-    imageDetail: 'http://www.dna360.in/assets/img/trainer/siddhesh-walavankar.jpg'
+    imageMain: '/images/trainer/siddhesh-walavankar-2.jpg',
+    imageDetail: '/images/trainer/siddhesh-walavankar.jpg'
   }
 ]

@@ -69,7 +69,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <Image
-              src="http://www.dna360.in/assets/img/logo-2.png"
+              src="/images/logo-2.png"
               alt="DNA 360 Fitness"
               width={60}
               height={60}

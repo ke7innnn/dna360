@@ -24,7 +24,7 @@ export default function TrainersPage() {
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/trainer-header-image.jpg)' }}
+          style={{ backgroundImage: 'url(/images/trainer-header-image.jpg)' }}
         >
           <div className="absolute inset-0 bg-black/60"></div>
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
@@ -40,7 +40,7 @@ export default function TrainersPage() {
         {/* Trainers Grid Section */}
         <section
           className="py-20 px-4 bg-cover bg-fixed bg-center"
-          style={{ backgroundImage: 'url(http://www.dna360.in/assets/img/bg-trainer.jpg)' }}
+          style={{ backgroundImage: 'url(/images/bg-trainer.jpg)' }}
         >
           {/* Dark Overlay for the background */}
           <div className="absolute inset-0 bg-black/80 z-0"></div>
