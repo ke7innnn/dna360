@@ -79,8 +79,11 @@ export default function TrainersPage() {
                       className="absolute inset-0 w-full h-full backface-hidden flip-front bg-cover bg-center"
                       style={{ backgroundImage: `url(${trainer.imageMain})` }}
                     >
-                      {/* Optional dark gradient overlay on front if needed */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      {/* Name label at bottom only */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent pt-10 pb-4 px-4">
+                        <p className="text-white font-black font-montserrat uppercase text-base text-center tracking-wide">{trainer.name}</p>
+                        <p className="text-[#00c8c8] font-opensans text-xs uppercase tracking-widest text-center">{trainer.role}</p>
+                      </div>
                     </div>
 
                     {/* Back of Card */}
