@@ -76,17 +76,17 @@ export default function TrainersPage() {
 
                     {/* FRONT — full color photo, NO overlay */}
                     <div
-                      className="absolute inset-0 w-full h-full backface-hidden flip-front overflow-hidden"
+                      className="absolute inset-0 w-full h-full backface-hidden flip-front overflow-hidden bg-[#1a1a1a]"
                     >
                       <img
                         src={trainer.imageMain}
                         alt={trainer.name}
                         className="w-full h-full object-cover object-top"
                       />
-                      {/* Only a slim gradient at the very bottom for name */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent pt-10 pb-4 px-4">
-                        <p className="text-white font-black font-montserrat uppercase text-base text-center tracking-wide">{trainer.name}</p>
-                        <p className="text-[#00c8c8] font-opensans text-xs uppercase tracking-widest text-center">{trainer.role}</p>
+                      {/* Name label at bottom - no gradient, just text with shadow */}
+                      <div className="absolute bottom-0 left-0 right-0 pb-4 px-4 text-center">
+                        <p className="text-white font-black font-montserrat uppercase text-base tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{trainer.name}</p>
+                        <p className="text-[#00c8c8] font-opensans text-xs uppercase tracking-widest drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">{trainer.role}</p>
                       </div>
                     </div>
 
