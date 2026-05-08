@@ -71,34 +71,46 @@ export default function TrainersPage() {
               viewport={{ once: true, amount: 0.1 }}
             >
               {trainers.map((trainer) => (
-                <motion.div
-                  key={trainer.slug}
-                  variants={fadeUp}
-                  className="group relative h-[380px] overflow-hidden cursor-pointer"
-                >
-                  {/* Photo — full color, no overlay */}
-                  <img
-                    src={trainer.imageMain}
-                    alt={trainer.name}
-                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                  />
+                <motion.div key={trainer.slug} variants={fadeUp} className="h-[380px] perspective-1000 group">
+                  <div className="relative w-full h-full transform-style-3d">
 
-                  {/* Name bar at bottom — only on lower 30% */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent pt-12 pb-5 px-4">
-                    <p className="text-white font-black font-montserrat uppercase text-base text-center tracking-wide">
-                      {trainer.name}
-                    </p>
-                    <p className="text-[#00c8c8] font-opensans text-xs uppercase tracking-widest text-center mb-3">
-                      {trainer.role}
-                    </p>
-                    <div className="flex justify-center">
-                      <Link
-                        href={`/trainers/${trainer.slug}`}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[#00c8c8] text-black font-bold font-montserrat text-xs uppercase tracking-widest px-6 py-2"
-                      >
-                        Read More
-                      </Link>
+                    {/* FRONT — full color photo, NO overlay */}
+                    <div
+                      className="absolute inset-0 w-full h-full backface-hidden flip-front overflow-hidden"
+                    >
+                      <img
+                        src={trainer.imageMain}
+                        alt={trainer.name}
+                        className="w-full h-full object-cover object-top"
+                      />
+                      {/* Only a slim gradient at the very bottom for name */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent pt-10 pb-4 px-4">
+                        <p className="text-white font-black font-montserrat uppercase text-base text-center tracking-wide">{trainer.name}</p>
+                        <p className="text-[#00c8c8] font-opensans text-xs uppercase tracking-widest text-center">{trainer.role}</p>
+                      </div>
                     </div>
+
+                    {/* BACK — dark overlay with info + link */}
+                    <div
+                      className="absolute inset-0 w-full h-full backface-hidden flip-back overflow-hidden"
+                    >
+                      <img
+                        src={trainer.imageMain}
+                        alt={trainer.name}
+                        className="w-full h-full object-cover object-top"
+                      />
+                      <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center border-2 border-[#00c8c8]">
+                        <h3 className="text-white font-black font-montserrat uppercase text-xl mb-1">{trainer.name}</h3>
+                        <h4 className="text-[#00c8c8] font-opensans font-bold text-sm uppercase tracking-wider mb-6">{trainer.role}</h4>
+                        <Link
+                          href={`/trainers/${trainer.slug}`}
+                          className="bg-transparent border border-white text-white font-bold font-montserrat text-xs uppercase tracking-widest px-8 py-3 hover:bg-[#00c8c8] hover:border-[#00c8c8] hover:text-black transition-all duration-300"
+                        >
+                          Read More
+                        </Link>
+                      </div>
+                    </div>
+
                   </div>
                 </motion.div>
               ))}
