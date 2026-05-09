@@ -21,7 +21,7 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
   return (
     <>
       <Navbar />
-      <main className="bg-[#0a0a0a] min-h-screen pt-[70px]">
+      <main className="bg-[#0a0a0a] min-h-screen pt-[105px]">
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
@@ -47,18 +47,25 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
               
               {/* Left Column: Image */}
               <div className="lg:col-span-5">
-                <img
-                  src={trainer.imageDetail}
-                  alt={trainer.name}
-                  className="w-full h-auto object-cover"
-                />
+                <div className="overflow-hidden rounded-xl border border-white/10 shadow-2xl">
+                  <img
+                    src={trainer.imageDetail}
+                    alt={trainer.name}
+                    className="w-full h-auto object-cover scale-110"
+                  />
+                </div>
               </div>
 
               {/* Right Column: Info */}
               <div className="lg:col-span-7 flex flex-col justify-center">
-                <h2 className="text-4xl lg:text-5xl font-black font-montserrat text-white mb-8">
-                  {trainer.name}
-                </h2>
+                <div className="mb-8">
+                  <h2 className="text-4xl lg:text-6xl font-black font-montserrat text-white mb-2 leading-tight">
+                    {trainer.name}
+                  </h2>
+                  <div className="inline-block bg-[#00c8c8] text-black font-black uppercase tracking-widest text-xs px-4 py-1.5 rounded-full">
+                    {trainer.role}
+                  </div>
+                </div>
 
                 {trainer.experience && (
                   <div className="mb-8">
@@ -79,7 +86,7 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
                     <ul className="space-y-3">
                       {trainer.qualifications.map((q, idx) => (
                         <li key={idx} className="flex items-start text-[#ccc] font-opensans text-base">
-                          <span className="text-[#00c8c8] mr-3 font-bold">✓</span>
+                          <span className="text-[#00c8c8] mr-3 font-bold shrink-0">✓</span>
                           <span>{q}</span>
                         </li>
                       ))}
@@ -92,10 +99,10 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
                     <h3 className="text-[#00c8c8] font-black font-montserrat uppercase tracking-widest text-lg mb-4">
                       Speciality Areas:
                     </h3>
-                    <ul className="space-y-3">
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {trainer.specialties.map((s, idx) => (
-                        <li key={idx} className="flex items-start text-[#ccc] font-opensans text-base">
-                          <span className="text-[#e63946] mr-3 font-bold">▹</span>
+                        <li key={idx} className="flex items-center text-[#ccc] font-opensans text-base bg-white/5 p-3 rounded-lg border border-white/10">
+                          <span className="text-[#00c8c8] mr-3 font-bold">▹</span>
                           <span>{s}</span>
                         </li>
                       ))}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -38,43 +38,62 @@ const mobileMenuVariants = {
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const [hidden, setHidden] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [partnerOpen, setPartnerOpen] = useState(false)
   const [servicesOpen, setServicesOpen] = useState(false)
   const [mobilePartnerOpen, setMobilePartnerOpen] = useState(false)
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false)
   const pathname = usePathname()
+  const lastScrollY = useRef(0)
 
   const navLinkClass = (href: string) =>
-    `font-semibold text-sm uppercase tracking-wider font-montserrat transition-colors ${
+    `font-semibold text-base uppercase tracking-wider font-montserrat transition-colors ${
       pathname === href ? 'text-[#00c8c8]' : 'text-white hover:text-[#00c8c8]'
     }`
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 80)
-    window.addEventListener('scroll', handleScroll)
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      // Transparent at top, solid when scrolled
+      setScrolled(currentScrollY > 80)
+      
+      // Hide on scroll down, show on scroll up
+      if (currentScrollY > lastScrollY.current && currentScrollY > 150) {
+        setHidden(true)
+      } else {
+        setHidden(false)
+      }
+      
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        hidden ? '-translate-y-full' : 'translate-y-0'
+      } ${
         scrolled
-          ? 'bg-[#0a0a0a] shadow-lg shadow-black/50'
-          : 'bg-[rgba(0,0,0,0.85)] backdrop-blur-sm'
+          ? 'bg-[#0a0a0a]/95 backdrop-blur-md shadow-lg shadow-black/50'
+          : 'bg-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-[70px]">
+        <div className="flex items-center justify-between h-[105px]">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <Image
-              src="/images/logo-2.png"
+              src="/images/main-logo/main-logo.png"
               alt="DNA 360 Fitness"
-              width={60}
-              height={60}
+              width={270}
+              height={90}
               unoptimized
-              className="object-contain"
+              className="object-contain h-20 w-auto"
             />
           </Link>
 

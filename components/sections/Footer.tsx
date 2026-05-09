@@ -22,12 +22,12 @@ export default function Footer() {
           <div>
             <div className="mb-5">
               <Image
-                src="/images/logo-2.png"
+                src="/images/main-logo/main-logo.png"
                 alt="DNA 360 Fitness Logo"
-                width={80}
-                height={80}
+                width={180}
+                height={60}
                 unoptimized
-                className="object-contain"
+                className="object-contain h-14 w-auto"
               />
             </div>
             <p className="text-[#aaa] font-opensans text-sm leading-relaxed mb-4">

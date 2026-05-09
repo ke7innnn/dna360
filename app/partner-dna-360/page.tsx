@@ -73,7 +73,7 @@ export default function PartnerDNA360Page() {
   return (
     <>
       <Navbar />
-      <main className="bg-[#151515] min-h-screen pt-[70px]">
+      <main className="bg-[#151515] min-h-screen pt-[105px]">
         {/* Banner Section */}
         <section
           className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"

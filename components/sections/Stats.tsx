@@ -1,8 +1,47 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
+
+function RotatingLogos() {
+  const logos = [
+    '/images/equipment-partner/logo-1.png',
+    '/images/equipment-partner/logo-2.png',
+    '/images/equipment-partner/logo-3.png'
+  ]
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % logos.length)
+    }, 2500)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, scale: index === 1 ? 1.3 : 1 }}
+          animate={{ opacity: 1, scale: index === 1 ? 1.3 : 1 }}
+          exit={{ opacity: 0, scale: index === 1 ? 1.3 : 1 }}
+          transition={{ duration: 0.5 }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={logos[index]}
+            alt="Equipment Partner"
+            fill
+            unoptimized
+            className="object-contain"
+          />
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}
 
 interface AnimatedCounterProps {
   target: number
@@ -24,7 +63,6 @@ function AnimatedCounter({ target, duration = 2000, suffix = '+' }: AnimatedCoun
           const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime
             const progress = Math.min(elapsed / duration, 1)
-            // Ease out cubic
             const easedProgress = 1 - Math.pow(1 - progress, 3)
             setCount(Math.floor(easedProgress * target))
             if (progress < 1) requestAnimationFrame(animate)
@@ -39,7 +77,7 @@ function AnimatedCounter({ target, duration = 2000, suffix = '+' }: AnimatedCoun
   }, [target, duration])
 
   return (
-    <span ref={ref} className="text-6xl lg:text-7xl font-black font-montserrat text-white leading-none">
+    <span ref={ref} className="text-6xl lg:text-7xl font-black font-montserrat text-white leading-none flex items-center justify-center h-[72px]">
       {count.toLocaleString()}{suffix}
     </span>
   )
@@ -107,22 +145,18 @@ export default function Stats() {
           </p>
         </motion.div>
 
-        {/* Stat 3 - Equipment partner GIF */}
+        {/* Stat 3 - Equipment partner Rotating Logos */}
         <motion.div
           variants={itemVariants}
           className="flex flex-col items-center text-center"
           id="stat-equipment"
         >
-          <div className="relative w-40 h-24 mb-2">
-            <Image
-              src="/images/equipment.gif"
-              alt="Equipment Partner"
-              fill
-              unoptimized
-              className="object-contain"
-            />
+          <div className="relative w-full h-[72px] flex items-center justify-center">
+            <div className="absolute w-[350px] md:w-[450px] h-[200px] pointer-events-none z-0">
+              <RotatingLogos />
+            </div>
           </div>
-          <p className="text-white/80 font-opensans text-base mt-1 uppercase tracking-widest">
+          <p className="text-white/80 font-opensans text-base mt-3 uppercase tracking-widest relative z-10">
             Equipment Partner
           </p>
         </motion.div>

@@ -41,9 +41,9 @@ export default function Services() {
         </p>
       </motion.div>
 
-      {/* Grid */}
+      {/* Centered Flex Container */}
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 max-w-7xl mx-auto"
+        className="flex flex-wrap justify-center gap-8 max-w-7xl mx-auto"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -53,28 +53,58 @@ export default function Services() {
           <motion.div
             key={service.slug}
             variants={cardVariants}
-            className="service-card group relative h-[380px] overflow-hidden"
+            className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)] xl:w-[calc(25%-1.5rem)] max-w-[320px] h-[420px] perspective-1000 group"
           >
-            <Image
-              src={service.images && service.images.length > 1 ? service.images[1] : service.bannerImage}
-              alt={service.title}
-              fill
-              unoptimized
-              className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-            />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent transition-all duration-400 group-hover:from-[#00c8c8]/40 group-hover:via-black/40" />
-            {/* Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 px-4">
-              <h3 className="text-white font-black uppercase tracking-wider text-lg font-montserrat text-center mb-3">
-                {service.title}
-              </h3>
-              <Link
-                href={`/services/${service.slug}`}
-                className="bg-[#00c8c8] text-black text-xs font-bold font-montserrat uppercase tracking-widest px-8 py-3 opacity-0 group-hover:opacity-100 transition-all duration-300"
-              >
-                Read More
-              </Link>
+            <div className="relative w-full h-full transform-style-3d cursor-pointer">
+              
+              {/* Front */}
+              <div className="absolute inset-0 w-full h-full backface-hidden flip-front bg-[#151515] rounded-2xl overflow-hidden shadow-lg border border-white/5 flex flex-col">
+                {/* Image Section */}
+                <div className="relative h-[200px] shrink-0 w-full">
+                  <Image
+                    src={service.images && service.images.length > 1 ? service.images[1] : service.bannerImage}
+                    alt={service.title}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                  <div className="absolute top-4 right-4 bg-[#00c8c8] text-black text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-lg">
+                    {service.title}
+                  </div>
+                </div>
+
+                {/* Content Section */}
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="text-white font-black text-xl font-montserrat mb-3">{service.title}</h3>
+                  <p className="text-[#aaa] font-opensans text-sm mb-4 line-clamp-3 leading-relaxed">
+                    {(service.content || '').split('.').filter(s => s.trim().length > 0).slice(0, 3).join(' • ')}
+                  </p>
+                  <div className="inline-block mt-auto bg-[#00c8c8]/20 text-[#00c8c8] font-bold text-xs px-3 py-1.5 rounded-md self-start">
+                    Premium Program
+                  </div>
+                </div>
+              </div>
+
+              {/* Back */}
+              <div className="absolute inset-0 w-full h-full backface-hidden flip-back overflow-hidden rounded-2xl">
+                <Image
+                  src={service.images && service.images.length > 1 ? service.images[1] : service.bannerImage}
+                  alt={service.title}
+                  fill
+                  unoptimized
+                  className="object-cover scale-110"
+                />
+                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center border-2 border-[#00c8c8] rounded-2xl">
+                  <h3 className="text-white font-black font-montserrat uppercase text-xl mb-4">{service.title}</h3>
+                  <Link
+                    href={`/services/${service.slug}`}
+                    className="bg-transparent border border-white text-white font-bold font-montserrat text-xs uppercase tracking-widest px-8 py-3 hover:bg-[#00c8c8] hover:border-[#00c8c8] hover:text-black transition-all duration-300 rounded-lg"
+                  >
+                    Explore Service
+                  </Link>
+                </div>
+              </div>
+
             </div>
           </motion.div>
         ))}

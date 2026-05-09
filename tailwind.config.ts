@@ -22,8 +22,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        montserrat: ['Montserrat', 'sans-serif'],
-        opensans: ['"Open Sans"', 'sans-serif'],
+        montserrat: ['var(--font-montserrat)', 'sans-serif'],
+        opensans: ['var(--font-opensans)', 'sans-serif'],
+        syne: ['var(--font-syne)', 'sans-serif'],
+        outfit: ['var(--font-outfit)', 'sans-serif'],
       },
       backgroundImage: {
         'teal-gradient': 'linear-gradient(135deg, #00c8c8, #009999)',

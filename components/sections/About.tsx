@@ -25,32 +25,21 @@ export default function About() {
       className="bg-[#0a0a0a] overflow-hidden py-0"
     >
       <div className="flex flex-col lg:flex-row min-h-[500px]">
-        {/* Left: Images stacked */}
+        {/* Left: Single Image */}
         <motion.div
-          className="relative lg:w-[55%] w-full flex flex-col"
+          className="relative lg:w-[55%] w-full h-[400px] lg:h-auto"
           variants={slideFromLeft}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
-          <div className="relative w-full h-[300px] lg:h-[400px]">
-            <Image
-              src="/images/home2-about.jpg"
-              alt="DNA 360 Gym Floor"
-              fill
-              unoptimized
-              className="object-cover"
-            />
-          </div>
-          <div className="relative w-full h-[200px] lg:h-[280px]">
-            <Image
-              src="/images/home2-about-2.jpg"
-              alt="DNA 360 Treadmills"
-              fill
-              unoptimized
-              className="object-cover"
-            />
-          </div>
+          <Image
+            src="/images/welcome-homepage/welcome-img-2.jpeg"
+            alt="DNA 360 Gym Area"
+            fill
+            unoptimized
+            className="object-cover"
+          />
         </motion.div>
 
         {/* Right: Teal border text box */}
