@@ -17,43 +17,34 @@ export default function Hero() {
         className="object-cover object-center"
       />
 
-      {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+      {/* Subtle dark overlay */}
+      <div className="absolute inset-0 bg-black/30" />
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+      {/* Bottom buttons — left and right */}
+      <div className="absolute bottom-10 left-0 right-0 z-10 flex items-end justify-between px-8 sm:px-16">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="mb-8"
-        >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight font-montserrat leading-none">
-            <span className="text-white">DNA </span>
-            <span className="text-[#00c8c8]">360</span>
-          </h1>
-          <p className="text-white/80 font-montserrat text-lg sm:text-xl mt-4 tracking-widest uppercase">
-            Best Gym in Powai, Mumbai
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.4 }}
-          className="flex gap-4 flex-wrap justify-center"
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
         >
           <Link
             href="/contact"
             id="hero-cta-contact"
-            className="inline-block bg-[#00c8c8] text-black px-10 py-4 text-base font-bold uppercase tracking-widest font-montserrat hover:bg-white transition-all duration-300"
+            className="inline-block bg-[#00c8c8] text-black px-8 py-4 text-sm font-bold uppercase tracking-widest font-montserrat hover:bg-white transition-all duration-300"
           >
             Contact Us
           </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
+        >
           <Link
             href="/about"
             id="hero-cta-about"
-            className="inline-block bg-transparent text-white border border-white/60 px-10 py-4 text-base font-semibold uppercase tracking-widest font-montserrat hover:bg-[#00c8c8] hover:border-[#00c8c8] hover:text-black transition-all duration-300"
+            className="inline-block bg-transparent text-white border border-white px-8 py-4 text-sm font-semibold uppercase tracking-widest font-montserrat hover:bg-[#00c8c8] hover:border-[#00c8c8] hover:text-black transition-all duration-300"
           >
             Read More
           </Link>
