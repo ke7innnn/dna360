@@ -13,18 +13,28 @@ export default function ServicesPage() {
       <main className="min-h-screen pt-[105px]" style={{ backgroundColor: '#151515' }}>
         {/* Banner Section */}
         <section
-          className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
+          className="relative h-[300px] lg:h-[400px] w-full flex items-center bg-cover bg-center"
           style={{ backgroundImage: 'url(/images/service-header-image.jpg)' }}
         >
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
-            <h1 className="text-4xl lg:text-5xl font-black font-montserrat uppercase tracking-wider mb-2 md:mb-0">
+            <motion.h1 
+              className="text-5xl lg:text-7xl font-black font-syne uppercase tracking-tighter mb-2 md:mb-0"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               SERVICES
-            </h1>
-            <p className="font-montserrat font-semibold text-sm lg:text-base">
+            </motion.h1>
+            <motion.p 
+              className="font-outfit font-semibold text-sm lg:text-base bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               <Link href="/" className="hover:text-[#00c8c8] transition-colors">Home</Link>{' '}
               / Services
-            </p>
+            </motion.p>
           </div>
         </section>
 
@@ -68,7 +78,7 @@ export default function ServicesPage() {
                       <div className="p-6 flex flex-col flex-grow">
                         <h3 className="text-white font-black text-xl font-montserrat mb-3">{service.title}</h3>
                         <p className="text-[#aaa] font-opensans text-sm mb-4 line-clamp-3 leading-relaxed">
-                          {(service.content || '').split('.').filter(s => s.trim().length > 0).slice(0, 3).join(' • ')}
+                          {(service.content || '').replace(/<[^>]*>/g, '').split('.').filter(s => s.trim().length > 0).slice(0, 3).join(' • ')}
                         </p>
                         <div className="inline-block mt-auto bg-[#00c8c8]/20 text-[#00c8c8] font-bold text-xs px-3 py-1.5 rounded-md self-start">
                           Premium Program

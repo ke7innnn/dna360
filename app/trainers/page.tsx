@@ -23,7 +23,12 @@ export default function TrainersPage() {
 
   const filteredTrainers = activeFilter === 'All' 
     ? trainers 
-    : trainers.filter(t => t.role === activeFilter)
+    : trainers.filter(t => {
+        if (activeFilter === 'Super Elite Coach') {
+          return t.role === 'Super Elite Coach' || t.role === 'Head Coach';
+        }
+        return t.role === activeFilter;
+      })
 
   return (
     <>
@@ -31,17 +36,27 @@ export default function TrainersPage() {
       <main className="bg-[#0a0a0a] min-h-screen pt-[105px]">
         {/* Banner Section */}
         <section
-          className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
+          className="relative h-[300px] lg:h-[400px] w-full flex items-center bg-cover bg-center"
           style={{ backgroundImage: 'url(/images/trainer-header-image.jpg)' }}
         >
-          <div className="absolute inset-0 bg-black/60"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
-            <h1 className="text-4xl lg:text-5xl font-black font-montserrat uppercase tracking-wider mb-2 md:mb-0">
+            <motion.h1 
+              className="text-5xl lg:text-7xl font-black font-syne uppercase tracking-tighter mb-2 md:mb-0"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               Trainers
-            </h1>
-            <p className="font-montserrat font-semibold text-sm lg:text-base">
+            </motion.h1>
+            <motion.p 
+              className="font-outfit font-semibold text-sm lg:text-base bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               <Link href="/" className="hover:text-[#00c8c8] transition-colors">Home</Link> / Trainers
-            </p>
+            </motion.p>
           </div>
         </section>
 

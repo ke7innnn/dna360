@@ -26,20 +26,30 @@ export default function ServiceDetailPage() {
       <main className="bg-[#151515] min-h-screen pt-[105px]">
         {/* Banner Section */}
         <section
-          className="relative h-[250px] lg:h-[300px] w-full flex items-center bg-cover bg-center"
+          className="relative h-[300px] lg:h-[350px] w-full flex items-center bg-cover bg-center"
           style={{ backgroundImage: `url(${service.bannerImage})` }}
         >
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
           <div className="max-w-7xl mx-auto px-4 w-full relative z-10 flex flex-col md:flex-row justify-between items-center text-white">
-            <h1 className="text-4xl lg:text-5xl font-black font-montserrat uppercase tracking-wider mb-2 md:mb-0">
+            <motion.h1 
+              className="text-4xl lg:text-6xl font-black font-syne uppercase tracking-tighter mb-2 md:mb-0"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               SERVICES
-            </h1>
-            <p className="font-montserrat font-semibold text-sm lg:text-base text-right">
+            </motion.h1>
+            <motion.p 
+              className="font-outfit font-semibold text-sm lg:text-base bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               <Link href="/" className="hover:text-[#00c8c8] transition-colors">Home</Link>{' '}
               /{' '}
               <Link href="/services" className="hover:text-[#00c8c8] transition-colors">Services</Link>{' '}
               / {service.title}
-            </p>
+            </motion.p>
           </div>
         </section>
 
@@ -111,9 +121,11 @@ export default function ServiceDetailPage() {
 
                 <div className="space-y-5">
                   {paragraphs.map((para, i) => (
-                    <p key={i} className="text-[#cccccc] font-opensans text-[15px] leading-relaxed">
-                      {para}
-                    </p>
+                    <p 
+                      key={i} 
+                      className="text-[#cccccc] font-opensans text-[15px] leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: para }}
+                    />
                   ))}
                 </div>
 

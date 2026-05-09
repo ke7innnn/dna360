@@ -77,7 +77,7 @@ export default function Services() {
                 <div className="p-6 flex flex-col flex-grow">
                   <h3 className="text-white font-black text-xl font-montserrat mb-3">{service.title}</h3>
                   <p className="text-[#aaa] font-opensans text-sm mb-4 line-clamp-3 leading-relaxed">
-                    {(service.content || '').split('.').filter(s => s.trim().length > 0).slice(0, 3).join(' • ')}
+                    {(service.content || '').replace(/<[^>]*>/g, '').split('.').filter(s => s.trim().length > 0).slice(0, 3).join(' • ')}
                   </p>
                   <div className="inline-block mt-auto bg-[#00c8c8]/20 text-[#00c8c8] font-bold text-xs px-3 py-1.5 rounded-md self-start">
                     Premium Program
