@@ -20,12 +20,31 @@ export default function Hero() {
       {/* Subtle dark overlay */}
       <div className="absolute inset-0 bg-black/30" />
 
+      {/* Left side text */}
+      <div className="absolute left-8 sm:left-16 top-1/2 -translate-y-1/2 z-10">
+        <motion.div
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: 'easeOut', delay: 0.2 }}
+        >
+          <p className="text-white font-black font-montserrat text-4xl sm:text-5xl lg:text-6xl leading-tight">
+            Be healthier.
+          </p>
+          <p className="text-white font-black font-montserrat text-4xl sm:text-5xl lg:text-6xl leading-tight">
+            Be stronger.
+          </p>
+          <p className="text-white font-black font-montserrat text-4xl sm:text-5xl lg:text-6xl leading-tight">
+            Be confident.
+          </p>
+        </motion.div>
+      </div>
+
       {/* Bottom buttons — left and right */}
       <div className="absolute bottom-10 left-0 right-0 z-10 flex items-end justify-between px-8 sm:px-16">
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.5 }}
         >
           <Link
             href="/contact"
@@ -39,7 +58,7 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.5 }}
         >
           <Link
             href="/about"
