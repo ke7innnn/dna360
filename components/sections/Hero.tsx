@@ -9,7 +9,7 @@ const slides = [
   {
     id: 1,
     bg: '/hero-section/hero-1.jpg',
-    imageClass: 'object-cover object-center scale-150 translate-y-12',
+    imageClass: 'object-cover object-[center_top] lg:object-center scale-110 lg:scale-150 lg:translate-y-12',
     heading: 'Be healthier.',
     subheadings: ['Be stronger.', 'Be confident.'],
     ctaLeft: { label: 'Contact Us', href: '/contact' },
@@ -18,7 +18,7 @@ const slides = [
   {
     id: 2,
     bg: '/hero-section/hero-2.png',
-    imageClass: 'object-cover object-center scale-125',
+    imageClass: 'object-cover object-[center_top] lg:object-center scale-105 lg:scale-125',
     heading: 'Train Hard.',
     subheadings: ['Stay Focused.', 'Achieve More.'],
     ctaLeft: { label: 'Our Services', href: '/services' },
@@ -47,7 +47,7 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative w-full h-screen overflow-hidden" id="hero">
+    <section className="relative w-full h-[65vh] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden" id="hero">
       {/* Slides */}
       <AnimatePresence mode="wait">
         <motion.div
