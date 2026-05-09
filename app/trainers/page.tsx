@@ -116,7 +116,7 @@ export default function TrainersPage() {
                 const pillColor = pillColors[index % pillColors.length];
                 
                 return (
-                  <motion.div key={trainer.slug} variants={fadeUp} className="h-[500px] perspective-1000 group">
+                  <motion.div key={trainer.slug} variants={fadeUp} className="h-[540px] perspective-1000 group">
                     <div className="relative w-full h-full transform-style-3d cursor-pointer">
 
                       {/* FRONT — New Design */}
@@ -124,11 +124,11 @@ export default function TrainersPage() {
                         className="absolute inset-0 w-full h-full backface-hidden flip-front overflow-hidden bg-[#151515] rounded-2xl flex flex-col border border-white/5"
                       >
                         {/* Image Section */}
-                        <div className="relative h-[280px] w-full shrink-0 bg-[#222]">
+                        <div className="relative h-[340px] w-full shrink-0 bg-[#222]">
                           <img
                             src={trainer.imageMain}
                             alt={trainer.name}
-                            className="w-full h-full object-cover object-top rounded-t-2xl scale-110"
+                            className="w-full h-full object-cover object-top rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
                           />
                           {/* Certified Badge */}
                           <div className="absolute top-4 right-4 w-14 h-14 border-[2px] border-[#4ade80] rounded-full flex flex-col items-center justify-center -rotate-12 bg-black/30 backdrop-blur-sm shadow-xl">
@@ -167,7 +167,7 @@ export default function TrainersPage() {
                         <img
                           src={trainer.imageMain}
                           alt={trainer.name}
-                          className="w-full h-full object-cover object-top scale-110"
+                          className="w-full h-full object-cover object-top"
                         />
                         <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center border-2 border-[#00c8c8] rounded-2xl">
                           <h3 className="text-white font-black font-montserrat uppercase text-xl mb-1">{trainer.name}</h3>
