@@ -15,7 +15,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/personal training.png",
+      "/images/services/personal training.jpg",
       "/images/services/personal-training-3.jpg",
       "/images/enquire-now.png"
     ],
@@ -37,7 +37,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/general fitness.png",
+      "/images/services/general fitness.jpg",
       "/images/services/general-fitness-3.jpg",
       "/images/enquire-now.png"
     ],
@@ -59,7 +59,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/reformer pilates.png",
+      "/images/services/reformer pilates.jpg",
       "/images/services/reformer-pilates-3.jpg",
       "/images/enquire-now.png"
     ],
@@ -92,7 +92,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/spinning.png",
+      "/images/services/spinning.jpg",
       "/images/services/spinning-3.jpg",
       "/images/enquire-now.png"
     ],
@@ -125,7 +125,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/bolly x fitness dance.png",
+      "/images/services/bolly x fitness dance.jpg",
       "/images/about-top-2.jpg",
       "/images/enquire-now.png"
     ],
@@ -224,7 +224,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/mat pilates.png",
+      "/images/services/mat pilates.jpg",
       "/images/services/mat-pilates-3.jpg",
       "/images/enquire-now.png"
     ],
@@ -257,7 +257,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/mixed marialarts.png",
+      "/images/services/mixed marialarts.jpg",
       "/images/services/mixed-martial-3.jpg",
       "/images/enquire-now.png"
     ],
