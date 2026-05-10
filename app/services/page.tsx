@@ -67,7 +67,7 @@ export default function ServicesPage() {
                         <img
                           src={service.images && service.images.length > 1 ? service.images[1] : service.bannerImage}
                           alt={service.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-top"
                         />
                         <div className="absolute top-4 right-4 bg-[#00c8c8] text-black text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-lg">
                           {service.title}

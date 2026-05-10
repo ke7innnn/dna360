@@ -76,7 +76,7 @@ export default function ServiceDetailPage() {
                     alt={service.title}
                     fill
                     unoptimized
-                    className="object-cover"
+                    className="object-cover object-top"
                   />
                 </div>
 
@@ -87,7 +87,7 @@ export default function ServiceDetailPage() {
                     alt={service.title}
                     fill
                     unoptimized
-                    className="object-cover"
+                    className="object-cover object-top"
                   />
                 </div>
                 

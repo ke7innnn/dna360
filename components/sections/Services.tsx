@@ -66,7 +66,7 @@ export default function Services() {
                     alt={service.title}
                     fill
                     unoptimized
-                    className="object-cover"
+                    className="object-cover object-top"
                   />
                   <div className="absolute top-4 right-4 bg-[#00c8c8] text-black text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-lg">
                     {service.title}
