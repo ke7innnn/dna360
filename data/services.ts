@@ -15,7 +15,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/personal-training-2.jpg",
+      "/images/services/personal training.png",
       "/images/services/personal-training-3.jpg",
       "/images/enquire-now.png"
     ],
@@ -191,7 +191,7 @@ export const services: Service[] = [
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
-      "/images/services/yoga.png",
+      "/images/services/yoga.jpeg",
       "/images/services/yoga-3.jpg",
       "/images/enquire-now.png"
     ],

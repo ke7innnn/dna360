@@ -63,7 +63,7 @@ export default function ServicesPage() {
                     {/* Front */}
                     <div className="absolute inset-0 w-full h-full backface-hidden flip-front bg-[#151515] rounded-2xl overflow-hidden shadow-lg border border-white/5 flex flex-col">
                       {/* Image Section */}
-                      <div className="relative h-[200px] shrink-0 w-full">
+                      <div className="relative h-[330px] shrink-0 w-full">
                         <img
                           src={service.images && service.images.length > 1 ? service.images[1] : service.bannerImage}
                           alt={service.title}
@@ -75,13 +75,15 @@ export default function ServicesPage() {
                       </div>
 
                       {/* Content Section */}
-                      <div className="p-6 flex flex-col flex-grow">
-                        <h3 className="text-white font-black text-xl font-montserrat mb-3">{service.title}</h3>
-                        <p className="text-[#aaa] font-opensans text-sm mb-4 line-clamp-3 leading-relaxed">
-                          {(service.content || '').replace(/<[^>]*>/g, '').split('.').filter(s => s.trim().length > 0).slice(0, 3).join(' • ')}
-                        </p>
-                        <div className="inline-block mt-auto bg-[#00c8c8]/20 text-[#00c8c8] font-bold text-xs px-3 py-1.5 rounded-md self-start">
-                          Premium Program
+                      <div className="p-4 flex flex-col flex-grow justify-between bg-[#151515]">
+                        <h3 className="text-white font-black text-lg font-montserrat leading-tight uppercase">{service.title}</h3>
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="inline-block bg-[#00c8c8]/20 text-[#00c8c8] font-bold text-[10px] px-2 py-1 rounded-md">
+                            Premium Program
+                          </div>
+                          <div className="text-[#00c8c8]">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                          </div>
                         </div>
                       </div>
                     </div>
