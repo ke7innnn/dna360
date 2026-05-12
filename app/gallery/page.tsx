@@ -10,7 +10,7 @@ import Footer from '@/components/sections/Footer'
 const galleryImages = Array.from({ length: 53 }, (_, i) => {
   const num = (i + 1).toString().padStart(2, '0')
   return `/images/gallery/${num}.jpg`
-})
+}).filter(src => !src.includes('19.jpg'))
 
 const containerVariants = {
   hidden: {},
