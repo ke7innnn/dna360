@@ -38,24 +38,9 @@ const offerings = [
     image: '/images/about-spa.jpg'
   },
   {
-    title: 'In-house Meditation Room',
-    description: 'Focus, relax and lose your senses in the tranquillity of DNA 360’s sound absorbing Meditation room.',
-    image: '/images/about-meditation-room.jpg'
-  },
-  {
-    title: 'Sports Nutritionist',
-    description: 'Get a full body assessment and composition analysis from DNA 360’s Sports Nutritionist for enhanced overall performance and improved endurance.',
-    image: '/images/about-sports-nutritionist.jpg'
-  },
-  {
     title: 'Hitachi purified air',
     description: 'Recharge your senses with every breath that you take within DNA 360’s centres, purified by DNA 360’s 70 ton Hitachi fresh air conditioning system. It uses scroll compressors and mesh filtration to deliver excellent air quality at 20 micron.',
     image: '/images/about-hitachi.jpg'
-  },
-  {
-    title: 'Assessment Room',
-    description: 'It offers dedicated physical fitness assessment rooms are available for trainers to assess the five components of fitness: body composition, cardio-respiratory fitness, muscle strength, muscle endurance, and flexibility. Additional equipment like In - Body equipement helps to discover body mass index which further assist the person to work on those important areas which requires consistent training.',
-    image: '/images/about-assessment-room.jpg'
   }
 ]
 
@@ -160,10 +145,6 @@ export default function AboutPage() {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                       </span>
                       <a href="tel:+919324462384" className="text-[#00c8c8] hover:text-white transition-colors">+91 93244 62384</a>
-                      <span className="text-[#00c8c8]">|</span>
-                      <a href="tel:02249691360" className="text-[#00c8c8] hover:text-white transition-colors">022 4969 1360</a>
-                      <span className="text-[#00c8c8]">|</span>
-                      <a href="tel:02249675663" className="text-[#00c8c8] hover:text-white transition-colors">022 4967 5663</a>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-white">

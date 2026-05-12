@@ -50,7 +50,7 @@ export default function Footer() {
             </h4>
             <div className="flex flex-col gap-4">
               <a
-                href="https://www.facebook.com/dna360fitness"
+                href="https://www.facebook.com/dna360powai"
                 target="_blank"
                 rel="noopener noreferrer"
                 id="footer-facebook"
@@ -64,7 +64,7 @@ export default function Footer() {
                 Facebook
               </a>
               <a
-                href="https://www.instagram.com/dna360fitness"
+                href="https://www.instagram.com/dna360powai/"
                 target="_blank"
                 rel="noopener noreferrer"
                 id="footer-instagram"
@@ -105,12 +105,6 @@ export default function Footer() {
                 <a href="tel:+919324462384" className="block hover:text-[#00c8c8] transition-colors">
                   +91 93244 62384
                 </a>
-                <a href="tel:02249691360" className="block hover:text-[#00c8c8] transition-colors">
-                  022 4969 1360
-                </a>
-                <a href="tel:02249675663" className="block hover:text-[#00c8c8] transition-colors">
-                  022 4967 5663
-                </a>
               </div>
               <div>
                 <p className="font-semibold text-white mb-1">Email</p>
@@ -142,12 +136,12 @@ export default function Footer() {
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
               <a
-                href="https://www.facebook.com/dna360fitness"
+                href="https://www.facebook.com/dna360powai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#00c8c8] text-sm font-montserrat font-bold uppercase tracking-wider hover:underline"
               >
-                DNA 360 Fitness
+                DNA 360
               </a>
               <p className="text-[#666] text-xs mt-1">Follow us on Facebook</p>
             </div>

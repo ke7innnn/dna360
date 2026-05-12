@@ -17,11 +17,9 @@ const serviceLinks = [
   { label: 'General Fitness', href: '/services/general-fitness' },
   { label: 'Reformer Pilates', href: '/services/reformer-pilates' },
   { label: 'Spinning', href: '/services/spinning' },
-  { label: 'Bolly X Fitness Dance', href: '/services/bolly-x-fitness' },
-  { label: 'Zumba Fitness Dance', href: '/services/zumba-fitness' },
+  { label: 'Dance Fitness', href: '/services/bolly-x-fitness' },
   { label: 'Yoga', href: '/services/yoga' },
   { label: 'Mat Pilates', href: '/services/mat-pilates' },
-  { label: 'Mixed Martial Arts', href: '/services/mixed-martial-arts' },
 ]
 
 const dropdownVariants = {

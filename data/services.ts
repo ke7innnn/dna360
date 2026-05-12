@@ -121,7 +121,7 @@ export const services: Service[] = [
   },
   {
     "slug": "bolly-x-fitness",
-    "title": "Bolly X Fitness Dance",
+    "title": "Dance Fitness",
     "bannerImage": "/images/service-header-image.jpg",
     "images": [
       "/images/group-circle-2.svg",
@@ -138,39 +138,6 @@ export const services: Service[] = [
       "Relieves stress",
       "Fun",
       "For everyone"
-    ],
-    "sessions": [
-      {
-        "durationNumber": "1",
-        "durationUnit": "month",
-        "sessionText": "12 session"
-      },
-      {
-        "durationNumber": "3",
-        "durationUnit": "month",
-        "sessionText": "36 session"
-      }
-    ]
-  },
-  {
-    "slug": "zumba-fitness",
-    "title": "Zumba Fitness Dance",
-    "bannerImage": "/images/service-header-image.jpg",
-    "images": [
-      "/images/group-circle-2.svg",
-      "/images/services/zumba fitness dance.jpeg",
-      "/images/about-top-2.jpg",
-      "/images/enquire-now.png"
-    ],
-    "content": "Zumba is a fitness program that combines Latin and international music with dance moves. Zumba routines incorporate interval training — alternating fast and slow rhythms — to help improve cardiovascular fitness.\n\nZumba is an aerobic activity that can count toward the amount of aerobic activity recommended for most healthy adults by the Department of Health and Human Services.\n\nAerobic exercise can reduce health risks, help maintain a healthy weight, strengthen your heart and boost your mood. If you enjoy Zumba, you're also more likely to do it regularly and experience its benefits as an aerobic exercise.",
-    "benefits": [
-      "Its fun",
-      "Great for weight loss",
-      "Tones your entire body",
-      "Boost your heart health",
-      "Helps you de stress",
-      "Improves coordination",
-      "Make you feel fresh & happy"
     ],
     "sessions": [
       {
@@ -237,39 +204,6 @@ export const services: Service[] = [
       "It might ease you aches",
       "It helps you lose weight",
       "It is the version way of cardio"
-    ],
-    "sessions": [
-      {
-        "durationNumber": "1",
-        "durationUnit": "month",
-        "sessionText": "12 session"
-      },
-      {
-        "durationNumber": "3",
-        "durationUnit": "month",
-        "sessionText": "36 session"
-      }
-    ]
-  },
-  {
-    "slug": "mixed-martial-arts",
-    "title": "Mixed Martial Arts",
-    "bannerImage": "/images/service-header-image.jpg",
-    "images": [
-      "/images/group-circle-2.svg",
-      "/images/services/mixed marialarts.jpg",
-      "/images/services/mixed-martial-3.jpg",
-      "/images/enquire-now.png"
-    ],
-    "content": "Mixed martial arts (MMA) sometimes referred to as cage fighting, is a full-contact combat sport based on striking, grappling and ground fighting, made up from various combat sports and martial arts from around the world.\n\nOriginally promoted as a competition to find the most effective martial arts for real unarmed combat, competitors from different fighting styles were pitted against one another in contests with relatively few rules. Later, individual fighters incorporated multiple martial arts into their style. MMA promoters were pressured to adopt additional rules to increase competitors' safety, to comply with sport regulations and to broaden mainstream acceptance of the sport.",
-    "benefits": [
-      "Improve Overall Body Coordination and Proprioception",
-      "Improve aerobic and anaerboic conditioning",
-      "Improve strength",
-      "Develops and Improves Mental Toughness and Resilience",
-      "Improves Physical Toughness",
-      "Stress Reliever and Effective Treatment for Certain Mental Disorders",
-      "Lose weight"
     ],
     "sessions": [
       {

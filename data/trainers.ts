@@ -40,18 +40,9 @@ export const trainers: Trainer[] = [
     about: '',
     qualifications: [
       'Diploma in Personal Training from K11 School of Fitness Sciences',
-      'Sports Nutritionist With Distinction From K11 School Of Fitness Sciences',
-      'Personal Trainer For Special Population With Distinction From K11 School Of Fitness Sciences',
-      'CPR and AED certification NSDC',
-      'Nutr107x: Nutrition, Exercise And Sports Certification From Wageningen University And Research',
-      'CPR, AED & First Aid From NHCPS',
-      'Fat Loss Fundamentals From Clean Health Fitness Institute'
+      'CPR and AED certification NSDC'
     ],
-    specialties: [
-      'Personal Training',
-      'Sports Nutrition',
-      'Fat Loss Fundamentals'
-    ],
+    specialties: [],
     imageMain: '/images/trainer/aftab memon.jpeg',
     imageDetail: '/images/trainer/aftab memon.jpeg'
   },
@@ -97,14 +88,9 @@ export const trainers: Trainer[] = [
     about: '',
     qualifications: [
       'Certified Personal Trainer From Intellectual Fitness And Sports Academy',
-      'Certified fitness coach-IFSA Academy',
-      'Advance Functional And Strength Training From PEFSA'
+      'Certified fitness coach-IFSA Academy'
     ],
-    specialties: [
-      'Personal Training',
-      'Fitness Coaching',
-      'Functional Training'
-    ],
+    specialties: [],
     imageMain: '/images/trainer/pramod sawant.jpeg',
     imageDetail: '/images/trainer/pramod sawant.jpeg'
   },
@@ -189,13 +175,9 @@ export const trainers: Trainer[] = [
     experience: '',
     about: '',
     qualifications: [
-      'Certified Personal Trainer From Intellectual Fitness And Sports Academy',
-      'Advance Functional And Strength Training From PEFSA'
+      'Certified Personal Trainer From Intellectual Fitness And Sports Academy'
     ],
-    specialties: [
-      'Personal Training',
-      'Functional Training'
-    ],
+    specialties: [],
     imageMain: '/images/trainer/nishant tawade.jpeg',
     imageDetail: '/images/trainer/nishant tawade.jpeg'
   },

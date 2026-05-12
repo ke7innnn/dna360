@@ -56,49 +56,40 @@ export default function ServiceDetailPage() {
         {/* Content Section */}
         <section className="py-24 px-4 bg-[#1a1a1a]">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-
-              {/* Left: Overlapping Images */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+ 
+              {/* Left: Single Hero Image */}
               <motion.div
-                className="relative h-[420px] sm:h-[520px] w-full"
+                className="relative h-[550px] sm:h-[750px] w-full"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8 }}
               >
-                {/* Yellow corner */}
-                <div className="absolute top-8 right-0 lg:-right-8 w-60 h-60 border-4 border-[#ffb400] z-0 opacity-80 hidden md:block" />
+                {/* Yellow corner decoration */}
+                <div className="absolute -top-6 -left-6 w-48 h-48 border-4 border-[#ffb400] z-0 opacity-40 hidden md:block" />
+                <div className="absolute -bottom-6 -right-6 w-48 h-48 border-4 border-[#00c8c8] z-0 opacity-40 hidden md:block" />
 
-                {/* Image 1 top-left */}
-                <div className="absolute top-0 left-0 w-[78%] h-[58%] z-10 shadow-xl overflow-hidden">
+                {/* Main Image */}
+                <div className="relative w-full h-full z-10 shadow-2xl overflow-hidden rounded-lg border border-white/10">
                   <Image
-                    src={service.images[1] || service.bannerImage}
+                    src={service.images && service.images.length > 1 ? service.images[1] : service.bannerImage}
                     alt={service.title}
                     fill
                     unoptimized
-                    className="object-cover object-top"
-                  />
-                </div>
-
-                {/* Image 2 bottom-right */}
-                <div className="absolute bottom-0 right-0 w-[63%] h-[58%] z-20 shadow-2xl border-4 border-[#1a1a1a] overflow-hidden">
-                  <Image
-                    src={service.images[2] || service.bannerImage}
-                    alt={service.title}
-                    fill
-                    unoptimized
-                    className="object-cover object-top"
+                    className="object-contain object-top"
+                    style={{ clipPath: 'inset(0 0 10% 0)' }}
                   />
                 </div>
                 
-                {/* Enquire Now Image (Desktop) */}
-                <div className="absolute -bottom-24 left-1/2 transform -translate-x-1/2 hidden lg:flex justify-center w-full z-30">
-                  <Link href="/contact" className="hover:scale-105 transition-transform">
+                {/* Enquire Now Image (Desktop Overlay) */}
+                <div className="absolute -bottom-10 left-10 hidden lg:flex justify-center z-30 drop-shadow-2xl">
+                  <Link href="/contact" className="hover:scale-105 transition-all duration-300">
                     <Image
                       src="/images/enquire-now.png"
                       alt="Enquire Now"
-                      width={220}
-                      height={65}
+                      width={180}
+                      height={55}
                       unoptimized
                       className="object-contain"
                     />
@@ -234,7 +225,7 @@ export default function ServiceDetailPage() {
                     <div className="service-flip-card">
                       <div
                         className="service-flip-front"
-                        style={{ backgroundImage: `url(${s.images && s.images.length > 1 ? s.images[1] : s.bannerImage})` }}
+                        style={{ backgroundImage: `url("${s.images && s.images.length > 1 ? s.images[1] : s.bannerImage}")` }}
                       >
                         <div className="service-flip-overlay" />
                         <div className="service-flip-inner">
@@ -243,7 +234,7 @@ export default function ServiceDetailPage() {
                       </div>
                       <div
                         className="service-flip-back"
-                        style={{ backgroundImage: `url(${s.images && s.images.length > 1 ? s.images[1] : s.bannerImage})` }}
+                        style={{ backgroundImage: `url("${s.images && s.images.length > 1 ? s.images[1] : s.bannerImage}")` }}
                       >
                         <div className="service-flip-overlay service-flip-overlay-dark" />
                         <div className="service-flip-inner">

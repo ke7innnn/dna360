@@ -11,11 +11,9 @@ const services = [
   'General Fitness',
   'Reformer Pilates',
   'Spinning',
-  'Bolly X Fitness Dance',
-  'Zumba Fitness Dance',
+  'Dance Fitness',
   'Yoga',
   'Mat Pilates',
-  'Mixed Martial Arts',
 ]
 
 const inputClass =
@@ -87,7 +85,6 @@ export default function ContactPage() {
                   <div>
                     <p className="text-white/40 font-montserrat text-[10px] uppercase tracking-widest mb-1">Phone</p>
                     <a href="tel:+919324462384" className="text-white/80 font-opensans text-sm hover:text-[#00c8c8] transition-colors block">+91 93244 62384</a>
-                    <a href="tel:02249691360" className="text-white/80 font-opensans text-sm hover:text-[#00c8c8] transition-colors block">022 4969 1360</a>
                   </div>
                 </div>
 
