@@ -8,6 +8,7 @@ const videos = [
     embedUrl: 'https://www.youtube.com/embed/3EU76wj0M9I',
     caption: 'DNA 360 Showreel',
   },
+  {
     id: 'video-experience',
     embedUrl: 'https://www.youtube.com/embed/_duotUR9NXw',
     caption: 'DNA 360 Experience',
