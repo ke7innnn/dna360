@@ -81,7 +81,7 @@ export default function TrainersPage() {
                 <span className="text-[#00c8c8]">Trainers</span>
               </h2>
               <p className="text-white/60 font-montserrat font-bold uppercase tracking-[0.2em] text-sm mb-8">
-                One More Rep, Common Common!!
+                One More Rep, Come on!!
               </p>
               
               {/* Filter Buttons */}
@@ -125,11 +125,24 @@ export default function TrainersPage() {
                       >
                         {/* Image Section */}
                         <div className="relative h-[340px] w-full shrink-0 bg-[#222]">
-                          <img
-                            src={trainer.imageMain}
-                            alt={trainer.name}
-                            className="w-full h-full object-cover object-top rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
-                          />
+                          {trainer.imageMain ? (
+                            <img
+                              src={trainer.imageMain}
+                              alt={trainer.name}
+                              className="w-full h-full object-cover object-top rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] flex flex-col items-center justify-center rounded-t-2xl border-b border-white/5 relative overflow-hidden">
+                              {/* Glowing circle background */}
+                              <div className="absolute w-32 h-32 rounded-full bg-[#00c8c8]/5 blur-2xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                              <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2 z-10 shadow-inner">
+                                <span className="text-[#00c8c8] text-3xl font-black font-montserrat tracking-tight">
+                                  {trainer.name.split(' ').map(n => n[0]).join('')}
+                                </span>
+                              </div>
+                              <span className="text-white/40 text-[10px] font-black font-montserrat uppercase tracking-[0.2em] z-10">DNA 360 Coach</span>
+                            </div>
+                          )}
                           {/* Certified Badge */}
                           <div className="absolute top-4 right-4 w-14 h-14 border-[2px] border-[#4ade80] rounded-full flex flex-col items-center justify-center -rotate-12 bg-black/30 backdrop-blur-sm shadow-xl">
                             <span className="text-[#4ade80] text-[5px] font-bold tracking-widest uppercase mb-0.5">DNA 360</span>
@@ -153,7 +166,9 @@ export default function TrainersPage() {
                           <p className="text-[#aaa] text-xs font-opensans leading-relaxed line-clamp-3 mb-4">
                             {trainer.specialties && trainer.specialties.length > 0 
                               ? trainer.specialties.join(' • ') 
-                              : ''}
+                              : (trainer.qualifications && trainer.qualifications.length > 0 
+                                ? trainer.qualifications.join(' • ') 
+                                : '')}
                           </p>
                           
 
@@ -164,11 +179,15 @@ export default function TrainersPage() {
                       <div
                         className="absolute inset-0 w-full h-full backface-hidden flip-back overflow-hidden rounded-2xl"
                       >
-                        <img
-                          src={trainer.imageMain}
-                          alt={trainer.name}
-                          className="w-full h-full object-cover object-top"
-                        />
+                        {trainer.imageMain ? (
+                          <img
+                            src={trainer.imageMain}
+                            alt={trainer.name}
+                            className="w-full h-full object-cover object-top"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-[#151515]" />
+                        )}
                         <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center border-2 border-[#00c8c8] rounded-2xl">
                           <h3 className="text-white font-black font-montserrat uppercase text-xl mb-1">{trainer.name}</h3>
                           <h4 className="text-[#00c8c8] font-opensans font-bold text-sm uppercase tracking-wider mb-6">{trainer.role}</h4>

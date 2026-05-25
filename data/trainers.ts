@@ -133,6 +133,70 @@ export const trainers: Trainer[] = [
     imageDetail: '/images/trainer/ahansh talekar.jpeg'
   },
   {
+    slug: 'arbaaz-shaikh',
+    name: 'Arbaaz Shaikh',
+    role: 'Premium Coach',
+    experience: '',
+    about: '',
+    qualifications: [
+      'Certified Advanced Personal Coach from IFSA'
+    ],
+    specialties: [
+      'Personal Training',
+      'Advanced Personal Coach'
+    ],
+    imageMain: '',
+    imageDetail: ''
+  },
+  {
+    slug: 'jateen-gaonkar',
+    name: 'Jateen Gaonkar',
+    role: 'Premium Coach',
+    experience: '',
+    about: '',
+    qualifications: [
+      'Certified Advanced Personal Coach from IFSA'
+    ],
+    specialties: [
+      'Personal Training',
+      'Advanced Personal Coach'
+    ],
+    imageMain: '/images/trainer/Jateen Gaonkar.png',
+    imageDetail: '/images/trainer/Jateen Gaonkar.png'
+  },
+  {
+    slug: 'aditya-sarmalkar',
+    name: 'Aditya Sarmalkar',
+    role: 'Premium Coach',
+    experience: '',
+    about: '',
+    qualifications: [
+      'Pursuing Advanced Personal Coach from IFSA'
+    ],
+    specialties: [
+      'Personal Training',
+      'Pursuing Advanced Personal Coach'
+    ],
+    imageMain: '/images/trainer/Aditya Sarmalkar.png',
+    imageDetail: '/images/trainer/Aditya Sarmalkar.png'
+  },
+  {
+    slug: 'alister-chettiar',
+    name: 'Alister Chettiar',
+    role: 'Premium Coach',
+    experience: '',
+    about: '',
+    qualifications: [
+      'Certified Advanced Personal Coach from IFSA'
+    ],
+    specialties: [
+      'Personal Training',
+      'Advanced Personal Coach'
+    ],
+    imageMain: '/images/trainer/Alister Chettiar.png',
+    imageDetail: '/images/trainer/Alister Chettiar.png'
+  },
+  {
     slug: 'anish-shinde',
     name: 'Anish Shinde',
     role: 'Elite Coach',
@@ -281,11 +345,17 @@ export const trainers: Trainer[] = [
       'Certified Pilates Trainer From Balanced Body',
       'Movements And Principles',
       'Mat Pilates Level 1',
-      'Reformer Pilates Level 3'
+      'Reformer Pilates Level 3',
+      'Calisthenics Certification',
+      'Rehabilitation Training Certification',
+      'Mobility & Flexibility Training Certification'
     ],
     specialties: [
       'Certified Trainer',
-      'Pilates'
+      'Pilates',
+      'Calisthenics',
+      'Rehabilitation Training',
+      'Mobility & Flexibility Training'
     ],
     imageMain: '/images/trainer/mayur chakke.jpeg',
     imageDetail: '/images/trainer/mayur chakke.jpeg'

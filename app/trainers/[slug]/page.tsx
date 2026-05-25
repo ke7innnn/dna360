@@ -48,11 +48,23 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
               {/* Left Column: Image */}
               <div className="lg:col-span-5">
                 <div className="overflow-hidden rounded-xl border border-white/10 shadow-2xl">
-                  <img
-                    src={trainer.imageDetail}
-                    alt={trainer.name}
-                    className="w-full h-auto object-cover scale-110"
-                  />
+                  {trainer.imageDetail ? (
+                    <img
+                      src={trainer.imageDetail}
+                      alt={trainer.name}
+                      className="w-full h-auto object-cover scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-[450px] bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] flex flex-col items-center justify-center relative overflow-hidden">
+                      <div className="absolute w-48 h-48 rounded-full bg-[#00c8c8]/5 blur-3xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                      <div className="w-28 h-28 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-3 z-10 shadow-inner">
+                        <span className="text-[#00c8c8] text-5xl font-black font-montserrat tracking-tight">
+                          {trainer.name.split(' ').map(n => n[0]).join('')}
+                        </span>
+                      </div>
+                      <span className="text-white/40 text-xs font-black font-montserrat uppercase tracking-[0.2em] z-10">DNA 360 Coach</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

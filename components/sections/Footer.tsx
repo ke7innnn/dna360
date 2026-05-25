@@ -34,12 +34,13 @@ export default function Footer() {
               DNA 360 we believe that fitness is a way of life.
             </p>
             <div className="border-t border-white/10 pt-4">
-              <p className="text-[#00c8c8] font-montserrat font-bold text-sm uppercase tracking-wider mb-1">
+              <p className="text-[#00c8c8] font-montserrat font-bold text-sm uppercase tracking-wider mb-2">
                 Gym Timings
               </p>
-              <p className="text-white font-opensans text-sm">
-                5:00 am – 12:00 am
-              </p>
+              <div className="flex flex-col gap-1 text-white font-opensans text-sm">
+                <p><span className="text-[#aaa]">Mon – Sat:</span> 5:30 am – 12:00 am</p>
+                <p><span className="text-[#aaa]">Sunday:</span> 5:30 am – 11:00 pm</p>
+              </div>
             </div>
           </div>
 

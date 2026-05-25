@@ -231,7 +231,7 @@ export default function ContactPage() {
         </section>
 
         {/* ── MAP ─────────────────────────────────────────────────────── */}
-        <section className="relative w-full h-[400px]">
+        <section className="relative w-full h-[400px] overflow-hidden group">
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8832506697!2d72.9133711!3d19.1199255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c9f2b3e2e2e3%3A0x21b69f517dc76ee2!2sDNA%20360%20Fitness!5e0!3m2!1sen!2sin!4v1715200000000!5m2!1sen!2sin"
             width="100%"
@@ -249,6 +249,24 @@ export default function ContactPage() {
             className="absolute inset-0 z-20"
             aria-label="Open DNA 360 on Google Maps"
           />
+          
+          {/* Highlight indicator overlay */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 flex flex-col items-center justify-center">
+            {/* Pulsing glow rings */}
+            <div className="absolute w-24 h-24 rounded-full bg-[#00c8c8]/25 animate-ping duration-1000" />
+            <div className="absolute w-12 h-12 rounded-full bg-[#00c8c8]/35 animate-pulse border border-[#00c8c8]/40" />
+            
+            {/* Center solid locator dot */}
+            <div className="w-5 h-5 rounded-full bg-black border-2 border-[#00c8c8] flex items-center justify-center shadow-[0_0_20px_rgba(0,200,200,0.8)] z-10">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#00c8c8]" />
+            </div>
+
+            {/* Glowing tooltip badge */}
+            <div className="mt-3 bg-[#0a0a0a]/95 border border-[#00c8c8] text-white px-3 py-1.5 rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-sm z-10 flex items-center gap-1.5 transform transition-transform duration-300 group-hover:scale-105 select-none">
+              <span className="w-2 h-2 rounded-full bg-[#00c8c8] animate-pulse" />
+              <span className="font-montserrat font-black text-[10px] uppercase tracking-wider text-[#00c8c8]">DNA 360 FITNESS</span>
+            </div>
+          </div>
         </section>
 
         <Footer />
