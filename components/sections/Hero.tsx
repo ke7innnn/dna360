@@ -89,12 +89,6 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut', delay: 0.1 } }}
             exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
           >
-            {/* Glowing Badge */}
-            <div className="flex items-center gap-2 mb-4 sm:mb-6">
-              <span className="inline-block bg-[#00c8c8]/20 text-[#00c8c8] text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-[#00c8c8]/30 backdrop-blur-sm shadow-sm">
-                {slides[current].badge}
-              </span>
-            </div>
 
             {/* Typography */}
             <div className="text-white font-black font-syne text-[30px] xs:text-[35px] sm:text-5xl lg:text-7xl leading-[1.05] uppercase tracking-tighter drop-shadow-md mb-8 sm:mb-10 w-full">
