@@ -44,14 +44,14 @@ export default function About() {
 
         {/* Right: Teal border text box */}
         <motion.div
-          className="lg:w-[45%] w-full flex items-center justify-center bg-[#0a0a0a] p-6 lg:p-10"
+          className="lg:w-[45%] w-full flex items-center justify-center bg-[#0a0a0a] p-4 sm:p-6 lg:p-10"
           variants={slideFromRight}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
           <div
-            className="border-2 border-[#00c8c8] bg-black/80 p-8 lg:p-12 w-full max-w-lg"
+            className="border-2 border-[#00c8c8] bg-black/80 p-6 sm:p-8 lg:p-12 w-full max-w-lg"
           >
             <p className="text-sm uppercase tracking-widest text-[#ccc] mb-1 font-opensans">
               Welcome To

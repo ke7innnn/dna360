@@ -74,10 +74,10 @@ export default function WhyChoose() {
             key={feature.id}
             id={`why-card-${feature.id}`}
             variants={cardVariants}
-            className="group flex flex-row bg-[#1e1e2e] hover:shadow-[0_0_25px_rgba(0,200,200,0.25)] transition-all duration-400 border border-transparent hover:border-[#00c8c8]/30"
+            className="group flex flex-col sm:flex-row bg-[#1e1e2e] hover:shadow-[0_0_25px_rgba(0,200,200,0.25)] transition-all duration-400 border border-transparent hover:border-[#00c8c8]/30"
           >
             {/* Image */}
-            <div className="relative w-[160px] lg:w-[180px] shrink-0 overflow-hidden">
+            <div className="relative w-full h-[200px] sm:w-[160px] sm:h-auto lg:w-[180px] shrink-0 overflow-hidden">
               <Image
                 src={feature.img}
                 alt={feature.title}

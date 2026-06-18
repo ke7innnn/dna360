@@ -10,6 +10,7 @@ const slides = [
     id: 1,
     bg: '/hero-section/hero-1.jpg',
     imageClass: 'object-cover object-[center_top] lg:object-center scale-110 lg:scale-150 lg:translate-y-12',
+    badge: '⚡ PREMIUM INTEGRATED WELLNESS STUDIO',
     heading: 'Be healthier.',
     subheadings: ['Be stronger.', 'Be confident.'],
     ctaLeft: { label: 'Contact Us', href: '/contact' },
@@ -19,6 +20,7 @@ const slides = [
     id: 2,
     bg: '/hero-section/hero-2.png',
     imageClass: 'object-cover object-[center_top] lg:object-center scale-105 lg:scale-125',
+    badge: '💪 POWAI\'S LARGEST FITNESS ARENA',
     heading: 'Train Hard.',
     subheadings: ['Stay Focused.', 'Achieve More.'],
     ctaLeft: { label: 'Our Services', href: '/services' },
@@ -47,107 +49,116 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative w-full h-[65vh] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden" id="hero">
+    <section className="relative w-full h-[85dvh] sm:h-[80vh] lg:h-screen min-h-[580px] lg:min-h-screen overflow-hidden" id="hero">
       {/* Slides */}
       <AnimatePresence mode="wait">
         <motion.div
           key={slides[current].id}
-          className="absolute inset-0"
+          className="absolute inset-0 overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { duration: 0.9, ease: 'easeInOut' } }}
           exit={{ opacity: 0, transition: { duration: 0.6, ease: 'easeInOut' } }}
         >
-          <Image
-            src={slides[current].bg}
-            alt={slides[current].heading}
-            fill
-            unoptimized
-            priority
-            className={slides[current].imageClass}
-          />
+          <motion.div 
+            className="absolute inset-0"
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 6, ease: 'easeOut' }}
+          >
+            <Image
+              src={slides[current].bg}
+              alt={slides[current].heading}
+              fill
+              unoptimized
+              priority
+              className={slides[current].imageClass}
+            />
+          </motion.div>
           {/* Dark overlay */}
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/55" />
         </motion.div>
       </AnimatePresence>
 
-      {/* Left side text */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`text-${current}`}
-          className="absolute left-8 sm:left-16 top-[40%] -translate-y-1/2 z-10"
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0, transition: { duration: 0.7, ease: 'easeOut', delay: 0.2 } }}
-          exit={{ opacity: 0, x: -20, transition: { duration: 0.3 } }}
-        >
-          <div className="text-white font-black font-syne text-3xl sm:text-4xl lg:text-5xl leading-[1.1] uppercase tracking-tighter">
-            {/* Slide 1 Logic: Be [Color] */}
-            {current === 0 ? (
-              <p>
-                Be <span className="text-[#00c8c8]">healthier.</span>
-              </p>
-            ) : (
-              <p>
-                <span className="text-[#00c8c8]">Train</span> Hard.
-              </p>
-            )}
-
-            {slides[current].subheadings.map((line, i) => (
-              <p key={i}>
-                {current === 0 ? (
-                  <>
-                    Be <span className="text-[#00c8c8]">{line.replace('Be ', '')}</span>
-                  </>
-                ) : (
-                  line
-                )}
-              </p>
-            ))}
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Bottom buttons — left and right */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`btns-${current}`}
-          className="absolute bottom-10 left-0 right-0 z-10 flex items-end justify-between px-8 sm:px-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut', delay: 0.4 } }}
-          exit={{ opacity: 0 }}
-        >
-          <Link
-            href={slides[current].ctaLeft.href}
-            id={`hero-cta-left-${current}`}
-            className="inline-block bg-[#00c8c8] text-black px-8 py-4 text-sm font-bold uppercase tracking-widest font-outfit hover:bg-white transition-all duration-300 rounded-sm"
+      {/* Content Container (Unified text & buttons to prevent overlapping) */}
+      <div className="absolute inset-0 z-10 flex flex-col justify-end pb-20 pt-[115px] px-6 sm:px-16">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`content-${current}`}
+            className="flex flex-col items-start w-full"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut', delay: 0.1 } }}
+            exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
           >
-            {slides[current].ctaLeft.label}
-          </Link>
+            {/* Glowing Badge */}
+            <div className="flex items-center gap-2 mb-4 sm:mb-6">
+              <span className="inline-block bg-[#00c8c8]/20 text-[#00c8c8] text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-[#00c8c8]/30 backdrop-blur-sm shadow-sm">
+                {slides[current].badge}
+              </span>
+            </div>
 
-          <div className="flex items-center gap-4">
-            {/* Dot indicators */}
-            {slides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
-                className={`transition-all duration-300 rounded-sm ${
-                  index === current
-                    ? 'bg-[#00c8c8] w-7 h-2.5'
-                    : 'bg-white/50 w-2.5 h-2.5 rounded-full'
-                }`}
-              />
-            ))}
-          </div>
+            {/* Typography */}
+            <div className="text-white font-black font-syne text-[30px] xs:text-[35px] sm:text-5xl lg:text-7xl leading-[1.05] uppercase tracking-tighter drop-shadow-md mb-8 sm:mb-10 w-full">
+              {/* Slide 1 Logic: Be [Color] */}
+              {current === 0 ? (
+                <p>
+                  Be <span className="text-[#00c8c8]">healthier.</span>
+                </p>
+              ) : (
+                <p>
+                  <span className="text-[#00c8c8]">Train</span> Hard.
+                </p>
+              )}
 
-          <Link
-            href={slides[current].ctaRight.href}
-            id={`hero-cta-right-${current}`}
-            className="inline-block bg-transparent text-white border border-white px-8 py-4 text-sm font-semibold uppercase tracking-widest font-outfit hover:bg-[#00c8c8] hover:border-[#00c8c8] hover:text-black transition-all duration-300 rounded-sm"
-          >
-            {slides[current].ctaRight.label}
-          </Link>
-        </motion.div>
-      </AnimatePresence>
+              {slides[current].subheadings.map((line, i) => (
+                <p key={i}>
+                  {current === 0 ? (
+                    <>
+                      Be <span className="text-[#00c8c8]">{line.replace('Be ', '')}</span>
+                    </>
+                  ) : (
+                    line
+                  )}
+                </p>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto">
+              <Link
+                href={slides[current].ctaLeft.href}
+                id={`hero-cta-left-${current}`}
+                className="w-full sm:w-auto text-center bg-[#00c8c8] text-black px-8 py-4 text-sm font-bold uppercase tracking-widest font-outfit hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 rounded-sm shadow-lg shadow-[#00c8c8]/25"
+              >
+                {slides[current].ctaLeft.label}
+              </Link>
+
+              <Link
+                href={slides[current].ctaRight.href}
+                id={`hero-cta-right-${current}`}
+                className="w-full sm:w-auto text-center bg-transparent text-white border border-white/80 px-8 py-4 text-sm font-semibold uppercase tracking-widest font-outfit hover:bg-[#00c8c8] hover:border-[#00c8c8] hover:text-black hover:scale-105 active:scale-95 transition-all duration-300 rounded-sm backdrop-blur-sm"
+              >
+                {slides[current].ctaRight.label}
+              </Link>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Slide Indicators - Centered at very bottom of viewport on mobile, bottom right on desktop */}
+      <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center gap-2.5 sm:bottom-14 sm:left-auto sm:right-16 sm:justify-end">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            aria-label={`Go to slide ${index + 1}`}
+            className={`transition-all duration-300 rounded-full ${
+              index === current
+                ? 'bg-[#00c8c8] w-8 h-2 rounded-sm'
+                : 'bg-white/40 w-2 h-2 hover:bg-white'
+            }`}
+          />
+        ))}
+      </div>
     </section>
   )
 }

@@ -46,7 +46,7 @@ export default function FacilitySetupServicesPage() {
               
               {/* Left Column: Overlapping Images */}
               <motion.div 
-                className="relative h-[450px] sm:h-[550px] w-full sticky top-32"
+                className="relative h-[320px] sm:h-[450px] lg:h-[550px] w-full lg:sticky lg:top-32"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}

@@ -97,7 +97,7 @@ export default function PartnerDNA360Page() {
               
               {/* Left Column: Overlapping Images */}
               <motion.div 
-                className="relative h-[450px] sm:h-[550px] w-full"
+                className="relative h-[320px] sm:h-[450px] lg:h-[550px] w-full"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}

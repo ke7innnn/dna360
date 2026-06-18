@@ -152,7 +152,7 @@ export default function Stats() {
           id="stat-equipment"
         >
           <div className="relative w-full h-[72px] flex items-center justify-center">
-            <div className="absolute w-[350px] md:w-[450px] h-[200px] pointer-events-none z-0">
+            <div className="absolute w-[280px] sm:w-[350px] md:w-[450px] h-[200px] pointer-events-none z-0">
               <RotatingLogos />
             </div>
           </div>
