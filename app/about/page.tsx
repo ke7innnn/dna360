@@ -160,6 +160,72 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* A Note From The Directors Section */}
+        <section className="py-20 px-4 bg-[#151515] relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00c8c8]/5 rounded-full blur-[120px] pointer-events-none" />
+          
+          <div className="max-w-4xl mx-auto relative z-10">
+            <motion.div
+              className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/5 p-8 md:p-12 rounded-2xl shadow-2xl relative"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              {/* Top border highlight */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[3px] bg-gradient-to-r from-transparent via-[#00c8c8] to-transparent" />
+              
+              <div className="text-center mb-10">
+                <h2 className="text-3xl md:text-4xl font-black font-montserrat text-white mb-3 uppercase tracking-tight">
+                  A Note From <span className="text-[#00c8c8]">The Directors</span>
+                </h2>
+                <div className="w-16 h-1 bg-[#ffb400] mx-auto" />
+              </div>
+
+              <div className="space-y-6 text-[#cccccc] font-opensans text-[15px] md:text-base leading-relaxed">
+                <p className="font-semibold text-white/95 text-lg border-l-4 border-[#00c8c8] pl-4 italic">
+                  DNA 360 has always meant more to us than fitness.
+                </p>
+                <p>
+                  Seven years ago, the four of us met here — not as business partners, but as members brought together by a shared passion for health, discipline, and self-improvement. What began as friendship grew into a shared belief: when people invest in their physical and mental wellbeing, every aspect of life improves — from productivity and confidence to creativity and happiness.
+                </p>
+                <p>
+                  Though each of us built businesses in different industries, one value remained constant: health is the foundation for growth — both personal and collective.
+                </p>
+                <p>
+                  In July 2025, we were given the opportunity to take forward a place that had already shaped our own lives. Becoming custodians of DNA 360 was never just a business decision; it was a commitment to a purpose we deeply believe in.
+                </p>
+                <p>
+                  At DNA 360, we envision fitness as a way of life and wellbeing as something that should be accessible, inspiring, and empowering for all. We believe in inclusive growth — creating a space where individuals from different walks of life can come together with one common goal: becoming healthier, stronger, and better versions of themselves.
+                </p>
+                <p>
+                  Our mission is not only to build a world-class fitness and wellness ecosystem in Powai, but to contribute meaningfully towards a larger movement of health for all. In our own way, we aspire to be a partner in building a healthier, stronger India — one person, one family, and one community at a time.
+                </p>
+                <p>
+                  To every member who walks through our doors — thank you for trusting us to be part of your journey.
+                </p>
+                <p className="font-semibold text-white mt-8">
+                  We look forward to growing stronger, together.
+                </p>
+              </div>
+
+              <div className="mt-10 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <p className="text-white font-montserrat font-bold text-lg">Warm regards,</p>
+                  <p className="text-[#00c8c8] font-bold font-montserrat text-[15px] tracking-wide mt-0.5">The Directors</p>
+                  <p className="text-white/60 font-opensans text-xs tracking-wider uppercase mt-1">DNA 360</p>
+                </div>
+                <div className="hidden md:block">
+                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10 text-xs text-white/70 font-opensans">
+                    Since <span className="text-[#ffb400] font-bold">2019</span> • Powai
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
         {/* Offerings Grid Section */}
         <section className="py-24 px-4 bg-[#151515]">
           <div className="max-w-7xl mx-auto">
