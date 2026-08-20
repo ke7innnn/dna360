@@ -22,12 +22,14 @@ export const trainers: Trainer[] = [
       'Sports Nutritionist with distinction from K11 School of Fitness Sciences',
       'Personal Trainer for Special Population with distinction from K11 School of Fitness Sciences',
       'NUTR107x: Nutrition, Exercise and Sports Certification from Wageningen University and Research',
-      'CPR, AED, and First Aid from National Healthcare Provider Solutions'
+      'CPR, AED, and First Aid from National Healthcare Provider Solutions',
+      'Fat Loss Fundamentals from Clean Health Fitness Institute'
     ],
     specialties: [
       'Personal Training',
       'Sports Nutrition',
-      'Special Population'
+      'Special Population',
+      'Fat Loss Fundamentals'
     ],
     imageMain: '/images/trainer/rajesh poojari.jpeg',
     imageDetail: '/images/trainer/rajesh poojari.jpeg'
@@ -95,27 +97,6 @@ export const trainers: Trainer[] = [
     imageDetail: '/images/trainer/pramod sawant.jpeg'
   },
   {
-    slug: 'deepika-kariya',
-    name: 'Deepika Kariya',
-    role: 'Premium Coach',
-    experience: '',
-    about: '',
-    qualifications: [
-      'Certification CPT From K11 Academy',
-      'Sports Nutrition From FSSA',
-      'Functional Training Certification From FSSA',
-      'Sports Injury Management From FSSA',
-      'CPR AED Licensed From FSSA'
-    ],
-    specialties: [
-      'Sports Nutrition',
-      'Functional Training',
-      'Sports Injury Management'
-    ],
-    imageMain: '/images/trainer/deepika kariya.jpeg',
-    imageDetail: '/images/trainer/deepika kariya.jpeg'
-  },
-  {
     slug: 'ahanash-talekar',
     name: 'Ahanash Talekar',
     role: 'Premium Coach',
@@ -171,30 +152,48 @@ export const trainers: Trainer[] = [
     experience: '',
     about: '',
     qualifications: [
-      'Pursuing Advanced Personal Coach from IFSA'
-    ],
-    specialties: [
-      'Personal Training',
-      'Pursuing Advanced Personal Coach'
-    ],
-    imageMain: '/images/trainer/Aditya Sarmalkar.png',
-    imageDetail: '/images/trainer/Aditya Sarmalkar.png'
-  },
-  {
-    slug: 'alister-chettiar',
-    name: 'Alister Chettiar',
-    role: 'Premium Coach',
-    experience: '',
-    about: '',
-    qualifications: [
       'Certified Advanced Personal Coach from IFSA'
     ],
     specialties: [
       'Personal Training',
       'Advanced Personal Coach'
     ],
-    imageMain: '/images/trainer/Alister Chettiar.png',
-    imageDetail: '/images/trainer/Alister Chettiar.png'
+    imageMain: '/images/trainer/Aditya Sarmalkar.png',
+    imageDetail: '/images/trainer/Aditya Sarmalkar.png'
+  },
+  {
+    slug: 'isa-rafi-shaikh',
+    name: 'Isa Rafi Shaikh',
+    role: 'Premium Coach',
+    experience: '',
+    about: '',
+    qualifications: [
+      'Certified Advanced Personal Coach from K11'
+    ],
+    specialties: [
+      'Personal Training',
+      'Advanced Personal Coach'
+    ],
+    imageMain: '/images/trainer/isa rafi shaikh.png',
+    imageDetail: '/images/trainer/isa rafi shaikh.png'
+  },
+  {
+    slug: 'vaibhav-mulik',
+    name: 'Vaibhav Mulik',
+    role: 'Premium Coach',
+    experience: '',
+    about: '',
+    qualifications: [
+      'Certified Personal Trainer From K11 Academy Of Fitness Science',
+      'Fat Loss Fundamentals From Clean Health Fitness Institute',
+      'CPR Certification From K11 Academy'
+    ],
+    specialties: [
+      'Personal Training',
+      'Fat Loss Fundamentals'
+    ],
+    imageMain: '/images/trainer/vaibhav mulik.jpeg',
+    imageDetail: '/images/trainer/vaibhav mulik.jpeg'
   },
   {
     slug: 'anish-shinde',
@@ -262,62 +261,6 @@ export const trainers: Trainer[] = [
     ],
     imageMain: '/images/trainer/hemant shirke.jpeg',
     imageDetail: '/images/trainer/hemant shirke.jpeg'
-  },
-  {
-    slug: 'aniruddha-parab',
-    name: 'Aniruddha Parab',
-    role: 'Elite Coach',
-    experience: '',
-    about: '',
-    qualifications: [
-      'Certified personal trainer under EREPS (European Register of Exercise Professionals) ~ level 4',
-      'Certified Nutritionist under EREPS (European Register of Exercise Professionals)',
-      'CPR and FIRST AID under NSDC (National Skill Development Corporation)'
-    ],
-    specialties: [
-      'Personal Training',
-      'Nutrition'
-    ],
-    imageMain: '/images/trainer/anirudh parab.jpeg',
-    imageDetail: '/images/trainer/anirudh parab.jpeg'
-  },
-  {
-    slug: 'sneha-maharana',
-    name: 'Sneha Maharana',
-    role: 'Elite Coach',
-    experience: '',
-    about: '',
-    qualifications: [
-      'Certified Personal Trainer – IFSA Academy',
-      'Reebok Core Pilates Instructor',
-      'Certified Trainer – Indian Trainer Federation',
-      'AFAA Practical Modality Instructor',
-      'Certified in CPR, AED & First Aid'
-    ],
-    specialties: [
-      'Personal Training',
-      'Pilates'
-    ],
-    imageMain: '/images/trainer/snrha maharana.jpeg',
-    imageDetail: '/images/trainer/snrha maharana.jpeg'
-  },
-  {
-    slug: 'vaibhav-mulik',
-    name: 'Vaibhav Mulik',
-    role: 'Elite Coach',
-    experience: '',
-    about: '',
-    qualifications: [
-      'Certified Personal Trainer From K11 Academy Of Fitness Science',
-      'Fat Loss Fundamentals From Clean Health Fitness Institute',
-      'CPR Certification From K11 Academy'
-    ],
-    specialties: [
-      'Personal Training',
-      'Fat Loss Fundamentals'
-    ],
-    imageMain: '/images/trainer/vaibhav mulik.jpeg',
-    imageDetail: '/images/trainer/vaibhav mulik.jpeg'
   },
   {
     slug: 'deepak-gaikwad',
