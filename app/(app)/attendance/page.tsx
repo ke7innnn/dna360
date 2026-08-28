@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, ShieldAlert, KeyRound, QrCode,
   Users, Clock, AlertTriangle, CheckCircle,
-  XCircle, RotateCcw, AlertOctagon, Flame,
+  XCircle, RotateCcw, AlertOctagon,
   Search, Filter, Smartphone, CreditCard,
   Building2, Radio, UserCheck, Activity,
 } from 'lucide-react'

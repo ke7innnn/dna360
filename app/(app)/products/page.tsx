@@ -1,18 +1,16 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
-  ShoppingBag, Plus, Search, Filter, Sparkles, Tag,
-  Clock, ShieldAlert, CheckCircle2, AlertTriangle, Layers,
-  Receipt, ArrowUpRight,
+  ShoppingBag, Plus, Search, Tag, AlertTriangle,
+  Receipt, X, ChevronRight, Check,
 } from 'lucide-react'
-import GlassCard from '@/components/app/ui/glass-card'
-import StatCard from '@/components/app/ui/stat-card'
 import { Button } from '@/components/app/ui/button'
-import { StatusPill } from '@/components/app/ui/badge'
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
+import { Badge } from '@/components/app/ui/badge'
+import { Drawer } from '@/components/app/ui/drawer'
 import { Modal } from '@/components/app/ui/modal'
 import { Input } from '@/components/app/ui/input'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
 import { getProducts, createProduct, CATEGORY_LABELS, getActiveCategories } from '@/lib/products'
 import { formatINR, backCalculateGst } from '@/lib/gst'
 import type { Product, ProductCategory } from '@/types/product'
@@ -23,26 +21,24 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [activeFilter, setActiveFilter] = useState<string>('all')
-  const [createModalOpen, setCreateModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [showPendingBanner, setShowPendingBanner] = useState(true)
 
-  // New Product Form state
+  // Form State
   const [name, setName] = useState('')
   const [category, setCategory] = useState<ProductCategory>('gym_membership')
   const [priceRupees, setPriceRupees] = useState('')
   const [taxRate, setTaxRate] = useState<number>(0.05)
   const [sessionCount, setSessionCount] = useState<string>('')
   const [validityDays, setValidityDays] = useState<string>('365')
-  const [isRenewal, setIsRenewal] = useState(false)
-  const [isTrial, setIsTrial] = useState(false)
   const [description, setDescription] = useState('')
 
   const refreshProducts = () => {
     const list = getProducts({
       search,
       category: categoryFilter as any,
-      active: activeFilter === 'all' ? 'all' : activeFilter === 'active',
     })
     setProducts(list)
   }
@@ -52,17 +48,35 @@ export default function ProductsPage() {
     const handleUpdate = () => refreshProducts()
     window.addEventListener('dna360_products_updated', handleUpdate)
     return () => window.removeEventListener('dna360_products_updated', handleUpdate)
-  }, [search, categoryFilter, activeFilter])
+  }, [search, categoryFilter])
 
-  const categories = getActiveCategories()
-  const totalCatalogueValue = products.reduce((acc, p) => acc + p.list_price, 0)
-  const pendingConfirmationCount = products.filter(p => p.pending_name_confirmation).length
+  // Group Products by Category
+  const groupedProducts = useMemo(() => {
+    const groups: { category: ProductCategory; label: string; items: Product[] }[] = []
+    const categoriesPresent = Array.from(new Set(products.map((p) => p.category)))
+
+    categoriesPresent.forEach((cat) => {
+      const items = products.filter((p) => p.category === cat)
+      if (items.length > 0) {
+        groups.push({
+          category: cat,
+          label: CATEGORY_LABELS[cat] || cat,
+          items,
+        })
+      }
+    })
+    return groups
+  }, [products])
+
+  const totalSKUs = products.length
+  const pendingCount = products.filter((p) => p.pending_name_confirmation).length
+  const totalCategories = groupedProducts.length
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
     const priceMinor = Math.round(parseFloat(priceRupees || '0') * 100)
     if (!name.trim() || priceMinor <= 0) {
-      toast.error('Product name and valid price are required')
+      toast.error('Valid SKU name and price are required')
       return
     }
 
@@ -74,8 +88,8 @@ export default function ProductsPage() {
       sac_code: taxRate === 0.18 ? '998361' : '999723',
       session_count: sessionCount ? parseInt(sessionCount, 10) : null,
       validity_days: validityDays ? parseInt(validityDays, 10) : null,
-      is_renewal_variant: isRenewal,
-      is_trial: isTrial,
+      is_renewal_variant: false,
+      is_trial: false,
       access_window: null,
       couple: false,
       active: true,
@@ -84,7 +98,7 @@ export default function ProductsPage() {
       sort_order: products.length + 1,
     })
 
-    toast.success(`Product added: ${name}`)
+    toast.success(`SKU added: ${name}`)
     setCreateModalOpen(false)
     setName('')
     setPriceRupees('')
@@ -92,352 +106,386 @@ export default function ProductsPage() {
     refreshProducts()
   }
 
+  // Selected Product GST breakdown for drawer
+  const gstBreakdown = selectedProduct
+    ? backCalculateGst(selectedProduct.list_price, selectedProduct.tax_rate)
+    : null
+
   return (
-    <div className="space-y-8 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5 max-w-7xl mx-auto">
+      {/* 1. Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight">
-            Product Catalogue & Pricing
+          <span className="font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-faint)]">
+            Catalogue & Master Tariffs
+          </span>
+          <h1 className="font-display text-[28px] sm:text-[30px] leading-[34px] font-semibold text-[var(--text)] tracking-[-0.02em] mt-0.5">
+            Product Catalogue
           </h1>
-          <p className="text-sm text-[var(--app-text-secondary)] mt-1">
-            Canonical SKUs across 24 categories. All prices are GST-inclusive with automated 5% fitness & 18% marketing back-calculation.
+          <p className="font-ui text-xs text-[var(--text-muted)] mt-1">
+            {totalSKUs} Canonical SKUs across {totalCategories} categories · All prices GST-inclusive
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="primary"
+            size="sm"
             onClick={() => setCreateModalOpen(true)}
-            icon={<Plus className="w-4 h-4" />}
+            icon={<Plus className="w-3.5 h-3.5" />}
           >
-            Add New Product
+            New Product SKU
           </Button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Active Catalogue SKUs"
-          value={products.length}
-          icon={<ShoppingBag className="w-5 h-5 text-[var(--aurora-1)]" />}
-        />
-        <StatCard
-          label="Product Categories"
-          value={categories.length}
-          icon={<Layers className="w-5 h-5 text-teal-400" />}
-        />
-        <StatCard
-          label="Pending Name Confirmation"
-          value={pendingConfirmationCount}
-          icon={<AlertTriangle className="w-5 h-5 text-amber-400" />}
-        />
-        <StatCard
-          label="Standard Tax Rate"
-          value="5% GST (Inclusive)"
-          icon={<Receipt className="w-5 h-5 text-emerald-400" />}
-        />
+      {/* 2. Persistent Dismissible Banner for Pending Confirmation SKUs */}
+      {showPendingBanner && pendingCount > 0 && (
+        <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--warn-dim)] border border-[rgba(217,154,60,0.30)] flex items-start justify-between gap-3 select-none">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-[var(--warn)] shrink-0 mt-0.5" />
+            <div className="font-ui text-xs">
+              <span className="font-semibold text-[var(--warn)]">
+                {pendingCount} Annual Membership SKUs pending client package naming confirmation.
+              </span>
+              <p className="text-[var(--text-muted)] mt-0.5">
+                Client form vs Gymex export nomenclature pending final sign-off. Click any highlighted row to inspect or edit.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPendingBanner(false)}
+            className="text-[var(--text-faint)] hover:text-[var(--text)] p-1"
+            aria-label="Dismiss banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* 3. Search and Category Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setCategoryFilter('all')}
+            className={cn(
+              'h-[30px] px-3 font-ui text-xs font-medium rounded-full cursor-pointer transition-colors whitespace-nowrap',
+              categoryFilter === 'all'
+                ? 'bg-[var(--surface-raised)] border border-[var(--line-strong)] text-[var(--text)]'
+                : 'bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-muted)] hover:text-[var(--text)]'
+            )}
+          >
+            All Categories ({totalSKUs})
+          </button>
+
+          {getActiveCategories().map(({ category: cat, label: catLabel }) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={cn(
+                'h-[30px] px-3 font-ui text-xs font-medium rounded-full cursor-pointer transition-colors whitespace-nowrap',
+                categoryFilter === cat
+                  ? 'bg-[var(--surface-raised)] border border-[var(--line-strong)] text-[var(--text)]'
+                  : 'bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-muted)] hover:text-[var(--text)]'
+              )}
+            >
+              {catLabel}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative min-w-[240px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search SKU or category..."
+            className="w-full h-[32px] pl-8 pr-3 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text)] placeholder:text-[var(--text-faint)] focus:border-[var(--line-strong)] focus:ring-[2px] focus:ring-[var(--teal-dim)] outline-none"
+          />
+        </div>
       </div>
 
-      {/* Filter Bar */}
-      <GlassCard padding="sm">
-        <div className="flex flex-col md:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--app-text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search product title, category, SKU…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-9 pr-4 text-xs glass-input text-[var(--app-text-primary)] placeholder:text-[var(--app-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
-            />
-          </div>
+      {/* 4. Dense Grouped Table */}
+      <div className="w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[var(--surface-sunken)] border-b border-[var(--line)] sticky top-0 z-10 h-[40px] font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)] select-none">
+                <th className="px-4 py-2 text-left">Category</th>
+                <th className="px-4 py-2 text-left">Product / SKU Name</th>
+                <th className="px-4 py-2 text-right">Price (Incl. GST)</th>
+                <th className="px-4 py-2 text-right">Tax Rate</th>
+                <th className="px-4 py-2 text-center">Sessions</th>
+                <th className="px-4 py-2 text-center">Validity</th>
+                <th className="px-4 py-2 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupedProducts.map((group) => (
+                <React.Fragment key={group.category}>
+                  {/* Sticky Category Group Header */}
+                  <tr className="bg-[var(--surface-sunken)]/70 border-y border-[var(--line)] h-[32px]">
+                    <td colSpan={7} className="px-4 py-1 font-ui text-[11px] uppercase tracking-[0.08em] font-bold text-[var(--teal)]">
+                      {group.label} ({group.items.length} SKUs)
+                    </td>
+                  </tr>
 
-          <div className="w-full md:w-64">
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger><SelectValue placeholder="Category: All" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories ({categories.reduce((a, c) => a + c.count, 0)})</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.category} value={c.category}>
-                    {c.label} ({c.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  {/* Category SKUs */}
+                  {group.items.map((prod) => (
+                    <tr
+                      key={prod.id}
+                      onClick={() => {
+                        setSelectedProduct(prod)
+                        setDrawerOpen(true)
+                      }}
+                      className={cn(
+                        'group border-b border-[var(--line)] last:border-0 h-[44px] cursor-pointer transition-colors duration-140',
+                        'hover:bg-[var(--surface-raised)]',
+                        prod.pending_name_confirmation && 'bg-[rgba(217,154,60,0.04)]'
+                      )}
+                    >
+                      <td className="px-4 py-2.5">
+                        <Badge status="neutral" size="sm">
+                          {CATEGORY_LABELS[prod.category] || prod.category}
+                        </Badge>
+                      </td>
 
-          <div className="w-full md:w-36">
-            <Select value={activeFilter} onValueChange={setActiveFilter}>
-              <SelectTrigger><SelectValue placeholder="Status: All" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active Only</SelectItem>
-                <SelectItem value="inactive">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                      <td className="px-4 py-2.5 font-ui font-medium text-[13.5px] text-[var(--text)] group-hover:text-[var(--teal)] transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span>{prod.name}</span>
+                          {prod.pending_name_confirmation && (
+                            <span className="px-1.5 py-0.2 font-ui text-[9px] uppercase tracking-wider font-semibold rounded bg-[var(--warn-dim)] text-[var(--warn)]">
+                              Pending Confirmation
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-2.5 text-right font-data text-[13px] font-medium text-[var(--text)] tabular-nums">
+                        {formatINR(prod.list_price)}
+                      </td>
+
+                      <td className="px-4 py-2.5 text-right font-data text-xs text-[var(--text-muted)] tabular-nums">
+                        {(prod.tax_rate * 100).toFixed(0)}% (SAC {prod.sac_code})
+                      </td>
+
+                      <td className="px-4 py-2.5 text-center font-data text-xs text-[var(--text)] tabular-nums">
+                        {prod.session_count === 1
+                          ? '1 Session'
+                          : prod.session_count
+                          ? `${prod.session_count} Sessions`
+                          : 'Unlimited'}
+                      </td>
+
+                      <td className="px-4 py-2.5 text-center font-data text-xs text-[var(--text-muted)] tabular-nums">
+                        {prod.validity_days ? `${prod.validity_days} Days` : 'Tenure-Based'}
+                      </td>
+
+                      <td className="px-4 py-2.5 text-center">
+                        <Badge status={prod.active ? 'ok' : 'neutral'} size="sm">
+                          {prod.active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </GlassCard>
+      </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((p) => {
-          const gst = backCalculateGst(p.list_price, p.tax_rate)
-          return (
-            <div
-              key={p.id}
-              onClick={() => setSelectedProduct(p)}
-              className="p-5 rounded-2xl glass-card hover:border-[var(--aurora-1)]/50 transition-all cursor-pointer space-y-4 flex flex-col justify-between group"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--app-glass-bg)] border border-[var(--app-glass-border)] text-teal-400">
-                    {CATEGORY_LABELS[p.category] || p.category}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {p.is_trial && (
-                      <span className="text-[0.625rem] font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                        TRIAL
-                      </span>
-                    )}
-                    {p.is_renewal_variant && (
-                      <span className="text-[0.625rem] font-bold px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                        RENEWAL
-                      </span>
-                    )}
-                    {p.pending_name_confirmation && (
-                      <span className="text-[0.625rem] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30" title="Disputed name in legacy data">
-                        PENDING
-                      </span>
-                    )}
+      {/* 5. Product SKU Detail Drawer (with GST Back-Calculation) */}
+      <Drawer
+        open={drawerOpen}
+        onOpenChange={(op) => {
+          setDrawerOpen(op)
+          if (!op) setSelectedProduct(null)
+        }}
+        title={selectedProduct?.name || 'Product Details'}
+        description={`Category: ${selectedProduct ? CATEGORY_LABELS[selectedProduct.category] : ''}`}
+        size="md"
+      >
+        {selectedProduct && gstBreakdown && (
+          <div className="space-y-6 select-none">
+            {/* Status Alert if Pending Confirmation */}
+            {selectedProduct.pending_name_confirmation && (
+              <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--warn-dim)] border border-[rgba(217,154,60,0.30)] text-xs text-[var(--warn)]">
+                <span className="font-semibold">Pending Client Package Naming:</span> This annual tier SKU requires final confirmation between Gymex export row and requirement form.
+              </div>
+            )}
+
+            {/* Core SKU Attributes */}
+            <div className="card p-4 space-y-3">
+              <h4 className="font-ui text-xs uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)]">
+                Catalogue Metadata
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-xs font-ui">
+                <div>
+                  <span className="text-[var(--text-faint)]">Product ID</span>
+                  <p className="font-data text-[var(--text)] mt-0.5">{selectedProduct.id}</p>
+                </div>
+                <div>
+                  <span className="text-[var(--text-faint)]">Status</span>
+                  <div className="mt-0.5">
+                    <Badge status={selectedProduct.active ? 'ok' : 'neutral'} size="sm">
+                      {selectedProduct.active ? 'Active SKU' : 'Inactive'}
+                    </Badge>
                   </div>
                 </div>
-
-                <h3 className="font-semibold text-sm text-[var(--app-text-primary)] group-hover:text-[var(--aurora-1)] transition-colors">
-                  {p.name}
-                </h3>
-
-                {p.description && (
-                  <p className="text-xs text-[var(--app-text-muted)] line-clamp-2">
-                    {p.description}
+                <div>
+                  <span className="text-[var(--text-faint)]">Sessions Allotted</span>
+                  <p className="font-data text-[var(--text)] mt-0.5">
+                    {selectedProduct.session_count === 1
+                      ? '1 Session'
+                      : selectedProduct.session_count
+                      ? `${selectedProduct.session_count} Sessions`
+                      : 'Unlimited / Non-session'}
                   </p>
-                )}
+                </div>
+                <div>
+                  <span className="text-[var(--text-faint)]">Validity Tenure</span>
+                  <p className="font-data text-[var(--text)] mt-0.5">
+                    {selectedProduct.validity_days ? `${selectedProduct.validity_days} Days` : 'N/A'}
+                  </p>
+                </div>
               </div>
 
-              <div className="pt-3 border-t border-[var(--app-glass-border)] space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-display text-lg font-bold text-[var(--app-text-primary)]">
-                    {formatINR(p.list_price)}
-                  </span>
-                  <span className="text-[0.6875rem] text-emerald-400 font-mono">
-                    Includes {(p.tax_rate * 100)}% GST
+              {selectedProduct.description && (
+                <div className="pt-2 border-t border-[var(--line)] text-xs font-ui">
+                  <span className="text-[var(--text-faint)]">Access Policy & Notes</span>
+                  <p className="text-[var(--text)] mt-0.5">{selectedProduct.description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Statutory GST Back-Calculation Breakdown */}
+            <div className="card p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-[var(--line)] pb-2">
+                <h4 className="font-ui text-xs uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)]">
+                  Statutory GST Breakdown
+                </h4>
+                <Badge status="ok" size="sm">
+                  SAC {selectedProduct.sac_code}
+                </Badge>
+              </div>
+
+              <div className="space-y-2 font-ui text-xs">
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-[var(--text-muted)]">Gross Inclusive Price</span>
+                  <span className="font-data font-semibold text-[var(--text)] tabular-nums">
+                    {formatINR(selectedProduct.list_price)}
                   </span>
                 </div>
-
-                {/* Back-calculated Breakdown */}
-                <div className="grid grid-cols-3 gap-1 text-[0.6875rem] font-mono text-[var(--app-text-muted)] bg-[var(--app-glass-bg)] p-2 rounded-lg">
-                  <div>
-                    <span className="block text-[0.5625rem] uppercase">Taxable</span>
-                    <span className="text-[var(--app-text-secondary)]">{formatINR(gst.taxable)}</span>
-                  </div>
-                  <div>
-                    <span className="block text-[0.5625rem] uppercase">CGST ({p.tax_rate * 50}%)</span>
-                    <span className="text-[var(--app-text-secondary)]">{formatINR(gst.cgst)}</span>
-                  </div>
-                  <div>
-                    <span className="block text-[0.5625rem] uppercase">SGST ({p.tax_rate * 50}%)</span>
-                    <span className="text-[var(--app-text-secondary)]">{formatINR(gst.sgst)}</span>
-                  </div>
+                <div className="flex justify-between items-center py-1 text-[var(--text-faint)]">
+                  <span>Taxable Supply Value</span>
+                  <span className="font-data tabular-nums">{formatINR(gstBreakdown.taxable)}</span>
                 </div>
-
-                {/* Validity & Limits */}
-                <div className="flex items-center justify-between text-[0.6875rem] text-[var(--app-text-muted)] pt-1">
-                  <span>
-                    {p.session_count ? `${p.session_count} Sessions` : 'Unlimited Sessions'}
-                  </span>
-                  <span>
-                    {p.validity_days ? `${p.validity_days} Days Validity` : 'Custom Duration'}
-                  </span>
+                <div className="flex justify-between items-center py-1 text-[var(--text-faint)]">
+                  <span>CGST ({(selectedProduct.tax_rate * 50).toFixed(1)}%)</span>
+                  <span className="font-data tabular-nums">{formatINR(gstBreakdown.cgst)}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 text-[var(--text-faint)]">
+                  <span>SGST ({(selectedProduct.tax_rate * 50).toFixed(1)}%)</span>
+                  <span className="font-data tabular-nums">{formatINR(gstBreakdown.sgst)}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-[var(--line)] font-medium text-[var(--teal)]">
+                  <span>Total Tax Included ({(selectedProduct.tax_rate * 100).toFixed(0)}%)</span>
+                  <span className="font-data tabular-nums">{formatINR(gstBreakdown.totalTax)}</span>
                 </div>
               </div>
             </div>
-          )
-        })}
-      </div>
+          </div>
+        )}
+      </Drawer>
 
-      {/* Add Product Modal */}
+      {/* 6. Create Product Modal */}
       <Modal
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
-        title="Add Product to Catalogue"
-        description="Create a new GST-inclusive purchasable plan or service."
+        title="Create Catalogue SKU"
+        description="Add a new master service or membership package"
         size="md"
       >
         <form onSubmit={handleCreate} className="space-y-4">
           <Input
-            label="Product Title *"
-            placeholder="e.g. Annual Gym Membership Package 2"
+            label="Product Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Reformer Pilates 36-Pack (Peak)"
             required
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[var(--app-text-secondary)]">Category *</label>
-              <Select value={category} onValueChange={(v: any) => setCategory(v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(CATEGORY_LABELS).map(([k, label]) => (
-                    <SelectItem key={k} value={k}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Select value={category} onValueChange={(v) => setCategory(v as ProductCategory)}>
+              <SelectTrigger label="Category">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {getActiveCategories().map(({ category: c, label: cLabel }) => (
+                  <SelectItem key={c} value={c}>
+                    {cLabel}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <Input
-              label="GST-Inclusive Price (₹) *"
+              label="Price (INR, GST-Inclusive)"
               type="number"
-              placeholder="e.g. 43500"
               value={priceRupees}
               onChange={(e) => setPriceRupees(e.target.value)}
+              placeholder="e.g. 35000"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[var(--app-text-secondary)]">Tax Rate</label>
-              <Select value={String(taxRate)} onValueChange={(v) => setTaxRate(parseFloat(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0.05">5% (Fitness Services - SAC 999723)</SelectItem>
-                  <SelectItem value="0.18">18% (Marketing / Space Rental)</SelectItem>
-                  <SelectItem value="0">0% (Exempt)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Select value={String(taxRate)} onValueChange={(v) => setTaxRate(parseFloat(v))}>
+              <SelectTrigger label="GST Rate">
+                <SelectValue placeholder="GST Rate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0.05">5% (Fitness SAC 999723)</SelectItem>
+                <SelectItem value="0.18">18% (Marketing/Shoots)</SelectItem>
+              </SelectContent>
+            </Select>
 
             <Input
-              label="Sessions Count (Optional)"
+              label="Sessions Count"
               type="number"
-              placeholder="e.g. 36 (blank for unlimited)"
               value={sessionCount}
               onChange={(e) => setSessionCount(e.target.value)}
+              placeholder="e.g. 36 (or blank)"
             />
 
             <Input
               label="Validity (Days)"
               type="number"
-              placeholder="e.g. 365"
               value={validityDays}
               onChange={(e) => setValidityDays(e.target.value)}
+              placeholder="e.g. 365"
             />
           </div>
 
           <Input
-            label="Product Notes / Special Inclusions"
-            placeholder="e.g. Includes 2-Month InBody composition assessments"
+            label="Access Policy & Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g. Valid MWF morning studio batches only"
           />
 
-          <div className="flex items-center gap-6 text-xs text-[var(--app-text-secondary)] pt-1">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="rounded" />
-              <span>Is Trial Product</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={isRenewal} onChange={(e) => setIsRenewal(e.target.checked)} className="rounded" />
-              <span>Is Renewal Variant</span>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--app-glass-border)]">
-            <Button type="button" variant="secondary" onClick={() => setCreateModalOpen(false)}>
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-[var(--line)]">
+            <Button variant="secondary" size="sm" onClick={() => setCreateModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" icon={<Plus className="w-4 h-4" />}>
-              Save to Catalogue
+            <Button variant="primary" size="sm" type="submit">
+              Save Catalogue SKU
             </Button>
           </div>
         </form>
       </Modal>
-
-      {/* Product Detail Modal */}
-      {selectedProduct && (
-        <Modal
-          open={!!selectedProduct}
-          onOpenChange={(open) => !open && setSelectedProduct(null)}
-          title={selectedProduct.name}
-          description={`SKU: ${selectedProduct.id} · Category: ${CATEGORY_LABELS[selectedProduct.category] || selectedProduct.category}`}
-          size="md"
-        >
-          <div className="space-y-4">
-            <div className="p-4 rounded-2xl glass-card border border-[var(--aurora-1)]/30 space-y-3">
-              <div className="flex items-baseline justify-between">
-                <span className="text-xs text-[var(--app-text-muted)]">GST-Inclusive List Price</span>
-                <span className="font-display text-2xl font-bold text-[var(--app-text-primary)]">
-                  {formatINR(selectedProduct.list_price)}
-                </span>
-              </div>
-
-              {/* Tax Back-calculation Breakdown */}
-              <div className="p-3 rounded-xl glass-input space-y-1.5 text-xs font-mono">
-                <div className="flex justify-between text-[var(--app-text-secondary)]">
-                  <span>Taxable Base (Ex-Tax):</span>
-                  <span>{formatINR(backCalculateGst(selectedProduct.list_price, selectedProduct.tax_rate).taxable)}</span>
-                </div>
-                <div className="flex justify-between text-[var(--app-text-secondary)]">
-                  <span>CGST (2.5%):</span>
-                  <span>{formatINR(backCalculateGst(selectedProduct.list_price, selectedProduct.tax_rate).cgst)}</span>
-                </div>
-                <div className="flex justify-between text-[var(--app-text-secondary)]">
-                  <span>SGST (2.5%):</span>
-                  <span>{formatINR(backCalculateGst(selectedProduct.list_price, selectedProduct.tax_rate).sgst)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-[var(--aurora-1)] pt-1 border-t border-[var(--app-glass-border)]">
-                  <span>Total Tax Included:</span>
-                  <span>{formatINR(backCalculateGst(selectedProduct.list_price, selectedProduct.tax_rate).totalTax)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl glass-card">
-                <span className="text-[var(--app-text-muted)] block">SAC Code</span>
-                <span className="font-mono font-semibold">{selectedProduct.sac_code}</span>
-              </div>
-              <div className="p-3 rounded-xl glass-card">
-                <span className="text-[var(--app-text-muted)] block">Tax Rate</span>
-                <span className="font-mono font-semibold">{selectedProduct.tax_rate * 100}% GST</span>
-              </div>
-              <div className="p-3 rounded-xl glass-card">
-                <span className="text-[var(--app-text-muted)] block">Session Allowance</span>
-                <span className="font-semibold">{selectedProduct.session_count ? `${selectedProduct.session_count} Sessions` : 'Unlimited'}</span>
-              </div>
-              <div className="p-3 rounded-xl glass-card">
-                <span className="text-[var(--app-text-muted)] block">Validity Window</span>
-                <span className="font-semibold">{selectedProduct.validity_days ? `${selectedProduct.validity_days} Days` : 'N/A'}</span>
-              </div>
-            </div>
-
-            {selectedProduct.description && (
-              <div className="p-3.5 rounded-xl glass-input text-xs text-[var(--app-text-secondary)]">
-                <strong>Description:</strong> {selectedProduct.description}
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2">
-              <Button variant="secondary" onClick={() => setSelectedProduct(null)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   )
 }

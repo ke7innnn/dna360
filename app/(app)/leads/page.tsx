@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import {
   UserPlus, Kanban, List, Filter,
-  Phone, Mail, MessageSquare, DollarSign,
+  Phone, Mail, MessageSquare, IndianRupee,
   TrendingUp, Sparkles, CheckCircle, Clock,
   Users, ArrowRight, CheckSquare, Search,
 } from 'lucide-react'
@@ -51,12 +51,12 @@ export default function LeadsPage() {
   const kpis = getCrmKpis()
 
   const pipelineColumns: { stage: LeadStage; label: string; color: string }[] = [
-    { stage: 'inquiry', label: 'New Inquiries', color: 'border-blue-500/30' },
-    { stage: 'trial_scheduled', label: 'Trial Scheduled', color: 'border-purple-500/30' },
-    { stage: 'trial_attended', label: 'Trial Attended', color: 'border-teal-500/30' },
-    { stage: 'negotiating', label: 'Negotiating', color: 'border-amber-500/30' },
-    { stage: 'converted', label: 'Won (Converted)', color: 'border-emerald-500/30' },
-    { stage: 'lost', label: 'Lost / Closed', color: 'border-rose-500/30' },
+    { stage: 'inquiry', label: 'New Inquiries', color: 'border-[var(--blue)]/30' },
+    { stage: 'trial_scheduled', label: 'Trial Scheduled', color: 'border-[var(--teal)]/30' },
+    { stage: 'trial_attended', label: 'Trial Attended', color: 'border-[var(--teal)]/50' },
+    { stage: 'negotiating', label: 'Negotiating', color: 'border-[var(--warn)]/30' },
+    { stage: 'converted', label: 'Won (Converted)', color: 'border-[var(--ok)]/30' },
+    { stage: 'lost', label: 'Lost / Closed', color: 'border-[var(--danger)]/30' },
   ]
 
   const handleAdvanceStage = (leadId: string, currentStage: LeadStage) => {
@@ -193,7 +193,7 @@ export default function LeadsPage() {
           value={kpis.pipelineValueMinor}
           prefix="₹"
           formatValue={(v) => formatINR(v).replace('₹', '')}
-          icon={<DollarSign className="w-5 h-5 text-[var(--aurora-1)]" />}
+          icon={<IndianRupee className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
           label="Total Leads (MTD)"

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  QrCode, Flame, Trophy, Activity,
+  QrCode, Activity, Trophy,
   Droplets, Calendar, Dumbbell, Clock,
   CheckCircle, Plus, FileText, PauseCircle,
   Sparkles, ArrowRight, ShieldCheck, Download,
@@ -13,7 +13,8 @@ import {
 import GlassCard from '@/components/app/ui/glass-card'
 import StatCard from '@/components/app/ui/stat-card'
 import { Button } from '@/components/app/ui/button'
-import { StatusPill } from '@/components/app/ui/badge'
+import { Badge, StatusPill } from '@/components/app/ui/badge'
+import { StrandMeter } from '@/components/app/ui/StrandMeter'
 import MemberFreezeRequestModal from '@/components/app/member/MemberFreezeRequestModal'
 import MemberUpgradeModal from '@/components/app/member/MemberUpgradeModal'
 import {
@@ -188,34 +189,40 @@ export default function MemberDashboardPage() {
         <StatCard
           label="Attendance Streak"
           value={`${state.attendanceStreak} Days`}
-          icon={<Flame className="w-5 h-5 text-amber-500 fill-amber-500 animate-pulse" />}
+          strandValue={state.attendanceStreak}
+          strandMax={7}
+          icon={<Activity className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
           label="Total Gym Visits"
           value={state.totalVisits}
           suffix=" visits"
-          icon={<Trophy className="w-5 h-5 text-[var(--aurora-1)]" />}
+          icon={<Trophy className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
           label="PT Coaching Balance"
           value={state.ptSessionsRemaining ?? 0}
           suffix={` / ${state.ptSessionsTotal ?? 0} left`}
-          icon={<Dumbbell className="w-5 h-5 text-[var(--app-info)]" />}
+          strandValue={state.ptSessionsRemaining ?? 0}
+          strandMax={state.ptSessionsTotal || 12}
+          icon={<Dumbbell className="w-4 h-4 text-[var(--blue)]" />}
         />
         <StatCard
           label="Daily Hydration"
           value={`${state.waterIntakeMl} ml`}
           suffix={` / ${state.waterTargetMl}`}
-          icon={<Droplets className="w-5 h-5 text-[var(--app-success)]" />}
+          strandValue={state.waterIntakeMl}
+          strandMax={state.waterTargetMl}
+          icon={<Droplets className="w-4 h-4 text-[var(--ok)]" />}
         />
       </div>
 
-      {/* Hydration Quick-Log & Progress Bar */}
-      <GlassCard padding="md" className="space-y-3">
+      {/* Hydration Quick-Log & Strand Meter */}
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Droplets className="w-4 h-4 text-[var(--aurora-1)]" />
-            <h3 className="font-display text-sm font-semibold text-[var(--app-text-primary)]">
+            <Droplets className="w-4 h-4 text-[var(--teal)]" />
+            <h3 className="font-ui text-sm font-semibold text-[var(--text)]">
               Daily Water Hydration Tracker
             </h3>
           </div>
@@ -229,19 +236,14 @@ export default function MemberDashboardPage() {
           </div>
         </div>
 
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs font-mono">
-            <span className="text-[var(--app-text-secondary)]">{state.waterIntakeMl} ml logged</span>
-            <span className="font-bold text-[var(--aurora-1)]">{waterPct}% of 3.5L goal</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+          <div className="flex items-baseline gap-2 font-data text-xs tabular-nums">
+            <span className="text-[var(--text-muted)]">{state.waterIntakeMl} ml logged</span>
+            <span className="font-medium text-[var(--teal)]">({waterPct}% of 3.5L goal)</span>
           </div>
-          <div className="w-full h-2 rounded-full bg-[var(--app-glass-bg)] overflow-hidden border border-[var(--app-glass-border)]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-2)] transition-all duration-500"
-              style={{ width: `${waterPct}%` }}
-            />
-          </div>
+          <StrandMeter value={state.waterIntakeMl} max={state.waterTargetMl} capsules={7} size="md" />
         </div>
-      </GlassCard>
+      </div>
 
       {/* Grid: Today's Workout Routine + Upcoming Group Classes */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

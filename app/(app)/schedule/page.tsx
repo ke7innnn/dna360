@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Calendar as CalendarIcon, Clock, Users, Dumbbell,
-  CheckCircle, Plus, Sparkles, Trophy, Flame,
-  DollarSign, Activity, ChevronRight, UserCheck,
+  CheckCircle, Plus, Sparkles, Trophy,
+  IndianRupee, Activity, ChevronRight, UserCheck,
 } from 'lucide-react'
 import GlassCard from '@/components/app/ui/glass-card'
 import StatCard from '@/components/app/ui/stat-card'
@@ -187,7 +187,7 @@ export default function TrainerWorkspacePage() {
           </div>
 
           <Link href="/trainers/commission">
-            <Button variant="secondary" size="sm" icon={<DollarSign className="w-3.5 h-3.5" />}>
+            <Button variant="secondary" size="sm" icon={<IndianRupee className="w-3.5 h-3.5" />}>
               Commission Ledger
             </Button>
           </Link>

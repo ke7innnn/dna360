@@ -7,45 +7,55 @@ import { Loader2 } from 'lucide-react'
 
 const buttonVariants = cva(
   [
-    'inline-flex items-center justify-center gap-2 text-sm font-medium',
-    'rounded-xl transition-all duration-150',
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus-ring)]',
-    'disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex items-center justify-center gap-2 font-ui font-medium',
+    'rounded-[var(--r-md)] transition-all duration-140 select-none cursor-pointer',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg)]',
+    'disabled:pointer-events-none disabled:opacity-40',
     'active:scale-[0.98]',
   ].join(' '),
   {
     variants: {
       variant: {
         primary: [
-          'bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-2)]',
+          'bg-gradient-to-b from-[#1BA79C] to-[#2AA8E2]',
           'text-white font-semibold',
-          'hover:brightness-110',
-          'shadow-lg shadow-[var(--aurora-1)]/20',
+          'hover:brightness-105',
+          'border border-transparent',
         ].join(' '),
         secondary: [
-          'glass-input',
-          'text-[var(--app-text-primary)]',
-          'hover:border-[var(--app-glass-hover-border)] hover:bg-[rgba(255,255,255,0.06)]',
+          'bg-transparent',
+          'border border-[var(--line-strong)]',
+          'text-[var(--text)]',
+          'hover:bg-[var(--surface-raised)] hover:border-[var(--text-faint)]',
         ].join(' '),
         ghost: [
-          'text-[var(--app-text-secondary)]',
-          'hover:bg-[var(--app-glass-bg)] hover:text-[var(--app-text-primary)]',
+          'bg-transparent',
+          'border border-transparent',
+          'text-[var(--text-muted)]',
+          'hover:bg-[var(--surface-raised)] hover:text-[var(--text)]',
         ].join(' '),
         danger: [
-          'bg-[var(--app-danger)] text-white font-semibold',
-          'hover:brightness-110',
-          'shadow-lg shadow-[var(--app-danger)]/20',
+          'bg-[var(--danger-dim)]',
+          'border border-transparent',
+          'text-[var(--danger)] font-medium',
+          'hover:bg-[rgba(222,90,82,0.20)]',
+        ].join(' '),
+        outline: [
+          'bg-transparent',
+          'border border-[var(--line-strong)]',
+          'text-[var(--text)]',
+          'hover:bg-[var(--surface-raised)]',
         ].join(' '),
       },
       size: {
-        sm: 'h-8 px-3 text-xs',
-        md: 'h-10 px-4 text-sm',
-        lg: 'h-12 px-6 text-base',
-        icon: 'h-10 w-10 p-0',
+        sm: 'h-[30px] px-2.5 text-xs',
+        md: 'h-[34px] px-3.5 text-xs',
+        lg: 'h-[40px] px-5 text-sm',
+        icon: 'h-[34px] w-[34px] p-0 shrink-0',
       },
     },
     defaultVariants: {
-      variant: 'primary',
+      variant: 'secondary',
       size: 'md',
     },
   }
@@ -67,7 +77,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+        {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
         {!loading && icon}
         {children}
       </button>
@@ -78,3 +88,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button'
 
 export { Button, buttonVariants }
+export default Button

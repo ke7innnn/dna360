@@ -289,7 +289,7 @@ export default function BillingPage() {
         <StatCard
           label="Invoice Format"
           value="DNA/2026-27/000X"
-          icon={<Clock className="w-5 h-5 text-indigo-400" />}
+          icon={<Clock className="w-5 h-5 text-[var(--teal)]" />}
         />
       </div>
 

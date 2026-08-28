@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
   ArrowLeft, Calendar, Clock, MapPin, Dumbbell,
-  Users, Flame, CheckCircle, XCircle, Printer,
+  Users, CheckCircle, XCircle, Printer,
   UserPlus, Sparkles, AlertTriangle,
 } from 'lucide-react'
 import GlassCard from '@/components/app/ui/glass-card'

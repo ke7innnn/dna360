@@ -148,22 +148,26 @@ export default function MemberDetailPage() {
         <StatCard
           label="Attendance Streak"
           value={`${member.attendance_streak} days`}
-          icon={<Flame className="w-5 h-5 text-[var(--app-warning)]" />}
+          strandValue={member.attendance_streak}
+          strandMax={7}
+          icon={<Activity className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
           label="Total Studio Visits"
           value={member.total_check_ins}
-          icon={<Activity className="w-5 h-5 text-[var(--aurora-1)]" />}
+          icon={<Activity className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
           label="Pilates Adjustment Credits"
           value={`${member.adjustment_credits_remaining} / 2`}
-          icon={<Clock className="w-5 h-5 text-teal-400" />}
+          strandValue={member.adjustment_credits_remaining}
+          strandMax={2}
+          icon={<Clock className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
           label="Lifetime Value (GST Inc)"
           value={formatINR(member.lifetime_value)}
-          icon={<CreditCard className="w-5 h-5 text-emerald-400" />}
+          icon={<CreditCard className="w-4 h-4 text-[var(--blue)]" />}
         />
       </div>
 

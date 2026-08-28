@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import {
   UserPlus, ShoppingBag, KeyRound, Calculator,
   Sparkles, Receipt, CheckCircle, Clock,
-  Users, DollarSign, ArrowUpRight, Search,
+  Users, ArrowUpRight, Search,
 } from 'lucide-react'
 import GlassCard from '@/components/app/ui/glass-card'
 import StatCard from '@/components/app/ui/stat-card'

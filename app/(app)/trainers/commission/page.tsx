@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  DollarSign, ArrowLeft, Download, Trophy,
+  IndianRupee, ArrowLeft, Download, Trophy,
   CheckCircle, Clock, Calendar, Users,
 } from 'lucide-react'
 import GlassCard from '@/components/app/ui/glass-card'
@@ -153,7 +153,7 @@ export default function TrainerCommissionPage() {
           value={totalAccruedMinor}
           prefix="₹"
           formatValue={(v) => formatINR(v).replace('₹', '')}
-          icon={<DollarSign className="w-5 h-5 text-[var(--aurora-1)]" />}
+          icon={<IndianRupee className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
           label="Total Settled / Paid Out"

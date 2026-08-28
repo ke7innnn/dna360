@@ -1,58 +1,56 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { cardHover, DURATIONS, EASE_OUT } from '@/lib/motion'
 
-interface GlassCardProps {
+export interface CardProps {
   children: React.ReactNode
   className?: string
   header?: React.ReactNode
   footer?: React.ReactNode
   hover?: boolean
+  floating?: boolean
   padding?: 'none' | 'sm' | 'md' | 'lg'
   as?: 'div' | 'article' | 'section'
+  onClick?: () => void
 }
 
 const paddingMap = {
   none: '',
-  sm: 'p-4',
+  sm: 'p-3.5',
   md: 'p-5',
   lg: 'p-6',
 }
 
-export default function GlassCard({
+/**
+ * Card / GlassCard — DNA 360 Design System
+ * 
+ * Rules: Elevation from light, not drop shadows. Solid --surface fill by default
+ * with top inner highlight. Glass translucency reserved for floating surfaces.
+ */
+export function GlassCard({
   children,
   className,
   header,
   footer,
   hover = false,
+  floating = false,
   padding = 'md',
-  as = 'div',
-}: GlassCardProps) {
-  const Wrapper = hover ? motion.div : (as as unknown as React.ElementType)
-  const wrapperProps = hover
-    ? {
-        initial: 'rest',
-        whileHover: 'hover',
-        variants: cardHover,
-        style: { willChange: 'transform' },
-      }
-    : {}
-
+  as: Component = 'div',
+  onClick,
+}: CardProps) {
   return (
-    <Wrapper
+    <Component
+      onClick={onClick}
       className={cn(
-        'glass-card overflow-hidden',
-        hover && 'cursor-pointer hover:border-[var(--app-glass-hover-border)]',
-        'transition-[border-color] duration-150',
+        floating ? 'glass' : 'card',
+        'overflow-hidden',
+        hover && 'cursor-pointer',
         className
       )}
-      {...wrapperProps}
     >
       {header && (
-        <div className="px-5 py-4 border-b border-[var(--app-glass-border)]">
+        <div className="px-5 py-3.5 border-b border-[var(--line)] bg-[var(--surface-sunken)]/50">
           {header}
         </div>
       )}
@@ -60,10 +58,12 @@ export default function GlassCard({
         {children}
       </div>
       {footer && (
-        <div className="px-5 py-4 border-t border-[var(--app-glass-border)]">
+        <div className="px-5 py-3 border-t border-[var(--line)] bg-[var(--surface-sunken)]/50">
           {footer}
         </div>
       )}
-    </Wrapper>
+    </Component>
   )
 }
+
+export default GlassCard

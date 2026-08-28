@@ -7,37 +7,41 @@ import { cn } from '@/lib/utils'
 
 // ─── Root ───
 const Select = SelectPrimitive.Root
+const SelectGroup = SelectPrimitive.Group
+const SelectValue = SelectPrimitive.Value
 
 // ─── Trigger ───
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & { label?: string; error?: string }
 >(({ className, children, label, error, ...props }, ref) => (
-  <div className="flex flex-col gap-1.5">
+  <div className="flex flex-col gap-1">
     {label && (
-      <span className="text-sm font-medium text-[var(--app-text-secondary)]">{label}</span>
+      <span className="font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)] select-none">
+        {label}
+      </span>
     )}
     <SelectPrimitive.Trigger
       ref={ref}
       className={cn(
-        'flex h-10 w-full items-center justify-between px-3 text-sm',
-        'glass-input text-[var(--app-text-primary)]',
-        'focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]',
-        'disabled:cursor-not-allowed disabled:opacity-50',
-        'transition-all duration-150',
-        'placeholder:text-[var(--app-text-muted)]',
-        error && 'ring-2 ring-[var(--app-danger)]',
+        'flex h-[36px] w-full items-center justify-between px-3 font-ui text-[13.5px] rounded-[var(--r-sm)]',
+        'bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text)]',
+        'transition-all duration-140 outline-none',
+        'focus:border-[var(--line-strong)] focus:ring-[3px] focus:ring-[var(--teal-dim)]',
+        'disabled:cursor-not-allowed disabled:opacity-40',
+        'placeholder:text-[var(--text-faint)]',
+        error && 'border-[var(--danger)] focus:ring-[var(--danger-dim)]',
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDown className="w-4 h-4 text-[var(--app-text-muted)]" />
+        <ChevronDown className="w-3.5 h-3.5 text-[var(--text-faint)] shrink-0" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
     {error && (
-      <p className="text-xs text-[var(--app-danger)]" role="alert">{error}</p>
+      <p className="font-ui text-[12px] text-[var(--danger)] mt-0.5" role="alert">{error}</p>
     )}
   </div>
 ))
@@ -53,7 +57,7 @@ const SelectContent = React.forwardRef<
       ref={ref}
       className={cn(
         'relative z-50 max-h-60 min-w-[8rem] overflow-hidden',
-        'glass-card py-1',
+        'bg-[var(--surface-raised)] border border-[var(--line-strong)] rounded-[var(--r-md)] shadow-xl py-1',
         'data-[state=open]:animate-in data-[state=closed]:animate-out',
         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
@@ -84,17 +88,17 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex w-full cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-2 text-sm',
-      'text-[var(--app-text-secondary)] outline-none',
-      'focus:bg-[var(--app-sidebar-active)] focus:text-[var(--app-text-primary)]',
-      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'relative flex w-full cursor-pointer select-none items-center rounded-[var(--r-sm)] py-2 pl-7 pr-2 font-ui text-[13px]',
+      'text-[var(--text-muted)] outline-none transition-colors duration-140',
+      'focus:bg-[var(--surface-sunken)] focus:text-[var(--text)]',
+      'data-[disabled]:pointer-events-none data-[disabled]:opacity-40',
       className
     )}
     {...props}
   >
-    <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="w-4 h-4 text-[var(--aurora-1)]" />
+        <Check className="w-3.5 h-3.5 text-[var(--teal)]" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -102,18 +106,11 @@ const SelectItem = React.forwardRef<
 ))
 SelectItem.displayName = 'SelectItem'
 
-const SelectValue = SelectPrimitive.Value
-const SelectGroup = SelectPrimitive.Group
-const SelectLabel = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Label
-    ref={ref}
-    className={cn('px-2 py-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider', className)}
-    {...props}
-  />
-))
-SelectLabel.displayName = 'SelectLabel'
-
-export { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectGroup, SelectLabel }
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+}

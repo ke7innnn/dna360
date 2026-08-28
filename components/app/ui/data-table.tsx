@@ -1,17 +1,13 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
 import {
   ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight,
   AlertCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { staggerContainer, staggerItem } from '@/lib/motion'
 import { Button } from './button'
-import { Skeleton, SkeletonRow } from './skeleton'
-import { EmptyState } from './empty-state'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { Skeleton } from './skeleton'
 
 /* ============================================================
    Types
@@ -26,12 +22,13 @@ export interface DataTableColumn<T> {
   sortable?: boolean
   width?: string
   align?: 'left' | 'center' | 'right'
+  sticky?: boolean
 }
 
 export interface DataTableProps<T> {
   columns: DataTableColumn<T>[]
   data: T[]
-  status: 'loading' | 'success' | 'error' | 'empty'
+  status?: 'loading' | 'success' | 'error' | 'empty'
   /** Current sort */
   sort?: { column: string; direction: 'asc' | 'desc' }
   onSort?: (column: string) => void
@@ -65,7 +62,7 @@ export interface DataTableProps<T> {
 export function DataTable<T>({
   columns,
   data,
-  status,
+  status = 'success',
   sort,
   onSort,
   page = 1,
@@ -74,7 +71,7 @@ export function DataTable<T>({
   onPageChange,
   errorMessage = 'Something went wrong. Please try again.',
   onRetry,
-  emptyTitle = 'No data yet',
+  emptyTitle = 'No records found',
   emptyDescription,
   emptyAction,
   isFilterActive,
@@ -83,7 +80,6 @@ export function DataTable<T>({
   onRowClick,
   getRowId,
 }: DataTableProps<T>) {
-  const prefersReducedMotion = useReducedMotion()
   const totalPages = Math.ceil(total / pageSize)
 
   const getCellValue = (row: T, col: DataTableColumn<T>) => {
@@ -95,34 +91,34 @@ export function DataTable<T>({
   const renderSortIcon = (col: DataTableColumn<T>) => {
     if (!col.sortable) return null
     if (!sort || sort.column !== col.id) {
-      return <ArrowUpDown className="w-3.5 h-3.5 ml-1 text-[var(--app-text-muted)]" />
+      return <ArrowUpDown className="w-3 h-3 ml-1 text-[var(--text-faint)]" />
     }
     return sort.direction === 'asc'
-      ? <ArrowUp className="w-3.5 h-3.5 ml-1 text-[var(--aurora-1)]" />
-      : <ArrowDown className="w-3.5 h-3.5 ml-1 text-[var(--aurora-1)]" />
+      ? <ArrowUp className="w-3 h-3 ml-1 text-[var(--teal)]" />
+      : <ArrowDown className="w-3 h-3 ml-1 text-[var(--teal)]" />
   }
 
   // ─── Loading State ───
   if (status === 'loading') {
     return (
-      <div className={cn('glass-card overflow-hidden', className)}>
+      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]', className)}>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[var(--app-glass-border)]">
+              <tr className="bg-[var(--surface-sunken)] border-b border-[var(--line)] h-[40px]">
                 {columns.map((col) => (
-                  <th key={col.id} className="px-4 py-3 text-left">
-                    <Skeleton className="h-3.5 w-20" />
+                  <th key={col.id} className="px-4 py-2 text-left font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)]">
+                    <Skeleton className="h-3 w-16" />
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-[var(--app-glass-border)] last:border-0">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i} className="border-b border-[var(--line)] last:border-0 h-[44px]">
                   {columns.map((col) => (
-                    <td key={col.id} className="px-4 py-3">
-                      <Skeleton className="h-4" style={{ width: `${60 + Math.random() * 40}%` }} />
+                    <td key={col.id} className="px-4 py-2.5">
+                      <Skeleton className="h-3.5" style={{ width: `${50 + (i % 3) * 20}%` }} />
                     </td>
                   ))}
                 </tr>
@@ -137,20 +133,12 @@ export function DataTable<T>({
   // ─── Error State ───
   if (status === 'error') {
     return (
-      <div className={cn('glass-card flex flex-col items-center justify-center py-16 px-8 text-center', className)}>
-        <div className="w-14 h-14 rounded-2xl bg-[var(--app-danger)]/10 flex items-center justify-center mb-4">
-          <AlertCircle className="w-7 h-7 text-[var(--app-danger)]" />
-        </div>
-        <h3 className="text-base font-semibold text-[var(--app-text-primary)] mb-1">
-          Failed to load data
-        </h3>
-        <p className="text-sm text-[var(--app-text-muted)] max-w-sm mb-4">
-          {errorMessage}
-        </p>
+      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] p-8 flex flex-col items-center justify-center text-center', className)}>
+        <AlertCircle className="w-6 h-6 text-[var(--danger)] mb-2" />
+        <h3 className="font-ui text-sm font-semibold text-[var(--text)] mb-1">Failed to load table data</h3>
+        <p className="font-ui text-xs text-[var(--text-muted)] max-w-sm mb-4">{errorMessage}</p>
         {onRetry && (
-          <Button variant="secondary" size="sm" onClick={onRetry}>
-            Try again
-          </Button>
+          <Button variant="secondary" size="sm" onClick={onRetry}>Try again</Button>
         )}
       </div>
     )
@@ -158,56 +146,51 @@ export function DataTable<T>({
 
   // ─── Empty State ───
   if (status === 'empty' || (status === 'success' && data.length === 0)) {
-    // Check if it's a filter-empty vs truly-empty
-    if (isFilterActive) {
-      return (
-        <EmptyState
-          title="No results found"
-          description="Try adjusting your filters or search terms."
-          action={onClearFilters ? { label: 'Clear filters', onClick: onClearFilters } : undefined}
-          className={className}
-        />
-      )
-    }
-
     return (
-      <EmptyState
-        title={emptyTitle}
-        description={emptyDescription}
-        action={emptyAction}
-        className={className}
-      />
+      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] py-12 px-6 flex flex-col items-center justify-center text-center', className)}>
+        <p className="font-ui text-[13.5px] text-[var(--text-muted)]">
+          {isFilterActive
+            ? 'No records match these filters.'
+            : emptyTitle}
+        </p>
+        {isFilterActive && onClearFilters && (
+          <button
+            onClick={onClearFilters}
+            className="font-ui text-xs text-[var(--teal)] hover:underline mt-2 cursor-pointer"
+          >
+            Clear filters
+          </button>
+        )}
+        {!isFilterActive && emptyAction && (
+          <Button variant="secondary" size="sm" onClick={emptyAction.onClick} className="mt-3">
+            {emptyAction.label}
+          </Button>
+        )}
+      </div>
     )
   }
 
   // ─── Data State ───
-  const MotionTr = prefersReducedMotion ? 'tr' : motion.tr
-
   return (
-    <div className={cn('glass-card overflow-hidden', className)}>
+    <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]', className)}>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-[var(--app-glass-border)]">
-              {columns.map((col) => (
+            <tr className="bg-[var(--surface-sunken)] border-b border-[var(--line)] sticky top-0 z-10 h-[40px]">
+              {columns.map((col, colIdx) => (
                 <th
                   key={col.id}
                   className={cn(
-                    'px-4 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--app-text-muted)]',
-                    col.align === 'center' && 'text-center',
-                    col.align === 'right' && 'text-right',
-                    col.sortable && 'cursor-pointer select-none hover:text-[var(--app-text-secondary)] transition-colors',
+                    'px-4 py-2 font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)] select-none whitespace-nowrap',
+                    col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
+                    col.sortable && 'cursor-pointer hover:text-[var(--text)] transition-colors',
+                    colIdx === 0 && 'sticky left-0 bg-[var(--surface-sunken)] z-20 shadow-[1px_0_0_var(--line)]'
                   )}
                   style={{ width: col.width }}
                   onClick={() => col.sortable && onSort?.(col.id)}
                   role={col.sortable ? 'columnheader' : undefined}
-                  aria-sort={
-                    sort?.column === col.id
-                      ? sort.direction === 'asc' ? 'ascending' : 'descending'
-                      : col.sortable ? 'none' : undefined
-                  }
                 >
-                  <span className="inline-flex items-center">
+                  <span className={cn('inline-flex items-center', col.align === 'right' && 'justify-end w-full')}>
                     {col.header}
                     {renderSortIcon(col)}
                   </span>
@@ -218,27 +201,18 @@ export function DataTable<T>({
           <tbody>
             {data.map((row, rowIndex) => {
               const rowId = getRowId ? getRowId(row) : String(rowIndex)
-              const trProps = prefersReducedMotion
-                ? {}
-                : {
-                    variants: staggerItem,
-                    initial: 'hidden',
-                    animate: 'visible',
-                    custom: Math.min(rowIndex, 10), // cap stagger at 10
-                    transition: { delay: Math.min(rowIndex, 10) * 0.025 },
-                  }
 
               return (
-                <MotionTr
+                <tr
                   key={rowId}
                   className={cn(
-                    'border-b border-[var(--app-glass-border)] last:border-0 hover:bg-[var(--app-glass-bg)] transition-colors',
+                    'group border-b border-[var(--line)] last:border-0 h-[44px] transition-colors duration-140',
+                    'hover:bg-[var(--surface-raised)]',
                     onRowClick && 'cursor-pointer'
                   )}
                   onClick={() => onRowClick?.(row)}
-                  {...trProps}
                 >
-                  {columns.map((col) => {
+                  {columns.map((col, colIdx) => {
                     const value = getCellValue(row, col)
                     const rendered = col.cell ? col.cell(value, row) : String(value ?? '')
 
@@ -246,49 +220,49 @@ export function DataTable<T>({
                       <td
                         key={col.id}
                         className={cn(
-                          'px-4 py-3 text-sm text-[var(--app-text-secondary)]',
-                          col.align === 'center' && 'text-center',
-                          col.align === 'right' && 'text-right tabular-nums',
+                          'px-4 py-2.5 font-ui text-[13.5px] leading-[20px] text-[var(--text)] whitespace-nowrap',
+                          col.align === 'right' ? 'text-right font-data tabular-nums' : col.align === 'center' ? 'text-center' : 'text-left',
+                          colIdx === 0 && 'sticky left-0 bg-[var(--surface)] group-hover:bg-[var(--surface-raised)] z-10 shadow-[1px_0_0_var(--line)] transition-colors duration-140'
                         )}
                       >
                         {rendered}
                       </td>
                     )
                   })}
-                </MotionTr>
+                </tr>
               )
             })}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--app-glass-border)]">
-          <p className="text-xs text-[var(--app-text-muted)] tabular-nums">
-            {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total.toLocaleString('en-IN')}
-          </p>
-          <div className="flex items-center gap-1">
+      {/* Pagination Bar */}
+      {totalPages > 1 && onPageChange && (
+        <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--surface-sunken)] border-t border-[var(--line)] text-xs font-ui text-[var(--text-muted)] select-none">
+          <div className="font-data tabular-nums">
+            Showing {((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, total)} of {total}
+          </div>
+          <div className="flex items-center gap-1.5">
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onPageChange?.(page - 1)}
+              variant="secondary"
+              size="sm"
               disabled={page <= 1}
-              aria-label="Previous page"
+              onClick={() => onPageChange(page - 1)}
+              icon={<ChevronLeft className="w-3.5 h-3.5" />}
             >
-              <ChevronLeft className="w-4 h-4" />
+              Prev
             </Button>
-            <span className="px-3 text-sm text-[var(--app-text-secondary)] tabular-nums">
+            <span className="font-data px-2 tabular-nums text-[var(--text)]">
               {page} / {totalPages}
             </span>
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onPageChange?.(page + 1)}
+              variant="secondary"
+              size="sm"
               disabled={page >= totalPages}
-              aria-label="Next page"
+              onClick={() => onPageChange(page + 1)}
+              icon={<ChevronRight className="w-3.5 h-3.5" />}
             >
-              <ChevronRight className="w-4 h-4" />
+              Next
             </Button>
           </div>
         </div>
@@ -296,3 +270,5 @@ export function DataTable<T>({
     </div>
   )
 }
+
+export default DataTable

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
   ArrowLeft, Dumbbell, Utensils, Printer,
-  CheckCircle, Plus, Edit2, Flame, HeartPulse,
+  CheckCircle, Plus, Edit2, Activity, HeartPulse,
 } from 'lucide-react'
 import GlassCard from '@/components/app/ui/glass-card'
 import StatCard from '@/components/app/ui/stat-card'
@@ -106,7 +106,7 @@ export default function ClientDetailPage() {
           label="Body Fat %"
           value={client.bodyFatPct}
           suffix="%"
-          icon={<Flame className="w-5 h-5 text-[var(--app-warning)]" />}
+          icon={<Activity className="w-5 h-5 text-[var(--warn)]" />}
         />
         <StatCard
           label="Completed Sessions"

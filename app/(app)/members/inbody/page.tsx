@@ -124,7 +124,7 @@ export default function InBodyAnalyticsPage() {
         <StatCard
           label="Percent Body Fat (PBF)"
           value={`${latest.pbf}%`}
-          icon={<Flame className="w-5 h-5 text-[var(--app-warning)]" />}
+          icon={<Activity className="w-5 h-5 text-[var(--warn)]" />}
         />
         <StatCard
           label="Visceral Fat Level"

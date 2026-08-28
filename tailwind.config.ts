@@ -9,40 +9,55 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Website tokens
-        teal: {
-          DEFAULT: '#00c8c8',
-          dark: '#009999',
-          light: '#00e5e5',
+        // App Tokens (Mapped to CSS variables)
+        surface: {
+          DEFAULT: 'var(--surface)',
+          raised: 'var(--surface-raised)',
+          sunken: 'var(--surface-sunken)',
+          bg: 'var(--bg)',
         },
-        dark: {
-          DEFAULT: '#0a0a0a',
-          card: '#1a1a2e',
-          section: '#111111',
-          charcoal: '#1c1c1c',
+        brand: {
+          teal: 'var(--teal)',
+          blue: 'var(--blue)',
+          'teal-dim': 'var(--teal-dim)',
+          'blue-dim': 'var(--blue-dim)',
         },
-        // App tokens (used via CSS vars in components, these are for Tailwind utility convenience)
-        aurora: {
-          blue: '#4F7DF3',
-          violet: '#6E56CF',
-          teal: '#2DD4BF',
+        line: {
+          DEFAULT: 'var(--line)',
+          strong: 'var(--line-strong)',
+        },
+        txt: {
+          DEFAULT: 'var(--text)',
+          muted: 'var(--text-muted)',
+          faint: 'var(--text-faint)',
+        },
+        sem: {
+          ok: 'var(--ok)',
+          warn: 'var(--warn)',
+          danger: 'var(--danger)',
+          'ok-dim': 'var(--ok-dim)',
+          'warn-dim': 'var(--warn-dim)',
+          'danger-dim': 'var(--danger-dim)',
         },
       },
       fontFamily: {
-        montserrat: ['var(--font-montserrat)', 'sans-serif'],
-        opensans: ['var(--font-opensans)', 'sans-serif'],
-        syne: ['var(--font-syne)', 'sans-serif'],
-        outfit: ['var(--font-outfit)', 'sans-serif'],
-        sans: ['General Sans', 'Satoshi', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        display: ['Clash Display', 'General Sans', 'Satoshi', 'sans-serif'],
+        display: ['Archivo', 'system-ui', 'sans-serif'],
+        ui: ['Archivo', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Archivo', 'system-ui', '-apple-system', 'sans-serif'],
+        data: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
       },
       backgroundImage: {
-        'teal-gradient': 'linear-gradient(135deg, #00c8c8, #009999)',
-        'aurora-gradient': 'linear-gradient(135deg, #4F7DF3, #6E56CF)',
+        'brand-gradient': 'linear-gradient(180deg, #1BA79C 0%, #2AA8E2 100%)',
+        'teal-gradient': 'linear-gradient(180deg, #1BA79C 0%, #2AA8E2 100%)',
       },
       borderRadius: {
-        'glass': '16px',
-        'glass-input': '12px',
+        'sm': '6px',
+        'md': '10px',
+        'lg': '14px',
+        'full': '999px',
+        'glass': '14px',
+        'glass-input': '6px',
         'glass-pill': '999px',
       },
       transitionTimingFunction: {

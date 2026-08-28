@@ -1,83 +1,23 @@
 'use client'
 
 import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Search, Bell, Sun, Moon, LogOut, Settings, User,
-  ChevronDown, Building2,
+  Search, Bell, LogOut, Settings, User,
+  Building2, Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useTheme } from '@/components/app/theme/ThemeProvider'
 import { useSidebar } from './Sidebar'
 import { getInitials } from '@/lib/utils'
-
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
 
-// ─── Branch Switcher ───
-function BranchSwitcher() {
-  const [isOpen, setIsOpen] = useState(false)
-  const { user, activeBranch, switchBranch } = useAuth()
-
-  const branches = user?.branches || [{ id: 'pow', name: 'Powai', code: 'POW' }]
-
+// ─── Single Location Identifier (Powai Only) ───
+function LocationBadge() {
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-xl text-sm',
-          'glass-input hover:border-[var(--app-glass-hover-border)]',
-          'text-[var(--app-text-primary)] transition-all duration-150'
-        )}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-label="Switch branch"
-      >
-        <Building2 className="w-4 h-4 text-[var(--app-text-muted)]" />
-        <span className="font-medium">{activeBranch?.name || 'Powai'}</span>
-        <ChevronDown className={cn('w-3.5 h-3.5 text-[var(--app-text-muted)] transition-transform', isOpen && 'rotate-180')} />
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15 }}
-              className="absolute top-full left-0 mt-2 w-52 py-1 glass-card z-50"
-              role="listbox"
-            >
-              {branches.map((branch) => (
-                <button
-                  key={branch.id}
-                  onClick={() => {
-                    switchBranch(branch.id)
-                    setIsOpen(false)
-                  }}
-                  className={cn(
-                    'w-full flex items-center gap-2 px-3 py-2 text-sm text-left',
-                    'hover:bg-[var(--app-sidebar-active)] transition-colors',
-                    activeBranch?.id === branch.id
-                      ? 'text-[var(--aurora-1)] font-medium'
-                      : 'text-[var(--app-text-secondary)]'
-                  )}
-                  role="option"
-                  aria-selected={activeBranch?.id === branch.id}
-                >
-                  <span className="w-6 h-6 rounded-md bg-[var(--app-glass-bg)] border border-[var(--app-glass-border)] flex items-center justify-center text-[0.625rem] font-semibold tabular-nums">
-                    {branch.code}
-                  </span>
-                  {branch.name}
-                </button>
-              ))}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] select-none">
+      <Building2 className="w-3.5 h-3.5 text-[var(--teal)] shrink-0" />
+      <span className="font-ui text-xs font-medium text-[var(--text)]">Powai, Mumbai</span>
+      <span className="font-data text-[10px] text-[var(--text-faint)]">· 400076</span>
     </div>
   )
 }
@@ -85,144 +25,148 @@ function BranchSwitcher() {
 // ─── User Menu ───
 function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
-  const { resolvedTheme, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
 
-  const userName = user?.name || 'Staff User'
-  const userEmail = user?.email || 'staff@dna360.in'
-  const roleName = user?.role?.name || 'Member'
+  const userName = user?.name || 'Front Desk Staff'
+  const userEmail = user?.email || 'reception@dna360.in'
+  const designation = user?.designation || user?.role?.name || 'Staff'
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-2 p-1.5 rounded-xl',
-          'hover:bg-[var(--app-glass-bg)] transition-all duration-150'
+          'flex items-center gap-2 p-1 rounded-[var(--r-sm)] cursor-pointer',
+          'hover:bg-[var(--surface-raised)] transition-colors duration-140 select-none'
         )}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label="User menu"
       >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-2)] flex items-center justify-center">
-          <span className="text-white text-xs font-semibold">
-            {getInitials(userName)}
+        <div className="w-7 h-7 rounded-[var(--r-sm)] bg-[var(--surface-raised)] border border-[var(--line-strong)] flex items-center justify-center text-[var(--text)] font-ui text-xs font-semibold">
+          {getInitials(userName)}
+        </div>
+        <div className="hidden sm:flex flex-col text-left">
+          <span className="font-ui text-xs font-medium text-[var(--text)] line-clamp-1">
+            {userName}
+          </span>
+          <span className="font-ui text-[10px] text-[var(--text-faint)] -mt-0.5">
+            {designation}
           </span>
         </div>
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="absolute top-full right-0 mt-2 w-56 glass-card z-50 overflow-hidden"
-            >
-              {/* User info */}
-              <div className="px-4 py-3 border-b border-[var(--app-glass-border)]">
-                <p className="text-sm font-medium text-[var(--app-text-primary)] truncate">{userName}</p>
-                <p className="text-xs text-[var(--app-text-muted)] mt-0.5 truncate">{userEmail}</p>
-                <span className="inline-block mt-1.5 px-2 py-0.5 text-[0.625rem] font-semibold rounded-full bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] border border-[var(--aurora-1)]/20">
-                  {roleName}
-                </span>
-              </div>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div
+            className="absolute right-0 top-full mt-2 w-56 p-1.5 bg-[var(--surface-raised)] border border-[var(--line-strong)] rounded-[var(--r-md)] shadow-2xl z-50 select-none"
+            role="menu"
+          >
+            {/* User Info Header */}
+            <div className="px-3 py-2 border-b border-[var(--line)]">
+              <p className="font-ui text-xs font-semibold text-[var(--text)] truncate">{userName}</p>
+              <p className="font-data text-[11px] text-[var(--text-faint)] truncate mt-0.5">{userEmail}</p>
+              <span className="inline-block mt-1 px-1.5 py-0.5 font-ui text-[9px] uppercase tracking-wider font-semibold rounded bg-[var(--teal-dim)] text-[var(--teal)]">
+                {designation}
+              </span>
+            </div>
 
-              {/* Menu items */}
-              <div className="py-1">
-                <Link
-                  href="/settings"
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--app-text-secondary)] hover:bg-[var(--app-sidebar-active)] hover:text-[var(--app-text-primary)] transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings & Matrix
-                </Link>
-                <button
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--app-text-secondary)] hover:bg-[var(--app-sidebar-active)] hover:text-[var(--app-text-primary)] transition-colors"
-                  onClick={() => { toggleTheme(); setIsOpen(false) }}
-                >
-                  {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  {resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
-                </button>
-              </div>
+            {/* Menu Links */}
+            <div className="py-1">
+              <Link
+                href="/profile"
+                onClick={() => setIsOpen(false)}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 font-ui text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-sunken)] rounded-[var(--r-sm)] transition-colors"
+                role="menuitem"
+              >
+                <User className="w-3.5 h-3.5" />
+                Profile
+              </Link>
+              <Link
+                href="/settings"
+                onClick={() => setIsOpen(false)}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 font-ui text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-sunken)] rounded-[var(--r-sm)] transition-colors"
+                role="menuitem"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                Settings
+              </Link>
+            </div>
 
-              <div className="border-t border-[var(--app-glass-border)] py-1">
-                <button
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--app-danger)] hover:bg-[var(--app-danger)]/10 transition-colors"
-                  onClick={() => {
-                    setIsOpen(false)
-                    logout()
-                  }}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign out
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            {/* Logout */}
+            <div className="pt-1 border-t border-[var(--line)]">
+              <button
+                onClick={() => {
+                  logout()
+                  setIsOpen(false)
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 font-ui text-xs text-[var(--danger)] hover:bg-[var(--danger-dim)] rounded-[var(--r-sm)] transition-colors"
+                role="menuitem"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
 // ─── Main TopBar ───
 export default function TopBar() {
-  const { collapsed } = useSidebar()
+  const { setMobileOpen } = useSidebar()
 
   return (
     <header
-      className={cn(
-        'fixed top-0 right-0 z-30 h-16 flex items-center justify-between px-6',
-        'glass border-b border-[var(--app-glass-border)]',
-        'transition-all duration-250',
-        collapsed ? 'left-[72px]' : 'left-[260px]'
-      )}
+      className="sticky top-0 z-30 flex items-center justify-between h-14 px-4 md:px-6 glass border-b border-[var(--line)]"
+      role="banner"
     >
-      {/* Left: Branch Switcher */}
-      <div className="flex items-center gap-4">
-        <BranchSwitcher />
+      {/* Left: Mobile Toggle & Location */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="md:hidden p-1.5 rounded-[var(--r-sm)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)] transition-colors"
+          aria-label="Open navigation menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <LocationBadge />
       </div>
 
-      {/* Center: Search */}
-      <div className="hidden md:flex flex-1 max-w-md mx-8">
-        <div className="w-full relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--app-text-muted)]" />
+      {/* Center: Search Field */}
+      <div className="hidden lg:flex items-center max-w-xs w-full mx-4">
+        <div className="relative w-full">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
           <input
             type="text"
-            placeholder="Search members, plans, invoices…"
-            className={cn(
-              'w-full pl-10 pr-4 py-2 text-sm rounded-xl',
-              'glass-input text-[var(--app-text-primary)] placeholder:text-[var(--app-text-muted)]',
-              'focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]',
-              'transition-all duration-150'
-            )}
-            aria-label="Global search"
+            placeholder="Search member, phone, SKU..."
+            className="w-full h-8 pl-8 pr-8 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text)] placeholder:text-[var(--text-faint)] focus:border-[var(--line-strong)] focus:ring-[2px] focus:ring-[var(--teal-dim)] outline-none transition-all"
           />
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 font-data text-[10px] text-[var(--text-faint)] border border-[var(--line-strong)] px-1 rounded bg-[var(--surface)] select-none">
+            ⌘K
+          </kbd>
         </div>
       </div>
 
-      {/* Right: Notifications + User */}
-      <div className="flex items-center gap-2">
-        {/* Notification Bell */}
-        <button
-          className={cn(
-            'relative p-2.5 rounded-xl text-[var(--app-text-secondary)]',
-            'hover:bg-[var(--app-glass-bg)] hover:text-[var(--app-text-primary)]',
-            'transition-all duration-150'
-          )}
+      {/* Right: Notification & User Menu */}
+      <div className="flex items-center gap-2.5">
+        {/* Notifications */}
+        <Link
+          href="/overview"
+          className="p-1.5 rounded-[var(--r-sm)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)] transition-colors relative"
           aria-label="Notifications"
         >
-          <Bell className="w-5 h-5" />
-          {/* Badge */}
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--app-danger)]" />
-        </button>
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--teal)]" />
+        </Link>
 
-        {/* User Menu */}
+        <div className="h-4 w-px bg-[var(--line)]" />
+
+        {/* User Account Menu */}
         <UserMenu />
       </div>
     </header>
