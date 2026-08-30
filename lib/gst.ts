@@ -155,7 +155,8 @@ export const DEFAULT_SAC_CODE = '999723'
  * Format an amount in paise as Indian Rupees.
  * e.g. 4350000 → "₹43,500"
  */
-export function formatINR(amountMinor: number): string {
+export function formatINR(amountMinor?: number | null): string {
+  if (typeof amountMinor !== 'number' || isNaN(amountMinor)) return '₹0'
   const rupees = amountMinor / 100
   return `₹${rupees.toLocaleString('en-IN', { 
     minimumFractionDigits: 0,

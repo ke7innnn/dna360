@@ -66,9 +66,11 @@ function addDays(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-function daysBetween(dateStr1: string, dateStr2: string): number {
+function daysBetween(dateStr1?: string | null, dateStr2?: string | null): number {
+  if (!dateStr1 || !dateStr2) return 0
   const d1 = new Date(dateStr1)
   const d2 = new Date(dateStr2)
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0
   return Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24))
 }
 

@@ -339,7 +339,11 @@ export function getMembers(filters: MemberFilterOptions = {}): Member[] {
     list = list.filter(m => m.complimentary === filters.complimentary)
   }
 
-  return list.sort((a, b) => new Date(b.joined_date).getTime() - new Date(a.joined_date).getTime())
+  return list.sort((a, b) => {
+    const timeB = b.joined_date ? new Date(b.joined_date).getTime() : 0
+    const timeA = a.joined_date ? new Date(a.joined_date).getTime() : 0
+    return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA)
+  })
 }
 
 export function getMemberById(id: string): Member | null {
