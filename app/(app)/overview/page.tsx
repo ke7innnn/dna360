@@ -59,11 +59,11 @@ export default function OverviewPage() {
     },
     {
       label: 'ACTIVE MEMBERS',
-      value: '679',
+      value: '659',
       unit: 'LIVE MEMBERS',
-      hoverTitle: '679 Verified Gymex Live Members',
-      strand: { value: 679, max: 750, capsules: 5 as const },
-      delta: { text: '614 active · 18 grace', type: 'neutral' as const },
+      hoverTitle: '659 Verified Gymex Live Members',
+      strand: { value: 659, max: 750, capsules: 5 as const },
+      delta: { text: '594 active · 18 grace', type: 'neutral' as const },
     },
     {
       label: 'EXPIRING IN 30 DAYS',

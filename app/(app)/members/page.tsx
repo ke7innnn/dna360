@@ -17,12 +17,12 @@ import RenewMemberModal from '@/components/app/members/RenewMemberModal'
 import { getMembers } from '@/lib/members'
 import { formatINR } from '@/lib/gst'
 import { getInitials } from '@/lib/utils'
-import type { Member, MemberStatus } from '@/types/member'
+import type { Member } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
 export default function MembersPage() {
-  const [members, setMembers] = useState<Member[]>([])
+  const [members, setMembers] = useState<Member[]>(() => getMembers())
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'grace_period' | 'expiring_soon' | 'inactive' | 'blacklisted'>('all')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
@@ -81,7 +81,7 @@ export default function MembersPage() {
       cell: (_, row) => (
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line-strong)] flex items-center justify-center font-ui text-[11px] font-semibold text-[var(--text)] shrink-0">
-            {getInitials(row.name)}
+            {getInitials(row.name || 'MB')}
           </div>
           <div>
             <p className="font-ui font-medium text-[13.5px] text-[var(--text)] hover:text-[var(--teal)] transition-colors leading-tight">
@@ -101,7 +101,8 @@ export default function MembersPage() {
       header: 'Package & Expiry',
       sortable: true,
       cell: (_, row) => {
-        const primaryPlan = row.active_memberships[0]
+        const memberships = row.active_memberships || []
+        const primaryPlan = memberships[0]
         return (
           <div className="max-w-[280px]">
             <span className="font-ui text-[13px] font-medium text-[var(--text)] block leading-tight">
@@ -119,7 +120,8 @@ export default function MembersPage() {
       header: 'Sessions Remaining',
       align: 'left',
       cell: (_, row) => {
-        const primaryPlan = row.active_memberships[0]
+        const memberships = row.active_memberships || []
+        const primaryPlan = memberships[0]
         const remaining = primaryPlan?.sessions_remaining
         const total = primaryPlan?.sessions_total
 
@@ -151,14 +153,14 @@ export default function MembersPage() {
       header: 'Status',
       align: 'left',
       cell: (_, row) => {
-        const statusMap: Record<MemberStatus, { status: 'ok' | 'warn' | 'danger' | 'neutral'; label: string }> = {
+        const statusMap: Record<string, { status: 'ok' | 'warn' | 'danger' | 'neutral'; label: string }> = {
           active: { status: 'ok', label: 'Active' },
           expiring_soon: { status: 'warn', label: 'Expiring Soon' },
           grace_period: { status: 'warn', label: 'Grace Period' },
           inactive: { status: 'neutral', label: 'Expired' },
           blacklisted: { status: 'danger', label: 'Blocked' },
         }
-        const s = statusMap[row.status] || { status: 'neutral', label: row.status }
+        const s = statusMap[row.status] || { status: 'neutral', label: row.status || 'Unknown' }
         return (
           <Badge status={s.status} size="sm">
             {s.label}
@@ -187,13 +189,17 @@ export default function MembersPage() {
       header: 'Lifetime Value',
       align: 'right',
       sortable: true,
-      cell: (_, row) => (
-        <span className="font-data text-[13px] font-medium text-[var(--text)] tabular-nums">
-          {formatINR(row.lifetime_value || (row.active_memberships[0]?.amount_paid || 0))}
-        </span>
-      ),
+      cell: (_, row) => {
+        const memberships = row.active_memberships || []
+        return (
+          <span className="font-data text-[13px] font-medium text-[var(--text)] tabular-nums">
+            {formatINR(row.lifetime_value || memberships[0]?.amount_paid || 0)}
+          </span>
+        )
+      },
     },
   ]
+
 
   const pagedMembers = members.slice((page - 1) * pageSize, page * pageSize)
 

@@ -89,7 +89,7 @@ function SidebarNavItem({ item, collapsed, onItemClick }: { item: NavItem; colla
   const Icon = iconMap[item.icon] || LayoutDashboard
 
   // Dynamic live badge count for Members & Leads
-  const badgeCount = item.href === '/members' ? 679 : item.badge
+  const badgeCount = item.href === '/members' ? 659 : item.badge
 
   return (
     <Link

@@ -13,8 +13,8 @@ const CHURN_RADAR_KEY = 'dna360_churn_radar_members'
 export const SEEDED_KPIS: ExecutiveKpis = {
   mrrMinor: 184000000, // ₹18,40,000
   arrMinor: 2208000000, // ₹2,20,80,000
-  totalActiveMembers: 679, // Real Gymex verified count
-  arpmMinor: 270986, // ₹2,709.86 per member
+  totalActiveMembers: 659, // Real Gymex verified count
+  arpmMinor: 279210, // ₹2,792.10 per member
   churnRatePct: 2.8,
   gstCollectedMinor: 9200000, // ₹92,000 (5% GST standard MTD)
   mrrGrowthPct: 14.2,
@@ -25,7 +25,7 @@ export const SEEDED_BRANCHES: BranchPerformance[] = [
     branchId: 'pow',
     branchName: 'Powai Studio & Flagship',
     monthlyRevenueMinor: 184000000, // ₹18,40,000
-    memberCount: 679,
+    memberCount: 659,
     occupancyPct: 68,
     ptSessionsDelivered: 296,
     growthPct: 14.2,

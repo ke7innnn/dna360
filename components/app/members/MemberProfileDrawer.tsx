@@ -1,16 +1,14 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
 import {
-  User, Mail, Phone, Calendar, ShieldCheck, HeartPulse,
-  CreditCard, Flame, Activity, Clock, FileText, Send,
-  Snowflake, RefreshCw, ExternalLink, Plus, MapPin, Building2,
-  AlertTriangle, Dumbbell, Sparkles, Check, X,
+  User, Mail, Phone, Calendar, ShieldCheck,
+  CreditCard, Activity, Clock, FileText, Send,
+  RefreshCw, Sparkles, Check, X,
 } from 'lucide-react'
 import { Drawer } from '@/components/app/ui/drawer'
 import { Button } from '@/components/app/ui/button'
-import { StatusPill } from '@/components/app/ui/badge'
+import { Badge } from '@/components/app/ui/badge'
 import { Input } from '@/components/app/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/app/ui/tabs'
 import RenewMemberModal from '@/components/app/members/RenewMemberModal'
@@ -39,15 +37,26 @@ export default function MemberProfileDrawer({
 
   if (!member) return null
 
-  const statusMap: Record<MemberStatus, { status: 'success' | 'warning' | 'danger' | 'info' | 'neutral'; label: string }> = {
-    active: { status: 'success', label: 'Active Member' },
-    expiring_soon: { status: 'warning', label: 'Expiring Soon' },
-    grace_period: { status: 'warning', label: 'Grace Period (7 Days)' },
-    inactive: { status: 'neutral', label: 'Inactive' },
-    blacklisted: { status: 'danger', label: 'Blacklisted' },
+  const statusMap: Record<string, { status: string; label: string }> = {
+    active: { status: 'ok', label: 'Active Member' },
+    expiring_soon: { status: 'warn', label: 'Expiring Soon' },
+    grace_period: { status: 'warn', label: 'Grace Period' },
+    inactive: { status: 'neutral', label: 'Expired' },
+    blacklisted: { status: 'danger', label: 'Blocked' },
   }
 
-  const currentStatus = statusMap[member.status] || { status: 'neutral', label: member.status }
+  const currentStatus = statusMap[member.status] || { status: 'neutral', label: member.status || 'Active' }
+  const activeMemberships = member.active_memberships || []
+  const kyc = member.kyc || {
+    id_type: null,
+    id_last_four: null,
+    id_verified: false,
+    blood_group: null,
+    emergency_contact_name: null,
+    emergency_contact_phone: null,
+  }
+  const consent = member.consent || { sms: true, email: true, whatsapp: false }
+  const staffNotes = member.staff_notes || []
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,7 +71,7 @@ export default function MemberProfileDrawer({
     })
 
     setNewNoteContent('')
-    toast.success('Staff note added to member timeline')
+    toast.success('Staff note recorded on timeline')
     if (onMemberUpdated) onMemberUpdated()
   }
 
@@ -86,32 +95,32 @@ export default function MemberProfileDrawer({
       <Drawer
         open={open}
         onOpenChange={onOpenChange}
-        title={member.name}
-        description={`Member Code: ${member.member_code} · Powai Flagship`}
+        title={member.name || 'Member Details'}
+        description={`Member Code: ${member.member_code || member.memberCode} · Powai Flagship`}
         size="lg"
       >
-        <div className="space-y-6">
+        <div className="space-y-5 select-none">
           {/* Header Profile Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl glass-card border border-[var(--app-glass-border)]">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-2)] flex items-center justify-center text-white font-display text-lg font-bold shadow-lg shadow-[var(--aurora-1)]/20">
-                {getInitials(member.name)}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-[var(--r-md)] bg-[var(--surface-sunken)] border border-[var(--line)]">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-[var(--r-sm)] bg-[var(--surface-raised)] border border-[var(--line-strong)] flex items-center justify-center text-[var(--text)] font-ui text-base font-bold shrink-0">
+                {getInitials(member.name || 'MB')}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-display text-lg font-semibold text-[var(--app-text-primary)]">
+                  <h3 className="font-ui text-base font-semibold text-[var(--text)]">
                     {member.name}
                   </h3>
-                  <StatusPill status={currentStatus.status} dot>
+                  <Badge status={currentStatus.status} size="sm">
                     {currentStatus.label}
-                  </StatusPill>
+                  </Badge>
                   {member.complimentary && (
-                    <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--warn-dim)] text-[var(--warn)] border border-[rgba(217,154,60,0.30)]">
                       COMPLIMENTARY
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
+                <p className="font-ui text-xs text-[var(--text-faint)] mt-0.5">
                   Joined {member.joined_date} · {member.phone}
                 </p>
               </div>
@@ -138,10 +147,10 @@ export default function MemberProfileDrawer({
 
           {/* Special Inclusions Alert Banner */}
           {member.special_inclusions && (
-            <div className="p-3.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-xs text-teal-300 flex items-start gap-2.5 shadow-sm">
-              <Sparkles className="w-4 h-4 mt-0.5 text-teal-400 flex-shrink-0" />
+            <div className="p-3.5 rounded-[var(--r-sm)] bg-[var(--teal-dim)] border border-[rgba(27,167,156,0.30)] text-xs text-[var(--teal)] flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 mt-0.5 text-[var(--teal)] flex-shrink-0" />
               <div>
-                <strong className="font-semibold block text-teal-200">Special Inclusions / Custom Privileges:</strong>
+                <strong className="font-semibold block text-[var(--text)]">Special Inclusions / Custom Privileges:</strong>
                 <span>{member.special_inclusions}</span>
               </div>
             </div>
@@ -151,7 +160,7 @@ export default function MemberProfileDrawer({
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-4 w-full">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="memberships">Plans ({member.active_memberships.length})</TabsTrigger>
+              <TabsTrigger value="memberships">Plans ({activeMemberships.length})</TabsTrigger>
               <TabsTrigger value="attendance">Access</TabsTrigger>
               <TabsTrigger value="notes">Timeline</TabsTrigger>
             </TabsList>
@@ -159,80 +168,80 @@ export default function MemberProfileDrawer({
             {/* TAB 1: Overview */}
             <TabsContent value="overview" className="space-y-4 pt-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-xl glass-card text-center">
-                  <span className="text-[0.6875rem] text-[var(--app-text-muted)] block">Attendance Streak</span>
+                <div className="p-3 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-center">
+                  <span className="font-ui text-[11px] uppercase tracking-wider text-[var(--text-faint)] block">Attendance Streak</span>
                   <div className="flex items-center justify-center gap-1 mt-1">
-                    <Flame className="w-4 h-4 text-[var(--app-warning)]" />
-                    <span className="font-display text-lg font-bold text-[var(--app-text-primary)]">
-                      {member.attendance_streak} d
+                    <Activity className="w-4 h-4 text-[var(--teal)]" />
+                    <span className="font-data text-lg font-bold text-[var(--text)] tabular-nums">
+                      {member.attendance_streak || 0}d
                     </span>
                   </div>
                 </div>
-                <div className="p-3 rounded-xl glass-card text-center">
-                  <span className="text-[0.6875rem] text-[var(--app-text-muted)] block">Total Check-ins</span>
-                  <span className="font-display text-lg font-bold text-[var(--app-text-primary)] mt-1 block">
-                    {member.total_check_ins}
+                <div className="p-3 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-center">
+                  <span className="font-ui text-[11px] uppercase tracking-wider text-[var(--text-faint)] block">Total Check-ins</span>
+                  <span className="font-data text-lg font-bold text-[var(--text)] mt-1 block tabular-nums">
+                    {member.total_check_ins || 0}
                   </span>
                 </div>
-                <div className="p-3 rounded-xl glass-card text-center">
-                  <span className="text-[0.6875rem] text-[var(--app-text-muted)] block">Pilates Credits</span>
-                  <span className="font-display text-lg font-bold text-teal-400 mt-1 block">
-                    {member.adjustment_credits_remaining} / 2
+                <div className="p-3 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-center">
+                  <span className="font-ui text-[11px] uppercase tracking-wider text-[var(--text-faint)] block">Pilates Credits</span>
+                  <span className="font-data text-lg font-bold text-[var(--teal)] mt-1 block tabular-nums">
+                    {member.adjustment_credits_remaining ?? 2} / 2
                   </span>
                 </div>
-                <div className="p-3 rounded-xl glass-card text-center">
-                  <span className="text-[0.6875rem] text-[var(--app-text-muted)] block">Lifetime Value</span>
-                  <span className="font-display text-sm font-bold text-[var(--aurora-1)] mt-1.5 block font-mono">
-                    {formatINR(member.lifetime_value)}
+                <div className="p-3 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-center">
+                  <span className="font-ui text-[11px] uppercase tracking-wider text-[var(--text-faint)] block">Lifetime Value</span>
+                  <span className="font-data text-sm font-bold text-[var(--text)] mt-1.5 block tabular-nums">
+                    {formatINR(member.lifetime_value || 0)}
                   </span>
                 </div>
               </div>
 
               {/* KYC & Verification Details */}
-              <div className="p-4 rounded-xl glass-card space-y-3">
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunken)] border border-[var(--line)] space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+                  <h4 className="font-ui text-xs font-semibold uppercase tracking-wider text-[var(--text-faint)]">
                     KYC & Identity
                   </h4>
-                  <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
+                  <span className="font-ui text-xs text-[var(--ok)] flex items-center gap-1 font-medium">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    {member.kyc.id_verified ? `Verified (${member.kyc.id_type || 'Govt ID'})` : 'Pending Verification'}
+                    {kyc.id_verified ? `Verified (${kyc.id_type || 'Govt ID'})` : 'Pending Verification'}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                   <div>
-                    <span className="text-[var(--app-text-muted)] block">ID Number:</span>
-                    <span className="font-mono text-[var(--app-text-primary)]">
-                      {member.kyc.id_last_four ? `•••• •••• ${member.kyc.id_last_four}` : 'Not provided'}
+                    <span className="text-[var(--text-faint)] block">ID Number:</span>
+                    <span className="font-data text-[var(--text)] tabular-nums">
+                      {kyc.id_last_four ? `•••• •••• ${kyc.id_last_four}` : 'Not provided'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[var(--app-text-muted)] block">Blood Group:</span>
-                    <span className="font-semibold text-[var(--app-text-primary)]">{member.kyc.blood_group || 'Unknown'}</span>
+                    <span className="text-[var(--text-faint)] block">Blood Group:</span>
+                    <span className="font-medium text-[var(--text)]">{kyc.blood_group || 'Unknown'}</span>
                   </div>
                   <div>
-                    <span className="text-[var(--app-text-muted)] block">Emergency Contact:</span>
-                    <span className="text-[var(--app-text-primary)] font-medium">
-                      {member.kyc.emergency_contact_name || 'None'} ({member.kyc.emergency_contact_phone || 'N/A'})
+                    <span className="text-[var(--text-faint)] block">Emergency Contact:</span>
+                    <span className="text-[var(--text)] font-medium">
+                      {kyc.emergency_contact_name || 'None'} ({kyc.emergency_contact_phone || 'N/A'})
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Marketing Consent */}
-              <div className="p-4 rounded-xl glass-card space-y-2 text-xs">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunken)] border border-[var(--line)] space-y-2 text-xs">
+                <h4 className="font-ui text-xs font-semibold uppercase tracking-wider text-[var(--text-faint)]">
                   Marketing & Channel Consent
                 </h4>
                 <div className="flex items-center gap-4">
-                  <span className={cn('flex items-center gap-1 font-medium', member.consent.sms ? 'text-emerald-400' : 'text-zinc-500')}>
-                    {member.consent.sms ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />} SMS (Active)
+                  <span className={cn('flex items-center gap-1 font-medium', consent.sms ? 'text-[var(--ok)]' : 'text-[var(--text-faint)]')}>
+                    {consent.sms ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />} SMS (Active)
                   </span>
-                  <span className={cn('flex items-center gap-1 font-medium', member.consent.email ? 'text-emerald-400' : 'text-zinc-500')}>
-                    {member.consent.email ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />} Email
+                  <span className={cn('flex items-center gap-1 font-medium', consent.email ? 'text-[var(--ok)]' : 'text-[var(--text-faint)]')}>
+                    {consent.email ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />} Email
                   </span>
-                  <span className={cn('flex items-center gap-1 font-medium', member.consent.whatsapp ? 'text-emerald-400' : 'text-zinc-500')}>
-                    {member.consent.whatsapp ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />} WhatsApp (Consent Required)
+                  <span className={cn('flex items-center gap-1 font-medium', consent.whatsapp ? 'text-[var(--ok)]' : 'text-[var(--text-faint)]')}>
+                    {consent.whatsapp ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />} WhatsApp
                   </span>
                 </div>
               </div>
@@ -240,46 +249,46 @@ export default function MemberProfileDrawer({
 
             {/* TAB 2: Memberships & Packages */}
             <TabsContent value="memberships" className="space-y-3 pt-4">
-              {member.active_memberships.length > 0 ? (
-                member.active_memberships.map((ms) => (
-                  <div key={ms.id} className="p-4 rounded-xl glass-card border border-[var(--aurora-1)]/30 space-y-3">
+              {activeMemberships.length > 0 ? (
+                activeMemberships.map((ms) => (
+                  <div key={ms.id} className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunken)] border border-[var(--line)] space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-[0.625rem] uppercase tracking-wider text-[var(--aurora-1)] font-semibold">
+                        <span className="font-ui text-[10px] uppercase tracking-wider text-[var(--teal)] font-semibold">
                           Active Package
                         </span>
-                        <h4 className="text-base font-semibold text-[var(--app-text-primary)]">
+                        <h4 className="font-ui text-sm font-semibold text-[var(--text)]">
                           {ms.product_name}
                         </h4>
                       </div>
-                      <StatusPill status={ms.status === 'active' ? 'success' : 'info'}>
+                      <Badge status={ms.status === 'active' ? 'ok' : 'info'} size="sm">
                         {ms.status}
-                      </StatusPill>
+                      </Badge>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                       <div>
-                        <span className="text-[var(--app-text-muted)] block">Enrolled:</span>
-                        <span className="text-[var(--app-text-secondary)]">{ms.enrolment_date}</span>
+                        <span className="text-[var(--text-faint)] block">Enrolled:</span>
+                        <span className="text-[var(--text-muted)]">{ms.enrolment_date}</span>
                       </div>
                       <div>
-                        <span className="text-[var(--app-text-muted)] block">Activation:</span>
-                        <span className="text-[var(--app-text-secondary)]">{ms.activation_date || 'Pending'}</span>
+                        <span className="text-[var(--text-faint)] block">Activation:</span>
+                        <span className="text-[var(--text-muted)]">{ms.activation_date || 'Pending'}</span>
                       </div>
                       <div>
-                        <span className="text-[var(--app-text-muted)] block">Expiry Date:</span>
-                        <span className="font-semibold text-emerald-400">{ms.expiry_date || 'N/A'}</span>
+                        <span className="text-[var(--text-faint)] block">Expiry Date:</span>
+                        <span className="font-semibold text-[var(--ok)]">{ms.expiry_date || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-[var(--app-text-muted)] block">Amount (GST Inc):</span>
-                        <span className="font-mono font-bold text-[var(--app-text-primary)]">{formatINR(ms.amount_paid)}</span>
+                        <span className="text-[var(--text-faint)] block">Amount (GST Inc):</span>
+                        <span className="font-data font-bold text-[var(--text)] tabular-nums">{formatINR(ms.amount_paid)}</span>
                       </div>
                     </div>
 
                     {ms.sessions_total !== null && (
-                      <div className="pt-2 border-t border-[var(--app-glass-border)] flex items-center justify-between text-xs">
-                        <span className="text-[var(--app-text-muted)]">Sessions Remaining:</span>
-                        <span className="font-bold text-[var(--aurora-1)]">
+                      <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between text-xs">
+                        <span className="text-[var(--text-faint)]">Sessions Remaining:</span>
+                        <span className="font-data font-bold text-[var(--teal)] tabular-nums">
                           {ms.sessions_remaining} of {ms.sessions_total} sessions
                         </span>
                       </div>
@@ -287,7 +296,7 @@ export default function MemberProfileDrawer({
                   </div>
                 ))
               ) : (
-                <div className="p-6 rounded-xl glass-input text-center text-xs text-[var(--app-text-muted)]">
+                <div className="p-6 rounded-[var(--r-md)] bg-[var(--surface-sunken)] border border-[var(--line)] text-center text-xs text-[var(--text-faint)]">
                   No active memberships on file.
                 </div>
               )}
@@ -295,18 +304,18 @@ export default function MemberProfileDrawer({
 
             {/* TAB 3: Attendance */}
             <TabsContent value="attendance" className="space-y-4 pt-4">
-              <div className="p-4 rounded-xl glass-card text-xs space-y-2">
-                <div className="flex justify-between py-1 border-b border-[var(--app-glass-border)]">
-                  <span className="text-[var(--app-text-muted)]">Total Studio Check-ins:</span>
-                  <span className="font-bold">{member.total_check_ins} visits</span>
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunken)] border border-[var(--line)] text-xs space-y-2">
+                <div className="flex justify-between py-1 border-b border-[var(--line)]">
+                  <span className="text-[var(--text-faint)]">Total Studio Check-ins:</span>
+                  <span className="font-data font-bold text-[var(--text)] tabular-nums">{member.total_check_ins || 0} visits</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-[var(--app-glass-border)]">
-                  <span className="text-[var(--app-text-muted)]">Current Attendance Streak:</span>
-                  <span className="font-bold text-amber-400">{member.attendance_streak} consecutive days</span>
+                <div className="flex justify-between py-1 border-b border-[var(--line)]">
+                  <span className="text-[var(--text-faint)]">Current Attendance Streak:</span>
+                  <span className="font-data font-bold text-[var(--warn)] tabular-nums">{member.attendance_streak || 0} consecutive days</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-[var(--app-text-muted)]">Last Turnstile Scan:</span>
-                  <span className="font-mono">{member.last_visit_at ? formatDateTime(member.last_visit_at) : 'No recent scans'}</span>
+                  <span className="text-[var(--text-faint)]">Last Turnstile Scan:</span>
+                  <span className="font-data tabular-nums text-[var(--text)]">{member.last_visit_at ? formatDateTime(member.last_visit_at) : 'No recent scans'}</span>
                 </div>
               </div>
             </TabsContent>
@@ -328,13 +337,13 @@ export default function MemberProfileDrawer({
               </form>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {member.staff_notes.map((note) => (
-                  <div key={note.id} className="p-3 rounded-xl glass-card text-xs space-y-1">
-                    <div className="flex items-center justify-between text-[0.6875rem] text-[var(--app-text-muted)]">
-                      <span className="font-medium text-[var(--aurora-1)]">{note.authorName} ({note.authorRole})</span>
-                      <span>{formatDateTime(note.timestamp)}</span>
+                {staffNotes.map((note) => (
+                  <div key={note.id} className="p-3 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-xs space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-[var(--text-faint)]">
+                      <span className="font-medium text-[var(--teal)]">{note.authorName} ({note.authorRole})</span>
+                      <span className="font-data tabular-nums">{formatDateTime(note.timestamp)}</span>
                     </div>
-                    <p className="text-[var(--app-text-primary)]">{note.content}</p>
+                    <p className="text-[var(--text)]">{note.content}</p>
                   </div>
                 ))}
               </div>

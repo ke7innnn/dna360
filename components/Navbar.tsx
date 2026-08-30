@@ -149,11 +149,22 @@ export default function Navbar() {
               Contact Us
             </Link>
             
+            <Link
+              href="/members"
+              className="ml-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#00c8c8] to-[#2AA8E2] text-black font-bold font-montserrat text-xs uppercase tracking-wider hover:shadow-[0_0_16px_rgba(0,200,200,0.5)] hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-1.5 shrink-0"
+              title="659 Live Members Directory"
+            >
+              <span>Members</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-black text-[10px] font-mono font-bold">
+                659
+              </span>
+            </Link>
+
             <a
               href="https://www.youtube.com/channel/UCIL51PkrBEW2xhqMCZewn2g"
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-2 text-white hover:text-[#ff0000] transition-colors"
+              className="ml-1 text-white hover:text-[#ff0000] transition-colors"
               title="YouTube"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -201,8 +212,21 @@ export default function Navbar() {
             >
               <div className="py-4 flex flex-col gap-0">
                 <Link
+                  href="/members"
+                  className="px-4 py-3 bg-gradient-to-r from-[#00c8c8]/20 to-transparent text-[#00c8c8] font-bold text-sm uppercase tracking-wider border-b border-white/10 flex items-center justify-between"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span className="flex items-center gap-2">
+                    👥 Members Section
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#00c8c8]/20 text-[#00c8c8] text-xs font-bold font-mono">
+                    659
+                  </span>
+                </Link>
+
+                <Link
                   href="/"
-                  className="px-4 py-3 text-[#00c8c8] font-semibold text-sm uppercase tracking-wider border-b border-white/5"
+                  className="px-4 py-3 text-white font-semibold text-sm uppercase tracking-wider border-b border-white/5"
                   onClick={() => setMobileOpen(false)}
                 >
                   Home
