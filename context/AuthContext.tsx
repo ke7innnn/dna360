@@ -68,6 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           parsed.email = 'admin@dna360.in'
           localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(parsed))
         }
+        if (parsed?.name?.includes('Keith') || parsed?.email === 'keith.mktg@dna360.in') {
+          const ownerRole = SEEDED_ROLE_DEFINITIONS.find((r) => r.slug === 'OWNER') || SEEDED_ROLE_DEFINITIONS[0]
+          parsed.role = ownerRole
+          parsed.designation = 'Administrator (All Features Access)'
+          parsed.can_view_revenue = true
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(parsed))
+        }
         setUser(parsed)
         if (parsed?.branches?.[0]) setActiveBranch(parsed.branches[0])
       }

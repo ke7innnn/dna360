@@ -93,8 +93,8 @@ def create_pdf(output_path):
     # Table Data
     rev_data = [
         ['Executive Admin', 'Owner / Executive', 'admin@dna360.in', '+919820011111', 'password123', '123456', 'All Financials, Full Admin'],
+        ['Keith Shah', 'Administrator', 'keith.mktg@dna360.in', '+919820021002', 'password123', '123456', 'Full Admin Access (All Features)'],
         ['Swapnil Borhade', 'HR Head', 'swapnil.hr@dna360.in', '+919820021001', 'password123', '123456', 'People, Staff, Audit, Revenue'],
-        ['Keith Shah', 'Marketing Head', 'keith.mktg@dna360.in', '+919820021002', 'password123', '123456', 'CRM Pipeline, Leads, Revenue'],
         ['Monica Picholla', 'Asst. Sales Head', 'monica.sales@dna360.in', '+919820021003', 'password123', '123456', 'Invoices, Memberships, Revenue'],
     ]
     
