@@ -8,6 +8,9 @@ export interface StatTileProps {
   label: string
   value: string | number
   unit?: string
+  prefix?: string
+  suffix?: string
+  formatValue?: (val: any) => string
   icon?: React.ReactNode
   delta?: {
     text: string
@@ -21,11 +24,16 @@ export function StatTile({
   label,
   value,
   unit,
+  prefix,
+  suffix,
+  formatValue,
   icon,
   delta,
   className,
   variant = 'default',
 }: StatTileProps) {
+  const displayVal = formatValue ? formatValue(value) : value
+
   return (
     <Card
       variant={variant}
@@ -36,7 +44,7 @@ export function StatTile({
     >
       {/* Top row: Mono eyebrow label + Lucide Icon */}
       <div className="flex items-center justify-between gap-2">
-        <span className="font-data text-[11px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] truncate">
+        <span className="font-ui text-[11px] uppercase tracking-[0.16em] font-semibold text-[var(--muted)] truncate">
           {label}
         </span>
         {icon && (
@@ -48,11 +56,13 @@ export function StatTile({
 
       {/* Main Metric: Big Clash Number + Mono Unit */}
       <div className="mt-3.5 flex items-baseline gap-2">
+        {prefix && <span className="font-ui text-lg text-[var(--muted)] font-medium">{prefix}</span>}
         <span className="font-display text-3xl sm:text-4xl font-semibold text-[var(--ink)] tabular-nums tracking-tight">
-          {value}
+          {displayVal}
         </span>
+        {suffix && <span className="font-ui text-xs text-[var(--muted)] font-medium">{suffix}</span>}
         {unit && (
-          <span className="font-data text-xs text-[var(--muted)] font-medium">
+          <span className="font-ui text-xs text-[var(--muted)] font-medium">
             {unit}
           </span>
         )}

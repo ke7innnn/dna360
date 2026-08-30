@@ -20,6 +20,8 @@ export type { UserSession }
 export interface BusinessProfile {
   clubName: string               // "DNA 360 Fitness"
   legalEntityName: string        // "Base Fitness Private Limited"
+  legalName?: string             // alias
+  brandName?: string             // alias
   gstin: string                  // "27AAICB3300R1ZH"
   /** Default SAC code for fitness services */
   sacCode: string                // "999723"
@@ -63,6 +65,9 @@ export interface PendingConfig {
   activation_window_days: number
   /** Days after expiry before access is blocked. Default 7. */
   grace_period_days: number
+  gracePeriodDays?: number
+  maxFreezeDaysPerYear?: number
+  complimentaryWindowDays?: number
   /**
    * Days from activation within which upgrade is allowed.
    * PENDING: Form says "same month", T&C says 10 days.
@@ -163,6 +168,8 @@ export interface BankDetails {
   bankName: string
   accountNumber: string
   ifscCode: string
+  ifsc?: string
+  beneficiaryName?: string
   branchName: string
   accountType: 'Current' | 'Savings'
 }

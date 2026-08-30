@@ -187,12 +187,12 @@ export default function AttendancePage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile
           label="FLOOR OCCUPANCY"
-          value={occupancy.currentOccupancy}
-          unit={`/ ${occupancy.capacityMax}`}
+          value={occupancy.currentCount}
+          unit={`/ ${occupancy.maxCapacity}`}
           icon={<Users className="w-4 h-4 text-[var(--accent)]" />}
           delta={{
-            text: `${occupancy.occupancyPercentage}% floor capacity`,
-            type: occupancy.occupancyPercentage > 85 ? 'danger' : 'ok',
+            text: `${Math.round((occupancy.currentCount / occupancy.maxCapacity) * 100)}% floor capacity`,
+            type: Math.round((occupancy.currentCount / occupancy.maxCapacity) * 100) > 85 ? 'danger' : 'ok',
           }}
         />
         <StatTile

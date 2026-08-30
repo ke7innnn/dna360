@@ -10,7 +10,7 @@ import type { Capability } from '@/config/permissions'
 import type { Branch, StaffDesignation } from '@/types'
 
 export type UserType = 'STAFF' | 'MEMBER'
-export type MembershipStatus = 'ACTIVE' | 'FROZEN' | 'EXPIRED'
+export type MembershipStatus = 'ACTIVE' | 'FROZEN' | 'EXPIRED' | 'GRACE_PERIOD'
 
 export type RoleSlug =
   | 'OWNER'

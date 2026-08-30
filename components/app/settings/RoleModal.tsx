@@ -13,9 +13,11 @@ import type { Capability } from '@/config/permissions'
 export default function RoleModal({
   open,
   onOpenChange,
+  onCreated,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onCreated?: () => void
 }) {
   const { createCustomRole } = useAuth()
 
@@ -40,7 +42,7 @@ export default function RoleModal({
 
     const newRole = createCustomRole({
       name: name.trim(),
-      slug,
+      slug: slug as any,
       description: description.trim() || `Custom role for ${name.trim()}`,
       capabilities: initialCapabilities,
     })

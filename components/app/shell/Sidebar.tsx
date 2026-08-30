@@ -5,7 +5,7 @@ import {
   LayoutDashboard, CreditCard, Calendar, CheckCircle, User,
   HelpCircle, Monitor, Users, Target, Clock, BarChart3, Receipt,
   UserCog, TrendingUp, Settings, FileText, Dumbbell,
-  ChevronLeft, ChevronRight, Search, X,
+  ChevronLeft, ChevronRight, Search, X, LogOut,
   type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -129,7 +129,7 @@ function SidebarNavItem({ item, collapsed, onItemClick }: { item: AppNavItem; co
 // ─── Main Sidebar ───
 export default function Sidebar({ role }: { role?: RoleName }) {
   const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebar()
-  const { user, can } = useAuth()
+  const { user, can, logout } = useAuth()
 
   const isMember = user?.type === 'MEMBER' || (!user && role === 'member')
   const userName = user?.name || (isMember ? 'Arjun Mehta' : 'Executive Admin')
@@ -261,13 +261,22 @@ export default function Sidebar({ role }: { role?: RoleName }) {
             </div>
 
             {(!collapsed || mobileOpen) && (
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="font-ui text-xs font-semibold text-[var(--ink)] truncate">
-                  {userName}
-                </span>
-                <span className="font-ui text-[10px] uppercase tracking-[0.10em] text-[var(--muted)] truncate">
-                  {userRoleTitle}
-                </span>
+              <div className="flex items-center justify-between min-w-0 flex-1 gap-2">
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="font-ui text-xs font-semibold text-[var(--ink)] truncate">
+                    {userName}
+                  </span>
+                  <span className="font-ui text-[10px] uppercase tracking-[0.10em] text-[var(--muted)] truncate">
+                    {userRoleTitle}
+                  </span>
+                </div>
+                <button
+                  onClick={logout}
+                  title="Sign out / Log out"
+                  className="p-1.5 rounded-[var(--r-sm)] text-[#F87171] hover:bg-[rgba(239,68,68,0.15)] transition-colors cursor-pointer shrink-0"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>

@@ -24,7 +24,7 @@ export function Badge({
   size = 'md',
   dot = true,
 }: BadgeProps) {
-  const normalizedStatus = ((): 'green' | 'amber' | 'accent' | 'indigo' | 'neutral' => {
+  const normalizedStatus = ((): 'green' | 'amber' | 'accent' | 'indigo' | 'neutral' | 'danger' => {
     switch (status?.toLowerCase()) {
       case 'active':
       case 'ok':

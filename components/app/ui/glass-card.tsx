@@ -7,14 +7,17 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   className?: string
   variant?: 'default' | 'feature' | 'elevated' | 'sunken'
+  padding?: 'none' | 'sm' | 'md' | 'lg' | string
 }
 
 export function Card({
   children,
   className,
   variant = 'default',
+  padding,
   ...props
 }: CardProps) {
+  const paddingClass = padding === 'none' ? 'p-0' : padding === 'sm' ? 'p-3' : padding === 'md' ? 'p-4 sm:p-5' : padding === 'lg' ? 'p-6 sm:p-8' : ''
   return (
     <div
       className={cn(
@@ -39,6 +42,7 @@ export function Card({
           'bg-[rgba(0,0,0,0.35)]',
           'border border-[var(--line-soft)]',
         ],
+        paddingClass,
         className
       )}
       {...props}

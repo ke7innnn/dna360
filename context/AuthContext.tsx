@@ -63,6 +63,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUser = localStorage.getItem(AUTH_STORAGE_KEY)
       if (storedUser) {
         const parsed: AuthUser = JSON.parse(storedUser)
+        if (parsed?.name?.includes('Kevin') || parsed?.email?.includes('pinnacle.studio')) {
+          parsed.name = 'Executive Admin'
+          parsed.email = 'admin@dna360.in'
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(parsed))
+        }
         setUser(parsed)
         if (parsed?.branches?.[0]) setActiveBranch(parsed.branches[0])
       }
@@ -296,6 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
     }
     saveUserSession(null)
+    toast.success('Signed out successfully')
     router.push('/login')
   }
 

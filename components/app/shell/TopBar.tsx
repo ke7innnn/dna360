@@ -118,6 +118,7 @@ function UserMenu() {
 // ─── Main TopBar ───
 export default function TopBar() {
   const { setMobileOpen } = useSidebar()
+  const { logout } = useAuth()
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 z-30 flex items-center justify-between px-4 sm:px-8 border-b border-[rgba(255,255,255,0.06)] bg-[#07090E]/80 backdrop-blur-2xl relative overflow-hidden">
@@ -145,8 +146,8 @@ export default function TopBar() {
         <LocationBadge />
       </div>
 
-      {/* Right: Notification + User Menu */}
-      <div className="flex items-center gap-3 relative z-10">
+      {/* Right: Notification + User Menu + Direct Logout Button */}
+      <div className="flex items-center gap-2.5 sm:gap-3 relative z-10">
         {/* Notification Bell */}
         <button
           className="relative p-2 rounded-full text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)] transition-colors cursor-pointer"
@@ -159,6 +160,16 @@ export default function TopBar() {
         <div className="h-5 w-px bg-[rgba(255,255,255,0.06)]" />
 
         <UserMenu />
+
+        {/* Direct One-Click Log Out Button */}
+        <button
+          onClick={logout}
+          title="Sign out / Log out"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-ui text-xs font-semibold bg-[rgba(239,68,68,0.10)] hover:bg-[rgba(239,68,68,0.20)] text-[#F87171] border border-[rgba(239,68,68,0.25)] hover:border-[rgba(239,68,68,0.45)] transition-all cursor-pointer shadow-sm"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Log out</span>
+        </button>
       </div>
     </header>
   )
