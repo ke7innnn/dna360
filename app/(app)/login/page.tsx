@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { KeyRound, Smartphone, Sparkles, Building2, Shield } from 'lucide-react'
 import LoginForm from '@/components/app/auth/LoginForm'
 import OtpLoginForm from '@/components/app/auth/OtpLoginForm'
-import PersonaSwitcher from '@/components/app/auth/PersonaSwitcher'
 import Card from '@/components/app/ui/glass-card'
 import { cn } from '@/lib/utils'
 
@@ -88,9 +87,6 @@ export default function LoginPage() {
           {/* Form views */}
           {activeTab === 'password' ? <LoginForm /> : <OtpLoginForm />}
         </Card>
-
-        {/* Demo Persona Switcher */}
-        <PersonaSwitcher />
       </motion.div>
     </div>
   )
