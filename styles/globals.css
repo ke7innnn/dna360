@@ -3,10 +3,6 @@
    Presentation Layer Architecture
    ============================================================ */
 
-/* --- Fonts: Clash Display & Satoshi (Fontshare) + Martian Mono (Google Fonts) --- */
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700,900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -108,7 +104,7 @@ html {
 }
 
 body {
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), 'Satoshi', sans-serif;
   background-color: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -116,27 +112,27 @@ body {
 }
 
 [data-surface="app"] {
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), 'Satoshi', sans-serif;
   color: var(--ink);
   background-color: var(--bg);
 }
 
 .font-display,
 [data-surface="app"] .font-display {
-  font-family: var(--font-display);
+  font-family: var(--font-display), 'Clash Display', sans-serif;
   letter-spacing: -0.01em;
 }
 
 .font-ui,
 .font-sans,
 [data-surface="app"] .font-ui {
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), 'Satoshi', sans-serif;
 }
 
 .font-data,
 .font-mono,
 [data-surface="app"] .font-data {
-  font-family: var(--font-data);
+  font-family: var(--font-data), 'Martian Mono', monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -204,7 +200,7 @@ body {
 
   /* Mono Eyebrow */
   .eyebrow {
-    font-family: var(--font-data);
+    font-family: var(--font-data), 'Martian Mono', monospace;
     font-size: 11px;
     font-weight: 500;
     text-transform: uppercase;
