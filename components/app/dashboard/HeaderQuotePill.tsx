@@ -65,22 +65,22 @@ export default function HeaderQuotePill() {
   }
 
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(59,130,246,0.35)] transition-all select-none backdrop-blur-md shadow-sm group">
-      <Sparkles className="w-3 h-3 text-[#3B82F6] shrink-0 animate-pulse" />
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(59,130,246,0.35)] transition-all select-none backdrop-blur-md shadow-sm group">
+      <Sparkles className="w-2.5 h-2.5 text-[#3B82F6] shrink-0 animate-pulse" />
       
       <AnimatePresence mode="wait">
         <motion.div
           key={index}
-          initial={{ opacity: 0, y: 4 }}
+          initial={{ opacity: 0, y: 3 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="flex items-center gap-1.5 text-[11px] sm:text-xs font-ui text-[var(--muted)]"
+          exit={{ opacity: 0, y: -3 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="flex items-center gap-1 text-[10.5px] sm:text-[11px] font-ui text-[var(--muted)]"
         >
-          <span className="italic text-[var(--ink-2)] truncate max-w-[200px] sm:max-w-[320px] md:max-w-[420px]">
+          <span className="italic text-[var(--ink-2)] truncate max-w-[180px] sm:max-w-[280px] md:max-w-[360px]">
             &ldquo;{current.quote}&rdquo;
           </span>
-          <span className="font-semibold text-[var(--ink)] shrink-0 hidden xs:inline">
+          <span className="font-medium text-[var(--ink)] shrink-0 hidden sm:inline text-[10px] opacity-75">
             — {current.author}
           </span>
         </motion.div>
@@ -89,7 +89,7 @@ export default function HeaderQuotePill() {
       <button
         onClick={shuffleNext}
         title="Shuffle inspirational quote"
-        className="p-1 rounded-full text-[var(--muted)] hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0 ml-0.5"
+        className="p-0.5 rounded-full text-[var(--muted)] hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
       >
         <RefreshCw className="w-2.5 h-2.5" />
       </button>

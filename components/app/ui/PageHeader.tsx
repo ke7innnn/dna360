@@ -55,32 +55,34 @@ export function PageHeader({
       />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-        <div>
-          {eyebrow && (
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_6px_rgba(59,130,246,0.9)]" />
-              <span className="font-ui text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)]">
-                {eyebrow}
-              </span>
+        <div className="space-y-1.5">
+          {(eyebrow || badge) && (
+            <div className="flex flex-wrap items-center gap-2.5">
+              {eyebrow && (
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_6px_rgba(59,130,246,0.9)]" />
+                  <span className="font-ui text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)]">
+                    {eyebrow}
+                  </span>
+                </div>
+              )}
+              {badge && (
+                <div className="shrink-0 flex items-center">
+                  {badge}
+                </div>
+              )}
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-2xl sm:text-[34px] font-semibold text-[var(--ink)] tracking-tight leading-tight">
-              {title}
-              {italicWord && (
-                <span className="italic font-normal text-[var(--ink-2)] ml-2">
-                  {italicWord}
-                </span>
-              )}
-            </h1>
-            {badge && (
-              <div className="shrink-0 flex items-center">
-                {badge}
-              </div>
+          <h1 className="font-display text-2xl sm:text-[34px] font-semibold text-[var(--ink)] tracking-tight leading-tight">
+            {title}
+            {italicWord && (
+              <span className="italic font-normal text-[var(--ink-2)] ml-2">
+                {italicWord}
+              </span>
             )}
-          </div>
+          </h1>
           {description && (
-            <p className="font-ui text-sm text-[var(--muted)] mt-1.5 max-w-2xl leading-relaxed">
+            <p className="font-ui text-sm text-[var(--muted)] max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
