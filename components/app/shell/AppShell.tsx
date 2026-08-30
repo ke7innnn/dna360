@@ -39,7 +39,7 @@ function AppShellInner({
           collapsed ? 'md:pl-[68px]' : 'md:pl-[250px]'
         )}
       >
-        <div className="p-5 sm:p-7 lg:p-9 max-w-[1560px] mx-auto">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-5 max-w-[1560px] mx-auto">
           {children}
         </div>
       </main>

@@ -82,7 +82,7 @@ export default function MemberDashboardPage() {
   const maskedPhone = memberPhone.replace(/(\+91\d{2})\d{4}(\d{4})/, '$1•• ••$2')
 
   return (
-    <div className="space-y-8 select-none">
+    <div className="space-y-6 select-none">
       {/* Header Member Greeting with Subtle Dynamic Quote Pill next to Name */}
       <PageHeader
         eyebrow={`MEMBER PORTAL · ${(state?.branchName || 'POWAI FLAGSHIP').toUpperCase()}`}
