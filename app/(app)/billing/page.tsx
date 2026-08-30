@@ -75,7 +75,7 @@ export default function BillingPage() {
           <div className="flex items-center gap-1.5 text-[10.5px] text-[var(--muted)] mt-0.5 font-data">
             <span>{row.issueDate}</span>
             <span>·</span>
-            <span>Rep: {row.salesRepName || 'Amit Sharma'}</span>
+            <span>Rep: {row.salesRepName || 'Swati'}</span>
           </div>
         </div>
       ),
@@ -100,7 +100,7 @@ export default function BillingPage() {
             {row.items[0]?.description || 'Studio Fitness Plan'}
           </span>
           <span className="font-data text-[10px] text-[var(--muted-2)]">
-            SAC: {row.items[0]?.sacCode || '999723'} · {(row.items[0]?.taxRate ? row.items[0].taxRate * 100 : 5)}% GST
+            SAC: {row.items[0]?.sacCode || '999723'} · {(row.items[0]?.taxRate ? Math.round(row.items[0].taxRate * 100) : 5)}% GST
           </span>
         </div>
       ),
@@ -113,10 +113,10 @@ export default function BillingPage() {
       cell: (_, row) => (
         <div>
           <p className="font-data font-bold text-xs text-[var(--ink)] tabular-nums">
-            {formatINR(row.totalAmount)}
+            {formatINR(row.grandTotalMinor)}
           </p>
           <p className="font-data text-[10px] text-[var(--muted)] tabular-nums">
-            GST: {formatINR(row.taxBreakdown.cgst + row.taxBreakdown.sgst)}
+            GST: {formatINR((row.cgstMinor || 0) + (row.sgstMinor || 0))}
           </p>
         </div>
       ),
@@ -151,8 +151,8 @@ export default function BillingPage() {
     },
   ]
 
-  const totalBilled = invoices.reduce((acc, inv) => inv.status === 'paid' ? acc + inv.totalAmount : acc, 0)
-  const totalTax = invoices.reduce((acc, inv) => inv.status === 'paid' ? acc + (inv.taxBreakdown.cgst + inv.taxBreakdown.sgst) : acc, 0)
+  const totalBilled = invoices.reduce((acc, inv) => inv.status === 'paid' ? acc + (inv.grandTotalMinor || 0) : acc, 0)
+  const totalTax = invoices.reduce((acc, inv) => inv.status === 'paid' ? acc + ((inv.cgstMinor || 0) + (inv.sgstMinor || 0)) : acc, 0)
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto select-none">
