@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import {
   Search, Bell, LogOut, Settings, User,
-  Building2, Menu,
+  Building2, Menu, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebar } from './Sidebar'
@@ -14,8 +14,8 @@ import Link from 'next/link'
 // ─── Single Location Identifier (Powai Only) ───
 function LocationBadge() {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--line)] select-none">
-      <Building2 className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--line)] select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[rgba(244,63,94,0.3)] transition-colors">
+      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
       <span className="font-ui text-xs font-semibold text-[var(--ink)]">Powai Flagship</span>
       <span className="font-data text-[10.5px] text-[var(--muted)]">· 400076</span>
     </div>
@@ -43,7 +43,7 @@ function UserMenu() {
         aria-expanded={isOpen}
         aria-label="User menu"
       >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.35)] to-[rgba(129,140,248,0.2)] border border-[rgba(244,63,94,0.4)] flex items-center justify-center text-white font-data text-xs font-bold shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.35)] to-[rgba(129,140,248,0.2)] border border-[rgba(244,63,94,0.4)] flex items-center justify-center text-white font-data text-xs font-bold shrink-0 shadow-[0_0_10px_rgba(244,63,94,0.25)]">
           {getInitials(userName)}
         </div>
         <div className="hidden sm:flex flex-col text-left">
@@ -60,7 +60,7 @@ function UserMenu() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div
-            className="absolute right-0 top-full mt-2 w-60 p-2 bg-[var(--bg-elev)] border border-[var(--line)] rounded-[var(--r-md)] shadow-card z-50 select-none backdrop-blur-md"
+            className="absolute right-0 top-full mt-2 w-60 p-2 bg-[var(--bg-elev)] border border-[var(--line)] rounded-[var(--r-md)] shadow-card z-50 select-none backdrop-blur-xl"
             role="menu"
           >
             {/* User Info Header */}
@@ -120,9 +120,20 @@ export default function TopBar() {
   const { setMobileOpen } = useSidebar()
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 z-30 flex items-center justify-between px-4 sm:px-8 border-b border-[var(--line)] bg-[#08080A]/70 backdrop-blur-md">
-      {/* Left: Mobile Toggle */}
-      <div className="flex items-center gap-3">
+    <header className="fixed top-0 left-0 right-0 h-16 z-30 flex items-center justify-between px-4 sm:px-8 border-b border-[var(--line)] bg-[#08080A]/75 backdrop-blur-xl relative overflow-hidden">
+      {/* Top subtle glowing aurora edge-light */}
+      <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(244,63,94,0.5)] to-transparent pointer-events-none" />
+
+      {/* Ambient background rose gradient glow */}
+      <div
+        className="absolute top-0 right-1/4 w-[350px] h-[60px] rounded-full blur-[40px] pointer-events-none opacity-20"
+        style={{
+          background: 'radial-gradient(circle, rgba(244, 63, 94, 0.4) 0%, transparent 80%)',
+        }}
+      />
+
+      {/* Left: Mobile Toggle & Location */}
+      <div className="flex items-center gap-3 relative z-10">
         <button
           onClick={() => setMobileOpen(true)}
           className="md:hidden p-2 rounded-[var(--r-sm)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] cursor-pointer"
@@ -135,14 +146,14 @@ export default function TopBar() {
       </div>
 
       {/* Right: Notification + User Menu */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 relative z-10">
         {/* Notification Bell */}
         <button
           className="relative p-2 rounded-full text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)] transition-colors cursor-pointer"
           aria-label="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent)] shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent)] shadow-[0_0_6px_rgba(244,63,94,0.9)]" />
         </button>
 
         <div className="h-5 w-px bg-[var(--line)]" />
