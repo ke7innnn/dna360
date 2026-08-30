@@ -16,6 +16,7 @@ import Button from '@/components/app/ui/button'
 import Badge, { StatusPill } from '@/components/app/ui/badge'
 import TokenReadout from '@/components/app/ui/TokenReadout'
 import PageHeader from '@/components/app/ui/PageHeader'
+import MemberQuoteCard from '@/components/app/dashboard/MemberQuoteCard'
 import MemberFreezeRequestModal from '@/components/app/member/MemberFreezeRequestModal'
 import MemberUpgradeModal from '@/components/app/member/MemberUpgradeModal'
 import { useAuth } from '@/context/AuthContext'
@@ -391,6 +392,9 @@ export default function MemberDashboardPage() {
                 : 'Token rotates every 30s. Present the code above at Gate 1 or 2.'}
             </p>
           </Card>
+
+          {/* Dynamic Daily Workout Motivation Widget */}
+          <MemberQuoteCard />
 
           {/* Card 3: PT Coaching */}
           <Card className="p-6 space-y-3">
