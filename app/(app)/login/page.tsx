@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { KeyRound, Smartphone, Sparkles, Building2, Shield } from 'lucide-react'
 import LoginForm from '@/components/app/auth/LoginForm'
@@ -27,22 +28,26 @@ export default function LoginPage() {
 
       {/* 3. Main Centered Authentication Container */}
       <motion.div
-        className="w-full max-w-[440px] z-10 space-y-6 relative"
+        className="w-full max-w-[440px] z-10 space-y-5 relative"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: 'easeOut' }}
       >
-        {/* Brand Header */}
-        <div className="text-center space-y-2">
-          {/* Logo Badge */}
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#3B82F6] via-[#2563EB] to-[#1D4ED8] shadow-[0_8px_24px_-4px_rgba(59,130,246,0.6)] mb-1 ring-1 ring-[rgba(255,255,255,0.2)]">
-            <span className="text-white font-display text-2xl font-bold tracking-tight">D</span>
+        {/* Brand Header with Official DNA 360 Logo */}
+        <div className="text-center space-y-2 flex flex-col items-center">
+          <div className="relative p-3 rounded-2xl bg-[rgba(255,255,255,0.03)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-[rgba(59,130,246,0.3)] to-[rgba(6,182,212,0.2)] opacity-40 blur-lg pointer-events-none" />
+            <Image
+              src="/images/main-logo/main-logo.png"
+              alt="DNA 360 Fitness"
+              width={160}
+              height={180}
+              className="h-20 w-auto object-contain relative z-10 drop-shadow-[0_4px_16px_rgba(59,130,246,0.5)]"
+              priority
+            />
           </div>
 
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--ink)] tracking-tight drop-shadow-md">
-            DNA 360
-          </h1>
-          <p className="font-ui text-xs uppercase tracking-[0.14em] text-[var(--muted)] font-semibold drop-shadow-sm">
+          <p className="font-ui text-[10.5px] uppercase tracking-[0.18em] text-[var(--accent)] font-bold pt-1">
             POWAI FLAGSHIP · STUDIO MANAGEMENT
           </p>
         </div>

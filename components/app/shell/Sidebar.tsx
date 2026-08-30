@@ -22,14 +22,22 @@ const iconMap: Record<string, LucideIcon> = {
   UserCog, TrendingUp, Settings, FileText, Dumbbell,
 }
 
+import Image from 'next/image'
+
 // ─── DNA 360 Logo Mark Motif ───
 function DnaLogoMark() {
   return (
     <div
-      className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#3B82F6] via-[#2563EB] to-[#1D4ED8] flex items-center justify-center font-display font-bold text-base text-white shadow-[0_4px_18px_rgba(59,130,246,0.55)] shrink-0"
+      className="w-8 h-8 rounded-xl bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center p-1 shadow-[0_0_14px_rgba(59,130,246,0.35)] shrink-0 overflow-hidden"
       aria-label="DNA 360 Brand Mark"
     >
-      D
+      <Image
+        src="/images/logo-2.png"
+        alt="DNA 360 Logo"
+        width={32}
+        height={32}
+        className="w-full h-full object-contain drop-shadow-[0_0_6px_#3B82F6]"
+      />
     </div>
   )
 }
