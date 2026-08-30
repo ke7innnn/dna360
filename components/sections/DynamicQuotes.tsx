@@ -16,11 +16,11 @@ interface FitnessQuote {
 const FITNESS_QUOTES: FitnessQuote[] = [
   {
     id: 1,
-    quote: "The only place where success comes before work is in the dictionary. Your DNA is rewritten in the reps you refuse to quit on.",
-    author: "DNA 360 Philosophy",
-    title: "Powai High-Performance Culture",
+    quote: "The only place where success comes before work is in the dictionary. Transformation happens in the reps you refuse to quit on.",
+    author: "Vince Lombardi",
+    title: "Legendary Championship Coach",
     category: "Philosophy",
-    highlight: "rewritten in the reps",
+    highlight: "reps you refuse to quit on",
   },
   {
     id: 2,
@@ -57,8 +57,8 @@ const FITNESS_QUOTES: FitnessQuote[] = [
   {
     id: 6,
     quote: "Discipline is doing what needs to be done, even if you don't want to do it. Excuses will always be there, opportunity won't.",
-    author: "DNA 360 Coaches",
-    title: "Master Trainer Manifesto",
+    author: "David Goggins",
+    title: "Ultramarathon Champion & Navy SEAL",
     category: "Discipline",
     highlight: "opportunity won't",
   },
@@ -72,11 +72,11 @@ const FITNESS_QUOTES: FitnessQuote[] = [
   },
   {
     id: 8,
-    quote: "Your body can stand almost anything. It's your mind that you have to convince. Elevate your standard 360 degrees.",
-    author: "DNA 360 Performance Lab",
-    title: "Functional Wellness Benchmark",
-    category: "Strength",
-    highlight: "360 degrees",
+    quote: "Your body can stand almost anything. It's your mind that you have to convince. You have power over your mind, not outside events.",
+    author: "Marcus Aurelius",
+    title: "Stoic Philosopher & Emperor",
+    category: "Philosophy",
+    highlight: "power over your mind",
   },
 ]
 

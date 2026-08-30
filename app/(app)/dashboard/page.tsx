@@ -16,7 +16,7 @@ import Button from '@/components/app/ui/button'
 import Badge, { StatusPill } from '@/components/app/ui/badge'
 import TokenReadout from '@/components/app/ui/TokenReadout'
 import PageHeader from '@/components/app/ui/PageHeader'
-import MemberQuoteCard from '@/components/app/dashboard/MemberQuoteCard'
+import HeaderQuotePill from '@/components/app/dashboard/HeaderQuotePill'
 import MemberFreezeRequestModal from '@/components/app/member/MemberFreezeRequestModal'
 import MemberUpgradeModal from '@/components/app/member/MemberUpgradeModal'
 import { useAuth } from '@/context/AuthContext'
@@ -83,11 +83,12 @@ export default function MemberDashboardPage() {
 
   return (
     <div className="space-y-8 select-none">
-      {/* Header Member Greeting */}
+      {/* Header Member Greeting with Subtle Dynamic Quote Pill next to Name */}
       <PageHeader
         eyebrow={`MEMBER PORTAL · ${(state?.branchName || 'POWAI FLAGSHIP').toUpperCase()}`}
         title="Welcome back,"
         italicWord={user?.name?.split(' ')[0] || state?.memberName?.split(' ')[0] || 'Aarav'}
+        badge={<HeaderQuotePill />}
         description={
           isExpired
             ? "Your membership plan has expired. Renew your plan below to restore turnstile gate access and class bookings."
@@ -392,9 +393,6 @@ export default function MemberDashboardPage() {
                 : 'Token rotates every 30s. Present the code above at Gate 1 or 2.'}
             </p>
           </Card>
-
-          {/* Dynamic Daily Workout Motivation Widget */}
-          <MemberQuoteCard />
 
           {/* Card 3: PT Coaching */}
           <Card className="p-6 space-y-3">

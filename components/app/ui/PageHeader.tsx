@@ -7,6 +7,7 @@ export interface PageHeaderProps {
   eyebrow?: string
   title: string
   italicWord?: string
+  badge?: React.ReactNode
   description?: string
   actions?: React.ReactNode
   className?: string
@@ -22,6 +23,7 @@ export function PageHeader({
   eyebrow,
   title,
   italicWord,
+  badge,
   description,
   actions,
   className,
@@ -62,16 +64,23 @@ export function PageHeader({
               </span>
             </div>
           )}
-          <h1 className="font-display text-2xl sm:text-[34px] font-semibold text-[var(--ink)] tracking-tight leading-tight">
-            {title}
-            {italicWord && (
-              <span className="italic font-normal text-[var(--ink-2)] ml-2">
-                {italicWord}
-              </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-2xl sm:text-[34px] font-semibold text-[var(--ink)] tracking-tight leading-tight">
+              {title}
+              {italicWord && (
+                <span className="italic font-normal text-[var(--ink-2)] ml-2">
+                  {italicWord}
+                </span>
+              )}
+            </h1>
+            {badge && (
+              <div className="shrink-0 flex items-center">
+                {badge}
+              </div>
             )}
-          </h1>
+          </div>
           {description && (
-            <p className="font-ui text-sm text-[var(--muted)] mt-1 max-w-2xl leading-relaxed">
+            <p className="font-ui text-sm text-[var(--muted)] mt-1.5 max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
