@@ -16,8 +16,8 @@
   /* Color Tokens */
   --bg:          #08080A;   /* app base */
   --bg-elev:     #0D0C10;   /* raised panels, popovers */
-  --surface:     rgba(255, 255, 255, 0.028);  /* card fill */
-  --surface-2:   rgba(255, 255, 255, 0.05);   /* hover / input fill */
+  --surface:     rgba(255, 255, 255, 0.035);  /* card fill */
+  --surface-2:   rgba(255, 255, 255, 0.06);   /* hover / input fill */
   --line:        rgba(255, 255, 255, 0.08);   /* borders */
   --line-soft:   rgba(255, 255, 255, 0.05);   /* dividers */
 
@@ -28,7 +28,7 @@
 
   --accent:      #F43F5E;   /* rose — primary accent */
   --accent-deep: #E11D48;
-  --accent-soft: rgba(244, 63, 94, 0.14);
+  --accent-soft: rgba(244, 63, 94, 0.16);
 
   --green:       #34D399;   /* active / online / success */
   --amber:       #F59E0B;   /* pending / warning */
@@ -99,13 +99,13 @@
 
 html {
   scroll-behavior: smooth;
-  background-color: var(--bg);
+  background-color: #08080A;
   color: var(--ink);
 }
 
 body {
   font-family: var(--font-ui), 'Satoshi', sans-serif;
-  background-color: var(--bg);
+  background-color: #08080A;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -114,7 +114,7 @@ body {
 [data-surface="app"] {
   font-family: var(--font-ui), 'Satoshi', sans-serif;
   color: var(--ink);
-  background-color: var(--bg);
+  background-color: transparent;
 }
 
 .font-display,
@@ -150,25 +150,27 @@ body {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--r-xl);
-    box-shadow: 0 20px 40px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(4px);
+    box-shadow: 0 20px 40px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
   }
 
   .card:hover,
   .glass-card:hover {
-    border-color: rgba(244, 63, 94, 0.22);
+    border-color: rgba(244, 63, 94, 0.25);
   }
 
   /* Feature Card Variant with corner accent radial */
   .card-feature {
     background: 
-      radial-gradient(ellipse 60% 50% at 90% 10%, rgba(244, 63, 94, 0.12), transparent 70%),
+      radial-gradient(ellipse 65% 55% at 90% 10%, rgba(244, 63, 94, 0.16), transparent 70%),
       var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--r-xl);
-    box-shadow: 0 20px 40px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(4px);
+    box-shadow: 0 20px 40px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   /* Input / Control wells */
@@ -212,24 +214,12 @@ body {
 /* ============================================================
    AURORA FIXED BACKGROUND ANIMATION (§2, §3)
    ============================================================ */
-.aurora-canvas {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(60% 55% at 82% 8%,  rgba(244, 63, 94, 0.20), transparent 60%),
-    radial-gradient(45% 45% at 96% 40%, rgba(190, 24, 93, 0.16), transparent 60%),
-    radial-gradient(50% 50% at 10% 100%, rgba(129, 140, 248, 0.08), transparent 55%),
-    linear-gradient(180deg, #0B0A0D, #08080A 40%);
-}
-
 @keyframes auroraDriftSlow {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(-15px, 20px, 0) scale(1.04);
+    transform: translate3d(-20px, 25px, 0) scale(1.05);
   }
   100% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -237,7 +227,8 @@ body {
 }
 
 .aurora-blob-anim {
-  animation: auroraDriftSlow 24s ease-in-out infinite alternate;
+  animation: auroraDriftSlow 20s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
