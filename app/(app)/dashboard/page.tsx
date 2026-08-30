@@ -4,17 +4,18 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  QrCode, Activity, Trophy,
-  Droplets, Calendar, Dumbbell, Clock,
-  CheckCircle, Plus, FileText, PauseCircle,
+  Flame, Activity, Dumbbell, Droplets, Calendar,
+  Clock, CheckCircle2, Plus, FileText, PauseCircle,
   Sparkles, ArrowRight, ShieldCheck, Download,
   CreditCard, Smartphone, CheckSquare, Square,
+  Check, ArrowUpRight,
 } from 'lucide-react'
-import GlassCard from '@/components/app/ui/glass-card'
-import StatCard from '@/components/app/ui/stat-card'
-import { Button } from '@/components/app/ui/button'
-import { Badge, StatusPill } from '@/components/app/ui/badge'
-import { StrandMeter } from '@/components/app/ui/StrandMeter'
+import Card from '@/components/app/ui/glass-card'
+import StatTile from '@/components/app/ui/StatTile'
+import Button from '@/components/app/ui/button'
+import Badge, { StatusPill } from '@/components/app/ui/badge'
+import TokenReadout from '@/components/app/ui/TokenReadout'
+import PageHeader from '@/components/app/ui/PageHeader'
 import MemberFreezeRequestModal from '@/components/app/member/MemberFreezeRequestModal'
 import MemberUpgradeModal from '@/components/app/member/MemberUpgradeModal'
 import {
@@ -23,18 +24,19 @@ import {
   addWaterIntake,
   cancelMemberBooking,
 } from '@/lib/memberportal'
-import { formatINR, formatDateTime, getInitials } from '@/lib/utils'
+import { formatINR } from '@/lib/gst'
 import type { MemberPortalState, MemberClassBooking } from '@/types/memberportal'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
 export default function MemberDashboardPage() {
-  const [state, setState] = useState<MemberPortalState>(getMemberPortalState())
+  const [state, setState] = useState<MemberPortalState>(() => getMemberPortalState())
   const [bookings, setBookings] = useState<MemberClassBooking[]>([])
-  const [countdown, setCountdown] = useState(28)
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({
     'ex1_s1': true,
     'ex1_s2': true,
+    'ex1_s3': false,
+    'ex1_s4': false,
   })
 
   const [freezeModalOpen, setFreezeModalOpen] = useState(false)
@@ -47,37 +49,17 @@ export default function MemberDashboardPage() {
 
   useEffect(() => {
     refreshData()
-
     const handleUpdate = () => refreshData()
     window.addEventListener('dna360_memberportal_updated', handleUpdate)
     return () => window.removeEventListener('dna360_memberportal_updated', handleUpdate)
   }, [])
 
-  // Rolling OTP QR countdown simulation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          return 30
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
-
   const handleAddWater = (ml: number) => {
     const updated = addWaterIntake(ml)
     setState(updated)
-    toast.success(`Logged +${ml}ml Hydration!`, {
-      description: `Daily Total: ${updated.waterIntakeMl} / ${updated.waterTargetMl} ml`,
+    toast.success(`Logged +${ml}ml Hydration`, {
+      description: `Daily total: ${updated.waterIntakeMl} / ${updated.waterTargetMl} ml`,
     })
-  }
-
-  const handleCancelBooking = (bookingId: string) => {
-    cancelMemberBooking(bookingId)
-    toast.success('Class reservation cancelled')
-    refreshData()
   }
 
   const toggleSet = (setId: string) => {
@@ -87,310 +69,342 @@ export default function MemberDashboardPage() {
     }))
   }
 
-  const waterPct = Math.min(100, Math.round((state.waterIntakeMl / state.waterTargetMl) * 100))
+  const targetWater = state?.waterTargetMl || 3500
+  const currentWater = state?.waterIntakeMl || 0
+  const waterPct = Math.min(100, Math.round((currentWater / targetWater) * 100))
+  const memberPhone = state?.phone || '+91 98200 11111'
+  const maskedPhone = memberPhone.replace(/(\+91\d{2})\d{4}(\d{4})/, '$1•• ••$2')
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-8 select-none">
       {/* Header Member Greeting */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs uppercase tracking-wider font-bold text-[var(--aurora-1)]">
-            Member Portal · {state.branchName}
-          </span>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight mt-0.5">
-            Welcome back, {state.memberName}
-          </h1>
-        </div>
+      <PageHeader
+        eyebrow={`MEMBER PORTAL · ${(state?.branchName || 'POWAI FLAGSHIP').toUpperCase()}`}
+        title="Welcome back,"
+        italicWord={state?.memberName?.split(' ')[0] || 'Aarav'}
+        description="Your check-in, plan and today's programming — all live. Tap the gate token at the turnstile to enter."
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setFreezeModalOpen(true)}
+            >
+              Pause membership
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setUpgradeModalOpen(true)}
+            >
+              Renew / Upgrade
+            </Button>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setFreezeModalOpen(true)}
-            icon={<PauseCircle className="w-3.5 h-3.5" />}
-          >
-            Pause Membership
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setUpgradeModalOpen(true)}
-            icon={<Sparkles className="w-3.5 h-3.5" />}
-          >
-            Renew / Upgrade
-          </Button>
-        </div>
-      </div>
-
-      {/* Signature Rolling QR Digital Turnstile Pass Card */}
-      <div className="p-6 sm:p-8 rounded-3xl glass-card border border-[var(--aurora-1)]/40 relative overflow-hidden shadow-2xl shadow-[var(--aurora-1)]/10">
-        {/* Ambient background glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-[var(--aurora-1)]/15 to-transparent blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          {/* Member Details */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[var(--aurora-1)]/15 text-[var(--aurora-1)] border border-[var(--aurora-1)]/30">
-                {state.planTier}
-              </span>
-              <span className="text-xs text-[var(--app-text-muted)] font-mono">
-                {state.daysRemaining} days remaining
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--app-text-primary)] tracking-tight">
-                {state.memberName}
-              </h2>
-              <p className="font-mono text-xs text-[var(--app-text-secondary)] mt-0.5">
-                {state.memberCode} · {state.phone}
-              </p>
-            </div>
-
-            <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-[var(--app-text-muted)]">
-              <span>Valid Thru: <strong className="text-[var(--app-text-primary)]">{state.expiryDate}</strong></span>
-              <span>·</span>
-              <span>Access: <strong className="text-[var(--aurora-1)]">Turnstile Gate 1 & 2</strong></span>
-            </div>
-          </div>
-
-          {/* Dynamic Rolling QR Box */}
-          <div className="flex flex-col items-center gap-2.5 bg-black/40 p-4 rounded-2xl border border-[var(--aurora-1)]/30 backdrop-blur-md">
-            <div className="w-36 h-36 rounded-xl bg-white p-2.5 flex items-center justify-center shadow-inner relative">
-              {/* Animated QR Code pattern mockup */}
-              <div className="w-full h-full border-2 border-black p-1 flex flex-col justify-between">
-                <div className="flex justify-between">
-                  <div className="w-7 h-7 bg-black rounded-xs" />
-                  <div className="w-7 h-7 bg-black rounded-xs" />
+      {/* Main Grid: 2-Column with Right Rail */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left / Main Column (8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Member Feature Card with Signature TokenReadout */}
+          <Card variant="feature" className="p-6 sm:p-7 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              {/* Left Details */}
+              <div className="space-y-4">
+                {/* Plan Badge */}
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-data font-bold tracking-[0.10em] uppercase bg-[rgba(244,63,94,0.14)] text-[var(--accent)] border border-[rgba(244,63,94,0.30)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+                    {state?.planTier || 'PLATINUM ALL-ACCESS'} · {state?.daysRemaining ?? 218} DAYS LEFT
+                  </span>
                 </div>
-                <div className="flex items-center justify-center font-mono text-[0.625rem] font-black text-black">
-                  DNA 360
+
+                {/* Member Name & Code */}
+                <div>
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--ink)] tracking-tight">
+                    {state?.memberName || 'Aarav Shah'}
+                  </h2>
+                  <p className="font-data text-xs text-[var(--muted)] mt-1 tracking-wide">
+                    {state?.memberCode || 'DNA-POW-2025-0892'} · {maskedPhone}
+                  </p>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div className="w-7 h-7 bg-black rounded-xs" />
-                  <div className="w-4 h-4 bg-black rounded-xs" />
+
+                {/* Sub Metadata Row */}
+                <div className="pt-2 flex flex-wrap items-center gap-6 sm:gap-10 text-xs">
+                  <div>
+                    <span className="font-data text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] block">
+                      VALID THRU
+                    </span>
+                    <span className="font-data text-[13px] font-semibold text-[var(--ink)] mt-0.5 block">
+                      {state?.expiryDate || '15 Mar 2027'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="font-data text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] block">
+                      ACCESS
+                    </span>
+                    <span className="font-ui text-[13px] font-medium text-[var(--ink)] mt-0.5 block">
+                      Turnstile Gate 1 & 2
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="font-data text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] block">
+                      STATUS
+                    </span>
+                    <span className="font-data text-[12px] font-bold text-[var(--green)] mt-0.5 block">
+                      Active
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {/* Right: Signature TokenReadout */}
+              <div className="pt-4 md:pt-0 md:border-l md:border-[var(--line)] md:pl-8 flex flex-col justify-center">
+                <TokenReadout initialTtlSeconds={30} />
+              </div>
             </div>
+          </Card>
 
-            {/* Rolling 30s Countdown Timer Ring */}
-            <div className="flex items-center gap-2 text-xs font-mono text-[var(--app-text-muted)]">
-              <span className="w-2 h-2 rounded-full bg-[var(--app-success)] animate-ping" />
-              <span>Token: <strong className="text-[var(--aurora-1)]">{state.qrToken}</strong></span>
-              <span>({countdown}s)</span>
-            </div>
+          {/* 4 Stat Tiles Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <StatTile
+              label="STREAK"
+              value={state?.attendanceStreak ?? 14}
+              unit="days"
+              icon={<Flame className="w-4 h-4 text-[var(--accent)]" />}
+            />
+            <StatTile
+              label="TOTAL VISITS"
+              value={state?.totalVisits ?? 142}
+              icon={<Activity className="w-4 h-4 text-[var(--accent)]" />}
+            />
+            <StatTile
+              label="PT BALANCE"
+              value={`${state?.ptSessionsRemaining ?? 8} / ${state?.ptSessionsTotal ?? 12}`}
+              icon={<Dumbbell className="w-4 h-4 text-[var(--accent)]" />}
+            />
+            <StatTile
+              label="HYDRATION"
+              value={currentWater}
+              unit="ml"
+              icon={<Droplets className="w-4 h-4 text-[var(--accent)]" />}
+            />
           </div>
-        </div>
-      </div>
 
-      {/* Top 4 KPI Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Attendance Streak"
-          value={`${state.attendanceStreak} Days`}
-          strandValue={state.attendanceStreak}
-          strandMax={7}
-          icon={<Activity className="w-4 h-4 text-[var(--teal)]" />}
-        />
-        <StatCard
-          label="Total Gym Visits"
-          value={state.totalVisits}
-          suffix=" visits"
-          icon={<Trophy className="w-4 h-4 text-[var(--teal)]" />}
-        />
-        <StatCard
-          label="PT Coaching Balance"
-          value={state.ptSessionsRemaining ?? 0}
-          suffix={` / ${state.ptSessionsTotal ?? 0} left`}
-          strandValue={state.ptSessionsRemaining ?? 0}
-          strandMax={state.ptSessionsTotal || 12}
-          icon={<Dumbbell className="w-4 h-4 text-[var(--blue)]" />}
-        />
-        <StatCard
-          label="Daily Hydration"
-          value={`${state.waterIntakeMl} ml`}
-          suffix={` / ${state.waterTargetMl}`}
-          strandValue={state.waterIntakeMl}
-          strandMax={state.waterTargetMl}
-          icon={<Droplets className="w-4 h-4 text-[var(--ok)]" />}
-        />
-      </div>
-
-      {/* Hydration Quick-Log & Strand Meter */}
-      <div className="card p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Droplets className="w-4 h-4 text-[var(--teal)]" />
-            <h3 className="font-ui text-sm font-semibold text-[var(--text)]">
-              Daily Water Hydration Tracker
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => handleAddWater(250)} icon={<Plus className="w-3 h-3" />}>
-              +250ml
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => handleAddWater(500)} icon={<Plus className="w-3 h-3" />}>
-              +500ml
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-          <div className="flex items-baseline gap-2 font-data text-xs tabular-nums">
-            <span className="text-[var(--text-muted)]">{state.waterIntakeMl} ml logged</span>
-            <span className="font-medium text-[var(--teal)]">({waterPct}% of 3.5L goal)</span>
-          </div>
-          <StrandMeter value={state.waterIntakeMl} max={state.waterTargetMl} capsules={7} size="md" />
-        </div>
-      </div>
-
-      {/* Grid: Today's Workout Routine + Upcoming Group Classes */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Today's Workout Checklist */}
-        <GlassCard padding="md" className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between border-b border-[var(--app-glass-border)] pb-3">
-            <div>
-              <h3 className="font-display text-base font-semibold text-[var(--app-text-primary)]">
-                Today's Workout Routine
+          {/* Daily Water Hydration Tracker Card */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-ui text-base font-semibold text-[var(--ink)]">
+                Daily Water Hydration
               </h3>
-              <p className="text-xs text-[var(--app-text-muted)]">
-                Day 1: Upper Body Push · Coach: Rajesh Poojary
-              </p>
+              <span className="font-data text-xs font-semibold text-[var(--muted)] tracking-wider">
+                {waterPct}% OF {(targetWater / 1000).toFixed(1)}L
+              </span>
             </div>
-            <Link href="/trainers/clients/mem_001">
-              <Button variant="ghost" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />}>
-                Full Routine
+
+            {/* Progress Bar */}
+            <div className="mt-4 h-2.5 w-full rounded-full bg-[var(--surface-2)] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#F43F5E] to-[#E11D48] transition-all duration-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]"
+                style={{ width: `${waterPct}%` }}
+              />
+            </div>
+
+            {/* Quick Actions & Target Subtext */}
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <p className="font-data text-xs text-[var(--muted)]">
+                <span className="font-semibold text-[var(--ink)]">{currentWater} ml</span> logged · goal {targetWater} ml
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleAddWater(250)}
+                >
+                  +250 ml
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleAddWater(500)}
+                >
+                  +500 ml
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Today's Routine Card */}
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-ui text-base font-semibold text-[var(--ink)]">
+                  Today's Routine
+                </h3>
+                <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                  Day 1 · Upper Body Push — Coach Rajesh Poojary
+                </p>
+              </div>
+              <Button variant="secondary" size="sm">
+                Full routine
               </Button>
-            </Link>
-          </div>
+            </div>
 
-          <div className="space-y-3">
-            {[
-              { id: 'ex1', name: 'Barbell Incline Bench Press', sets: '4 Sets', reps: '8-10 Reps', weight: '75 kg', note: '3-sec eccentric tempo' },
-              { id: 'ex2', name: 'Flat Dumbbell Press', sets: '3 Sets', reps: '10-12 Reps', weight: '32 kg', note: 'Full chest stretch' },
-              { id: 'ex3', name: 'Standing Cable Lateral Raises', sets: '4 Sets', reps: '12-15 Reps', weight: '12.5 kg', note: 'Constant tension' },
-              { id: 'ex4', name: 'Overhead Rope Tricep Extension', sets: '3 Sets', reps: '12-15 Reps', weight: '25 kg', note: 'Lockout contraction' },
-            ].map((ex) => (
-              <div key={ex.id} className="p-3 rounded-xl glass-input space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h5 className="font-semibold text-[var(--app-text-primary)]">{ex.name}</h5>
-                    <span className="text-[0.6875rem] text-[var(--app-text-muted)]">{ex.note}</span>
-                  </div>
-                  <span className="font-mono font-bold text-[var(--aurora-1)]">{ex.weight}</span>
-                </div>
+            {/* Routine Item */}
+            <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="font-ui text-sm font-semibold text-[var(--ink)] block">
+                  Barbell Incline Bench Press
+                </span>
+                <span className="font-ui text-xs text-[var(--muted)] mt-0.5 block">
+                  3-sec eccentric tempo
+                </span>
+              </div>
 
-                <div className="flex items-center gap-2 pt-1 border-t border-[var(--app-glass-border)]">
-                  <span className="text-[0.6875rem] text-[var(--app-text-muted)] font-mono">{ex.sets} × {ex.reps}</span>
-                  <div className="flex-1" />
-                  <button
-                    type="button"
-                    onClick={() => toggleSet(`${ex.id}_s1`)}
-                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-[var(--app-text-secondary)] hover:text-[var(--aurora-1)]"
-                  >
-                    {completedSets[`${ex.id}_s1`] ? (
-                      <CheckSquare className="w-3.5 h-3.5 text-[var(--app-success)]" />
-                    ) : (
-                      <Square className="w-3.5 h-3.5 text-[var(--app-text-muted)]" />
-                    )}
-                    <span>Set 1</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleSet(`${ex.id}_s2`)}
-                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-[var(--app-text-secondary)] hover:text-[var(--aurora-1)]"
-                  >
-                    {completedSets[`${ex.id}_s2`] ? (
-                      <CheckSquare className="w-3.5 h-3.5 text-[var(--app-success)]" />
-                    ) : (
-                      <Square className="w-3.5 h-3.5 text-[var(--app-text-muted)]" />
-                    )}
-                    <span>Set 2</span>
-                  </button>
+              <div className="flex items-center gap-4 text-xs font-data">
+                <span className="text-[var(--ink-2)] font-semibold">75 kg</span>
+                <span className="text-[var(--muted)]">4 × 8–10</span>
+                <div className="flex items-center gap-1.5">
+                  {(['ex1_s1', 'ex1_s2', 'ex1_s3', 'ex1_s4'] as const).map((setId, i) => (
+                    <button
+                      key={setId}
+                      onClick={() => toggleSet(setId)}
+                      className={cn(
+                        'w-6 h-6 rounded flex items-center justify-center font-data text-[10.5px] font-bold transition-all cursor-pointer',
+                        completedSets[setId]
+                          ? 'bg-[var(--accent)] text-white shadow-[0_0_8px_rgba(244,63,94,0.5)]'
+                          : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white'
+                      )}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </GlassCard>
-
-        {/* Right: Upcoming Group Classes */}
-        <GlassCard padding="md" className="lg:col-span-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-[var(--app-glass-border)] pb-3">
-            <h3 className="font-display text-base font-semibold text-[var(--app-text-primary)]">
-              My Class Bookings ({bookings.length})
-            </h3>
-            <Link href="/classes">
-              <Button variant="ghost" size="sm">
-                Book Class
-              </Button>
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {bookings.length > 0 ? (
-              bookings.map((booking) => (
-                <div key={booking.id} className="p-3.5 rounded-xl glass-input space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-[var(--aurora-1)]">{booking.time}</span>
-                    <StatusPill status="success">{booking.status.toUpperCase()}</StatusPill>
-                  </div>
-
-                  <div>
-                    <h5 className="font-semibold text-[var(--app-text-primary)]">{booking.classTitle}</h5>
-                    <p className="text-[0.6875rem] text-[var(--app-text-muted)] mt-0.5">
-                      Coach: {booking.instructorName} · {booking.studioName}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-[var(--app-glass-border)] flex items-center justify-between">
-                    <span className="font-mono text-[0.6875rem] text-[var(--app-text-muted)]">{booking.date}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleCancelBooking(booking.id)}
-                      className="text-[0.6875rem] text-[var(--app-danger)] hover:underline"
-                    >
-                      Cancel Spot
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-[var(--app-text-muted)] text-center py-8">
-                No active class reservations.
-              </p>
-            )}
-          </div>
-
-          {/* Membership & Tax Invoice Quick Download */}
-          <div className="p-4 rounded-xl glass-card border border-[var(--app-glass-border)] space-y-2 pt-4">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-[var(--app-text-primary)]">Tax Invoice (2026-27)</span>
-              <Link href="/billing/invoices/inv_001">
-                <span className="font-mono text-[var(--aurora-1)] flex items-center gap-1 hover:underline">
-                  <Download className="w-3 h-3" />
-                  PDF (₹56,640)
-                </span>
-              </Link>
             </div>
-            <p className="text-[0.6875rem] text-[var(--app-text-muted)]">
-              SAC 999723 · 18% GST (₹8,640) breakdown available for personal income tax / corporate reimbursement.
+          </Card>
+        </div>
+
+        {/* Right Rail Column (4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Card 1: Access This Week */}
+          <Card className="p-6 space-y-4">
+            <div>
+              <span className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] block">
+                ACCESS · THIS WEEK
+              </span>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="font-display text-4xl font-semibold text-[var(--ink)] tabular-nums">
+                  5
+                </span>
+                <span className="font-ui text-xs text-[var(--muted)]">
+                  Gym visits logged
+                </span>
+              </div>
+            </div>
+
+            {/* Weekly Bar Graph */}
+            <div className="pt-2 flex items-end justify-between gap-2 h-24 px-1">
+              {[
+                { day: 'M', h: 65, active: true },
+                { day: 'T', h: 80, active: true },
+                { day: 'W', h: 50, active: true },
+                { day: 'T', h: 100, active: true },
+                { day: 'F', h: 90, active: true },
+                { day: 'S', h: 30, active: false },
+                { day: 'S', h: 15, active: false },
+              ].map((item, idx) => (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                  <div
+                    className={cn(
+                      'w-full rounded-t-[4px] transition-all duration-300',
+                      item.active
+                        ? 'bg-gradient-to-t from-[#E11D48] to-[#F43F5E] shadow-[0_0_10px_rgba(244,63,94,0.4)]'
+                        : 'bg-[var(--surface-2)]'
+                    )}
+                    style={{ height: `${item.h}%` }}
+                  />
+                  <span className="font-data text-[10.5px] text-[var(--muted)] font-medium">
+                    {item.day}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Card 2: Gate Status */}
+          <Card className="p-6 space-y-2.5">
+            <span className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] block">
+              GATE STATUS
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[var(--green)] shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
+              <span className="font-ui text-sm font-semibold text-[var(--ink)]">
+                Turnstile online · ready
+              </span>
+            </div>
+            <p className="font-ui text-xs text-[var(--muted)] leading-relaxed">
+              Token rotates every 30s. Present the code above at Gate 1 or 2.
             </p>
-          </div>
-        </GlassCard>
+          </Card>
+
+          {/* Card 3: PT Coaching */}
+          <Card className="p-6 space-y-3">
+            <span className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] block">
+              PT COACHING
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-3xl font-semibold text-[var(--ink)] tabular-nums">
+                8
+              </span>
+              <span className="font-ui text-xs text-[var(--muted)]">
+                of 12 sessions left
+              </span>
+            </div>
+            {/* Progress bar */}
+            <div className="h-2 w-full rounded-full bg-[var(--surface-2)] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#F43F5E] to-[#E11D48]"
+                style={{ width: `${(8 / 12) * 100}%` }}
+              />
+            </div>
+          </Card>
+
+          {/* Card 4: Tax Invoice */}
+          <Card className="p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
+                TAX INVOICE · 2026-27
+              </span>
+              <Button variant="secondary" size="sm" icon={<FileText className="w-3.5 h-3.5" />}>
+                PDF
+              </Button>
+            </div>
+            <div>
+              <div className="font-display text-2xl font-semibold text-[var(--ink)] tabular-nums">
+                ₹56,640
+              </div>
+              <p className="font-data text-[11px] text-[var(--muted)] mt-1">
+                SAC 999723 · 18% GST (₹8,640)
+              </p>
+            </div>
+          </Card>
+        </div>
       </div>
 
       {/* Modals */}
       <MemberFreezeRequestModal
         open={freezeModalOpen}
         onOpenChange={setFreezeModalOpen}
-        onRequestSubmitted={refreshData}
+        onRequested={() => refreshData()}
       />
-
       <MemberUpgradeModal
         open={upgradeModalOpen}
         onOpenChange={setUpgradeModalOpen}
-        onUpgraded={refreshData}
+        onUpgraded={() => refreshData()}
       />
     </div>
   )

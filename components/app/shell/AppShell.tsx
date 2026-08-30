@@ -5,7 +5,6 @@ import Sidebar, { SidebarProvider, useSidebar } from './Sidebar'
 import TopBar from './TopBar'
 import { cn } from '@/lib/utils'
 import type { RoleName } from '@/types'
-
 import { useAuth } from '@/context/AuthContext'
 import { usePathname } from 'next/navigation'
 
@@ -22,7 +21,6 @@ function AppShellInner({
 
   const isAuthRoute = pathname === '/login' || pathname === '/forgot-password'
 
-  // Standalone layout for login / forgot-password
   if (isAuthRoute) {
     return <div className="min-h-screen relative z-10">{children}</div>
   }
@@ -37,11 +35,11 @@ function AppShellInner({
       {/* Main content area */}
       <main
         className={cn(
-          'pt-16 min-h-screen transition-all duration-250',
-          collapsed ? 'pl-[72px]' : 'pl-[260px]'
+          'pt-16 min-h-screen transition-all duration-200',
+          collapsed ? 'md:pl-[68px]' : 'md:pl-[250px]'
         )}
       >
-        <div className="p-6 lg:p-8">
+        <div className="p-5 sm:p-7 lg:p-9 max-w-[1560px] mx-auto">
           {children}
         </div>
       </main>

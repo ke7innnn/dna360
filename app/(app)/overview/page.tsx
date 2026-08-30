@@ -7,17 +7,19 @@ import {
   Clock, ShieldAlert, FileSignature, ArrowUpRight,
   ChevronRight, Calendar, Sparkles,
 } from 'lucide-react'
-import { Button } from '@/components/app/ui/button'
-import { Badge } from '@/components/app/ui/badge'
-import { KpiPanel } from '@/components/app/ui/KpiPanel'
-import { StrandMeter } from '@/components/app/ui/StrandMeter'
+import Button from '@/components/app/ui/button'
+import Badge from '@/components/app/ui/badge'
+import Card from '@/components/app/ui/glass-card'
+import KpiPanel from '@/components/app/ui/KpiPanel'
+import StrandMeter from '@/components/app/ui/StrandMeter'
+import PageHeader from '@/components/app/ui/PageHeader'
 import {
   getExecutiveKpis,
   getRevenueMix,
   getCohortData,
   getGstTaxReport,
 } from '@/lib/analytics'
-import { formatINR } from '@/lib/utils'
+import { formatINR } from '@/lib/gst'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
@@ -123,79 +125,75 @@ export default function OverviewPage() {
   ]
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. Header: Display Type & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        <div>
-          <span className="font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-faint)]">
-            Command & Operations Hub
-          </span>
-          <h1 className="font-display text-[28px] sm:text-[30px] leading-[34px] font-semibold text-[var(--text)] tracking-[-0.02em] mt-0.5">
-            Executive Overview
-          </h1>
-        </div>
+    <div className="space-y-7 max-w-7xl mx-auto select-none">
+      {/* 1. Header */}
+      <PageHeader
+        eyebrow="EXECUTIVE DASHBOARD · POWAI FLAGSHIP"
+        title="Executive Overview"
+        description="Live operational command metrics, revenue velocity, GST compliance, and retention health across Powai Flagship."
+        actions={
+          <>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-sm)] bg-[var(--surface)] border border-[var(--line)] font-data text-xs text-[var(--ink)] select-none">
+              <Calendar className="w-3.5 h-3.5 text-[var(--muted)]" />
+              <span>{dateRange}</span>
+            </div>
 
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] font-data text-xs text-[var(--text)] select-none">
-            <Calendar className="w-3.5 h-3.5 text-[var(--text-faint)]" />
-            <span>{dateRange}</span>
-          </div>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleExportGstr1}
-            icon={<Download className="w-3.5 h-3.5" />}
-          >
-            Export GSTR-1
-          </Button>
-
-          <Link href="/billing">
             <Button
-              variant="primary"
-              size="sm"
-              icon={<Receipt className="w-3.5 h-3.5" />}
+              variant="secondary"
+              size="md"
+              onClick={handleExportGstr1}
+              icon={<Download className="w-3.5 h-3.5" />}
             >
-              Billing Hub
+              Export GSTR-1
             </Button>
-          </Link>
-        </div>
-      </div>
+
+            <Link href="/billing">
+              <Button
+                variant="primary"
+                size="md"
+                icon={<Receipt className="w-3.5 h-3.5" />}
+              >
+                Billing Hub
+              </Button>
+            </Link>
+          </>
+        }
+      />
 
       {/* 2. Four KPI Cells in One Bordered Panel */}
       <KpiPanel cells={kpiCells} />
 
-      {/* 3. Needs Attention Panel — Full Width Direct Operations Action */}
-      <div className="w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] overflow-hidden">
+      {/* 3. Needs Attention Panel */}
+      <Card className="overflow-hidden">
         {/* Panel Header */}
-        <div className="px-4 py-3 bg-[var(--surface-sunken)] border-b border-[var(--line)] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-[var(--warn)]" />
-            <h2 className="font-ui text-xs uppercase tracking-[0.06em] font-semibold text-[var(--text)]">
+        <div className="px-5 py-3.5 bg-[var(--bg-elev)] border-b border-[var(--line)] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-[var(--amber)]" />
+            <h2 className="font-data text-xs uppercase tracking-[0.16em] font-semibold text-[var(--ink)]">
               Needs Immediate Attention ({needsAttentionItems.length})
             </h2>
           </div>
-          <span className="font-ui text-[11px] text-[var(--text-faint)]">
+          <span className="font-ui text-xs text-[var(--muted)] hidden sm:inline">
             Expiring memberships, unclaimed entitlements & unsigned waivers
           </span>
         </div>
 
         {/* Attention Items List */}
-        <div className="divide-y divide-[var(--line)]">
+        <div className="divide-y divide-[var(--line-soft)]">
           {needsAttentionItems.map((item) => (
             <div
               key={item.id}
-              className="p-3.5 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[var(--surface-raised)] transition-colors duration-140"
+              className="p-4 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[var(--surface-2)] transition-colors duration-140"
             >
               <div className="flex items-start sm:items-center gap-3">
                 <Badge status={item.badgeStatus} size="sm">
                   {item.category}
                 </Badge>
                 <div>
-                  <p className="font-ui text-[13.5px] font-medium text-[var(--text)]">
+                  <p className="font-ui text-[13.5px] font-medium text-[var(--ink)]">
                     {item.title}
                   </p>
-                  <p className="font-ui text-[12px] text-[var(--text-faint)] mt-0.5">
+                  <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
                     {item.subtitle}
                   </p>
                 </div>
@@ -203,7 +201,7 @@ export default function OverviewPage() {
 
               <Link
                 href={item.link}
-                className="inline-flex items-center gap-1.5 font-ui text-xs font-medium text-[var(--teal)] hover:text-[var(--blue)] hover:underline whitespace-nowrap self-end sm:self-center"
+                className="inline-flex items-center gap-1.5 font-ui text-xs font-semibold text-[var(--accent)] hover:underline whitespace-nowrap self-end sm:self-center"
               >
                 <span>{item.actionLabel}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -211,64 +209,64 @@ export default function OverviewPage() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
-      {/* 4. Below the Fold: Revenue Mix & Cohort Retention */}
+      {/* 4. Revenue Mix & Cohort Retention Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Stream Breakdown */}
-        <div className="card p-5 flex flex-col justify-between">
+        <Card className="p-6 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4">
-              <h3 className="font-ui text-[14px] font-semibold text-[var(--text)]">
+            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3.5 mb-5">
+              <h3 className="font-display text-base font-semibold text-[var(--ink)]">
                 Revenue Streams Mix
               </h3>
-              <span className="font-ui text-[11px] uppercase tracking-wider text-[var(--text-faint)]">
+              <span className="font-data text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
                 MTD Actuals
               </span>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4.5">
               <div>
                 <div className="flex items-center justify-between font-ui text-xs mb-1.5">
-                  <span className="text-[var(--text-muted)]">Gym & Studio Memberships</span>
-                  <span className="font-data tabular-nums text-[var(--text)] font-medium">74% · ₹13.61L</span>
+                  <span className="text-[var(--ink-2)] font-medium">Gym & Studio Memberships</span>
+                  <span className="font-data tabular-nums text-[var(--ink)] font-semibold">74% · ₹13.61L</span>
                 </div>
                 <StrandMeter value={74} max={100} capsules={7} size="sm" />
               </div>
 
               <div>
                 <div className="flex items-center justify-between font-ui text-xs mb-1.5">
-                  <span className="text-[var(--text-muted)]">Personal Training Tiers</span>
-                  <span className="font-data tabular-nums text-[var(--text)] font-medium">22% · ₹4.04L</span>
+                  <span className="text-[var(--ink-2)] font-medium">Personal Training Tiers</span>
+                  <span className="font-data tabular-nums text-[var(--ink)] font-semibold">22% · ₹4.04L</span>
                 </div>
                 <StrandMeter value={22} max={100} capsules={7} size="sm" />
               </div>
 
               <div>
                 <div className="flex items-center justify-between font-ui text-xs mb-1.5">
-                  <span className="text-[var(--text-muted)]">Lockers & Ancillary</span>
-                  <span className="font-data tabular-nums text-[var(--text)] font-medium">4% · ₹73.6K</span>
+                  <span className="text-[var(--ink-2)] font-medium">Lockers & Ancillary</span>
+                  <span className="font-data tabular-nums text-[var(--ink)] font-semibold">4% · ₹73.6K</span>
                 </div>
                 <StrandMeter value={4} max={100} capsules={7} size="sm" />
               </div>
             </div>
           </div>
 
-          <div className="pt-4 mt-4 border-t border-[var(--line)] flex items-center justify-between font-data text-xs text-[var(--text-faint)] tabular-nums">
+          <div className="pt-4 mt-5 border-t border-[var(--line)] flex items-center justify-between font-data text-xs text-[var(--muted)] tabular-nums">
             <span>Total Gross Invoiced</span>
-            <span className="font-medium text-[var(--text)]">₹18,40,000</span>
+            <span className="font-semibold text-[var(--ink)] text-sm">₹18,40,000</span>
           </div>
-        </div>
+        </Card>
 
         {/* Member Retention & Cohort Decay Matrix */}
-        <div className="card p-5 lg:col-span-2 flex flex-col justify-between">
+        <Card className="p-6 lg:col-span-2 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4">
+            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3.5 mb-4">
               <div>
-                <h3 className="font-ui text-[14px] font-semibold text-[var(--text)]">
+                <h3 className="font-display text-base font-semibold text-[var(--ink)]">
                   Monthly Member Retention Curves
                 </h3>
-                <p className="font-ui text-[12px] text-[var(--text-faint)] mt-0.5">
+                <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
                   Cohort survival rate after 1, 3, 6, and 12 months
                 </p>
               </div>
@@ -277,11 +275,11 @@ export default function OverviewPage() {
               </Badge>
             </div>
 
-            {/* Dense Cohort Table */}
+            {/* Cohort Table */}
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-[var(--line)] font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)] h-7">
+                  <tr className="border-b border-[var(--line)] font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] h-8">
                     <th className="text-left pb-1">Cohort</th>
                     <th className="text-right pb-1">Size</th>
                     <th className="text-right pb-1">Month 1</th>
@@ -290,15 +288,15 @@ export default function OverviewPage() {
                     <th className="text-right pb-1">Month 12</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--line)]">
+                <tbody className="divide-y divide-[var(--line-soft)]">
                   {cohorts.map((c) => (
-                    <tr key={c.cohort} className="h-9 hover:bg-[var(--surface-raised)] transition-colors">
-                      <td className="font-ui text-xs font-medium text-[var(--text)]">{c.cohort}</td>
-                      <td className="font-data text-xs text-right tabular-nums text-[var(--text-muted)]">{c.size}</td>
-                      <td className="font-data text-xs text-right tabular-nums text-[var(--ok)]">{c.month1}%</td>
-                      <td className="font-data text-xs text-right tabular-nums text-[var(--ok)]">{c.month3}%</td>
-                      <td className="font-data text-xs text-right tabular-nums text-[var(--text)]">{c.month6}%</td>
-                      <td className="font-data text-xs text-right tabular-nums text-[var(--text-faint)]">{c.month12}%</td>
+                    <tr key={c.cohort} className="h-10 hover:bg-[var(--surface-2)] transition-colors">
+                      <td className="font-ui text-xs font-semibold text-[var(--ink)]">{c.cohort}</td>
+                      <td className="font-data text-xs text-right tabular-nums text-[var(--muted)]">{c.size}</td>
+                      <td className="font-data text-xs text-right tabular-nums font-medium text-[var(--green)]">{c.month1}%</td>
+                      <td className="font-data text-xs text-right tabular-nums font-medium text-[var(--green)]">{c.month3}%</td>
+                      <td className="font-data text-xs text-right tabular-nums text-[var(--ink)]">{c.month6}%</td>
+                      <td className="font-data text-xs text-right tabular-nums text-[var(--muted)]">{c.month12}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -306,11 +304,11 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[var(--line)] flex items-center justify-between text-xs font-ui text-[var(--text-faint)]">
-            <span>Industry Benchmark: 62% M12</span>
-            <span className="text-[var(--ok)] font-medium">+11% Above Target</span>
+          <div className="pt-3.5 border-t border-[var(--line)] flex items-center justify-between text-xs font-ui text-[var(--muted)]">
+            <span className="font-data text-[11px]">Industry Benchmark: 62% M12</span>
+            <span className="text-[var(--green)] font-semibold">+11% Above Target</span>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )

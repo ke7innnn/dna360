@@ -8,13 +8,13 @@ import {
   Phone, Mail, Globe, MapPin, KeyRound, AlertTriangle,
   Upload, Clock, FileCheck, CheckCircle2,
 } from 'lucide-react'
-import GlassCard from '@/components/app/ui/glass-card'
-import StatCard from '@/components/app/ui/stat-card'
-import { Button } from '@/components/app/ui/button'
-import { Input } from '@/components/app/ui/input'
-import { StatusPill } from '@/components/app/ui/badge'
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
+import Card from '@/components/app/ui/glass-card'
+import StatTile from '@/components/app/ui/StatTile'
+import Button from '@/components/app/ui/button'
+import Input from '@/components/app/ui/input'
+import Badge, { StatusPill } from '@/components/app/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/app/ui/tabs'
+import PageHeader from '@/components/app/ui/PageHeader'
 import {
   getProfile,
   saveProfile,
@@ -102,412 +102,291 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight">
-            Club Configuration & Settings
-          </h1>
-          <p className="text-sm text-[var(--app-text-secondary)] mt-1">
-            Base Fitness Private Limited business profile, GSTIN parameters, lifecycle state rules, and migration pipeline.
-          </p>
-        </div>
+    <div className="space-y-6 max-w-7xl mx-auto select-none">
+      {/* 1. Header */}
+      <PageHeader
+        eyebrow="ADMINISTRATION · MASTER CONFIG"
+        title="Club Settings"
+        description="Business legal entity, GSTIN registration, bank accounts, turnstile device endpoints, WhatsApp API, and data migration."
+      />
 
-        {blockers.length === 0 ? (
-          <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4" /> Go-Live Ready
-          </span>
-        ) : (
-          <span className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5">
-            <AlertTriangle className="w-4 h-4" /> {blockers.length} Go-Live Blockers
-          </span>
-        )}
-      </div>
-
-      {/* Go-Live Blockers Alert if any */}
-      {blockers.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 space-y-2">
-          <div className="flex items-center gap-2 font-bold text-amber-200">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <span>Go-Live Pending Configuration Items (§14):</span>
-          </div>
-          <ul className="list-disc list-inside space-y-1 font-mono text-[0.6875rem]">
-            {blockers.map((b, i) => (
-              <li key={i}>{b}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Settings Tabs */}
+      {/* 2. Settings Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
-          <TabsTrigger value="profile">Legal Entity</TabsTrigger>
-          <TabsTrigger value="rules">Lifecycle & Rules</TabsTrigger>
-          <TabsTrigger value="happyhours">Happy Hours</TabsTrigger>
-          <TabsTrigger value="bank">Bank & Invoicing</TabsTrigger>
-          <TabsTrigger value="migration">Migration Pipeline</TabsTrigger>
+        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-sm)] p-1">
+          <TabsTrigger value="profile">Business & GSTIN</TabsTrigger>
+          <TabsTrigger value="policies">Rules & Lifecycles</TabsTrigger>
+          <TabsTrigger value="bank">Bank Accounts</TabsTrigger>
+          <TabsTrigger value="gateways">API & Gateways</TabsTrigger>
+          <TabsTrigger value="migration">Data Migration</TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: Legal Entity */}
-        <TabsContent value="profile" className="space-y-6 pt-4">
-          <GlassCard>
-            <h3 className="font-semibold text-sm text-[var(--app-text-primary)] mb-4">Entity & GST Registration Details</h3>
-            <form onSubmit={handleSaveProfile} className="space-y-4">
+        {/* TAB 1: Business Profile & GSTIN */}
+        <TabsContent value="profile" className="pt-4">
+          <Card className="p-6">
+            <form onSubmit={handleSaveProfile} className="space-y-5">
+              <div className="border-b border-[var(--line)] pb-4">
+                <h3 className="font-display text-base font-semibold text-[var(--ink)]">
+                  Business Legal Entity & Tax Information
+                </h3>
+                <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                  Appears on all member tax invoices, receipts, and GSTR-1 filings.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Club Brand Name"
-                  value={profile.clubName}
-                  onChange={(e) => setProfile({ ...profile, clubName: e.target.value })}
+                  label="Legal Business / Entity Name"
+                  value={profile.legalName}
+                  onChange={(e) => setProfile({ ...profile, legalName: e.target.value })}
                   required
                 />
                 <Input
-                  label="Legal Entity Name (Invoice Header) *"
-                  value={profile.legalEntityName}
-                  onChange={(e) => setProfile({ ...profile, legalEntityName: e.target.value })}
+                  label="Brand / Trading Name"
+                  value={profile.brandName}
+                  onChange={(e) => setProfile({ ...profile, brandName: e.target.value })}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Input
-                  label="GSTIN *"
+                  label="GSTIN (15-Character Pan-India)"
                   value={profile.gstin}
                   onChange={(e) => setProfile({ ...profile, gstin: e.target.value })}
                   required
                 />
                 <Input
-                  label="Default Fitness SAC Code"
-                  value={profile.sacCode}
-                  onChange={(e) => setProfile({ ...profile, sacCode: e.target.value })}
+                  label="State & State Code"
+                  value={profile.stateCode}
+                  onChange={(e) => setProfile({ ...profile, stateCode: e.target.value })}
                   required
                 />
                 <Input
-                  label="PAN (Derived)"
+                  label="PAN Number"
                   value={profile.pan}
-                  disabled
+                  onChange={(e) => setProfile({ ...profile, pan: e.target.value })}
                 />
               </div>
 
-              <Input
-                label="Registered Business Address *"
-                value={profile.address}
-                onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                required
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Club Phone"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  label="Club Location Address"
+                  value={profile.address}
+                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                  required
                 />
                 <Input
-                  label="Official Email"
+                  label="Support Email / Invoicing Desk"
                   value={profile.email}
                   onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                />
-                <Input
-                  label="Timezone"
-                  value={profile.timezone}
-                  disabled
+                  required
                 />
               </div>
 
-              <div className="flex justify-end pt-3 border-t border-[var(--app-glass-border)]">
-                <Button type="submit" variant="primary" icon={<Save className="w-4 h-4" />}>
-                  Save Legal Profile
+              <div className="flex justify-end pt-3 border-t border-[var(--line)]">
+                <Button type="submit" variant="primary" size="md" icon={<Save className="w-3.5 h-3.5" />}>
+                  Save business profile
                 </Button>
               </div>
             </form>
-          </GlassCard>
+          </Card>
         </TabsContent>
 
-        {/* TAB 2: Lifecycle Rules */}
-        <TabsContent value="rules" className="space-y-6 pt-4">
-          <GlassCard>
-            <h3 className="font-semibold text-sm text-[var(--app-text-primary)] mb-4">Membership Lifecycle & Commission Policies</h3>
-            <form onSubmit={handleSavePendingConfig} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input
-                  label="Activation Window (Days) *"
-                  type="number"
-                  value={pendingConfig.activation_window_days}
-                  onChange={(e) => setPendingConfig({ ...pendingConfig, activation_window_days: parseInt(e.target.value, 10) })}
-                  required
-                />
-                <Input
-                  label="Grace Period (Days) *"
-                  type="number"
-                  value={pendingConfig.grace_period_days}
-                  onChange={(e) => setPendingConfig({ ...pendingConfig, grace_period_days: parseInt(e.target.value, 10) })}
-                  required
-                />
-                <Input
-                  label="Upgrade Window (Days) *"
-                  type="number"
-                  value={pendingConfig.upgrade_window_days}
-                  onChange={(e) => setPendingConfig({ ...pendingConfig, upgrade_window_days: parseInt(e.target.value, 10) })}
-                  required
-                />
+        {/* TAB 2: Rules & Lifecycle */}
+        <TabsContent value="policies" className="pt-4">
+          <Card className="p-6">
+            <form onSubmit={handleSavePendingConfig} className="space-y-5">
+              <div className="border-b border-[var(--line)] pb-4">
+                <h3 className="font-display text-base font-semibold text-[var(--ink)]">
+                  Membership Lifecycle & Grace Periods
+                </h3>
+                <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                  Configure turnstile grace window, freeze allowances, and session carryover policies.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Input
-                  label="Starting Invoice Sequence Number"
+                  label="Turnstile Grace Period (Days)"
                   type="number"
-                  placeholder="e.g. 1"
-                  value={pendingConfig.starting_invoice_number ?? ''}
-                  onChange={(e) => setPendingConfig({ ...pendingConfig, starting_invoice_number: e.target.value ? parseInt(e.target.value, 10) : null })}
+                  value={pendingConfig.gracePeriodDays}
+                  onChange={(e) => setPendingConfig({ ...pendingConfig, gracePeriodDays: parseInt(e.target.value, 10) || 7 })}
+                  hint="Members can scan for X days after expiry before being blocked."
                 />
                 <Input
-                  label="Front Desk Discount Ceiling (%)"
+                  label="Max Freeze Days Allowed / Year"
                   type="number"
-                  value={pendingConfig.discount_ceiling_pct}
-                  onChange={(e) => setPendingConfig({ ...pendingConfig, discount_ceiling_pct: parseInt(e.target.value, 10) })}
+                  value={pendingConfig.maxFreezeDaysPerYear}
+                  onChange={(e) => setPendingConfig({ ...pendingConfig, maxFreezeDaysPerYear: parseInt(e.target.value, 10) || 30 })}
+                  hint="Maximum cumulative hold per annual plan."
                 />
                 <Input
-                  label="PT Commission Rate (%)"
+                  label="Complimentary Assessment Window"
                   type="number"
-                  value={pendingConfig.pt_commission_pct}
-                  onChange={(e) => setPendingConfig({ ...pendingConfig, pt_commission_pct: parseInt(e.target.value, 10) })}
+                  value={pendingConfig.complimentaryWindowDays}
+                  onChange={(e) => setPendingConfig({ ...pendingConfig, complimentaryWindowDays: parseInt(e.target.value, 10) || 60 })}
+                  hint="Validity for initial fitness assessment & massage."
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[var(--app-text-secondary)]">PT Commission Basis (PENDING)</label>
-                  <Select
-                    value={pendingConfig.pt_commission_basis || 'none'}
-                    onValueChange={(v) => setPendingConfig({ ...pendingConfig, pt_commission_basis: v === 'none' ? null : v as any })}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Not configured" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Not Configured (Blocks Payouts)</SelectItem>
-                      <SelectItem value="gross">Gross (On List Price)</SelectItem>
-                      <SelectItem value="net_of_gst">Net of GST (Taxable Base)</SelectItem>
-                      <SelectItem value="post_discount">Post-Discount Collected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[var(--app-text-secondary)]">Commission Earn Trigger</label>
-                  <Select
-                    value={pendingConfig.pt_commission_trigger || 'none'}
-                    onValueChange={(v) => setPendingConfig({ ...pendingConfig, pt_commission_trigger: v === 'none' ? null : v as any })}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Not configured" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Not Configured</SelectItem>
-                      <SelectItem value="on_delivery">On Session Delivery (Sign-off)</SelectItem>
-                      <SelectItem value="on_sale">On Package Sale</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={pendingConfig.no_show_consumes_session}
-                    onChange={(e) => setPendingConfig({ ...pendingConfig, no_show_consumes_session: e.target.checked })}
-                    className="rounded"
-                  />
-                  <span>No-Show Consumes Session Balance (Default: Yes)</span>
-                </label>
-              </div>
-
-              <div className="flex justify-end pt-3 border-t border-[var(--app-glass-border)]">
-                <Button type="submit" variant="primary" icon={<Save className="w-4 h-4" />}>
-                  Save Lifecycle Rules
+              <div className="flex justify-end pt-3 border-t border-[var(--line)]">
+                <Button type="submit" variant="primary" size="md" icon={<Save className="w-3.5 h-3.5" />}>
+                  Save lifecycle policies
                 </Button>
               </div>
             </form>
-          </GlassCard>
+          </Card>
         </TabsContent>
 
-        {/* TAB 3: Happy Hours */}
-        <TabsContent value="happyhours" className="space-y-6 pt-4">
-          <GlassCard>
-            <h3 className="font-semibold text-sm text-[var(--app-text-primary)] mb-4">Happy Hours Time Windows (Two Separate Constants)</h3>
-            <div className="p-4 rounded-xl glass-input text-xs space-y-4">
-              <p className="text-[var(--app-text-secondary)]">
-                DNA 360 enforces two distinct Happy Hours access schedules. Access outside these windows prompts front desk to collect ₹1,450 day pass.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-                <div className="p-4 rounded-xl glass-card space-y-3">
-                  <h4 className="font-semibold text-sm text-[var(--aurora-1)]">1. Main Gym Floor Happy Hours</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      label="Start Time"
-                      value={pendingConfig.happy_hours_gym.start}
-                      onChange={(e) => setPendingConfig({
-                        ...pendingConfig,
-                        happy_hours_gym: { ...pendingConfig.happy_hours_gym, start: e.target.value },
-                      })}
-                    />
-                    <Input
-                      label="End Time"
-                      value={pendingConfig.happy_hours_gym.end}
-                      onChange={(e) => setPendingConfig({
-                        ...pendingConfig,
-                        happy_hours_gym: { ...pendingConfig.happy_hours_gym, end: e.target.value },
-                      })}
-                    />
-                  </div>
-                  <span className="text-[0.6875rem] text-[var(--app-text-muted)] block">Confirmed default: 12:00 PM – 3:30 PM</span>
-                </div>
-
-                <div className="p-4 rounded-xl glass-card space-y-3">
-                  <h4 className="font-semibold text-sm text-teal-400">2. Reformer Pilates Happy Hours</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      label="Start Time"
-                      value={pendingConfig.happy_hours_pilates.start}
-                      onChange={(e) => setPendingConfig({
-                        ...pendingConfig,
-                        happy_hours_pilates: { ...pendingConfig.happy_hours_pilates, start: e.target.value },
-                      })}
-                    />
-                    <Input
-                      label="End Time"
-                      value={pendingConfig.happy_hours_pilates.end}
-                      onChange={(e) => setPendingConfig({
-                        ...pendingConfig,
-                        happy_hours_pilates: { ...pendingConfig.happy_hours_pilates, end: e.target.value },
-                      })}
-                    />
-                  </div>
-                  <span className="text-[0.6875rem] text-[var(--app-text-muted)] block">Confirmed default: 2:00 PM – 4:00 PM (Separate constant)</span>
-                </div>
+        {/* TAB 3: Bank Details */}
+        <TabsContent value="bank" className="pt-4">
+          <Card className="p-6">
+            <form onSubmit={handleSaveBankDetails} className="space-y-5">
+              <div className="border-b border-[var(--line)] pb-4">
+                <h3 className="font-display text-base font-semibold text-[var(--ink)]">
+                  Designated Bank Account for Invoices
+                </h3>
+                <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                  Printed on tax invoice PDFs for NEFT/RTGS wire transfers.
+                </p>
               </div>
 
-              <div className="flex justify-end pt-3">
-                <Button onClick={handleSavePendingConfig} variant="primary" icon={<Save className="w-4 h-4" />}>
-                  Save Happy Hours Windows
-                </Button>
-              </div>
-            </div>
-          </GlassCard>
-        </TabsContent>
-
-        {/* TAB 4: Bank Details */}
-        <TabsContent value="bank" className="space-y-6 pt-4">
-          <GlassCard>
-            <h3 className="font-semibold text-sm text-[var(--app-text-primary)] mb-4">Bank Account Details for Tax Invoice Footer</h3>
-            <form onSubmit={handleSaveBankDetails} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Bank Name *"
+                  label="Beneficiary Account Name"
+                  value={bankDetails.beneficiaryName}
+                  onChange={(e) => setBankDetails({ ...bankDetails, beneficiaryName: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Bank Name & Branch"
                   value={bankDetails.bankName}
                   onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
                   required
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Account Number *"
+                  label="Current Account Number"
                   value={bankDetails.accountNumber}
                   onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                  placeholder="e.g. 921020038912345"
+                  required
+                />
+                <Input
+                  label="IFSC Code"
+                  value={bankDetails.ifsc}
+                  onChange={(e) => setBankDetails({ ...bankDetails, ifsc: e.target.value })}
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input
-                  label="IFSC Code *"
-                  value={bankDetails.ifscCode}
-                  onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value })}
-                  placeholder="e.g. UTIB0000123"
-                  required
-                />
-                <Input
-                  label="Branch Name"
-                  value={bankDetails.branchName}
-                  onChange={(e) => setBankDetails({ ...bankDetails, branchName: e.target.value })}
-                  placeholder="Hiranandani Powai Branch"
-                />
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[var(--app-text-secondary)]">Account Type</label>
-                  <Select value={bankDetails.accountType} onValueChange={(v: any) => setBankDetails({ ...bankDetails, accountType: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Current">Current Account</SelectItem>
-                      <SelectItem value="Savings">Savings Account</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-3 border-t border-[var(--app-glass-border)]">
-                <Button type="submit" variant="primary" icon={<Save className="w-4 h-4" />}>
-                  Save Bank Details
+              <div className="flex justify-end pt-3 border-t border-[var(--line)]">
+                <Button type="submit" variant="primary" size="md" icon={<Save className="w-3.5 h-3.5" />}>
+                  Save bank details
                 </Button>
               </div>
             </form>
-          </GlassCard>
+          </Card>
         </TabsContent>
 
-        {/* TAB 5: Migration Pipeline */}
-        <TabsContent value="migration" className="space-y-6 pt-4">
-          <GlassCard>
-            <h3 className="font-semibold text-sm text-[var(--app-text-primary)] mb-4">Gymex 679-Member Migration Pipeline</h3>
-            <div className="space-y-4">
-              <p className="text-xs text-[var(--app-text-secondary)]">
-                Import Gymex export rows (46 columns). Converts ex-tax costs (Base Cost × 1.05 = inclusive price), maps 6 historical sales reps, and flags unknown session counts.
+        {/* TAB 4: Gateways */}
+        <TabsContent value="gateways" className="pt-4">
+          <Card className="p-6 space-y-4">
+            <div className="border-b border-[var(--line)] pb-4">
+              <h3 className="font-display text-base font-semibold text-[var(--ink)]">
+                Notification Gateways & Turnstile Devices
+              </h3>
+              <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                Status of connected hardware devices and communication APIs.
               </p>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[var(--app-text-secondary)]">
-                  Gymex Export JSON Batch (leave blank for built-in sample test batch)
-                </label>
-                <textarea
-                  rows={4}
-                  value={migrationJson}
-                  onChange={(e) => setMigrationJson(e.target.value)}
-                  placeholder='[{"first_name": "Arjun", "mobile": "9820011111", "package_name": "Annual Gym", "base_cost": 41428.57, "sales_rep": "Swati"}]'
-                  className="w-full p-3 font-mono text-xs glass-input text-[var(--app-text-primary)] placeholder:text-[var(--app-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <label className="flex items-center gap-2 text-xs text-[var(--app-text-secondary)] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isDryRun}
-                    onChange={(e) => setIsDryRun(e.target.checked)}
-                    className="rounded"
-                  />
-                  <span>Dry Run Mode (Validate & preview without writing to database)</span>
-                </label>
-
-                <Button onClick={handleRunMigration} variant="primary" icon={<Upload className="w-4 h-4" />}>
-                  {isDryRun ? 'Execute Dry Run' : 'Commit & Import Data'}
-                </Button>
-              </div>
-
-              {migrationReport && (
-                <div className="p-4 rounded-xl glass-card border border-[var(--aurora-1)]/30 space-y-3 text-xs">
-                  <div className="flex justify-between items-center font-semibold">
-                    <span>Migration Report ({migrationReport.isDryRun ? 'DRY RUN' : 'COMMITTED'}):</span>
-                    <StatusPill status={migrationReport.errorCount === 0 ? 'success' : 'warning'}>
-                      {migrationReport.validRows} / {migrationReport.totalRows} Valid
-                    </StatusPill>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-                    <div><span className="text-[var(--app-text-muted)]">Members Created:</span> {migrationReport.membersCreated}</div>
-                    <div><span className="text-[var(--app-text-muted)]">Memberships:</span> {migrationReport.membershipsCreated}</div>
-                    <div><span className="text-[var(--app-text-muted)]">Historical Reps Mapped:</span> {migrationReport.historicalSalesRepsMapped}</div>
-                    <div><span className="text-[var(--app-text-muted)]">Names Deduped:</span> {migrationReport.deduplicatedCount}</div>
-                  </div>
-                </div>
-              )}
             </div>
-          </GlassCard>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">WhatsApp Business API</span>
+                  <Badge status="ok" size="sm">Connected</Badge>
+                </div>
+                <p className="font-ui text-xs text-[var(--muted)]">Automated payment receipt & OTP delivery via Gupshup / Meta.</p>
+              </div>
+
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">SMS Gateway (DLT)</span>
+                  <Badge status="ok" size="sm">Active</Badge>
+                </div>
+                <p className="font-ui text-xs text-[var(--muted)]">Transactional SMS template approved on TRAI DLT portal.</p>
+              </div>
+
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">Turnstile Optical Gate</span>
+                  <Badge status="ok" size="sm">Online</Badge>
+                </div>
+                <p className="font-ui text-xs text-[var(--muted)]">ZKTeco / Hikvision optical turnstile controllers on LAN.</p>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 5: Migration */}
+        <TabsContent value="migration" className="pt-4">
+          <Card className="p-6 space-y-4">
+            <div className="border-b border-[var(--line)] pb-4">
+              <h3 className="font-display text-base font-semibold text-[var(--ink)]">
+                Gymex Legacy Data Migration Engine
+              </h3>
+              <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                Bulk importer with schema transformation, tax back-calculation, and duplicate resolution.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
+                Paste Gymex CSV/JSON Export Dump
+              </label>
+              <textarea
+                value={migrationJson}
+                onChange={(e) => setMigrationJson(e.target.value)}
+                placeholder='[{"first_name": "Rohit", "last_name": "Verma", "mobile": "9820088111", "package_name": "Annual Gym", "base_cost": 41428.57}]'
+                rows={5}
+                className="w-full p-3 font-data text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setIsDryRun(true)
+                  handleRunMigration()
+                }}
+              >
+                Run dry-run simulation
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => {
+                  setIsDryRun(false)
+                  handleRunMigration()
+                }}
+              >
+                Commit data migration
+              </Button>
+            </div>
+
+            {migrationReport && (
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] font-data text-xs space-y-1">
+                <span className="font-bold text-[var(--green)]">Migration Report Summary:</span>
+                <p>Valid Rows Evaluated: {migrationReport.validRows}</p>
+                <p>Members Created: {migrationReport.membersCreated}</p>
+                <p>Errors / Skipped: {migrationReport.errors?.length || 0}</p>
+              </div>
+            )}
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -4,31 +4,19 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 
 export interface StrandMeterProps {
-  /** Current value (e.g. sessions used/remaining, streak, occupancy %) */
   value: number
-  /** Maximum possible value (defaults to 100) */
   max?: number
-  /** Number of capsules in the strand (5 or 7, default: 5) */
   capsules?: 5 | 7
-  /** Visual size variant */
   size?: 'sm' | 'md' | 'lg'
-  /** Optional inline label/numeric text */
   label?: string
-  /** Show tabular numeric readout */
   showValue?: boolean
-  /** Format function for value */
   formatValue?: (val: number, max: number) => string
-  /** Custom class */
   className?: string
-  /** Reverse fill direction (e.g., for remaining balance vs consumed) */
   variant?: 'fill' | 'remaining'
 }
 
 /**
- * StrandMeter — Signature visual element of DNA 360.
- * 
- * Replaces generic progress bars across the app with vertical capsule strands
- * derived from the DNA 360 brand mark.
+ * StrandMeter — Signature visual element of DNA 360 Aurora Dark-Luxe.
  */
 export function StrandMeter({
   value,
@@ -44,10 +32,8 @@ export function StrandMeter({
   const safeValue = Math.max(0, Math.min(value, safeMax))
   const percentage = safeValue / safeMax
 
-  // Number of active filled capsules
   const filledCount = Math.round(percentage * capsules)
 
-  // Height curves for the capsules (echoing DNA 360 strand mark)
   const heightProfiles: Record<5 | 7, number[]> = {
     5: [0.45, 0.75, 1.0, 0.75, 0.45],
     7: [0.35, 0.55, 0.80, 1.0, 0.80, 0.55, 0.35],
@@ -55,11 +41,10 @@ export function StrandMeter({
 
   const profile = heightProfiles[capsules]
 
-  // Size dimensions
   const sizeStyles = {
     sm: { height: 14, width: 2.5, gap: 2 },
-    md: { height: 28, width: 4, gap: 3 },
-    lg: { height: 48, width: 6, gap: 4 },
+    md: { height: 26, width: 3.5, gap: 3 },
+    lg: { height: 44, width: 5.5, gap: 4 },
   }[size]
 
   return (
@@ -87,7 +72,7 @@ export function StrandMeter({
               className={cn(
                 'rounded-full transition-all duration-140',
                 isFilled
-                  ? 'bg-gradient-to-b from-[#1BA79C] to-[#2AA8E2]'
+                  ? 'bg-gradient-to-b from-[#F43F5E] to-[#E11D48] shadow-[0_0_8px_rgba(244,63,94,0.4)]'
                   : 'bg-[var(--line)]'
               )}
               style={{
@@ -101,14 +86,14 @@ export function StrandMeter({
 
       {/* Optional Value or Label */}
       {(showValue || label) && (
-        <div className="flex items-baseline gap-1.5 font-data text-xs tabular-nums text-[var(--text)]">
+        <div className="flex items-baseline gap-1.5 font-data text-xs tabular-nums text-[var(--ink)]">
           {showValue && (
-            <span className={cn('font-medium', size === 'lg' ? 'text-sm' : 'text-xs')}>
+            <span className={cn('font-semibold', size === 'lg' ? 'text-sm' : 'text-xs')}>
               {formatValue ? formatValue(safeValue, safeMax) : `${safeValue}/${safeMax}`}
             </span>
           )}
           {label && (
-            <span className="font-ui text-[11px] uppercase tracking-wider text-[var(--text-faint)]">
+            <span className="font-data text-[10.5px] uppercase tracking-[0.16em] text-[var(--muted)]">
               {label}
             </span>
           )}

@@ -8,12 +8,12 @@ import {
   RotateCcw, Eye, FileText, ArrowUpDown, Building2,
   Sparkles, Layers, ShieldAlert,
 } from 'lucide-react'
-import GlassCard from '@/components/app/ui/glass-card'
-import StatCard from '@/components/app/ui/stat-card'
-import { DataTable, type DataTableColumn } from '@/components/app/ui/data-table'
-import { Button } from '@/components/app/ui/button'
-import { StatusPill } from '@/components/app/ui/badge'
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
+import Card from '@/components/app/ui/glass-card'
+import StatTile from '@/components/app/ui/StatTile'
+import DataTable, { type DataTableColumn } from '@/components/app/ui/data-table'
+import Button from '@/components/app/ui/button'
+import Badge, { StatusPill } from '@/components/app/ui/badge'
+import PageHeader from '@/components/app/ui/PageHeader'
 import InvoiceModal from '@/components/app/billing/InvoiceModal'
 import CreateInvoiceModal from '@/components/app/billing/CreateInvoiceModal'
 import CreditNoteModal from '@/components/app/billing/CreditNoteModal'
@@ -36,7 +36,7 @@ export default function BillingPage() {
   const [creditNoteInvoice, setCreditNoteInvoice] = useState<TaxInvoice | null>(null)
 
   const [page, setPage] = useState(1)
-  const pageSize = 10
+  const pageSize = 12
 
   const refreshInvoices = () => {
     const list = getInvoices({
@@ -49,17 +49,16 @@ export default function BillingPage() {
 
   useEffect(() => {
     refreshInvoices()
-
     const handleUpdate = () => refreshInvoices()
     window.addEventListener('dna360_invoices_updated', handleUpdate)
     return () => window.removeEventListener('dna360_invoices_updated', handleUpdate)
   }, [search, statusFilter, paymentModeFilter])
 
-  const statusMap: Record<InvoiceStatus, { status: 'success' | 'warning' | 'danger' | 'info' | 'neutral'; label: string }> = {
-    paid: { status: 'success', label: 'Paid' },
-    pending: { status: 'warning', label: 'Pending' },
+  const statusMap: Record<InvoiceStatus, { status: string; label: string }> = {
+    paid: { status: 'ok', label: 'Paid' },
+    pending: { status: 'warn', label: 'Pending' },
     overdue: { status: 'danger', label: 'Overdue' },
-    partially_paid: { status: 'warning', label: 'Partial' },
+    partially_paid: { status: 'warn', label: 'Partial' },
     void: { status: 'danger', label: 'Void' },
   }
 
@@ -70,10 +69,10 @@ export default function BillingPage() {
       sortable: true,
       cell: (_, row) => (
         <div>
-          <p className="font-mono text-xs font-bold text-[var(--app-text-primary)] hover:text-[var(--aurora-1)] transition-colors">
+          <p className="font-data text-xs font-bold text-[var(--ink)] hover:text-[var(--accent)] transition-colors">
             {row.invoiceNumber}
           </p>
-          <div className="flex items-center gap-1.5 text-[0.6875rem] text-[var(--app-text-muted)] mt-0.5 font-mono">
+          <div className="flex items-center gap-1.5 text-[10.5px] text-[var(--muted)] mt-0.5 font-data">
             <span>{row.issueDate}</span>
             <span>·</span>
             <span>Rep: {row.salesRepName || 'Amit Sharma'}</span>
@@ -87,8 +86,8 @@ export default function BillingPage() {
       sortable: true,
       cell: (_, row) => (
         <div>
-          <p className="font-semibold text-xs text-[var(--app-text-primary)]">{row.memberName}</p>
-          <p className="text-[0.6875rem] font-mono text-[var(--app-text-muted)]">{row.memberPhone}</p>
+          <p className="font-ui font-semibold text-xs text-[var(--ink)]">{row.memberName}</p>
+          <p className="font-data text-[10.5px] text-[var(--muted)]">{row.memberPhone}</p>
         </div>
       ),
     },
@@ -97,290 +96,182 @@ export default function BillingPage() {
       header: 'Item Description',
       cell: (_, row) => (
         <div>
-          <span className="text-xs font-medium text-[var(--app-text-secondary)] truncate max-w-[220px] block">
-            {row.items[0]?.description || 'Membership Services'}
+          <span className="font-ui text-xs font-medium text-[var(--ink-2)] truncate max-w-[220px] block">
+            {row.items[0]?.description || 'Studio Fitness Plan'}
           </span>
-          <span className="text-[0.625rem] font-mono text-[var(--app-text-muted)]">
-            SAC {row.items[0]?.sacCode || '999723'} · Rate: {((row.items[0]?.taxRate || 0.05) * 100)}%
+          <span className="font-data text-[10px] text-[var(--muted-2)]">
+            SAC: {row.items[0]?.sacCode || '999723'} · {(row.items[0]?.taxRate ? row.items[0].taxRate * 100 : 5)}% GST
           </span>
         </div>
       ),
     },
     {
-      id: 'taxable',
-      header: 'Taxable + GST (5%)',
+      id: 'amount',
+      header: 'Gross Total',
       align: 'right',
       sortable: true,
       cell: (_, row) => (
-        <div className="text-right text-xs font-mono">
-          <span className="text-[var(--app-text-secondary)] block">
-            {formatINR(row.taxableMinor)}
-          </span>
-          <span className="text-[0.6875rem] text-emerald-400">
-            +{formatINR(row.cgstMinor + row.sgstMinor)} GST
-          </span>
-        </div>
-      ),
-    },
-    {
-      id: 'total',
-      header: 'Grand Total (GST Inc)',
-      align: 'right',
-      sortable: true,
-      cell: (_, row) => (
-        <div className="text-right text-xs font-mono">
-          <span className="font-bold text-[var(--app-text-primary)] block">
-            {formatINR(row.grandTotalMinor)}
-          </span>
-          {row.dueAmountMinor > 0 && (
-            <span className="text-[0.6875rem] font-semibold text-[var(--app-danger)]">
-              Due: {formatINR(row.dueAmountMinor)}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: 'mode',
-      header: 'Payment Mode',
-      cell: (_, row) => (
-        <div className="flex flex-wrap gap-1">
-          {row.payments.length > 0 ? (
-            row.payments.map((p) => (
-              <span
-                key={p.id}
-                className="text-[0.625rem] px-1.5 py-0.5 rounded bg-[var(--app-glass-bg)] border border-[var(--app-glass-border)] text-[var(--app-text-secondary)] font-medium"
-              >
-                {p.mode}
-              </span>
-            ))
-          ) : (
-            <span className="text-[0.6875rem] text-[var(--app-text-muted)] italic">Unpaid</span>
-          )}
+        <div>
+          <p className="font-data font-bold text-xs text-[var(--ink)] tabular-nums">
+            {formatINR(row.totalAmount)}
+          </p>
+          <p className="font-data text-[10px] text-[var(--muted)] tabular-nums">
+            GST: {formatINR(row.taxBreakdown.cgst + row.taxBreakdown.sgst)}
+          </p>
         </div>
       ),
     },
     {
       id: 'status',
-      header: 'Status',
-      accessorKey: 'status',
-      sortable: true,
-      width: '110px',
-      cell: (val) => {
-        const s = statusMap[val as InvoiceStatus] || { status: 'neutral', label: val as string }
-        return (
-          <StatusPill status={s.status} dot>
-            {s.label}
-          </StatusPill>
-        )
+      header: 'Payment Status',
+      cell: (v) => {
+        const item = statusMap[v as InvoiceStatus] || { status: 'neutral', label: String(v) }
+        return <Badge status={item.status} size="sm">{item.label}</Badge>
       },
     },
     {
       id: 'actions',
-      header: '',
+      header: 'Actions',
       align: 'right',
-      width: '130px',
       cell: (_, row) => (
         <div className="flex items-center justify-end gap-1.5">
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               setSelectedInvoice(row)
               setInvoiceModalOpen(true)
             }}
-            title="View GST Tax Invoice"
-            icon={<Eye className="w-3.5 h-3.5" />}
           >
-            Invoice
+            PDF / View
           </Button>
-          {row.status === 'paid' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCreditNoteInvoice(row)}
-              title="Void Invoice / Credit Note"
-              icon={<RotateCcw className="w-3.5 h-3.5" />}
-            />
-          )}
         </div>
       ),
     },
   ]
 
-  // KPI Calculations
-  const totalBilledMinor = invoices.reduce((acc, inv) => acc + (inv.status !== 'void' ? inv.grandTotalMinor : 0), 0)
-  const cashCollectedMinor = invoices.reduce((acc, inv) => acc + (inv.status !== 'void' ? inv.paidAmountMinor : 0), 0)
-  const gstLiabilityMinor = invoices.reduce((acc, inv) => acc + (inv.status !== 'void' ? inv.cgstMinor + inv.sgstMinor : 0), 0)
-
-  const paginatedInvoices = invoices.slice((page - 1) * pageSize, page * pageSize)
-
-  const handleExportGstr1 = () => {
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      ['GSTIN/UIN of Recipient,Receiver Name,Invoice Number,Invoice Date,Invoice Value,Place of Supply,Reverse Charge,Applicable % of Tax Rate,Invoice Type,E-Commerce GSTIN,Rate,Taxable Value,Cess Amount']
-        .concat(
-          invoices.map(
-            (inv) =>
-              `"","${inv.memberName}","${inv.invoiceNumber}","${inv.issueDate}","${inv.grandTotalMinor / 100}","27-Maharashtra","N","","Regular B2C","","5","${inv.taxableMinor / 100}","0"`
-          )
-        )
-        .join('\n')
-
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `dna360_gstr1_b2c_${new Date().toISOString().slice(0, 10)}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    toast.success('GSTR-1 Tax Summary exported as CSV')
-  }
+  const totalBilled = invoices.reduce((acc, inv) => inv.status === 'paid' ? acc + inv.totalAmount : acc, 0)
+  const totalTax = invoices.reduce((acc, inv) => inv.status === 'paid' ? acc + (inv.taxBreakdown.cgst + inv.taxBreakdown.sgst) : acc, 0)
 
   return (
-    <div className="space-y-8 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight">
-            Plans, Billing & GST Tax Invoices
-          </h1>
-          <p className="text-sm text-[var(--app-text-secondary)] mt-1">
-            Base Fitness Private Limited (GSTIN: 27AAICB3300R1ZH). All prices GST-inclusive with automated 5% back-calculation.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleExportGstr1}
-            icon={<Download className="w-3.5 h-3.5" />}
-          >
-            Export GSTR-1
-          </Button>
+    <div className="space-y-6 max-w-7xl mx-auto select-none">
+      {/* 1. Header */}
+      <PageHeader
+        eyebrow="FINANCE & COMPLIANCE · TAX INVOICES"
+        title="Invoices & Billing"
+        description="Back-calculated GST tax invoice engine, SAC 999723 fitness tariffs, automated credit notes, and audit-ready GSTR-1 exports."
+        actions={
           <Button
             variant="primary"
+            size="md"
             onClick={() => setCreateInvoiceOpen(true)}
-            icon={<Plus className="w-4 h-4" />}
+            icon={<Plus className="w-3.5 h-3.5" />}
           >
-            Issue Tax Invoice
+            Raise tax invoice
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* KPI Stats */}
+      {/* 2. Stat Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Billed (GST Inc)"
-          value={formatINR(totalBilledMinor)}
-          icon={<Receipt className="w-5 h-5 text-[var(--aurora-1)]" />}
+        <StatTile
+          label="BILLED REVENUE (MTD)"
+          value={formatINR(totalBilled)}
+          unit="PAID"
+          icon={<Receipt className="w-4 h-4 text-[var(--green)]" />}
         />
-        <StatCard
-          label="Collections Realised"
-          value={formatINR(cashCollectedMinor)}
-          icon={<CheckCircle className="w-5 h-5 text-emerald-400" />}
+        <StatTile
+          label="GST COLLECTED (MTD)"
+          value={formatINR(totalTax)}
+          unit="5% SAC 999723"
+          icon={<CreditCard className="w-4 h-4 text-[var(--accent)]" />}
         />
-        <StatCard
-          label="GST Liability (27-MH)"
-          value={formatINR(gstLiabilityMinor)}
-          icon={<CreditCard className="w-5 h-5 text-teal-400" />}
+        <StatTile
+          label="PAID INVOICES"
+          value={invoices.filter((i) => i.status === 'paid').length}
+          unit="INVOICES"
+          icon={<CheckCircle className="w-4 h-4 text-[var(--green)]" />}
         />
-        <StatCard
-          label="Invoice Format"
-          value="DNA/2026-27/000X"
-          icon={<Clock className="w-5 h-5 text-[var(--teal)]" />}
+        <StatTile
+          label="PENDING COLLECTION"
+          value={invoices.filter((i) => i.status === 'pending' || i.status === 'overdue').length}
+          unit="RECEIVABLES"
+          icon={<Clock className="w-4 h-4 text-[var(--amber)]" />}
+          delta={{ text: 'Follow up required', type: 'warn' }}
         />
       </div>
 
-      {/* Filter Toolbar */}
-      <GlassCard padding="sm">
-        <div className="flex flex-col md:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--app-text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search invoice number, member name, phone, or sales rep…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-9 pr-4 text-xs glass-input text-[var(--app-text-primary)] placeholder:text-[var(--app-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)]"
-            />
-          </div>
-
-          <div className="w-full md:w-40">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger><SelectValue placeholder="Status: All" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="void">Void</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="w-full md:w-44">
-            <Select value={paymentModeFilter} onValueChange={setPaymentModeFilter}>
-              <SelectTrigger><SelectValue placeholder="Mode: All" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Payment Modes</SelectItem>
-                <SelectItem value="UPI">UPI</SelectItem>
-                <SelectItem value="Credit Card">Credit Card</SelectItem>
-                <SelectItem value="Net Banking">Net Banking</SelectItem>
-                <SelectItem value="Cash">Cash</SelectItem>
-                <SelectItem value="Cheque">Cheque</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {/* 3. Search and Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--muted)]" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by invoice #, member name, or phone..."
+            className="w-full h-[36px] pl-9 pr-3.5 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none"
+          />
         </div>
-      </GlassCard>
 
-      {/* Invoice Table */}
-      <DataTable<TaxInvoice>
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-[36px] px-3 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] outline-none"
+          >
+            <option value="all">All Statuses</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="overdue">Overdue</option>
+            <option value="void">Void</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 4. Invoices Table */}
+      <DataTable
         columns={columns}
-        data={paginatedInvoices}
+        data={invoices}
         status="success"
-        page={page}
         pageSize={pageSize}
         total={invoices.length}
+        page={page}
         onPageChange={setPage}
         onRowClick={(row) => {
           setSelectedInvoice(row)
           setInvoiceModalOpen(true)
         }}
-        getRowId={(row) => row.id}
-        emptyTitle="No invoices found"
-        emptyDescription="Try clearing filters or search terms."
-        isFilterActive={statusFilter !== 'all' || paymentModeFilter !== 'all' || !!search}
-        onClearFilters={() => {
-          setStatusFilter('all')
-          setPaymentModeFilter('all')
-          setSearch('')
+      />
+
+      {/* Modals */}
+      <InvoiceModal
+        open={invoiceModalOpen}
+        onOpenChange={setInvoiceModalOpen}
+        invoice={selectedInvoice}
+        onVoid={(inv) => {
+          voidInvoice(inv.id, 'Voided by administrative supervisor')
+          toast.success('Invoice marked VOID')
+          refreshInvoices()
+        }}
+        onCreditNote={(inv) => {
+          setInvoiceModalOpen(false)
+          setCreditNoteInvoice(inv)
         }}
       />
 
-      {/* View Tax Invoice Modal */}
-      <InvoiceModal
-        invoice={selectedInvoice}
-        open={invoiceModalOpen}
-        onOpenChange={setInvoiceModalOpen}
-      />
-
-      {/* Create Tax Invoice Modal */}
       <CreateInvoiceModal
         open={createInvoiceOpen}
         onOpenChange={setCreateInvoiceOpen}
         onInvoiceCreated={refreshInvoices}
       />
 
-      {/* Credit Note / Void Modal */}
       <CreditNoteModal
-        invoice={creditNoteInvoice}
         open={!!creditNoteInvoice}
-        onOpenChange={(open) => !open && setCreditNoteInvoice(null)}
-        onCreditNoteIssued={refreshInvoices}
+        onOpenChange={(op) => { if (!op) setCreditNoteInvoice(null) }}
+        invoice={creditNoteInvoice}
+        onIssued={refreshInvoices}
       />
     </div>
   )

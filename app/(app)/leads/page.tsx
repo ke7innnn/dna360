@@ -5,14 +5,14 @@ import {
   UserPlus, Kanban, List, Filter,
   Phone, Mail, MessageSquare, IndianRupee,
   TrendingUp, Sparkles, CheckCircle, Clock,
-  Users, ArrowRight, CheckSquare, Search,
+  Users, ArrowRight, CheckSquare, Search, Plus,
 } from 'lucide-react'
-import GlassCard from '@/components/app/ui/glass-card'
-import StatCard from '@/components/app/ui/stat-card'
-import { DataTable, type DataTableColumn } from '@/components/app/ui/data-table'
-import { Button } from '@/components/app/ui/button'
-import { StatusPill } from '@/components/app/ui/badge'
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
+import Card from '@/components/app/ui/glass-card'
+import StatTile from '@/components/app/ui/StatTile'
+import DataTable, { type DataTableColumn } from '@/components/app/ui/data-table'
+import Button from '@/components/app/ui/button'
+import Badge, { StatusPill } from '@/components/app/ui/badge'
+import PageHeader from '@/components/app/ui/PageHeader'
 import LeadModal from '@/components/app/leads/LeadModal'
 import LeadDetailDrawer from '@/components/app/leads/LeadDetailDrawer'
 import MemberOnboardingModal from '@/components/app/members/MemberOnboardingModal'
@@ -42,7 +42,6 @@ export default function LeadsPage() {
 
   useEffect(() => {
     refreshData()
-
     const handleUpdate = () => refreshData()
     window.addEventListener('dna360_leads_updated', handleUpdate)
     return () => window.removeEventListener('dna360_leads_updated', handleUpdate)
@@ -50,13 +49,13 @@ export default function LeadsPage() {
 
   const kpis = getCrmKpis()
 
-  const pipelineColumns: { stage: LeadStage; label: string; color: string }[] = [
-    { stage: 'inquiry', label: 'New Inquiries', color: 'border-[var(--blue)]/30' },
-    { stage: 'trial_scheduled', label: 'Trial Scheduled', color: 'border-[var(--teal)]/30' },
-    { stage: 'trial_attended', label: 'Trial Attended', color: 'border-[var(--teal)]/50' },
-    { stage: 'negotiating', label: 'Negotiating', color: 'border-[var(--warn)]/30' },
-    { stage: 'converted', label: 'Won (Converted)', color: 'border-[var(--ok)]/30' },
-    { stage: 'lost', label: 'Lost / Closed', color: 'border-[var(--danger)]/30' },
+  const pipelineColumns: { stage: LeadStage; label: string; borderAccent: string }[] = [
+    { stage: 'inquiry', label: 'New Inquiries', borderAccent: 'border-t-2 border-t-[var(--indigo)]' },
+    { stage: 'trial_scheduled', label: 'Trial Scheduled', borderAccent: 'border-t-2 border-t-[var(--accent)]' },
+    { stage: 'trial_attended', label: 'Trial Attended', borderAccent: 'border-t-2 border-t-[var(--accent-deep)]' },
+    { stage: 'negotiating', label: 'Negotiating', borderAccent: 'border-t-2 border-t-[var(--amber)]' },
+    { stage: 'converted', label: 'Won (Converted)', borderAccent: 'border-t-2 border-t-[var(--green)]' },
+    { stage: 'lost', label: 'Lost / Closed', borderAccent: 'border-t-2 border-t-[var(--muted-2)]' },
   ]
 
   const handleAdvanceStage = (leadId: string, currentStage: LeadStage) => {
@@ -80,13 +79,13 @@ export default function LeadsPage() {
       header: 'Prospect',
       sortable: true,
       cell: (_, row) => (
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-2)] flex items-center justify-center text-white font-bold text-xs shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.25)] to-[rgba(129,140,248,0.15)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-white font-data text-xs font-bold shrink-0">
             {getInitials(row.name)}
           </div>
           <div>
-            <p className="font-semibold text-xs text-[var(--app-text-primary)]">{row.name}</p>
-            <p className="font-mono text-[0.6875rem] text-[var(--app-text-muted)]">{row.phone}</p>
+            <p className="font-ui font-semibold text-[13.5px] text-[var(--ink)]">{row.name}</p>
+            <p className="font-data text-[10.5px] text-[var(--muted)]">{row.phone}</p>
           </div>
         </div>
       ),
@@ -96,162 +95,154 @@ export default function LeadsPage() {
       header: 'Goal & Source',
       cell: (_, row) => (
         <div>
-          <span className="text-xs font-medium text-[var(--app-text-primary)] block">{row.goal}</span>
-          <span className="text-[0.6875rem] text-[var(--app-text-muted)]">{row.source}</span>
+          <span className="font-ui text-xs font-semibold text-[var(--ink)] block">{row.goal}</span>
+          <span className="font-data text-[10px] uppercase text-[var(--muted)]">{row.source}</span>
         </div>
       ),
     },
     {
       id: 'stage',
       header: 'Pipeline Stage',
-      accessorKey: 'stage',
-      sortable: true,
-      cell: (val) => (
-        <StatusPill
-          status={val === 'converted' ? 'success' : val === 'lost' ? 'danger' : val === 'negotiating' ? 'warning' : 'info'}
-          dot
-        >
-          {(val as string).replace('_', ' ').toUpperCase()}
-        </StatusPill>
-      ),
+      cell: (v) => {
+        const stage = String(v)
+        const statusMap: Record<string, 'ok' | 'warn' | 'danger' | 'info' | 'neutral'> = {
+          converted: 'ok',
+          negotiating: 'warn',
+          lost: 'danger',
+          trial_scheduled: 'info',
+          trial_attended: 'info',
+          inquiry: 'neutral',
+        }
+        return <Badge status={statusMap[stage] || 'neutral'} size="sm">{stage.replace('_', ' ')}</Badge>
+      },
     },
     {
       id: 'value',
-      header: 'Deal Value',
-      accessorKey: 'expectedDealValueMinor',
+      header: 'Target Value',
       align: 'right',
-      sortable: true,
-      cell: (val) => <span className="font-mono text-xs font-bold text-[var(--aurora-1)]">{formatINR(val as number)}</span>,
+      cell: (_, row) => (
+        <span className="font-data font-bold text-xs text-[var(--ink)] tabular-nums">
+          {formatINR(row.potentialValueMinor)}
+        </span>
+      ),
     },
     {
       id: 'rep',
-      header: 'Sales Rep',
-      accessorKey: 'assignedRepName',
-      sortable: true,
-      cell: (val) => <span className="text-xs text-[var(--app-text-secondary)]">{val as string}</span>,
+      header: 'Assigned Consultant',
+      cell: (_, row) => (
+        <span className="font-ui text-xs text-[var(--muted)]">{row.assignedStaffName || 'Unassigned'}</span>
+      ),
     },
   ]
 
   return (
-    <div className="space-y-8 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight">
-            Leads & Sales CRM Pipeline
-          </h1>
-          <p className="text-sm text-[var(--app-text-secondary)] mt-1">
-            Track inquiries, trial pass turnstile conversions, sales rep assignments, and member onboarding.
-          </p>
-        </div>
+    <div className="space-y-6 max-w-7xl mx-auto select-none">
+      {/* 1. Header */}
+      <PageHeader
+        eyebrow="GROWTH · CRM & PIPELINE"
+        title="Leads & CRM"
+        description="Walk-in lead capture, trial booking funnel, conversion pipeline, and automated WhatsApp follow-up workflows."
+        actions={
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center rounded-[var(--r-sm)] bg-[var(--surface)] border border-[var(--line)] p-0.5">
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={cn(
+                  'px-3 py-1.5 rounded-[var(--r-sm)] font-ui text-xs font-semibold transition-colors cursor-pointer',
+                  viewMode === 'kanban'
+                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(244,63,94,0.30)]'
+                    : 'text-[var(--muted)] hover:text-white'
+                )}
+              >
+                <Kanban className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'px-3 py-1.5 rounded-[var(--r-sm)] font-ui text-xs font-semibold transition-colors cursor-pointer',
+                  viewMode === 'list'
+                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(244,63,94,0.30)]'
+                    : 'text-[var(--muted)] hover:text-white'
+                )}
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-        <div className="flex items-center gap-3">
-          {/* View Mode Toggle */}
-          <div className="flex items-center p-1 rounded-xl glass-input">
-            <button
-              type="button"
-              onClick={() => setViewMode('kanban')}
-              className={cn(
-                'p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
-                viewMode === 'kanban'
-                  ? 'bg-[var(--app-sidebar-active)] text-[var(--app-text-primary)] shadow-xs'
-                  : 'text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)]'
-              )}
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setLeadModalOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
             >
-              <Kanban className="w-3.5 h-3.5" />
-              <span>Kanban</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={cn(
-                'p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all',
-                viewMode === 'list'
-                  ? 'bg-[var(--app-sidebar-active)] text-[var(--app-text-primary)] shadow-xs'
-                  : 'text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)]'
-              )}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span>Table</span>
-            </button>
+              Add walk-in lead
+            </Button>
           </div>
+        }
+      />
 
-          <Button
-            variant="primary"
-            onClick={() => setLeadModalOpen(true)}
-            icon={<UserPlus className="w-4 h-4" />}
-          >
-            Create Lead
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI Stats */}
+      {/* 2. Stat Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Active Pipeline Value"
-          value={kpis.pipelineValueMinor}
-          prefix="₹"
-          formatValue={(v) => formatINR(v).replace('₹', '')}
-          icon={<IndianRupee className="w-4 h-4 text-[var(--teal)]" />}
+        <StatTile
+          label="ACTIVE PIPELINE"
+          value={kpis.totalLeads}
+          unit="LEADS"
+          icon={<Users className="w-4 h-4 text-[var(--accent)]" />}
         />
-        <StatCard
-          label="Total Leads (MTD)"
-          value={kpis.totalLeadsMtd}
-          suffix=" prospects"
-          icon={<Users className="w-5 h-5 text-[var(--app-info)]" />}
+        <StatTile
+          label="PIPELINE VALUE"
+          value={formatINR(kpis.pipelineValueMinor)}
+          icon={<IndianRupee className="w-4 h-4 text-[var(--accent)]" />}
         />
-        <StatCard
-          label="Trial Conversion Rate"
-          value={`${kpis.conversionRatePct}%`}
-          icon={<CheckCircle className="w-5 h-5 text-[var(--app-success)]" />}
+        <StatTile
+          label="CONVERSION RATE"
+          value={`${kpis.conversionRate}%`}
+          icon={<TrendingUp className="w-4 h-4 text-[var(--green)]" />}
+          delta={{ text: 'Target: 28%', type: 'ok' }}
         />
-        <StatCard
-          label="Avg Days to Close"
-          value={`${kpis.avgDaysToClose} Days`}
-          icon={<Clock className="w-5 h-5 text-[var(--app-warning)]" />}
+        <StatTile
+          label="TRIALS SCHEDULED"
+          value={kpis.trialsThisWeek}
+          unit="THIS WEEK"
+          icon={<Clock className="w-4 h-4 text-[var(--indigo)]" />}
         />
       </div>
 
-      {/* Search & Filter Toolbar */}
-      <GlassCard padding="sm">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--app-text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search leads by prospect name or phone (+91)…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-9 pr-4 text-xs glass-input text-[var(--app-text-primary)] placeholder:text-[var(--app-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-focus-ring)] transition-all"
-            />
-          </div>
-        </div>
-      </GlassCard>
+      {/* 3. Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--muted)]" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by prospect name, phone, or fitness goal..."
+          className="w-full h-[36px] pl-9 pr-3.5 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none"
+        />
+      </div>
 
-      {/* Main View: Kanban Board vs DataTable */}
+      {/* 4. Kanban or List View */}
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 overflow-x-auto pb-4">
-          {pipelineColumns.map((col) => {
-            const columnLeads = leads.filter((l) => l.stage === col.stage)
-            const columnTotal = columnLeads.reduce((a, c) => a + c.expectedDealValueMinor, 0)
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3.5 items-start">
+          {pipelineColumns.map(({ stage, label, borderAccent }) => {
+            const columnLeads = leads.filter((l) => l.stage === stage)
+
             return (
-              <div key={col.stage} className="space-y-3 min-w-[220px]">
+              <Card
+                key={stage}
+                className={cn('p-3.5 flex flex-col min-h-[440px] space-y-3', borderAccent)}
+              >
                 {/* Column Header */}
-                <div className="p-3 rounded-xl glass-input flex items-center justify-between border-b border-[var(--app-glass-border)]">
-                  <div>
-                    <h4 className="font-semibold text-xs text-[var(--app-text-primary)]">{col.label}</h4>
-                    <span className="font-mono text-[0.625rem] text-[var(--app-text-muted)]">
-                      {formatINR(columnTotal)}
-                    </span>
-                  </div>
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--app-glass-bg)] border border-[var(--app-glass-border)]">
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--line)]">
+                  <span className="font-data text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--ink)] truncate">
+                    {label}
+                  </span>
+                  <span className="font-data text-xs px-1.5 py-0.5 rounded-full bg-[var(--surface-2)] border border-[var(--line)] text-[var(--muted)] tabular-nums font-bold">
                     {columnLeads.length}
                   </span>
                 </div>
 
                 {/* Lead Cards */}
-                <div className="space-y-2.5">
+                <div className="space-y-2.5 flex-1 overflow-y-auto pr-0.5">
                   {columnLeads.map((lead) => (
                     <div
                       key={lead.id}
@@ -259,34 +250,30 @@ export default function LeadsPage() {
                         setSelectedLead(lead)
                         setDrawerOpen(true)
                       }}
-                      className={cn(
-                        'p-3.5 rounded-2xl glass-card border hover:border-[var(--aurora-1)] cursor-pointer transition-all space-y-2.5 shadow-sm group',
-                        col.color
-                      )}
+                      className="p-3 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] cursor-pointer hover:border-[rgba(244,63,94,0.35)] transition-all duration-140 space-y-2 group"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-[var(--app-text-primary)] group-hover:text-[var(--aurora-1)] transition-colors">
+                        <span className="font-ui text-xs font-semibold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-1">
                           {lead.name}
                         </span>
-                        <span className="font-mono font-bold text-xs text-[var(--aurora-1)]">
-                          {formatINR(lead.expectedDealValueMinor)}
+                        <span className="font-data text-[11px] font-bold text-[var(--ink)] tabular-nums">
+                          {formatINR(lead.potentialValueMinor)}
                         </span>
                       </div>
 
-                      <p className="text-[0.6875rem] text-[var(--app-text-muted)] line-clamp-1">
-                        {lead.goal} · {lead.source.split('/')[0]}
+                      <p className="font-ui text-[11px] text-[var(--muted)] line-clamp-1">
+                        {lead.goal}
                       </p>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-[var(--app-glass-border)] text-[0.625rem] font-mono text-[var(--app-text-muted)]">
-                        <span>Rep: {lead.assignedRepName.split(' ')[0]}</span>
-                        {lead.stage !== 'converted' && lead.stage !== 'lost' && (
+                      <div className="pt-1.5 border-t border-[var(--line-soft)] flex items-center justify-between text-[10px] font-data text-[var(--muted-2)]">
+                        <span>{lead.source}</span>
+                        {stage !== 'converted' && stage !== 'lost' && (
                           <button
-                            type="button"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleAdvanceStage(lead.id, lead.stage)
                             }}
-                            className="text-[var(--aurora-1)] font-bold hover:underline flex items-center gap-0.5"
+                            className="font-ui text-[10.5px] text-[var(--accent)] hover:underline font-semibold cursor-pointer"
                           >
                             Advance →
                           </button>
@@ -295,23 +282,21 @@ export default function LeadsPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             )
           })}
         </div>
       ) : (
-        <DataTable<CrmLead>
+        <DataTable
           columns={listColumns}
           data={leads}
           status="success"
-          page={1}
-          pageSize={leads.length}
+          pageSize={12}
           total={leads.length}
           onRowClick={(row) => {
             setSelectedLead(row)
             setDrawerOpen(true)
           }}
-          getRowId={(row) => row.id}
         />
       )}
 
@@ -326,8 +311,9 @@ export default function LeadsPage() {
         lead={selectedLead}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        onUpdated={refreshData}
-        onConvertToMember={(lead) => {
+        onLeadUpdated={refreshData}
+        onConvert={() => {
+          setDrawerOpen(false)
           setOnboardingOpen(true)
         }}
       />

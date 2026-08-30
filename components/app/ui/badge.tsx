@@ -2,51 +2,54 @@
 
 import React from 'react'
 import { cn } from '@/lib/utils'
-import type { SemanticStatus } from '@/types'
 
 export interface BadgeProps {
   status?: string
   children: React.ReactNode
   className?: string
   size?: 'sm' | 'md'
-  // Support legacy props gracefully
   variant?: string
   shape?: string
   dot?: boolean
 }
 
 /**
- * Status Badge — DNA 360 Design System
- * 
- * Rules: --r-full, 2px/8px padding, label uppercase font, tinted background with matching text colour.
- * Text only — no dot, no border. One shape, one meaning.
+ * Status Badge — Aurora Dark-Luxe (§2, §5)
+ * Status-tinted background with matching text color, Martian Mono font, uppercase tracking.
  */
 export function Badge({
   status = 'neutral',
   children,
   className,
   size = 'md',
+  dot,
 }: BadgeProps) {
-  const normalizedStatus = ((): string => {
-    switch (status) {
+  const normalizedStatus = ((): 'green' | 'amber' | 'accent' | 'indigo' | 'neutral' => {
+    switch (status?.toLowerCase()) {
       case 'active':
       case 'ok':
       case 'success':
-        return 'ok'
+      case 'online':
+      case 'paid':
+        return 'green'
       case 'grace':
       case 'warn':
       case 'warning':
       case 'expiring_soon':
       case 'grace_period':
-        return 'warn'
+      case 'pending':
+        return 'amber'
       case 'expired':
       case 'blocked':
       case 'danger':
       case 'blacklisted':
-        return 'danger'
+      case 'void':
+      case 'overdue':
+        return 'accent'
       case 'info':
-        return 'info'
-      case 'pending':
+      case 'platinum':
+      case 'vip':
+        return 'indigo'
       case 'neutral':
       case 'inactive':
       default:
@@ -55,28 +58,46 @@ export function Badge({
   })()
 
   const statusStyles: Record<string, string> = {
-    ok: 'bg-[var(--ok-dim)] text-[var(--ok)]',
-    warn: 'bg-[var(--warn-dim)] text-[var(--warn)]',
-    danger: 'bg-[var(--danger-dim)] text-[var(--danger)]',
-    info: 'bg-[var(--blue-dim)] text-[var(--blue)]',
-    neutral: 'bg-[var(--surface-sunken)] text-[var(--text-muted)]',
+    green: 'bg-[rgba(52,211,153,0.12)] text-[#34D399] border border-[rgba(52,211,153,0.25)]',
+    amber: 'bg-[rgba(245,158,11,0.12)] text-[#F59E0B] border border-[rgba(245,158,11,0.25)]',
+    accent: 'bg-[rgba(244,63,94,0.12)] text-[#F43F5E] border border-[rgba(244,63,94,0.25)]',
+    indigo: 'bg-[rgba(129,140,248,0.12)] text-[#818CF8] border border-[rgba(129,140,248,0.25)]',
+    neutral: 'bg-[var(--surface-2)] text-[var(--muted)] border border-[var(--line)]',
+  }
+
+  const dotColors: Record<string, string> = {
+    green: 'bg-[#34D399]',
+    amber: 'bg-[#F59E0B]',
+    accent: 'bg-[#F43F5E]',
+    indigo: 'bg-[#818CF8]',
+    neutral: 'bg-[var(--muted)]',
   }
 
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full font-ui uppercase font-semibold tracking-[0.06em] select-none',
-        size === 'sm' ? 'px-2 py-0.5 text-[10px] leading-[13px]' : 'px-2.5 py-0.5 text-[11px] leading-[14px]',
+        'inline-flex items-center gap-1.5 rounded-full font-data uppercase font-semibold select-none',
+        size === 'sm'
+          ? 'px-2 py-0.5 text-[10px] tracking-[0.08em]'
+          : 'px-2.5 py-0.5 text-[11px] tracking-[0.10em]',
         statusStyles[normalizedStatus],
         className
       )}
     >
+      {dot && (
+        <span
+          className={cn(
+            'w-1.5 h-1.5 rounded-full animate-pulse',
+            dotColors[normalizedStatus]
+          )}
+        />
+      )}
       {children}
     </span>
   )
 }
 
-/** Alias for semantic clarity */
+/** Alias for StatusPill */
 export function StatusPill(props: BadgeProps) {
   return <Badge {...props} />
 }

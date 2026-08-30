@@ -6,10 +6,11 @@ import {
   CheckCircle2, Clock, AlertTriangle, ShieldAlert,
   ArrowUpDown, Eye, Plus,
 } from 'lucide-react'
-import { Button } from '@/components/app/ui/button'
-import { Badge } from '@/components/app/ui/badge'
-import { StrandMeter } from '@/components/app/ui/StrandMeter'
-import { DataTable, type DataTableColumn } from '@/components/app/ui/data-table'
+import Button from '@/components/app/ui/button'
+import Badge from '@/components/app/ui/badge'
+import StrandMeter from '@/components/app/ui/StrandMeter'
+import DataTable, { type DataTableColumn } from '@/components/app/ui/data-table'
+import PageHeader from '@/components/app/ui/PageHeader'
 import MemberProfileDrawer from '@/components/app/members/MemberProfileDrawer'
 import MemberOnboardingModal from '@/components/app/members/MemberOnboardingModal'
 import FreezeMemberModal from '@/components/app/members/FreezeMemberModal'
@@ -71,7 +72,7 @@ export default function MembersPage() {
     { id: 'blacklisted', label: 'Blocked', count: counts.blacklisted },
   ]
 
-  // Columns for 44px Dense Table
+  // Columns for 52px Dense Table
   const columns: DataTableColumn<Member>[] = [
     {
       id: 'member',
@@ -79,15 +80,15 @@ export default function MembersPage() {
       accessorKey: 'name',
       sortable: true,
       cell: (_, row) => (
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line-strong)] flex items-center justify-center font-ui text-[11px] font-semibold text-[var(--text)] shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.25)] to-[rgba(129,140,248,0.15)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center font-data text-[11px] font-bold text-white shrink-0">
             {getInitials(row.name || 'MB')}
           </div>
           <div>
-            <p className="font-ui font-medium text-[13.5px] text-[var(--text)] hover:text-[var(--teal)] transition-colors leading-tight">
+            <p className="font-ui font-semibold text-[13.5px] text-[var(--ink)] hover:text-[var(--accent)] transition-colors leading-tight">
               {row.name}
             </p>
-            <div className="flex items-center gap-1.5 font-data text-[11px] text-[var(--text-faint)] mt-0.5 tabular-nums">
+            <div className="flex items-center gap-1.5 font-data text-[10.5px] text-[var(--muted)] mt-0.5 tabular-nums">
               <span>{row.member_code}</span>
               <span>·</span>
               <span>{row.phone}</span>
@@ -105,10 +106,10 @@ export default function MembersPage() {
         const primaryPlan = memberships[0]
         return (
           <div className="max-w-[280px]">
-            <span className="font-ui text-[13px] font-medium text-[var(--text)] block leading-tight">
+            <span className="font-ui text-[13px] font-semibold text-[var(--ink)] block leading-tight">
               {primaryPlan?.product_name || 'No Active Plan'}
             </span>
-            <p className="font-ui text-[11px] text-[var(--text-faint)] mt-0.5">
+            <p className="font-data text-[10.5px] text-[var(--muted)] mt-0.5">
               {primaryPlan?.expiry_date ? `Expires: ${primaryPlan.expiry_date}` : 'Expired / None'}
             </p>
           </div>
@@ -134,7 +135,7 @@ export default function MembersPage() {
                 capsules={5}
                 size="sm"
               />
-              <span className="font-data text-xs tabular-nums text-[var(--text)] font-medium">
+              <span className="font-data text-xs tabular-nums text-[var(--ink)] font-semibold">
                 {remaining}/{total}
               </span>
             </div>
@@ -142,7 +143,7 @@ export default function MembersPage() {
         }
 
         return (
-          <span className="font-ui text-[11px] text-[var(--text-faint)]">
+          <span className="font-ui text-[11.5px] text-[var(--muted-2)]">
             Unlimited
           </span>
         )
@@ -177,7 +178,7 @@ export default function MembersPage() {
         return (
           <div className="flex items-center gap-2">
             <StrandMeter value={Math.min(streak, 7)} max={7} capsules={7} size="sm" />
-            <span className="font-data text-xs tabular-nums text-[var(--text)]">
+            <span className="font-data text-xs tabular-nums text-[var(--ink)] font-semibold">
               {streak}d
             </span>
           </div>
@@ -192,7 +193,7 @@ export default function MembersPage() {
       cell: (_, row) => {
         const memberships = row.active_memberships || []
         return (
-          <span className="font-data text-[13px] font-medium text-[var(--text)] tabular-nums">
+          <span className="font-data text-[13px] font-semibold text-[var(--ink)] tabular-nums">
             {formatINR(row.lifetime_value || memberships[0]?.amount_paid || 0)}
           </span>
         )
@@ -200,38 +201,31 @@ export default function MembersPage() {
     },
   ]
 
-
   const pagedMembers = members.slice((page - 1) * pageSize, page * pageSize)
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto select-none">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        <div>
-          <span className="font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-faint)]">
-            Member Operations
-          </span>
-          <h1 className="font-display text-[28px] sm:text-[30px] leading-[34px] font-semibold text-[var(--text)] tracking-[-0.02em] mt-0.5">
-            Member Directory
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-2.5">
+      <PageHeader
+        eyebrow="OPERATIONS · MEMBER DIRECTORY"
+        title="Member Directory"
+        description="Search and manage all 659 registered members, attendance access, session tracking, and renewal lifecycles."
+        actions={
           <Button
             variant="primary"
-            size="sm"
+            size="md"
             onClick={() => setOnboardingOpen(true)}
             icon={<UserPlus className="w-3.5 h-3.5" />}
           >
-            Enrol Member
+            Enrol member
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filter Chips & Search Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 select-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
           {filterChips.map((chip) => {
             const isSelected = statusFilter === chip.id
             return (
@@ -242,16 +236,16 @@ export default function MembersPage() {
                   setPage(1)
                 }}
                 className={cn(
-                  'inline-flex items-center gap-1.5 h-[30px] px-3 font-ui text-xs font-medium rounded-full cursor-pointer transition-colors duration-140 whitespace-nowrap',
+                  'inline-flex items-center gap-2 h-[32px] px-3.5 font-ui text-xs font-semibold rounded-full cursor-pointer transition-all duration-140 whitespace-nowrap',
                   isSelected
-                    ? 'bg-[var(--surface-raised)] border border-[var(--line-strong)] text-[var(--text)] shadow-sm'
-                    : 'bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)]'
+                    ? 'bg-[var(--accent-soft)] border border-[rgba(244,63,94,0.35)] text-white shadow-glow-sm'
+                    : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
                 )}
               >
                 <span>{chip.label}</span>
                 <span className={cn(
-                  'font-data text-[11px] tabular-nums font-semibold',
-                  isSelected ? 'text-[var(--teal)]' : 'text-[var(--text-faint)]'
+                  'font-data text-[10.5px] tabular-nums font-bold',
+                  isSelected ? 'text-[var(--accent)]' : 'text-[var(--muted-2)]'
                 )}>
                   {chip.count}
                 </span>
@@ -261,8 +255,8 @@ export default function MembersPage() {
         </div>
 
         {/* Search */}
-        <div className="relative min-w-[240px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
+        <div className="relative min-w-[260px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--muted)]" />
           <input
             type="text"
             value={search}
@@ -271,12 +265,12 @@ export default function MembersPage() {
               setPage(1)
             }}
             placeholder="Search by name, phone or code..."
-            className="w-full h-[32px] pl-8 pr-3 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text)] placeholder:text-[var(--text-faint)] focus:border-[var(--line-strong)] focus:ring-[2px] focus:ring-[var(--teal-dim)] outline-none transition-all"
+            className="w-full h-[36px] pl-9 pr-3.5 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none transition-all"
           />
         </div>
       </div>
 
-      {/* 44px Dense Table */}
+      {/* 52px Dense Table */}
       <DataTable
         columns={columns}
         data={pagedMembers}

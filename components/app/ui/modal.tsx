@@ -41,7 +41,7 @@ export function Modal({
             {/* Overlay */}
             <DialogPrimitive.Overlay asChild>
               <motion.div
-                className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -55,8 +55,9 @@ export function Modal({
                 className={cn(
                   'fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)]',
                   sizeMap[size],
-                  'glass-card p-0 overflow-hidden',
-                  '-translate-x-1/2 -translate-y-1/2',
+                  'bg-[var(--bg-elev)] border border-[var(--line)] rounded-[var(--r-lg)]',
+                  'shadow-[0_24px_48px_-20px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]',
+                  'overflow-hidden -translate-x-1/2 -translate-y-1/2',
                   className
                 )}
                 variants={scaleFade}
@@ -65,19 +66,19 @@ export function Modal({
                 exit="exit"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--app-glass-border)]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--line)]">
                   <div>
-                    <DialogPrimitive.Title className="text-base font-semibold text-[var(--app-text-primary)]">
+                    <DialogPrimitive.Title className="font-display text-base font-semibold text-[var(--ink)]">
                       {title}
                     </DialogPrimitive.Title>
                     {description && (
-                      <DialogPrimitive.Description className="text-sm text-[var(--app-text-muted)] mt-0.5">
+                      <DialogPrimitive.Description className="font-ui text-xs text-[var(--muted)] mt-0.5">
                         {description}
                       </DialogPrimitive.Description>
                     )}
                   </div>
                   <DialogPrimitive.Close
-                    className="p-1.5 rounded-lg text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)] hover:bg-[var(--app-glass-bg)] transition-colors"
+                    className="p-1.5 rounded-[var(--r-sm)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer"
                     aria-label="Close"
                   >
                     <X className="w-4 h-4" />
@@ -85,7 +86,7 @@ export function Modal({
                 </div>
 
                 {/* Body */}
-                <div className="px-6 py-4">
+                <div className="px-6 py-5">
                   {children}
                 </div>
               </motion.div>
@@ -96,3 +97,5 @@ export function Modal({
     </DialogPrimitive.Root>
   )
 }
+
+export default Modal

@@ -10,7 +10,7 @@ import { Button } from './button'
 import { Skeleton } from './skeleton'
 
 /* ============================================================
-   Types
+   DataTable Types
    ============================================================ */
 
 export interface DataTableColumn<T> {
@@ -23,40 +23,33 @@ export interface DataTableColumn<T> {
   width?: string
   align?: 'left' | 'center' | 'right'
   sticky?: boolean
+  isData?: boolean // True for numeric/code/date columns (renders in Martian Mono)
 }
 
 export interface DataTableProps<T> {
   columns: DataTableColumn<T>[]
   data: T[]
   status?: 'loading' | 'success' | 'error' | 'empty'
-  /** Current sort */
   sort?: { column: string; direction: 'asc' | 'desc' }
   onSort?: (column: string) => void
-  /** Pagination */
   page?: number
   pageSize?: number
   total?: number
   onPageChange?: (page: number) => void
-  /** Error */
   errorMessage?: string
   onRetry?: () => void
-  /** Empty */
   emptyTitle?: string
   emptyDescription?: string
   emptyAction?: { label: string; onClick: () => void }
-  /** Filter empty */
   isFilterActive?: boolean
   onClearFilters?: () => void
-  /** Class */
   className?: string
-  /** Row click */
   onRowClick?: (row: T) => void
-  /** Row key */
   getRowId?: (row: T) => string
 }
 
 /* ============================================================
-   Component
+   DataTable Component — Aurora Dark-Luxe (§5)
    ============================================================ */
 
 export function DataTable<T>({
@@ -66,10 +59,10 @@ export function DataTable<T>({
   sort,
   onSort,
   page = 1,
-  pageSize = 10,
+  pageSize = 15,
   total = 0,
   onPageChange,
-  errorMessage = 'Something went wrong. Please try again.',
+  errorMessage = 'Something went wrong while retrieving records.',
   onRetry,
   emptyTitle = 'No records found',
   emptyDescription,
@@ -91,34 +84,34 @@ export function DataTable<T>({
   const renderSortIcon = (col: DataTableColumn<T>) => {
     if (!col.sortable) return null
     if (!sort || sort.column !== col.id) {
-      return <ArrowUpDown className="w-3 h-3 ml-1 text-[var(--text-faint)]" />
+      return <ArrowUpDown className="w-3 h-3 ml-1.5 text-[var(--muted-2)]" />
     }
     return sort.direction === 'asc'
-      ? <ArrowUp className="w-3 h-3 ml-1 text-[var(--teal)]" />
-      : <ArrowDown className="w-3 h-3 ml-1 text-[var(--teal)]" />
+      ? <ArrowUp className="w-3 h-3 ml-1.5 text-[var(--accent)]" />
+      : <ArrowDown className="w-3 h-3 ml-1.5 text-[var(--accent)]" />
   }
 
   // ─── Loading State ───
   if (status === 'loading') {
     return (
-      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]', className)}>
+      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-xl)] overflow-hidden shadow-card backdrop-blur-[4px]', className)}>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-[var(--surface-sunken)] border-b border-[var(--line)] h-[40px]">
+              <tr className="bg-[var(--bg-elev)] border-b border-[var(--line)] h-[44px]">
                 {columns.map((col) => (
-                  <th key={col.id} className="px-4 py-2 text-left font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)]">
-                    <Skeleton className="h-3 w-16" />
+                  <th key={col.id} className="px-5 py-2.5 text-left font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
+                    <Skeleton className="h-3 w-16 bg-[var(--surface-2)]" />
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
-                <tr key={i} className="border-b border-[var(--line)] last:border-0 h-[44px]">
+                <tr key={i} className="border-b border-[var(--line-soft)] last:border-0 h-[54px]">
                   {columns.map((col) => (
-                    <td key={col.id} className="px-4 py-2.5">
-                      <Skeleton className="h-3.5" style={{ width: `${50 + (i % 3) * 20}%` }} />
+                    <td key={col.id} className="px-5 py-3">
+                      <Skeleton className="h-3.5 bg-[var(--surface-2)]" style={{ width: `${50 + (i % 3) * 20}%` }} />
                     </td>
                   ))}
                 </tr>
@@ -133,10 +126,10 @@ export function DataTable<T>({
   // ─── Error State ───
   if (status === 'error') {
     return (
-      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] p-8 flex flex-col items-center justify-center text-center', className)}>
-        <AlertCircle className="w-6 h-6 text-[var(--danger)] mb-2" />
-        <h3 className="font-ui text-sm font-semibold text-[var(--text)] mb-1">Failed to load table data</h3>
-        <p className="font-ui text-xs text-[var(--text-muted)] max-w-sm mb-4">{errorMessage}</p>
+      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-xl)] p-10 flex flex-col items-center justify-center text-center shadow-card', className)}>
+        <AlertCircle className="w-7 h-7 text-[var(--accent)] mb-3" />
+        <h3 className="font-ui text-sm font-semibold text-[var(--ink)] mb-1">Failed to load data</h3>
+        <p className="font-ui text-xs text-[var(--muted)] max-w-sm mb-4">{errorMessage}</p>
         {onRetry && (
           <Button variant="secondary" size="sm" onClick={onRetry}>Try again</Button>
         )}
@@ -147,22 +140,25 @@ export function DataTable<T>({
   // ─── Empty State ───
   if (status === 'empty' || (status === 'success' && data.length === 0)) {
     return (
-      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] py-12 px-6 flex flex-col items-center justify-center text-center', className)}>
-        <p className="font-ui text-[13.5px] text-[var(--text-muted)]">
-          {isFilterActive
-            ? 'No records match these filters.'
-            : emptyTitle}
+      <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-xl)] py-14 px-6 flex flex-col items-center justify-center text-center shadow-card backdrop-blur-[4px]', className)}>
+        <p className="font-ui text-[14px] text-[var(--muted)]">
+          {isFilterActive ? 'No records match the active filter criteria.' : emptyTitle}
         </p>
+        {emptyDescription && (
+          <p className="font-ui text-xs text-[var(--muted-2)] mt-1 max-w-md">
+            {emptyDescription}
+          </p>
+        )}
         {isFilterActive && onClearFilters && (
           <button
             onClick={onClearFilters}
-            className="font-ui text-xs text-[var(--teal)] hover:underline mt-2 cursor-pointer"
+            className="font-ui text-xs text-[var(--accent)] hover:underline mt-2.5 cursor-pointer font-medium"
           >
-            Clear filters
+            Clear active filters
           </button>
         )}
         {!isFilterActive && emptyAction && (
-          <Button variant="secondary" size="sm" onClick={emptyAction.onClick} className="mt-3">
+          <Button variant="primary" size="sm" onClick={emptyAction.onClick} className="mt-4">
             {emptyAction.label}
           </Button>
         )}
@@ -172,19 +168,19 @@ export function DataTable<T>({
 
   // ─── Data State ───
   return (
-    <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]', className)}>
+    <div className={cn('w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-xl)] overflow-hidden shadow-card backdrop-blur-[4px]', className)}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-[var(--surface-sunken)] border-b border-[var(--line)] sticky top-0 z-10 h-[40px]">
+            <tr className="bg-[var(--bg-elev)] border-b border-[var(--line)] sticky top-0 z-10 h-[44px]">
               {columns.map((col, colIdx) => (
                 <th
                   key={col.id}
                   className={cn(
-                    'px-4 py-2 font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)] select-none whitespace-nowrap',
+                    'px-5 py-2.5 font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] select-none whitespace-nowrap',
                     col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
-                    col.sortable && 'cursor-pointer hover:text-[var(--text)] transition-colors',
-                    colIdx === 0 && 'sticky left-0 bg-[var(--surface-sunken)] z-20 shadow-[1px_0_0_var(--line)]'
+                    col.sortable && 'cursor-pointer hover:text-[var(--ink)] transition-colors',
+                    colIdx === 0 && 'sticky left-0 bg-[var(--bg-elev)] z-20 shadow-[1px_0_0_var(--line)]'
                   )}
                   style={{ width: col.width }}
                   onClick={() => col.sortable && onSort?.(col.id)}
@@ -206,8 +202,8 @@ export function DataTable<T>({
                 <tr
                   key={rowId}
                   className={cn(
-                    'group border-b border-[var(--line)] last:border-0 h-[44px] transition-colors duration-140',
-                    'hover:bg-[var(--surface-raised)]',
+                    'group border-b border-[var(--line-soft)] last:border-0 h-[52px] transition-colors duration-140',
+                    'hover:bg-[var(--surface-2)]',
                     onRowClick && 'cursor-pointer'
                   )}
                   onClick={() => onRowClick?.(row)}
@@ -220,9 +216,10 @@ export function DataTable<T>({
                       <td
                         key={col.id}
                         className={cn(
-                          'px-4 py-2.5 font-ui text-[13.5px] leading-[20px] text-[var(--text)] whitespace-nowrap',
-                          col.align === 'right' ? 'text-right font-data tabular-nums' : col.align === 'center' ? 'text-center' : 'text-left',
-                          colIdx === 0 && 'sticky left-0 bg-[var(--surface)] group-hover:bg-[var(--surface-raised)] z-10 shadow-[1px_0_0_var(--line)] transition-colors duration-140'
+                          'px-5 py-3 text-[13.5px] leading-[20px] text-[var(--ink)] whitespace-nowrap',
+                          col.isData || col.align === 'right' ? 'font-data tabular-nums' : 'font-ui',
+                          col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
+                          colIdx === 0 && 'sticky left-0 bg-[var(--bg)] group-hover:bg-[var(--bg-elev)] z-10 shadow-[1px_0_0_var(--line)] transition-colors duration-140'
                         )}
                       >
                         {rendered}
@@ -238,11 +235,11 @@ export function DataTable<T>({
 
       {/* Pagination Bar */}
       {totalPages > 1 && onPageChange && (
-        <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--surface-sunken)] border-t border-[var(--line)] text-xs font-ui text-[var(--text-muted)] select-none">
-          <div className="font-data tabular-nums">
-            Showing {((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, total)} of {total}
+        <div className="flex items-center justify-between px-5 py-3 bg-[var(--bg-elev)] border-t border-[var(--line)] text-xs font-ui text-[var(--muted)] select-none">
+          <div className="font-data text-[11px] tabular-nums font-medium text-[var(--muted)]">
+            Showing <span className="text-[var(--ink)]">{((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, total)}</span> of <span className="text-[var(--ink)]">{total}</span> records
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Button
               variant="secondary"
               size="sm"
@@ -250,9 +247,9 @@ export function DataTable<T>({
               onClick={() => onPageChange(page - 1)}
               icon={<ChevronLeft className="w-3.5 h-3.5" />}
             >
-              Prev
+              Previous
             </Button>
-            <span className="font-data px-2 tabular-nums text-[var(--text)]">
+            <span className="font-data text-[11px] px-2 tabular-nums text-[var(--ink-2)] font-medium">
               {page} / {totalPages}
             </span>
             <Button

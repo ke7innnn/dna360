@@ -15,33 +15,33 @@ const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & { label?: string; error?: string }
 >(({ className, children, label, error, ...props }, ref) => (
-  <div className="flex flex-col gap-1">
+  <div className="flex flex-col gap-1.5">
     {label && (
-      <span className="font-ui text-[11px] uppercase tracking-[0.06em] font-semibold text-[var(--text-muted)] select-none">
+      <span className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] select-none">
         {label}
       </span>
     )}
     <SelectPrimitive.Trigger
       ref={ref}
       className={cn(
-        'flex h-[36px] w-full items-center justify-between px-3 font-ui text-[13.5px] rounded-[var(--r-sm)]',
-        'bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text)]',
-        'transition-all duration-140 outline-none',
-        'focus:border-[var(--line-strong)] focus:ring-[3px] focus:ring-[var(--teal-dim)]',
+        'flex h-[38px] w-full items-center justify-between px-3.5 font-ui text-[13.5px] rounded-[var(--r-sm)]',
+        'bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)]',
+        'transition-all duration-140 outline-none cursor-pointer',
+        'focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]',
         'disabled:cursor-not-allowed disabled:opacity-40',
-        'placeholder:text-[var(--text-faint)]',
-        error && 'border-[var(--danger)] focus:ring-[var(--danger-dim)]',
+        'placeholder:text-[var(--muted-2)]',
+        error && 'border-[var(--accent)] focus:ring-[var(--accent-soft)]',
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDown className="w-3.5 h-3.5 text-[var(--text-faint)] shrink-0" />
+        <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-2)] shrink-0" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
     {error && (
-      <p className="font-ui text-[12px] text-[var(--danger)] mt-0.5" role="alert">{error}</p>
+      <p className="font-ui text-[12px] text-[var(--accent)] mt-0.5" role="alert">{error}</p>
     )}
   </div>
 ))
@@ -57,7 +57,7 @@ const SelectContent = React.forwardRef<
       ref={ref}
       className={cn(
         'relative z-50 max-h-60 min-w-[8rem] overflow-hidden',
-        'bg-[var(--surface-raised)] border border-[var(--line-strong)] rounded-[var(--r-md)] shadow-xl py-1',
+        'bg-[var(--bg-elev)] border border-[var(--line)] rounded-[var(--r-md)] shadow-card py-1.5 backdrop-blur-[6px]',
         'data-[state=open]:animate-in data-[state=closed]:animate-out',
         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
@@ -88,9 +88,9 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex w-full cursor-pointer select-none items-center rounded-[var(--r-sm)] py-2 pl-7 pr-2 font-ui text-[13px]',
-      'text-[var(--text-muted)] outline-none transition-colors duration-140',
-      'focus:bg-[var(--surface-sunken)] focus:text-[var(--text)]',
+      'relative flex w-full cursor-pointer select-none items-center rounded-[var(--r-sm)] py-2 pl-7 pr-3 font-ui text-[13px]',
+      'text-[var(--ink-2)] outline-none transition-colors duration-140',
+      'focus:bg-[var(--surface-2)] focus:text-[var(--ink)]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-40',
       className
     )}
@@ -98,7 +98,7 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="w-3.5 h-3.5 text-[var(--teal)]" />
+        <Check className="w-3.5 h-3.5 text-[var(--accent)]" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -114,3 +114,4 @@ export {
   SelectContent,
   SelectItem,
 }
+export default Select

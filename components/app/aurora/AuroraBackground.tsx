@@ -1,76 +1,35 @@
 'use client'
 
-import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { useTheme } from '@/components/app/theme/ThemeProvider'
+import React from 'react'
 
 /**
- * Aurora Background — the signature ambient element.
+ * Aurora Background — Aurora Dark-Luxe (§2)
  *
- * Three blurred colour blobs drift slowly and continuously on a 20s+ loop.
- * Sits BEHIND all content. Heavily blurred, low opacity.
- * Respects prefers-reduced-motion (no animation).
- * Adapts to light theme (paler wash).
+ * Fixed layer behind all content (z-index: 0, pointer-events: none)
+ * radial-gradient(60% 55% at 82% 8%,  rgba(244,63,94,0.20), transparent 60%),
+ * radial-gradient(45% 45% at 96% 40%, rgba(190,24,93,0.16), transparent 60%),
+ * radial-gradient(50% 50% at 10% 100%,rgba(129,140,248,0.08),transparent 55%),
+ * linear-gradient(180deg,#0B0A0D,#08080A 40%)
  */
 export default function AuroraBackground() {
-  const prefersReducedMotion = useReducedMotion()
-  const { resolvedTheme } = useTheme()
-  const isLight = resolvedTheme === 'light'
-
-  const opacity = isLight ? 0.20 : 0.18
-
   return (
     <div
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
       aria-hidden="true"
     >
-      {/* Base canvas */}
-      <div
-        className="absolute inset-0"
-        style={{ backgroundColor: isLight ? '#F0F3FA' : '#0B0E14' }}
-      />
+      {/* Base Canvas */}
+      <div className="absolute inset-0 bg-[#08080A]" />
 
-      {/* Aurora blob 1 — Cool blue */}
+      {/* Main Aurora Mesh Gradient */}
       <div
-        className={`aurora-blob ${prefersReducedMotion ? '' : 'aurora-blob-1'}`}
+        className="absolute inset-0 aurora-blob-anim"
         style={{
-          top: '-15%',
-          left: '-10%',
-          width: '60vw',
-          height: '60vw',
-          maxWidth: '800px',
-          maxHeight: '800px',
-          background: `radial-gradient(circle, var(--aurora-1) 0%, transparent 70%)`,
-          opacity,
-        }}
-      />
-
-      {/* Aurora blob 2 — Violet */}
-      <div
-        className={`aurora-blob ${prefersReducedMotion ? '' : 'aurora-blob-2'}`}
-        style={{
-          top: '10%',
-          right: '-15%',
-          width: '55vw',
-          height: '55vw',
-          maxWidth: '750px',
-          maxHeight: '750px',
-          background: `radial-gradient(circle, var(--aurora-2) 0%, transparent 70%)`,
-          opacity: opacity * 0.85,
-        }}
-      />
-
-      {/* Aurora blob 3 — Teal */}
-      <div
-        className={`aurora-blob ${prefersReducedMotion ? '' : 'aurora-blob-3'}`}
-        style={{
-          bottom: '-20%',
-          left: '15%',
-          width: '65vw',
-          height: '65vw',
-          maxWidth: '900px',
-          maxHeight: '900px',
-          background: `radial-gradient(circle, var(--aurora-3) 0%, transparent 70%)`,
-          opacity: opacity * 0.75,
+          background: `
+            radial-gradient(60% 55% at 82% 8%, rgba(244, 63, 94, 0.20), transparent 60%),
+            radial-gradient(45% 45% at 96% 40%, rgba(190, 24, 93, 0.16), transparent 60%),
+            radial-gradient(50% 50% at 10% 100%, rgba(129, 140, 248, 0.08), transparent 55%),
+            linear-gradient(180deg, #0B0A0D 0%, #08080A 40%)
+          `,
         }}
       />
     </div>

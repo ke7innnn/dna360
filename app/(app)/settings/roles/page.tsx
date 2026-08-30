@@ -7,9 +7,10 @@ import {
   Shield, Plus, ArrowLeft, Trash2, KeyRound,
   CheckCircle, AlertCircle, Info, Sparkles,
 } from 'lucide-react'
-import GlassCard from '@/components/app/ui/glass-card'
-import { Button } from '@/components/app/ui/button'
-import { StatusPill } from '@/components/app/ui/badge'
+import Card from '@/components/app/ui/glass-card'
+import Button from '@/components/app/ui/button'
+import Badge, { StatusPill } from '@/components/app/ui/badge'
+import PageHeader from '@/components/app/ui/PageHeader'
 import PermissionMatrix from '@/components/app/settings/PermissionMatrix'
 import RoleModal from '@/components/app/settings/RoleModal'
 import { ConfirmDialog } from '@/components/app/ui/confirm-dialog'
@@ -34,98 +35,81 @@ export default function RolesSettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl">
+    <div className="space-y-7 max-w-7xl mx-auto select-none">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <Link
-            href="/settings"
-            className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)] transition-colors mb-2"
+      <PageHeader
+        eyebrow="ADMINISTRATION · STAFF ACCESS"
+        title="Staff Roles & Capabilities"
+        description="Fine-grained permissions, staff security tiers, and dynamic role capability matrix for front-desk, trainers, and accounting staff."
+        actions={
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => setModalOpen(true)}
+            icon={<Plus className="w-3.5 h-3.5" />}
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Settings
-          </Link>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight">
-            Roles & Capability Matrix
-          </h1>
-          <p className="text-sm text-[var(--app-text-secondary)] mt-1">
-            Roles in DNA 360 are records with granular capability toggles, allowing gym owners to build tailor-made staff roles.
-          </p>
-        </div>
-
-        <Button
-          variant="primary"
-          onClick={() => setModalOpen(true)}
-          icon={<Plus className="w-4 h-4" />}
-        >
-          Create Custom Role
-        </Button>
-      </div>
+            Create custom role
+          </Button>
+        }
+      />
 
       {/* Role Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         {roles.map((role) => (
-          <GlassCard key={role.id} padding="sm" className="flex flex-col justify-between">
+          <Card key={role.id} className="p-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-1 mb-2">
-                <span className="font-semibold text-sm text-[var(--app-text-primary)]">
+                <span className="font-display font-semibold text-sm text-[var(--ink)]">
                   {role.name}
                 </span>
                 {role.isSystem ? (
-                  <StatusPill status="info" size="sm">System</StatusPill>
+                  <Badge status="info" size="sm">System</Badge>
                 ) : (
                   <button
                     onClick={() => setRoleToDelete(role)}
-                    className="text-[var(--app-danger)] hover:opacity-80 p-1 transition-opacity"
+                    className="text-[var(--accent)] hover:opacity-80 p-1 transition-opacity cursor-pointer"
                     title="Delete role"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
-              <p className="text-[0.6875rem] text-[var(--app-text-secondary)] line-clamp-2 leading-relaxed">
+              <p className="font-ui text-xs text-[var(--muted)] line-clamp-2 leading-relaxed">
                 {role.description}
               </p>
             </div>
 
-            <div className="mt-3 pt-2 border-t border-[var(--app-glass-border)] flex items-center justify-between text-[0.6875rem] text-[var(--app-text-muted)]">
+            <div className="mt-3.5 pt-2.5 border-t border-[var(--line)] flex items-center justify-between text-xs font-ui text-[var(--muted)]">
               <span>Capabilities:</span>
-              <span className="font-bold text-[var(--aurora-1)] font-mono">
+              <span className="font-bold text-[var(--accent)] font-data tabular-nums">
                 {role.slug === 'owner' ? 'All (Unrestricted)' : `${role.capabilities.length} active`}
               </span>
             </div>
-          </GlassCard>
+          </Card>
         ))}
       </div>
 
-      {/* Permission Matrix Table */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-[var(--aurora-1)]" />
-            <h2 className="font-display text-lg font-semibold text-[var(--app-text-primary)] tracking-tight">
-              Interactive Permissions Matrix
-            </h2>
-          </div>
-          <p className="text-xs text-[var(--app-text-muted)]">
-            Click any checkbox to grant or revoke specific capabilities in real-time.
-          </p>
-        </div>
+      {/* Permission Matrix */}
+      <PermissionMatrix />
 
-        <PermissionMatrix />
-      </div>
+      {/* Role Modal */}
+      <RoleModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onCreated={() => {
+          setModalOpen(false)
+          toast.success('New role definition added')
+        }}
+      />
 
-      {/* Role Creation Modal */}
-      <RoleModal open={modalOpen} onOpenChange={setModalOpen} />
-
-      {/* Delete Confirmation Dialog */}
+      {/* Confirm Dialog */}
       <ConfirmDialog
         open={!!roleToDelete}
-        onOpenChange={(open) => !open && setRoleToDelete(null)}
-        title="Delete Custom Role"
-        description={`Are you sure you want to delete "${roleToDelete?.name}"? Staff currently assigned this role will lose their custom capabilities.`}
-        variant="danger"
+        onOpenChange={(op) => !op && setRoleToDelete(null)}
+        title="Delete Role Definition"
+        description={`Are you sure you want to permanently delete "${roleToDelete?.name}"? Staff assigned to this role will lose their custom capabilities.`}
         confirmLabel="Delete Role"
+        variant="danger"
         onConfirm={handleDeleteRole}
       />
     </div>
