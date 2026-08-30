@@ -93,9 +93,9 @@ export default function FreezeMemberModal({
           <Select value={approverName} onValueChange={setApproverName}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="Vikramaditya Shinde (Asst. Sales Head)">Vikramaditya Shinde (Asst. Sales Head)</SelectItem>
-              <SelectItem value="Pooja Hegde (HR Head)">Pooja Hegde (HR Head)</SelectItem>
-              <SelectItem value="Kevin Patel (Owner)">Kevin Patel (Owner)</SelectItem>
+              <SelectItem value="Monica Picholla (Asst. Sales Head)">Monica Picholla (Asst. Sales Head)</SelectItem>
+              <SelectItem value="Swapnil Borhade (HR Head)">Swapnil Borhade (HR Head)</SelectItem>
+              <SelectItem value="Executive Admin (Owner)">Executive Admin (Owner)</SelectItem>
             </SelectContent>
           </Select>
         </div>

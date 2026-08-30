@@ -26,13 +26,14 @@
   --muted:       #8B8690;   /* labels, captions */
   --muted-2:     #615C66;   /* faintest */
 
-  --accent:      #F43F5E;   /* rose — primary accent */
-  --accent-deep: #E11D48;
-  --accent-soft: rgba(244, 63, 94, 0.16);
+  --accent:      #3B82F6;   /* electric blue — primary accent */
+  --accent-deep: #1D4ED8;   /* deep sapphire */
+  --accent-soft: rgba(59, 130, 246, 0.16);
 
   --green:       #34D399;   /* active / online / success */
   --amber:       #F59E0B;   /* pending / warning */
   --indigo:      #818CF8;   /* info / secondary data */
+  --danger:      #EF4444;   /* destructive action */
 
   /* Radii */
   --r-sm:        10px;
@@ -44,8 +45,8 @@
 
   /* Typography */
   --font-display: 'Clash Display', -apple-system, sans-serif;
-  --font-ui:      'Satoshi', -apple-system, sans-serif;
-  --font-data:    'Martian Mono', ui-monospace, monospace;
+  --font-ui:      'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-data:    'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Compatibility bindings for legacy component compatibility */
   --text:                     var(--ink);
@@ -57,10 +58,9 @@
 
   --ok:                       var(--green);
   --warn:                     var(--amber);
-  --danger:                   var(--accent);
   --ok-dim:                   rgba(52, 211, 153, 0.14);
   --warn-dim:                 rgba(245, 158, 11, 0.14);
-  --danger-dim:               rgba(244, 63, 94, 0.14);
+  --danger-dim:               rgba(239, 68, 68, 0.14);
 
   --teal:                     var(--accent);
   --teal-dim:                 var(--accent-soft);
@@ -75,14 +75,14 @@
   --app-text-muted:           var(--muted);
   --app-glass-bg:             var(--surface);
   --app-glass-border:         var(--line);
-  --app-glass-hover-border:   rgba(244, 63, 94, 0.3);
-  --app-focus-ring:           rgba(244, 63, 94, 0.40);
-  --aurora-1:                 var(--accent);
-  --aurora-2:                 #BE185D;
-  --aurora-3:                 var(--indigo);
+  --app-glass-hover-border:   rgba(59, 130, 246, 0.35);
+  --app-focus-ring:           rgba(59, 130, 246, 0.40);
+  --aurora-1:                 #3B82F6;
+  --aurora-2:                 #2563EB;
+  --aurora-3:                 #6366F1;
   --app-success:              var(--green);
   --app-warning:              var(--amber);
-  --app-danger:               var(--accent);
+  --app-danger:               var(--danger);
   --app-info:                 var(--indigo);
   --app-sidebar-active:       var(--surface-2);
   --app-sidebar-active-border:var(--accent);
@@ -132,12 +132,15 @@ body {
 .font-data,
 .font-mono,
 [data-surface="app"] .font-data {
-  font-family: var(--font-data), 'Martian Mono', monospace;
+  font-family: var(--font-data), 'Satoshi', sans-serif;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' on, 'ss01' on;
+  letter-spacing: 0;
 }
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' on;
 }
 
 /* ============================================================
@@ -158,13 +161,13 @@ body {
 
   .card:hover,
   .glass-card:hover {
-    border-color: rgba(244, 63, 94, 0.25);
+    border-color: rgba(59, 130, 246, 0.25);
   }
 
   /* Feature Card Variant with corner accent radial */
   .card-feature {
     background: 
-      radial-gradient(ellipse 65% 55% at 90% 10%, rgba(244, 63, 94, 0.16), transparent 70%),
+      radial-gradient(ellipse 65% 55% at 90% 10%, rgba(59, 130, 246, 0.20), transparent 70%),
       var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--r-xl);
@@ -192,7 +195,7 @@ body {
 
   /* Accent Glow Elements */
   .accent-glow {
-    box-shadow: 0 8px 24px -8px rgba(244, 63, 94, 0.7);
+    box-shadow: 0 8px 24px -8px rgba(59, 130, 246, 0.7);
   }
 
   /* Button Depress */

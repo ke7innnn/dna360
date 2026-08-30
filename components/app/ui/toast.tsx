@@ -18,7 +18,7 @@ export function Toaster() {
           description: 'font-ui text-xs text-[var(--muted)] mt-0.5',
           actionButton: [
             'px-3 py-1.5 rounded-[var(--r-sm)] text-xs font-semibold',
-            'bg-gradient-to-r from-[#F43F5E] to-[#E11D48] text-white shadow-glow-sm',
+            'bg-gradient-to-r from-[#3B82F6] to-[#1D4ED8] text-white shadow-glow-sm',
             'hover:brightness-110 transition-all',
           ].join(' '),
           cancelButton: [
@@ -27,7 +27,7 @@ export function Toaster() {
             'hover:text-[var(--ink)] transition-all',
           ].join(' '),
           success: 'border-l-[3px] border-[var(--green)]',
-          error: 'border-l-[3px] border-[var(--accent)]',
+          error: 'border-l-[3px] border-[var(--danger)]',
           warning: 'border-l-[3px] border-[var(--amber)]',
           info: 'border-l-[3px] border-[var(--indigo)]',
         },

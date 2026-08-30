@@ -1,14 +1,45 @@
 /* ============================================================
-   DNA 360 — Auth & Staff Types
-   
-   34 staff on record with 12 real designations.
-   6 historical inactive staff for attribution.
+   DNA 360 — Auth & Staff Types (RBAC)
+   Single-club v1 · Powai
+
+   Underneath, everyone resolves to User -> Role -> Capabilities.
+   Capabilities are the atom; roles are named bundles of them.
    ============================================================ */
 
 import type { Capability } from '@/config/permissions'
 import type { Branch, StaffDesignation } from '@/types'
 
-export type RoleSlug = 'owner' | 'manager' | 'sales' | 'trainer' | 'front_desk' | 'staff_no_login' | 'member' | string
+export type UserType = 'STAFF' | 'MEMBER'
+export type MembershipStatus = 'ACTIVE' | 'FROZEN' | 'EXPIRED'
+
+export type RoleSlug =
+  | 'OWNER'
+  | 'HR_HEAD'
+  | 'MARKETING_HEAD'
+  | 'SALES_HEAD'
+  | 'HEAD_TRAINER'
+  | 'TRAINER'
+  | 'FITNESS_CONSULTANT'
+  | 'MASSEUR'
+  | 'SUPERVISOR'
+  | 'EMPLOYEE'
+  | 'MEMBER'
+  // Lowercase aliases for backward compatibility
+  | 'owner'
+  | 'hr_head'
+  | 'marketing_head'
+  | 'sales_head'
+  | 'head_trainer'
+  | 'trainer'
+  | 'fitness_consultant'
+  | 'masseur'
+  | 'supervisor'
+  | 'employee'
+  | 'member'
+  | 'manager'
+  | 'sales'
+  | 'front_desk'
+  | 'staff_no_login'
 
 export interface RoleDefinition {
   id: string
@@ -22,43 +53,37 @@ export interface RoleDefinition {
 }
 
 /**
- * AuthUser — staff member who can log into the system.
- * 
- * Key additions:
- * - designation: the real org chart title
- * - can_view_revenue: first-class per-user permission
- *   (currently on HR Head, Marketing Head, Asst Sales Head)
- * - pt_tier: which PT tier this trainer can deliver (PENDING)
- * - is_active: false for historical staff (6 ex-sales reps)
+ * AuthUser — verified user identity on the server & client.
  */
 export interface AuthUser {
   id: string
+  clubId: string // Single-club v1 seam: "club_powai"
+  type: UserType
   name: string
-  email: string
+  email?: string | null
   phone: string
   avatar?: string
   role: RoleDefinition
   /** The real designation from the org chart */
-  designation: StaffDesignation
+  designation?: StaffDesignation | string
   branchId: string
   branches: Branch[]
   status: 'active' | 'suspended' | 'invited' | 'inactive'
+  membershipStatus?: MembershipStatus // For members (ACTIVE | FROZEN | EXPIRED)
   lastLoginAt?: string
   /**
-   * First-class per-user permission for revenue visibility.
-   * They already think in terms of who can see money.
-   * Currently on: HR Head, Marketing Head, Asst Sales Head, Owner.
+   * First-class revenue visibility flag.
+   * True ONLY for: Owner, HR Head, Marketing Head, Sales Head.
    */
   can_view_revenue: boolean
-  /**
-   * PT tier this trainer can deliver.
-   * PENDING — products are tiered Premium/Elite/Super Elite
-   * but staff records only distinguish Head/General Trainer.
-   * Blocks booking validation and commission.
-   */
-  pt_tier: 'premium' | 'elite' | 'super_elite' | null
-  /** Whether this staff member needs app login (vs attendance-only) */
+  /** 2FA requirement flag (Enforced for Owner + 3 revenue heads) */
+  twoFactorEnabled?: boolean
+  twoFactorRequired?: boolean
+  /** Assigned trainer clients (for Trainer / Masseur scoping) */
+  assignedClientIds?: string[]
+  /** Whether this staff member needs app login */
   requires_login: boolean
+  passwordHash?: string
 }
 
 export interface UserSession {
@@ -67,6 +92,9 @@ export interface UserSession {
   userName: string
   userEmail?: string
   userRole: string
+  capabilities: Capability[]
+  clubId: string
+  membershipStatus?: MembershipStatus
   ipAddress: string
   userAgent: string
   deviceType: 'Desktop' | 'Mobile' | 'Tablet'
@@ -88,12 +116,14 @@ export type AuditAction =
   | 'EXPORT'
   | 'VOID'
   | 'TRANSFER'
+  | 'REVENUE_VIEW'
   | 'DISCOUNT_OVERRIDE'
   | 'CHECKIN_OVERRIDE'
   | 'FREEZE_OVERRIDE'
   | 'ROLE_CHANGE'
   | 'PERMISSION_GRANT'
   | 'PERMISSION_REVOKE'
+  | 'VIEW_AS_MEMBER'
 
 export interface AuditActor {
   id: string

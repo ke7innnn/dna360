@@ -28,6 +28,7 @@ export interface KpiPanelProps {
 
 /**
  * KpiPanel — Aurora Dark-Luxe Unified KPI Strip
+ * Clean, minimal typography with modern tabular figures.
  */
 export function KpiPanel({ cells, className }: KpiPanelProps) {
   const displayCells = cells.slice(0, 4)
@@ -56,7 +57,7 @@ export function KpiPanel({ cells, className }: KpiPanelProps) {
             title={cell.hoverTitle}
           >
             {/* Label */}
-            <div className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] truncate">
+            <div className="font-ui text-[11px] uppercase tracking-[0.12em] font-semibold text-[var(--muted)] truncate">
               {cell.label}
             </div>
 
@@ -66,7 +67,7 @@ export function KpiPanel({ cells, className }: KpiPanelProps) {
                 {cell.value}
               </div>
               {cell.unit && (
-                <div className="font-data text-[10px] uppercase tracking-[0.12em] text-[var(--muted)] mt-0.5 font-medium">
+                <div className="font-ui text-[10.5px] uppercase tracking-[0.10em] text-[var(--muted)] mt-0.5 font-medium">
                   {cell.unit}
                 </div>
               )}
@@ -86,7 +87,7 @@ export function KpiPanel({ cells, className }: KpiPanelProps) {
               )}
 
               {cell.delta && (
-                <span className={cn('font-data text-[11px] tabular-nums font-semibold', deltaColor)}>
+                <span className={cn('font-ui text-[11px] tabular-nums font-semibold tracking-normal', deltaColor)}>
                   {cell.delta.text}
                 </span>
               )}

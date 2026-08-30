@@ -80,12 +80,12 @@ export default function LeadsPage() {
       sortable: true,
       cell: (_, row) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.25)] to-[rgba(129,140,248,0.15)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-white font-data text-xs font-bold shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(59,130,246,0.35)] to-[rgba(99,102,241,0.20)] border border-[rgba(59,130,246,0.4)] flex items-center justify-center text-white font-ui text-xs font-bold shrink-0 shadow-sm">
             {getInitials(row.name)}
           </div>
           <div>
             <p className="font-ui font-semibold text-[13.5px] text-[var(--ink)]">{row.name}</p>
-            <p className="font-data text-[10.5px] text-[var(--muted)]">{row.phone}</p>
+            <p className="font-ui text-[10.5px] text-[var(--muted)] tabular-nums">{row.phone}</p>
           </div>
         </div>
       ),
@@ -96,7 +96,7 @@ export default function LeadsPage() {
       cell: (_, row) => (
         <div>
           <span className="font-ui text-xs font-semibold text-[var(--ink)] block">{row.goal}</span>
-          <span className="font-data text-[10px] uppercase text-[var(--muted)]">{row.source}</span>
+          <span className="font-ui text-[10px] uppercase text-[var(--muted)] font-medium">{row.source}</span>
         </div>
       ),
     },
@@ -121,7 +121,7 @@ export default function LeadsPage() {
       header: 'Target Value',
       align: 'right',
       cell: (_, row) => (
-        <span className="font-data font-bold text-xs text-[var(--ink)] tabular-nums">
+        <span className="font-ui font-semibold text-xs text-[var(--ink)] tabular-nums">
           {formatINR(row.potentialValueMinor)}
         </span>
       ),
@@ -150,7 +150,7 @@ export default function LeadsPage() {
                 className={cn(
                   'px-3 py-1.5 rounded-[var(--r-sm)] font-ui text-xs font-semibold transition-colors cursor-pointer',
                   viewMode === 'kanban'
-                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(244,63,94,0.30)]'
+                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(59,130,246,0.30)]'
                     : 'text-[var(--muted)] hover:text-white'
                 )}
               >
@@ -161,7 +161,7 @@ export default function LeadsPage() {
                 className={cn(
                   'px-3 py-1.5 rounded-[var(--r-sm)] font-ui text-xs font-semibold transition-colors cursor-pointer',
                   viewMode === 'list'
-                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(244,63,94,0.30)]'
+                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(59,130,246,0.30)]'
                     : 'text-[var(--muted)] hover:text-white'
                 )}
               >
@@ -250,7 +250,7 @@ export default function LeadsPage() {
                         setSelectedLead(lead)
                         setDrawerOpen(true)
                       }}
-                      className="p-3 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] cursor-pointer hover:border-[rgba(244,63,94,0.35)] transition-all duration-140 space-y-2 group"
+                      className="p-3 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] cursor-pointer hover:border-[rgba(59,130,246,0.35)] transition-all duration-140 space-y-2 group"
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-ui text-xs font-semibold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-1">

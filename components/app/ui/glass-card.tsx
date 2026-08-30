@@ -24,11 +24,11 @@ export function Card({
           'border border-[var(--line)]',
           'shadow-[0_20px_40px_-30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)]',
           'backdrop-blur-[4px]',
-          'hover:border-[rgba(244,63,94,0.20)]',
+          'hover:border-[rgba(59,130,246,0.25)]',
         ],
         variant === 'feature' && [
           'card-feature',
-          'hover:border-[rgba(244,63,94,0.30)]',
+          'hover:border-[rgba(59,130,246,0.35)]',
         ],
         variant === 'elevated' && [
           'bg-[var(--bg-elev)]',

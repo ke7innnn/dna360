@@ -3,10 +3,10 @@
 import React from 'react'
 
 /**
- * Aurora Background — Aurora Dark-Luxe (§2, §3)
+ * Aurora Background — Luxury Electric Blue & Indigo Gradient Canvas
  *
  * Fixed layer behind all content (z-index: 0, pointer-events: none)
- * Rich multi-stop rose/crimson/magenta and indigo aurora radials.
+ * Rich multi-stop electric sapphire, vibrant cyan, and deep indigo aurora radials.
  */
 export default function AuroraBackground() {
   return (
@@ -15,35 +15,35 @@ export default function AuroraBackground() {
       aria-hidden="true"
     >
       {/* Base Canvas */}
-      <div className="absolute inset-0 bg-[#08080A]" />
+      <div className="absolute inset-0 bg-[#07090E]" />
 
       {/* Main Aurora Mesh Gradient Canvas */}
       <div
         className="absolute inset-0 aurora-blob-anim"
         style={{
           background: `
-            radial-gradient(ellipse 70% 55% at 85% 5%, rgba(244, 63, 94, 0.28), rgba(190, 24, 93, 0.16) 45%, transparent 70%),
-            radial-gradient(ellipse 50% 45% at 95% 35%, rgba(225, 29, 72, 0.20), transparent 60%),
-            radial-gradient(ellipse 60% 50% at 10% 95%, rgba(129, 140, 248, 0.12), transparent 55%),
-            radial-gradient(circle at 45% 0%, rgba(244, 63, 94, 0.10), transparent 50%),
-            linear-gradient(180deg, #0B0A0E 0%, #08080A 35%, #050507 100%)
+            radial-gradient(ellipse 75% 60% at 85% 5%, rgba(59, 130, 246, 0.35), rgba(99, 102, 241, 0.22) 45%, transparent 75%),
+            radial-gradient(ellipse 55% 50% at 95% 35%, rgba(6, 182, 212, 0.22), transparent 60%),
+            radial-gradient(ellipse 65% 55% at 10% 95%, rgba(79, 70, 229, 0.25), transparent 60%),
+            radial-gradient(circle at 45% 0%, rgba(59, 130, 246, 0.15), transparent 55%),
+            linear-gradient(180deg, #080D18 0%, #07090E 35%, #05060A 100%)
           `,
         }}
       />
 
-      {/* Extra Top-Right Glowing Rose/Crimson Aura Orb */}
+      {/* Extra Top-Right Glowing Electric Blue Aura Orb */}
       <div
-        className="absolute -top-[10%] right-[5%] w-[650px] h-[550px] rounded-full blur-[100px] pointer-events-none opacity-50 mix-blend-screen"
+        className="absolute -top-[12%] right-[3%] w-[700px] h-[600px] rounded-full blur-[110px] pointer-events-none opacity-60 mix-blend-screen"
         style={{
-          background: 'radial-gradient(circle, rgba(244, 63, 94, 0.45) 0%, rgba(190, 24, 93, 0.2) 50%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.50) 0%, rgba(37, 99, 235, 0.28) 45%, rgba(6, 182, 212, 0.12) 70%, transparent 85%)',
         }}
       />
 
-      {/* Subtle Indigo Bottom Ambient Orb */}
+      {/* Deep Indigo/Cyan Bottom-Left Ambient Orb */}
       <div
-        className="absolute -bottom-[10%] left-[5%] w-[500px] h-[450px] rounded-full blur-[90px] pointer-events-none opacity-40 mix-blend-screen"
+        className="absolute -bottom-[10%] left-[5%] w-[550px] h-[500px] rounded-full blur-[100px] pointer-events-none opacity-45 mix-blend-screen"
         style={{
-          background: 'radial-gradient(circle, rgba(129, 140, 248, 0.25) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(79, 70, 229, 0.35) 0%, rgba(6, 182, 212, 0.15) 50%, transparent 75%)',
         }}
       />
     </div>

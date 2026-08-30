@@ -88,7 +88,7 @@ export function TokenReadout({
             strokeDashoffset={circumference - progress}
             strokeLinecap="round"
             style={{
-              filter: 'drop-shadow(0 0 6px rgba(244, 63, 94, 0.6))',
+              filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.7))',
             }}
           />
         </svg>

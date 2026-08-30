@@ -103,7 +103,7 @@ export default function MemberProfileDrawer({
           {/* Header Profile Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)]">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.3)] to-[rgba(129,140,248,0.2)] border border-[rgba(244,63,94,0.4)] flex items-center justify-center text-white font-data text-base font-bold shrink-0">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[rgba(59,130,246,0.35)] to-[rgba(99,102,241,0.25)] border border-[rgba(59,130,246,0.5)] flex items-center justify-center text-white font-ui text-base font-bold shrink-0 shadow-[0_0_12px_rgba(59,130,246,0.25)]">
                 {getInitials(member.name || 'MB')}
               </div>
               <div>
@@ -115,12 +115,12 @@ export default function MemberProfileDrawer({
                     {currentStatus.label}
                   </Badge>
                   {member.complimentary && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-data font-semibold bg-[var(--amber-dim)] text-[var(--amber)] border border-[rgba(245,158,11,0.30)]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-ui font-semibold bg-[var(--amber-dim)] text-[var(--amber)] border border-[rgba(245,158,11,0.30)]">
                       COMPLIMENTARY
                     </span>
                   )}
                 </div>
-                <p className="font-data text-xs text-[var(--muted)] mt-0.5">
+                <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
                   Joined {member.joined_date} · {member.phone}
                 </p>
               </div>
@@ -147,7 +147,7 @@ export default function MemberProfileDrawer({
 
           {/* Special Inclusions Alert Banner */}
           {member.special_inclusions && (
-            <div className="p-3.5 rounded-[var(--r-sm)] bg-[var(--accent-soft)] border border-[rgba(244,63,94,0.30)] text-xs text-[var(--accent)] flex items-start gap-2.5">
+            <div className="p-3.5 rounded-[var(--r-sm)] bg-[var(--accent-soft)] border border-[rgba(59,130,246,0.30)] text-xs text-[var(--accent)] flex items-start gap-2.5">
               <Sparkles className="w-4 h-4 mt-0.5 text-[var(--accent)] flex-shrink-0" />
               <div>
                 <strong className="font-semibold block text-[var(--ink)]">Special Inclusions / Custom Privileges:</strong>

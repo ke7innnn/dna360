@@ -55,8 +55,8 @@ const config: Config = {
         ui: ['var(--font-ui)', 'Satoshi', 'sans-serif'],
         sans: ['var(--font-ui)', 'Satoshi', 'sans-serif'],
         body: ['var(--font-ui)', 'Satoshi', 'sans-serif'],
-        data: ['var(--font-data)', 'Martian Mono', 'monospace'],
-        mono: ['var(--font-data)', 'Martian Mono', 'monospace'],
+        data: ['var(--font-data)', 'Satoshi', 'sans-serif'],
+        mono: ['var(--font-data)', 'Satoshi', 'sans-serif'],
       },
       borderRadius: {
         'sm': 'var(--r-sm)',
@@ -68,12 +68,12 @@ const config: Config = {
       },
       boxShadow: {
         card: '0 20px 40px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.03)',
-        glow: '0 8px 24px -8px rgba(244, 63, 94, 0.7)',
-        'glow-sm': '0 4px 16px -4px rgba(244, 63, 94, 0.5)',
+        glow: '0 8px 24px -8px rgba(59, 130, 246, 0.7)',
+        'glow-sm': '0 4px 16px -4px rgba(59, 130, 246, 0.5)',
       },
       backgroundImage: {
-        'accent-gradient': 'linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)',
-        'aurora-glow': 'radial-gradient(60% 55% at 82% 8%, rgba(244,63,94,0.20), transparent 60%)',
+        'accent-gradient': 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        'aurora-glow': 'radial-gradient(60% 55% at 82% 8%, rgba(59,130,246,0.20), transparent 60%)',
       },
     },
   },

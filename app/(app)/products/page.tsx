@@ -163,7 +163,7 @@ export default function ProductsPage() {
             className={cn(
               'h-[32px] px-3.5 font-ui text-xs font-semibold rounded-full cursor-pointer transition-all duration-140 whitespace-nowrap',
               categoryFilter === 'all'
-                ? 'bg-[var(--accent-soft)] border border-[rgba(244,63,94,0.35)] text-white shadow-glow-sm'
+                ? 'bg-[var(--accent-soft)] border border-[rgba(59,130,246,0.35)] text-white shadow-glow-sm'
                 : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
             )}
           >
@@ -177,7 +177,7 @@ export default function ProductsPage() {
               className={cn(
                 'h-[32px] px-3.5 font-ui text-xs font-semibold rounded-full cursor-pointer transition-all duration-140 whitespace-nowrap',
                 categoryFilter === cat
-                  ? 'bg-[var(--accent-soft)] border border-[rgba(244,63,94,0.35)] text-white shadow-glow-sm'
+                  ? 'bg-[var(--accent-soft)] border border-[rgba(59,130,246,0.35)] text-white shadow-glow-sm'
                   : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
               )}
             >

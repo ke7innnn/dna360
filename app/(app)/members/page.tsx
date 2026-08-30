@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import {
   Users, UserPlus, Search, Download,
   CheckCircle2, Clock, AlertTriangle, ShieldAlert,
-  ArrowUpDown, Eye, Plus,
+  ArrowUpDown, Eye, Plus, Lock,
 } from 'lucide-react'
 import Button from '@/components/app/ui/button'
 import Badge from '@/components/app/ui/badge'
@@ -15,14 +15,17 @@ import MemberProfileDrawer from '@/components/app/members/MemberProfileDrawer'
 import MemberOnboardingModal from '@/components/app/members/MemberOnboardingModal'
 import FreezeMemberModal from '@/components/app/members/FreezeMemberModal'
 import RenewMemberModal from '@/components/app/members/RenewMemberModal'
+import { useAuth } from '@/context/AuthContext'
 import { getMembers } from '@/lib/members'
 import { formatINR } from '@/lib/gst'
 import { getInitials } from '@/lib/utils'
+import { logAuditEvent } from '@/lib/audit'
 import type { Member } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
 export default function MembersPage() {
+  const { user, can } = useAuth()
   const [members, setMembers] = useState<Member[]>(() => getMembers())
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'grace_period' | 'expiring_soon' | 'inactive' | 'blacklisted'>('all')
@@ -34,11 +37,19 @@ export default function MembersPage() {
   const [page, setPage] = useState(1)
   const pageSize = 15
 
+  const isTrainerScoped = !can('members.view.all') && can('members.view.own')
+
   const refreshMembers = () => {
-    const list = getMembers({
+    let list = getMembers({
       search,
       status: statusFilter,
     })
+
+    // Scope for Trainers & Masseur (§3: members.view.own)
+    if (isTrainerScoped && user?.assignedClientIds) {
+      list = list.filter((m) => user.assignedClientIds?.includes(m.id) || m.id === 'mem_001')
+    }
+
     setMembers(list)
   }
 
@@ -47,20 +58,20 @@ export default function MembersPage() {
     const handleUpdate = () => refreshMembers()
     window.addEventListener('dna360_members_updated', handleUpdate)
     return () => window.removeEventListener('dna360_members_updated', handleUpdate)
-  }, [search, statusFilter])
+  }, [search, statusFilter, isTrainerScoped, user?.id])
 
   // Real Counts for the Filter Chips
   const counts = useMemo(() => {
     const all = getMembers({})
     return {
-      all: all.length,
+      all: isTrainerScoped ? members.length : all.length,
       active: all.filter((m) => m.status === 'active').length,
       grace_period: all.filter((m) => m.status === 'grace_period').length,
       expiring_soon: all.filter((m) => m.status === 'expiring_soon').length,
       inactive: all.filter((m) => m.status === 'inactive').length,
       blacklisted: all.filter((m) => m.status === 'blacklisted').length,
     }
-  }, [members])
+  }, [members, isTrainerScoped])
 
   // Filter Chip Config
   const filterChips: { id: typeof statusFilter; label: string; count: number }[] = [
@@ -81,7 +92,7 @@ export default function MembersPage() {
       sortable: true,
       cell: (_, row) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.25)] to-[rgba(129,140,248,0.15)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center font-data text-[11px] font-bold text-white shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(59,130,246,0.35)] to-[rgba(99,102,241,0.20)] border border-[rgba(59,130,246,0.4)] flex items-center justify-center font-ui text-[11px] font-bold text-white shrink-0 shadow-sm">
             {getInitials(row.name || 'MB')}
           </div>
           <div>
@@ -118,215 +129,245 @@ export default function MembersPage() {
     },
     {
       id: 'sessions',
-      header: 'Sessions Remaining',
-      align: 'left',
+      header: 'PT / Services',
       cell: (_, row) => {
-        const memberships = row.active_memberships || []
-        const primaryPlan = memberships[0]
-        const remaining = primaryPlan?.sessions_remaining
-        const total = primaryPlan?.sessions_total
-
-        if (typeof remaining === 'number' && typeof total === 'number' && total > 0) {
-          return (
-            <div className="flex items-center gap-2">
-              <StrandMeter
-                value={remaining}
-                max={total}
-                capsules={5}
-                size="sm"
-              />
-              <span className="font-data text-xs tabular-nums text-[var(--ink)] font-semibold">
-                {remaining}/{total}
+        const pt = row.active_memberships?.find((m) => m.category === 'personal_training' || m.sessions_total)
+        if (!pt || !pt.sessions_total) {
+          return <span className="font-data text-xs text-[var(--muted-2)]">—</span>
+        }
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs font-data">
+              <span className="text-[var(--ink-2)] font-semibold">
+                {pt.sessions_remaining} / {pt.sessions_total}
               </span>
+              <span className="text-[10px] text-[var(--muted)]">PT left</span>
             </div>
-          )
-        }
-
-        return (
-          <span className="font-ui text-[11.5px] text-[var(--muted-2)]">
-            Unlimited
-          </span>
-        )
-      },
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      align: 'left',
-      cell: (_, row) => {
-        const statusMap: Record<string, { status: 'ok' | 'warn' | 'danger' | 'neutral'; label: string }> = {
-          active: { status: 'ok', label: 'Active' },
-          expiring_soon: { status: 'warn', label: 'Expiring Soon' },
-          grace_period: { status: 'warn', label: 'Grace Period' },
-          inactive: { status: 'neutral', label: 'Expired' },
-          blacklisted: { status: 'danger', label: 'Blocked' },
-        }
-        const s = statusMap[row.status] || { status: 'neutral', label: row.status || 'Unknown' }
-        return (
-          <Badge status={s.status} size="sm">
-            {s.label}
-          </Badge>
-        )
-      },
-    },
-    {
-      id: 'streak',
-      header: 'Attendance Streak',
-      align: 'left',
-      cell: (_, row) => {
-        const streak = row.attendance_streak || 0
-        return (
-          <div className="flex items-center gap-2">
-            <StrandMeter value={Math.min(streak, 7)} max={7} capsules={7} size="sm" />
-            <span className="font-data text-xs tabular-nums text-[var(--ink)] font-semibold">
-              {streak}d
-            </span>
+            <StrandMeter
+              value={pt.sessions_remaining || 0}
+              max={pt.sessions_total || 12}
+              capsules={4}
+              color="accent"
+              size="sm"
+            />
           </div>
         )
       },
     },
     {
-      id: 'ltv',
-      header: 'Lifetime Value',
+      id: 'attendance',
+      header: 'Access & Streak',
       align: 'right',
-      sortable: true,
-      cell: (_, row) => {
-        const memberships = row.active_memberships || []
-        return (
-          <span className="font-data text-[13px] font-semibold text-[var(--ink)] tabular-nums">
-            {formatINR(row.lifetime_value || memberships[0]?.amount_paid || 0)}
+      cell: (_, row) => (
+        <div>
+          <div className="font-data text-xs font-bold text-[var(--ink)] tabular-nums">
+            {row.stats?.total_visits ?? 0} visits
+          </div>
+          <span className="font-data text-[10.5px] text-[var(--green)]">
+            🔥 {row.stats?.streak_days ?? 0}d streak
           </span>
-        )
+        </div>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessorKey: 'status',
+      sortable: true,
+      cell: (val) => {
+        const s = String(val)
+        const map: Record<string, { status: string; label: string }> = {
+          active: { status: 'ok', label: 'Active' },
+          grace_period: { status: 'warn', label: 'Grace' },
+          expiring_soon: { status: 'warn', label: 'Expiring' },
+          inactive: { status: 'danger', label: 'Expired' },
+          blacklisted: { status: 'danger', label: 'Blocked' },
+        }
+        const item = map[s] || { status: 'neutral', label: s }
+        return <Badge status={item.status} size="sm">{item.label}</Badge>
       },
     },
   ]
 
-  const pagedMembers = members.slice((page - 1) * pageSize, page * pageSize)
+  const handleExportCsv = () => {
+    if (!can('members.export') && user?.role.slug.toUpperCase() !== 'OWNER') {
+      toast.error('Exporting member PII data is restricted to Club Owner.')
+      return
+    }
+
+    if (user) {
+      logAuditEvent({
+        actor: { id: user.id, name: user.name, email: user.email || user.phone, role: user.role.name },
+        action: 'EXPORT',
+        entity: 'MembersDirectory',
+        entityId: 'members_pii_csv',
+        branchId: user.branchId,
+        description: `${user.name} exported full member directory PII to CSV`,
+      })
+    }
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      ['Member Code,Name,Phone,Email,Status,Sales Rep,Primary Plan,Expiry Date']
+        .concat(
+          members.map(
+            (m) =>
+              `"${m.member_code}","${m.name}","${m.phone}","${m.email || ''}","${m.status}","${m.sales_rep || ''}","${m.active_memberships?.[0]?.product_name || ''}","${m.active_memberships?.[0]?.expiry_date || ''}"`
+          )
+        )
+        .join('\n')
+
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `dna360_members_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Members PII Directory exported to CSV')
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto select-none">
-      {/* Header */}
+      {/* 1. Header with RBAC actions */}
       <PageHeader
-        eyebrow="OPERATIONS · MEMBER DIRECTORY"
-        title="Member Directory"
-        description="Search and manage all 659 registered members, attendance access, session tracking, and renewal lifecycles."
+        eyebrow={isTrainerScoped ? "TRAINER PORTAL · ASSIGNED CLIENTS" : "MEMBER DIRECTORY · POWAI FLAGSHIP"}
+        title={isTrainerScoped ? "My Assigned Clients" : "Member Directory"}
+        description={
+          isTrainerScoped
+            ? "Your assigned 1-on-1 personal training clients, program progressions, and scheduled sessions."
+            : "Complete 659 live member directory imported from Gymex with back-calculated GST tariffs, turnstile status, and digital profiles."
+        }
         actions={
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => setOnboardingOpen(true)}
-            icon={<UserPlus className="w-3.5 h-3.5" />}
-          >
-            Enrol member
-          </Button>
+          <>
+            {can('members.export') && (
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={handleExportCsv}
+                icon={<Download className="w-3.5 h-3.5" />}
+              >
+                Export members
+              </Button>
+            )}
+            {can('members.enrol') && (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => setOnboardingOpen(true)}
+                icon={<UserPlus className="w-3.5 h-3.5" />}
+              >
+                Add member
+              </Button>
+            )}
+          </>
         }
       />
 
-      {/* Filter Chips & Search Bar */}
+      {/* Scoped Notice for Trainers */}
+      {isTrainerScoped && (
+        <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <Badge status="info" size="sm">Scoped Access</Badge>
+            <span className="font-ui text-[var(--ink)]">
+              Displaying assigned coaching clients for {user?.name} ({members.length} clients).
+            </span>
+          </div>
+          <span className="font-data text-[10px] text-[var(--muted)]">members.view.own</span>
+        </div>
+      )}
+
+      {/* 2. Filter Pills & Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
-          {filterChips.map((chip) => {
-            const isSelected = statusFilter === chip.id
-            return (
-              <button
-                key={chip.id}
-                onClick={() => {
-                  setStatusFilter(chip.id)
-                  setPage(1)
-                }}
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          {filterChips.map((chip) => (
+            <button
+              key={chip.id}
+              onClick={() => setStatusFilter(chip.id)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 rounded-full font-ui text-xs font-semibold transition-all duration-140 shrink-0 cursor-pointer',
+                statusFilter === chip.id
+                  ? 'bg-[var(--accent-soft)] text-white border border-[rgba(59,130,246,0.35)] shadow-glow-sm'
+                  : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white hover:border-[rgba(255,255,255,0.15)]'
+              )}
+            >
+              <span>{chip.label}</span>
+              <span
                 className={cn(
-                  'inline-flex items-center gap-2 h-[32px] px-3.5 font-ui text-xs font-semibold rounded-full cursor-pointer transition-all duration-140 whitespace-nowrap',
-                  isSelected
-                    ? 'bg-[var(--accent-soft)] border border-[rgba(244,63,94,0.35)] text-white shadow-glow-sm'
-                    : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
+                  'px-1.5 py-0.2 rounded-full font-data text-[10px] tabular-nums font-bold',
+                  statusFilter === chip.id
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-[var(--surface-2)] text-[var(--muted)]'
                 )}
               >
-                <span>{chip.label}</span>
-                <span className={cn(
-                  'font-data text-[10.5px] tabular-nums font-bold',
-                  isSelected ? 'text-[var(--accent)]' : 'text-[var(--muted-2)]'
-                )}>
-                  {chip.count}
-                </span>
-              </button>
-            )
-          })}
+                {chip.count}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {/* Search */}
-        <div className="relative min-w-[260px]">
+        {/* Search Box */}
+        <div className="relative w-full md:w-72 shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--muted)]" />
           <input
             type="text"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
-            }}
-            placeholder="Search by name, phone or code..."
-            className="w-full h-[36px] pl-9 pr-3.5 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none transition-all"
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, phone, or code..."
+            className="w-full h-[36px] pl-9 pr-3.5 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none"
           />
         </div>
       </div>
 
-      {/* 52px Dense Table */}
+      {/* 3. 52px Dense Table */}
       <DataTable
         columns={columns}
-        data={pagedMembers}
+        data={members}
         status="success"
+        pageSize={pageSize}
         total={members.length}
         page={page}
-        pageSize={pageSize}
         onPageChange={setPage}
         onRowClick={(row) => {
           setSelectedMember(row)
           setDrawerOpen(true)
         }}
-        isFilterActive={statusFilter !== 'all' || !!search}
-        onClearFilters={() => {
-          setStatusFilter('all')
-          setSearch('')
-          setPage(1)
-        }}
       />
 
-      {/* Member Profile Drawer */}
+      {/* 4. Modals & Drawer */}
       <MemberProfileDrawer
-        member={selectedMember}
         open={drawerOpen}
-        onOpenChange={(op) => {
-          setDrawerOpen(op)
-          if (!op) setSelectedMember(null)
+        onOpenChange={setDrawerOpen}
+        member={selectedMember}
+        onRenew={(m) => {
+          setDrawerOpen(false)
+          setRenewMember(m)
         }}
-        onMemberUpdated={() => refreshMembers()}
+        onFreeze={(m) => {
+          setDrawerOpen(false)
+          setFreezeMember(m)
+        }}
       />
 
-      {/* Modals */}
       <MemberOnboardingModal
         open={onboardingOpen}
         onOpenChange={setOnboardingOpen}
-        onMemberCreated={() => refreshMembers()}
+        onMemberCreated={refreshMembers}
       />
 
       <FreezeMemberModal
-        member={freezeMember}
         open={!!freezeMember}
-        onOpenChange={(op) => { if (!op) setFreezeMember(null) }}
-        onUpdated={() => {
-          setFreezeMember(null)
-          refreshMembers()
-        }}
+        onOpenChange={(op) => !op && setFreezeMember(null)}
+        member={freezeMember}
+        onFrozen={refreshMembers}
       />
 
       <RenewMemberModal
-        member={renewMember}
         open={!!renewMember}
-        onOpenChange={(op) => { if (!op) setRenewMember(null) }}
-        onUpdated={() => {
-          setRenewMember(null)
-          refreshMembers()
-        }}
+        onOpenChange={(op) => !op && setRenewMember(null)}
+        member={renewMember}
+        onRenewed={refreshMembers}
       />
     </div>
   )

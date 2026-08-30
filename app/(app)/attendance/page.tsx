@@ -114,7 +114,7 @@ export default function AttendancePage() {
       header: 'Member / Identity',
       cell: (_, row) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(244,63,94,0.25)] to-[rgba(129,140,248,0.15)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center font-data text-xs font-bold text-white shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(59,130,246,0.35)] to-[rgba(99,102,241,0.20)] border border-[rgba(59,130,246,0.4)] flex items-center justify-center font-ui text-xs font-bold text-white shrink-0 shadow-sm">
             {getInitials(row.memberName || 'MB')}
           </div>
           <div>

@@ -17,10 +17,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: [
-          'bg-gradient-to-r from-[#F43F5E] to-[#E11D48]',
+          'bg-gradient-to-r from-[#3B82F6] to-[#1D4ED8]',
           'text-white font-semibold',
-          'shadow-[0_8px_24px_-8px_rgba(244,63,94,0.7)]',
-          'hover:brightness-110 hover:shadow-[0_10px_28px_-6px_rgba(244,63,94,0.85)]',
+          'shadow-[0_8px_24px_-8px_rgba(59,130,246,0.7)]',
+          'hover:brightness-110 hover:shadow-[0_10px_28px_-6px_rgba(59,130,246,0.85)]',
           'border border-transparent',
         ].join(' '),
         secondary: [
@@ -37,10 +37,10 @@ const buttonVariants = cva(
           'hover:bg-[var(--surface-2)] hover:text-[var(--ink)]',
         ].join(' '),
         danger: [
-          'bg-[var(--accent-soft)]',
-          'border border-[rgba(244,63,94,0.30)]',
-          'text-[var(--accent)] font-medium',
-          'hover:bg-[rgba(244,63,94,0.22)]',
+          'bg-[rgba(239,68,68,0.12)]',
+          'border border-[rgba(239,68,68,0.30)]',
+          'text-[#EF4444] font-medium',
+          'hover:bg-[rgba(239,68,68,0.22)]',
         ].join(' '),
         outline: [
           'bg-transparent',

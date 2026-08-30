@@ -44,7 +44,7 @@ export default function Navbar() {
 
   const navLinkClass = (href: string) =>
     `font-semibold text-sm uppercase tracking-wider font-ui transition-colors ${
-      pathname === href ? 'text-[#F43F5E]' : 'text-white hover:text-[#F43F5E]'
+      pathname === href ? 'text-[#3B82F6]' : 'text-white hover:text-[#3B82F6]'
     }`
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export default function Navbar() {
               onMouseEnter={() => setPartnerOpen(true)}
               onMouseLeave={() => setPartnerOpen(false)}
             >
-              <Link href="/partner-dna-360" className={`font-semibold text-sm uppercase tracking-wider font-ui hover:text-[#F43F5E] transition-colors flex items-center gap-1 ${pathname === '/partner-dna-360' ? 'text-[#F43F5E]' : 'text-white'}`}>
+              <Link href="/partner-dna-360" className={`font-semibold text-sm uppercase tracking-wider font-ui hover:text-[#3B82F6] transition-colors flex items-center gap-1 ${pathname === '/partner-dna-360' ? 'text-[#3B82F6]' : 'text-white'}`}>
                 Partner DNA 360
                 <svg className="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -147,41 +147,44 @@ export default function Navbar() {
             {/* Direct App Link Button */}
             <Link
               href="/members"
-              className="ml-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#F43F5E] to-[#E11D48] text-white font-bold font-ui text-xs uppercase tracking-wider shadow-[0_4px_16px_rgba(244,63,94,0.5)] hover:shadow-[0_6px_22px_rgba(244,63,94,0.7)] hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2 shrink-0"
+              className="ml-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#1D4ED8] text-white font-bold font-ui text-xs uppercase tracking-wider shadow-[0_4px_16px_rgba(59,130,246,0.5)] hover:shadow-[0_6px_22px_rgba(59,130,246,0.7)] hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2 shrink-0"
               title="659 Live Members Directory"
             >
               <span>Members</span>
-              <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10.5px] font-data font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10.5px] font-ui font-bold">
                 659
               </span>
             </Link>
           </div>
 
           {/* Mobile Hamburger */}
-          <button
-            id="mobile-menu-btn"
-            className="lg:hidden text-white p-2"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle mobile menu"
-          >
-            <div className="w-6 flex flex-col gap-1.5">
-              <span
-                className={`block h-0.5 bg-white transition-all duration-300 ${
-                  mobileOpen ? 'rotate-45 translate-y-2' : ''
-                }`}
-              />
-              <span
-                className={`block h-0.5 bg-white transition-all duration-300 ${
-                  mobileOpen ? 'opacity-0' : ''
-                }`}
-              />
-              <span
-                className={`block h-0.5 bg-white transition-all duration-300 ${
-                  mobileOpen ? '-rotate-45 -translate-y-2' : ''
-                }`}
-              />
-            </div>
-          </button>
+          <div className="flex items-center gap-3 lg:hidden">
+            <Link
+              href="/members"
+              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#1D4ED8] text-white font-bold font-ui text-xs uppercase tracking-wider shadow-sm flex items-center gap-1.5"
+            >
+              <span>Members</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-ui font-bold">
+                659
+              </span>
+            </Link>
+
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="text-white p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -197,13 +200,13 @@ export default function Navbar() {
               <div className="py-4 flex flex-col gap-0">
                 <Link
                   href="/members"
-                  className="px-4 py-3.5 bg-gradient-to-r from-[#F43F5E]/20 to-transparent text-[#F43F5E] font-bold text-sm uppercase tracking-wider border-b border-white/10 flex items-center justify-between"
+                  className="px-4 py-3.5 bg-gradient-to-r from-[#3B82F6]/20 to-transparent text-[#3B82F6] font-bold text-sm uppercase tracking-wider border-b border-white/10 flex items-center justify-between"
                   onClick={() => setMobileOpen(false)}
                 >
                   <span className="flex items-center gap-2">
                     👥 Members Section
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-[#F43F5E]/20 text-[#F43F5E] text-xs font-bold font-data">
+                  <span className="px-2 py-0.5 rounded-full bg-[#3B82F6]/20 text-[#3B82F6] text-xs font-bold font-ui">
                     659
                   </span>
                 </Link>
@@ -217,35 +220,35 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/about"
-                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#F43F5E]"
+                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
                   onClick={() => setMobileOpen(false)}
                 >
                   About
                 </Link>
                 <Link
                   href="/services"
-                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#F43F5E]"
+                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
                   onClick={() => setMobileOpen(false)}
                 >
                   Services
                 </Link>
                 <Link
                   href="/trainers"
-                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#F43F5E]"
+                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
                   onClick={() => setMobileOpen(false)}
                 >
                   Trainers
                 </Link>
                 <Link
                   href="/gallery"
-                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#F43F5E]"
+                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
                   onClick={() => setMobileOpen(false)}
                 >
                   Gallery
                 </Link>
                 <Link
                   href="/contact"
-                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#F43F5E]"
+                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
                   onClick={() => setMobileOpen(false)}
                 >
                   Contact Us

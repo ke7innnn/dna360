@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   Shield, Plus, ArrowLeft, Trash2, KeyRound,
-  CheckCircle, AlertCircle, Info, Sparkles,
+  CheckCircle, AlertCircle, Info, Sparkles, Lock,
 } from 'lucide-react'
 import Card from '@/components/app/ui/glass-card'
 import Button from '@/components/app/ui/button'
@@ -19,12 +19,18 @@ import { toast } from '@/components/app/ui/toast'
 import type { RoleDefinition } from '@/types/auth'
 
 export default function RolesSettingsPage() {
-  const { roles, deleteCustomRole } = useAuth()
+  const { roles, deleteCustomRole, can, user } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [roleToDelete, setRoleToDelete] = useState<RoleDefinition | null>(null)
 
+  const isOwner = user?.role.slug.toUpperCase() === 'OWNER' || can('roles.assign')
+
   const handleDeleteRole = () => {
     if (!roleToDelete) return
+    if (!isOwner) {
+      toast.error('Only the Club Owner can delete custom role definitions.')
+      return
+    }
     const ok = deleteCustomRole(roleToDelete.id)
     if (ok) {
       toast.success(`Role "${roleToDelete.name}" deleted`)
@@ -42,19 +48,26 @@ export default function RolesSettingsPage() {
         title="Staff Roles & Capabilities"
         description="Fine-grained permissions, staff security tiers, and dynamic role capability matrix for front-desk, trainers, and accounting staff."
         actions={
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => setModalOpen(true)}
-            icon={<Plus className="w-3.5 h-3.5" />}
-          >
-            Create custom role
-          </Button>
+          isOwner ? (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setModalOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Create custom role
+            </Button>
+          ) : (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--line)] text-xs text-[var(--muted)]">
+              <Lock className="w-3.5 h-3.5 text-[var(--amber)]" />
+              <span className="font-data text-[10.5px]">Role Assignment Restricted (Owner Only)</span>
+            </div>
+          )
         }
       />
 
       {/* Role Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {roles.map((role) => (
           <Card key={role.id} className="p-4 flex flex-col justify-between">
             <div>
@@ -64,7 +77,7 @@ export default function RolesSettingsPage() {
                 </span>
                 {role.isSystem ? (
                   <Badge status="info" size="sm">System</Badge>
-                ) : (
+                ) : isOwner ? (
                   <button
                     onClick={() => setRoleToDelete(role)}
                     className="text-[var(--accent)] hover:opacity-80 p-1 transition-opacity cursor-pointer"
@@ -72,7 +85,7 @@ export default function RolesSettingsPage() {
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                )}
+                ) : null}
               </div>
               <p className="font-ui text-xs text-[var(--muted)] line-clamp-2 leading-relaxed">
                 {role.description}
@@ -82,7 +95,7 @@ export default function RolesSettingsPage() {
             <div className="mt-3.5 pt-2.5 border-t border-[var(--line)] flex items-center justify-between text-xs font-ui text-[var(--muted)]">
               <span>Capabilities:</span>
               <span className="font-bold text-[var(--accent)] font-data tabular-nums">
-                {role.slug === 'owner' ? 'All (Unrestricted)' : `${role.capabilities.length} active`}
+                {role.slug.toUpperCase() === 'OWNER' ? 'All (Unrestricted)' : `${role.capabilities.length} active`}
               </span>
             </div>
           </Card>

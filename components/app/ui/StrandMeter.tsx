@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils'
 export interface StrandMeterProps {
   value: number
   max?: number
-  capsules?: 5 | 7
+  capsules?: number
   size?: 'sm' | 'md' | 'lg'
   label?: string
+  color?: string
   showValue?: boolean
   formatValue?: (val: number, max: number) => string
   className?: string
@@ -24,6 +25,7 @@ export function StrandMeter({
   capsules = 5,
   size = 'md',
   label,
+  color = 'accent',
   showValue = false,
   formatValue,
   className,
@@ -32,20 +34,21 @@ export function StrandMeter({
   const safeValue = Math.max(0, Math.min(value, safeMax))
   const percentage = safeValue / safeMax
 
-  const filledCount = Math.round(percentage * capsules)
+  const count = Math.max(3, capsules)
+  const filledCount = Math.round(percentage * count)
 
-  const heightProfiles: Record<5 | 7, number[]> = {
-    5: [0.45, 0.75, 1.0, 0.75, 0.45],
-    7: [0.35, 0.55, 0.80, 1.0, 0.80, 0.55, 0.35],
-  }
-
-  const profile = heightProfiles[capsules]
+  // Symmetric height profile for any capsule count
+  const profile = Array.from({ length: count }, (_, i) => {
+    const mid = (count - 1) / 2
+    const dist = Math.abs(i - mid) / (mid || 1)
+    return Math.max(0.35, 1 - dist * 0.55)
+  })
 
   const sizeStyles = {
     sm: { height: 14, width: 2.5, gap: 2 },
     md: { height: 26, width: 3.5, gap: 3 },
     lg: { height: 44, width: 5.5, gap: 4 },
-  }[size]
+  }[size] || { height: 26, width: 3.5, gap: 3 }
 
   return (
     <div className={cn('inline-flex items-center gap-2 select-none', className)}>
@@ -70,10 +73,10 @@ export function StrandMeter({
             <div
               key={idx}
               className={cn(
-                'rounded-full transition-all duration-140',
+                'rounded-full transition-all duration-300',
                 isFilled
-                  ? 'bg-gradient-to-b from-[#F43F5E] to-[#E11D48] shadow-[0_0_8px_rgba(244,63,94,0.4)]'
-                  : 'bg-[var(--line)]'
+                  ? 'bg-gradient-to-t from-[#1D4ED8] to-[#3B82F6] shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+                  : 'bg-[var(--surface-2)] border border-[rgba(255,255,255,0.06)]'
               )}
               style={{
                 width: `${sizeStyles.width}px`,
@@ -84,20 +87,11 @@ export function StrandMeter({
         })}
       </div>
 
-      {/* Optional Value or Label */}
-      {(showValue || label) && (
-        <div className="flex items-baseline gap-1.5 font-data text-xs tabular-nums text-[var(--ink)]">
-          {showValue && (
-            <span className={cn('font-semibold', size === 'lg' ? 'text-sm' : 'text-xs')}>
-              {formatValue ? formatValue(safeValue, safeMax) : `${safeValue}/${safeMax}`}
-            </span>
-          )}
-          {label && (
-            <span className="font-data text-[10.5px] uppercase tracking-[0.16em] text-[var(--muted)]">
-              {label}
-            </span>
-          )}
-        </div>
+      {/* Optional Label or Formatted Value */}
+      {(label || showValue) && (
+        <span className="font-data text-[11px] tabular-nums font-semibold text-[var(--muted)]">
+          {label || (formatValue ? formatValue(safeValue, safeMax) : `${Math.round(percentage * 100)}%`)}
+        </span>
       )}
     </div>
   )

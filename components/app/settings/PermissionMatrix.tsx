@@ -9,11 +9,18 @@ import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
 export default function PermissionMatrix() {
-  const { roles, updateRolePermissions } = useAuth()
+  const { roles, updateRolePermissions, can, user } = useAuth()
   const [hoveredCap, setHoveredCap] = useState<string | null>(null)
 
+  const isOwner = user?.role.slug.toUpperCase() === 'OWNER' || can('roles.assign')
+
   const handleToggle = (role: RoleDefinition, capId: Capability) => {
-    if (role.slug === 'owner') {
+    if (!isOwner) {
+      toast.error('Only the Club Owner can modify role capability sets.')
+      return
+    }
+
+    if (role.slug.toUpperCase() === 'OWNER') {
       toast.info('Owner role retains full unrestricted capabilities')
       return
     }
@@ -30,31 +37,31 @@ export default function PermissionMatrix() {
   }
 
   return (
-    <div className="glass-card overflow-hidden">
+    <div className="card overflow-hidden select-none">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           {/* Table Header: Roles */}
           <thead>
-            <tr className="border-b border-[var(--app-glass-border)] bg-[var(--app-glass-bg)]/50">
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] min-w-[280px]">
+            <tr className="border-b border-[var(--line)] bg-[var(--surface-2)]">
+              <th className="px-5 py-4 text-left font-data text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)] min-w-[280px]">
                 Capability / Domain
               </th>
               {roles.map((role) => (
                 <th
                   key={role.id}
-                  className="px-4 py-4 text-center min-w-[120px]"
+                  className="px-3 py-4 text-center min-w-[110px]"
                 >
                   <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs font-semibold text-[var(--app-text-primary)]">
+                    <span className="font-ui text-xs font-semibold text-[var(--ink)] truncate max-w-[120px]">
                       {role.name}
                     </span>
                     {role.isSystem ? (
-                      <span className="text-[0.625rem] px-1.5 py-0.5 rounded-full bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] border border-[var(--aurora-1)]/20 font-medium">
-                        System
+                      <span className="font-ui text-[9px] px-1.5 py-0.2 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(59,130,246,0.30)] font-semibold">
+                        SYSTEM
                       </span>
                     ) : (
-                      <span className="text-[0.625rem] px-1.5 py-0.5 rounded-full bg-[var(--app-warning)]/10 text-[var(--app-warning)] border border-[var(--app-warning)]/20 font-medium">
-                        Custom
+                      <span className="font-ui text-[9px] px-1.5 py-0.2 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(59,130,246,0.30)] font-semibold">
+                        CUSTOM
                       </span>
                     )}
                   </div>
@@ -68,13 +75,13 @@ export default function PermissionMatrix() {
             {CAPABILITY_GROUPS.map((group) => (
               <React.Fragment key={group.id}>
                 {/* Domain Section Header */}
-                <tr className="border-b border-[var(--app-glass-border)] bg-[var(--app-sidebar-active)]/40">
+                <tr className="border-b border-[var(--line)] bg-[var(--bg-elev)]">
                   <td
                     colSpan={roles.length + 1}
-                    className="px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--aurora-1)]"
+                    className="px-5 py-2.5 font-data text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent)]"
                   >
                     {group.name}
-                    <span className="ml-2 font-normal text-[0.6875rem] text-[var(--app-text-muted)] lowercase">
+                    <span className="ml-2 font-ui font-normal text-xs text-[var(--muted)] lowercase">
                       · {group.description}
                     </span>
                   </td>
@@ -84,50 +91,54 @@ export default function PermissionMatrix() {
                 {group.capabilities.map((cap) => (
                   <tr
                     key={cap.id}
-                    className="border-b border-[var(--app-glass-border)] hover:bg-[var(--app-glass-bg)] transition-colors"
+                    className="border-b border-[var(--line)] hover:bg-[var(--surface-2)] transition-colors"
                   >
                     {/* Capability Name & Description */}
                     <td className="px-5 py-3">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-xs font-medium text-[var(--app-text-primary)]">
+                          <p className="font-ui text-xs font-medium text-[var(--ink)]">
                             {cap.name}
                           </p>
-                          <p className="text-[0.6875rem] text-[var(--app-text-muted)] mt-0.5">
+                          <p className="font-ui text-[11px] text-[var(--muted)] mt-0.5">
                             {cap.description}
                           </p>
                         </div>
-                        <span className="text-[0.625rem] font-mono text-[var(--app-text-muted)] bg-[var(--app-glass-bg)] px-1.5 py-0.5 rounded">
+                        <span className="font-data text-[10px] text-[var(--muted-2)] bg-[var(--surface-2)] px-1.5 py-0.5 rounded border border-[var(--line)]">
                           {cap.id}
                         </span>
                       </div>
                     </td>
 
-                    {/* Role Checkbox Cells */}
+                    {/* Role Checkboxes */}
                     {roles.map((role) => {
-                      const isOwner = role.slug === 'owner'
-                      const isGranted = isOwner || role.capabilities.includes(cap.id)
+                      const isOwnerRole = role.slug.toUpperCase() === 'OWNER'
+                      const hasCap = isOwnerRole || role.capabilities.includes(cap.id)
 
                       return (
-                        <td
-                          key={role.id}
-                          className="px-4 py-3 text-center align-middle"
-                        >
+                        <td key={role.id} className="px-3 py-3 text-center">
                           <button
                             type="button"
+                            disabled={isOwnerRole || !isOwner}
                             onClick={() => handleToggle(role, cap.id)}
-                            disabled={isOwner}
                             className={cn(
-                              'w-6 h-6 rounded-md inline-flex items-center justify-center transition-all',
-                              isGranted
-                                ? 'bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-2)] text-white shadow-sm'
-                                : 'glass-input hover:border-[var(--app-glass-hover-border)] text-transparent',
-                              isOwner && 'cursor-default opacity-85',
-                              !isOwner && 'cursor-pointer hover:scale-105 active:scale-95'
+                              'w-6 h-6 rounded flex items-center justify-center mx-auto transition-all',
+                              hasCap
+                                ? 'bg-gradient-to-tr from-[#3B82F6] to-[#1D4ED8] text-white shadow-glow-sm'
+                                : 'bg-[var(--surface)] border border-[var(--line)] text-transparent hover:border-[rgba(59,130,246,0.4)]',
+                              (isOwnerRole || !isOwner) && 'cursor-default opacity-80'
                             )}
-                            aria-label={`${cap.name} for ${role.name}`}
+                            title={
+                              isOwnerRole
+                                ? 'Owner has all capabilities by default'
+                                : !isOwner
+                                ? 'Only Owner can edit role capabilities'
+                                : hasCap
+                                ? 'Click to revoke'
+                                : 'Click to grant'
+                            }
                           >
-                            {isGranted && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                            {hasCap && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                           </button>
                         </td>
                       )
