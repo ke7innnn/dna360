@@ -1,0 +1,38 @@
+# DNA 360 Gym Management Platform — Robots Policy
+
+User-agent: *
+# Disallow all internal gym application and administration paths
+Disallow: /overview
+Disallow: /dashboard
+Disallow: /members
+Disallow: /billing
+Disallow: /classes
+Disallow: /leads
+Disallow: /attendance
+Disallow: /settings
+Disallow: /front-desk
+Disallow: /audit-log
+Disallow: /consent
+Disallow: /products
+Disallow: /profile
+Disallow: /my-plan
+Disallow: /my-clients
+Disallow: /my-shifts
+Disallow: /schedule
+Disallow: /staff
+Disallow: /support
+Disallow: /api/
+
+# Allow public brand and service marketing pages
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /services/
+Allow: /trainers
+Allow: /trainers/
+Allow: /gallery
+Allow: /contact
+Allow: /partner-dna-360
+Allow: /facility-setup-services
+Allow: /franchise-services
+Allow: /management-services

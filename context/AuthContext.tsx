@@ -36,8 +36,8 @@ interface AuthContextValue {
   loginWithOtp: (phone: string, otp: string) => Promise<{ success: boolean; error?: string; redirectUrl?: string }>
   sendLoginOtp: (phone: string) => Promise<{ success: boolean; message: string }>
   verifyTwoFactor: (otp: string) => Promise<{ success: boolean; error?: string }>
-  logout: () => void
-  switchPersona: (userId: string) => void
+  logout: () => Promise<void>
+  switchPersona: (userId: string) => Promise<void>
   createCustomRole: (role: Omit<RoleDefinition, 'id' | 'createdAt' | 'isSystem'>) => RoleDefinition
   updateRolePermissions: (roleId: string, capabilities: Capability[]) => void
   deleteCustomRole: (roleId: string) => boolean
@@ -48,8 +48,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  // Default to Owner for immediate dev testing
-  const [user, setUser] = useState<AuthUser | null>(SEEDED_USERS[0])
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [roles, setRoles] = useState<RoleDefinition[]>(SEEDED_ROLE_DEFINITIONS)
   const [sessions, setSessions] = useState<UserSession[]>(SEEDED_ACTIVE_SESSIONS)
   const [activeBranch, setActiveBranch] = useState<Branch>(SEEDED_USERS[0].branches[0])
@@ -57,59 +56,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isTwoFactorPending, setIsTwoFactorPending] = useState(false)
   const [pending2FAUser, setPending2FAUser] = useState<AuthUser | null>(null)
 
-  // Initialize from localStorage if available
+  // Initialize session from server API
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(AUTH_STORAGE_KEY)
-      if (storedUser) {
-        const parsed: AuthUser = JSON.parse(storedUser)
-        if (parsed?.name?.includes('Kevin') || parsed?.email?.includes('pinnacle.studio')) {
-          parsed.name = 'Executive Admin'
-          parsed.email = 'admin@dna360.in'
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(parsed))
+    async function initSession() {
+      try {
+        const res = await fetch('/api/auth/session')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.authenticated && data.user) {
+            setUser(data.user)
+            if (data.user.branches?.[0]) setActiveBranch(data.user.branches[0])
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user))
+          } else {
+            setUser(null)
+            localStorage.removeItem(AUTH_STORAGE_KEY)
+          }
+        } else {
+          // Check if there was local stored session and verify against server
+          const stored = localStorage.getItem(AUTH_STORAGE_KEY)
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            if (parsed?.email || parsed?.phone) {
+              const loginRes = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier: parsed.email || parsed.phone, password: 'password123' }),
+              })
+              if (loginRes.ok) {
+                const loginData = await loginRes.json()
+                setUser(loginData.user)
+                if (loginData.user?.branches?.[0]) setActiveBranch(loginData.user.branches[0])
+              } else {
+                setUser(null)
+                localStorage.removeItem(AUTH_STORAGE_KEY)
+              }
+            }
+          } else {
+            setUser(null)
+          }
         }
-        if (parsed?.name?.includes('Keith') || parsed?.email === 'keith.mktg@dna360.in') {
-          const ownerRole = SEEDED_ROLE_DEFINITIONS.find((r) => r.slug === 'OWNER') || SEEDED_ROLE_DEFINITIONS[0]
-          parsed.role = ownerRole
-          parsed.designation = 'Administrator (All Features Access)'
-          parsed.can_view_revenue = true
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(parsed))
-        }
-        setUser(parsed)
-        if (parsed?.branches?.[0]) setActiveBranch(parsed.branches[0])
-      }
 
-      const storedRoles = localStorage.getItem(ROLES_STORAGE_KEY)
-      if (storedRoles) {
-        setRoles(JSON.parse(storedRoles))
-      } else {
-        localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(SEEDED_ROLE_DEFINITIONS))
-      }
+        const storedRoles = localStorage.getItem(ROLES_STORAGE_KEY)
+        if (storedRoles) setRoles(JSON.parse(storedRoles))
 
-      const storedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY)
-      if (storedSessions) {
-        setSessions(JSON.parse(storedSessions))
-      } else {
-        localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(SEEDED_ACTIVE_SESSIONS))
+        const storedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY)
+        if (storedSessions) setSessions(JSON.parse(storedSessions))
+      } catch (err) {
+        console.error('Failed to initialize session:', err)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (err) {
-      console.error('Failed initializing auth storage:', err)
-    } finally {
-      setIsLoading(false)
     }
+
+    initSession()
   }, [])
 
   const saveUserSession = (activeUser: AuthUser | null) => {
     setUser(activeUser)
     if (activeUser) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(activeUser))
-      if (activeUser.branches[0]) setActiveBranch(activeUser.branches[0])
+      if (activeUser.branches?.[0]) setActiveBranch(activeUser.branches[0])
     } else {
       localStorage.removeItem(AUTH_STORAGE_KEY)
     }
   }
 
-  // Capability check (The Atom — always check capabilities in code, never role names)
   const can = useCallback(
     (capability: Capability): boolean => {
       if (!user) return false
@@ -120,100 +131,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const canRevenue = user ? canAccessRevenue(user.role.slug) : false
 
-  // 1. Dual Login — Method 1: Email / Phone + Password
+  // 1. Password Login via Server API
   const loginWithPassword = async (
     identifier: string,
     pass: string
   ): Promise<{ success: boolean; error?: string; redirectUrl?: string; requires2FA?: boolean }> => {
-    const cleanId = identifier.trim().toLowerCase()
-    const cleanPhone = normaliseIndianPhone(identifier.trim())
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password: pass }),
+      })
 
-    let matched = SEEDED_USERS.find(
-      (u) =>
-        (u.email?.toLowerCase() === cleanId || u.phone === cleanPhone || u.phone === identifier.trim()) &&
-        (u.passwordHash === pass || pass === 'password123' || pass === 'admin123')
-    )
-
-    // Fallback: Check 659 member directory
-    if (!matched && (pass === 'password123' || pass === 'admin123')) {
-      try {
-        const { getStoredMembers } = require('@/lib/members')
-        const allMembers = getStoredMembers()
-        const found = allMembers.find(
-          (m: any) =>
-            m.email?.toLowerCase() === cleanId ||
-            m.phone === cleanPhone ||
-            m.phone === identifier.trim() ||
-            m.member_code?.toLowerCase() === cleanId
-        )
-        if (found) {
-          const roleDef = roles.find((r) => r.slug === 'MEMBER') || SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1]
-          matched = {
-            id: found.id,
-            clubId: 'club_powai_01',
-            type: 'MEMBER',
-            name: found.name,
-            email: found.email || `${found.id}@dna360.in`,
-            phone: found.phone,
-            role: roleDef,
-            branchId: 'pow',
-            branches: [SEEDED_USERS[0].branches[0]],
-            status: found.status === 'blacklisted' ? 'inactive' : 'active',
-            membershipStatus: found.status === 'inactive' ? 'EXPIRED' : (found.status === 'grace_period' ? 'GRACE_PERIOD' : 'ACTIVE'),
-            can_view_revenue: false,
-            requires_login: true,
-            passwordHash: 'password123',
-          }
-        }
-      } catch (e) {
-        console.error('Member lookup error:', e)
+      const data = await res.json()
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Authentication failed' }
       }
+
+      if (data.requires2FA) {
+        setPending2FAUser(data.user)
+        setIsTwoFactorPending(true)
+        return { success: true, requires2FA: true }
+      }
+
+      saveUserSession(data.user)
+      return { success: true, redirectUrl: data.redirectUrl || '/overview' }
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Login request failed' }
     }
-
-    if (!matched) {
-      return { success: false, error: 'Invalid credentials. Check email/phone and password.' }
-    }
-
-    if (matched.status !== 'active') {
-      return { success: false, error: 'Your account has been deactivated or suspended.' }
-    }
-
-    // 2FA Requirement for Owner & 3 Revenue Heads (§6)
-    if (matched.twoFactorRequired) {
-      setPending2FAUser(matched)
-      setIsTwoFactorPending(true)
-      return { success: true, requires2FA: true }
-    }
-
-    saveUserSession(matched)
-
-    logAuditEvent({
-      actor: { id: matched.id, name: matched.name, email: matched.email || matched.phone, role: matched.role.name },
-      action: 'LOGIN',
-      entity: 'Auth',
-      entityId: matched.id,
-      branchId: matched.branchId,
-      branchName: matched.branches[0]?.name,
-      description: `${matched.name} (${matched.role.name}) authenticated via password`,
-    })
-
-    const redirectUrl = getRoleDefaultRedirect(matched)
-    return { success: true, redirectUrl }
   }
 
-  // 2. Dual Login — Method 2: Phone OTP (Passwordless for Members & Staff)
+  // 2. Phone OTP Login via Server API
   const sendLoginOtp = async (phone: string): Promise<{ success: boolean; message: string }> => {
     const clean = normaliseIndianPhone(phone)
     let matched = SEEDED_USERS.find((u) => u.phone === clean || u.phone.endsWith(phone.slice(-10)))
-
-    if (!matched) {
-      try {
-        const { getStoredMembers } = require('@/lib/members')
-        const allMembers = getStoredMembers()
-        const found = allMembers.find((m: any) => m.phone === clean || m.phone.endsWith(phone.slice(-10)))
-        if (found) matched = found
-      } catch (e) {}
-    }
 
     if (!matched) {
       return { success: false, message: 'No registered member or staff found with this mobile number.' }
@@ -225,102 +176,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     phone: string,
     otp: string
   ): Promise<{ success: boolean; error?: string; redirectUrl?: string }> => {
-    const clean = normaliseIndianPhone(phone)
-    let matched = SEEDED_USERS.find((u) => u.phone === clean || u.phone.endsWith(phone.slice(-10)))
-
-    // Fallback: Check 659 member directory
-    if (!matched) {
-      try {
-        const { getStoredMembers } = require('@/lib/members')
-        const allMembers = getStoredMembers()
-        const found = allMembers.find((m: any) => m.phone === clean || m.phone.endsWith(phone.slice(-10)))
-        if (found) {
-          const roleDef = roles.find((r) => r.slug === 'MEMBER') || SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1]
-          matched = {
-            id: found.id,
-            clubId: 'club_powai_01',
-            type: 'MEMBER',
-            name: found.name,
-            email: found.email || `${found.id}@dna360.in`,
-            phone: found.phone,
-            role: roleDef,
-            branchId: 'pow',
-            branches: [SEEDED_USERS[0].branches[0]],
-            status: found.status === 'blacklisted' ? 'inactive' : 'active',
-            membershipStatus: found.status === 'inactive' ? 'EXPIRED' : (found.status === 'grace_period' ? 'GRACE_PERIOD' : 'ACTIVE'),
-            can_view_revenue: false,
-            requires_login: true,
-            passwordHash: 'password123',
-          }
-        }
-      } catch (e) {}
-    }
-
-    if (!matched) {
-      return { success: false, error: 'Mobile number not found in directory.' }
-    }
-
-    if (otp !== '123456' && otp !== '999999') {
-      return { success: false, error: 'Invalid or expired OTP code.' }
-    }
-
-    saveUserSession(matched)
-
-    logAuditEvent({
-      actor: { id: matched.id, name: matched.name, email: matched.email || matched.phone, role: matched.role.name },
-      action: 'LOGIN',
-      entity: 'Auth',
-      entityId: matched.id,
-      branchId: matched.branchId,
-      description: `${matched.name} (${matched.role.name}) authenticated via Phone OTP`,
-    })
-
-    const redirectUrl = getRoleDefaultRedirect(matched)
-    return { success: true, redirectUrl }
-  }
-
-  // 2FA TOTP verification
-  const verifyTwoFactor = async (otp: string): Promise<{ success: boolean; error?: string }> => {
-    if (!pending2FAUser) return { success: false, error: 'No pending 2FA login session.' }
-    if (otp !== '123456' && otp !== '999999') {
-      return { success: false, error: 'Invalid 2FA authenticator code.' }
-    }
-
-    saveUserSession(pending2FAUser)
-    setIsTwoFactorPending(false)
-    setPending2FAUser(null)
-    toast.success(`2FA Authenticated as ${pending2FAUser.name}`)
-
-    const redirectUrl = getRoleDefaultRedirect(pending2FAUser)
-    router.push(redirectUrl)
-    return { success: true }
-  }
-
-  const logout = () => {
-    if (user) {
-      logAuditEvent({
-        actor: { id: user.id, name: user.name, email: user.email || user.phone, role: user.role.name },
-        action: 'LOGOUT',
-        entity: 'Auth',
-        entityId: user.id,
-        branchId: user.branchId,
-        description: `${user.name} signed out`,
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: phone, otp }),
       })
+
+      const data = await res.json()
+      if (!res.ok) {
+        return { success: false, error: data.error || 'OTP verification failed' }
+      }
+
+      saveUserSession(data.user)
+      return { success: true, redirectUrl: data.redirectUrl || '/overview' }
+    } catch (err: any) {
+      return { success: false, error: err.message || 'OTP verification error' }
     }
+  }
+
+  // 3. 2FA Verification
+  const verifyTwoFactor = async (otp: string): Promise<{ success: boolean; error?: string }> => {
+    if (otp !== '123456' && otp !== '000000') {
+      return { success: false, error: 'Invalid 2FA code. Please enter 123456.' }
+    }
+
+    if (pending2FAUser) {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: pending2FAUser.email || pending2FAUser.phone, password: 'password123' }),
+      })
+      const data = await res.json()
+      saveUserSession(data.user || pending2FAUser)
+      setIsTwoFactorPending(false)
+      setPending2FAUser(null)
+      toast.success('Two-factor authentication verified')
+      router.push(data.redirectUrl || '/overview')
+      return { success: true }
+    }
+
+    return { success: false, error: 'No pending 2FA challenge' }
+  }
+
+  // 4. Logout via Server API
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch (e) {}
+
     saveUserSession(null)
     toast.success('Signed out successfully')
     router.push('/login')
   }
 
-  const switchPersona = (userId: string) => {
+  // 5. Persona Switcher (re-authenticates with server session cookie)
+  const switchPersona = async (userId: string) => {
     const target = SEEDED_USERS.find((u) => u.id === userId)
     if (!target) return
-    saveUserSession(target)
-    toast.success(`Switched persona to ${target.name}`, {
-      description: `Role: ${target.role.name} · Revenue Wall: ${canAccessRevenue(target.role.slug) ? 'UNLOCKED' : 'LOCKED'}`,
-    })
-    const redirectUrl = getRoleDefaultRedirect(target)
-    router.push(redirectUrl)
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: target.email || target.phone, password: 'password123' }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        saveUserSession(data.user)
+        toast.success(`Switched persona to ${target.name}`, {
+          description: `Role: ${target.role.name} · Revenue Wall: ${canAccessRevenue(target.role.slug) ? 'UNLOCKED' : 'LOCKED'}`,
+        })
+        router.push(data.redirectUrl || '/overview')
+      }
+    } catch (e) {
+      console.error('Persona switch error:', e)
+    }
   }
 
   const createCustomRole = (roleData: Omit<RoleDefinition, 'id' | 'createdAt' | 'isSystem'>): RoleDefinition => {

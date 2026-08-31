@@ -98,8 +98,10 @@ const SEEDED_AUDIT_LOGS: AuditLogEntry[] = [
   },
 ]
 
+let serverAuditLogs: AuditLogEntry[] = [...SEEDED_AUDIT_LOGS]
+
 function getStoredLogs(): AuditLogEntry[] {
-  if (typeof window === 'undefined') return SEEDED_AUDIT_LOGS
+  if (typeof window === 'undefined') return serverAuditLogs
   try {
     const data = localStorage.getItem(STORAGE_KEY)
     if (!data) {
@@ -114,7 +116,10 @@ function getStoredLogs(): AuditLogEntry[] {
 }
 
 function saveLogs(logs: AuditLogEntry[]) {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') {
+    serverAuditLogs = logs
+    return
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs))
   } catch (err) {

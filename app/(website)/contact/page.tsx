@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/sections/Footer'
+import { submitWebsiteInquiry } from '@/lib/leads'
 
 const services = [
   'Personal Training',
@@ -22,16 +23,39 @@ const inputClass =
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', service: '', message: '' })
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => setForm({ ...form, [e.target.name]: e.target.value })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 4000)
-    setForm({ name: '', phone: '', service: '', message: '' })
+    if (!form.name || !form.phone) return
+    setIsSubmitting(true)
+
+    try {
+      // 1. Submit to local CRM & Notification engine (instant reflect in app)
+      submitWebsiteInquiry({
+        name: form.name,
+        phone: form.phone,
+        service: form.service || 'General Fitness',
+        message: form.message,
+      })
+
+      // 2. Also POST to API route
+      await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      }).catch(() => {})
+
+      setSubmitted(true)
+      setForm({ name: '', phone: '', service: '', message: '' })
+      setTimeout(() => setSubmitted(false), 5000)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

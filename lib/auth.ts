@@ -747,6 +747,17 @@ export function normaliseIndianPhone(raw: string): string {
   return raw
 }
 
+export function maskPhoneNumber(phone: string): string {
+  if (!phone) return ''
+  const trimmed = phone.trim()
+  if (trimmed.length <= 4) return '••••'
+  const lastFour = trimmed.slice(-4)
+  if (trimmed.startsWith('+91')) {
+    return `+91 ••••• •${lastFour}`
+  }
+  return `••••••${lastFour}`
+}
+
 /**
  * Default Redirect after Login based on Role & Population
  */

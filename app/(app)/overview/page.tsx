@@ -13,6 +13,11 @@ import Card from '@/components/app/ui/glass-card'
 import KpiPanel from '@/components/app/ui/KpiPanel'
 import StrandMeter from '@/components/app/ui/StrandMeter'
 import PageHeader from '@/components/app/ui/PageHeader'
+import DailyActionQueue from '@/components/app/overview/DailyActionQueue'
+import ChurnRadar from '@/components/app/overview/ChurnRadar'
+import PtPackBurndown from '@/components/app/overview/PtPackBurndown'
+import AttendanceHeatmap from '@/components/app/overview/AttendanceHeatmap'
+import RenewalForecast from '@/components/app/overview/RenewalForecast'
 import { useAuth } from '@/context/AuthContext'
 import {
   getExecutiveKpis,
@@ -20,6 +25,7 @@ import {
   getCohortData,
   getGstTaxReport,
 } from '@/lib/analytics'
+import { getSystemMetrics } from '@/lib/metrics'
 import { formatINR } from '@/lib/gst'
 import { logAuditEvent } from '@/lib/audit'
 import { toast } from '@/components/app/ui/toast'
@@ -27,12 +33,11 @@ import { cn } from '@/lib/utils'
 
 export default function OverviewPage() {
   const { user, can, canRevenue } = useAuth()
+  const metrics = getSystemMetrics()
   const kpis = getExecutiveKpis()
   const revenueMix = getRevenueMix()
   const cohorts = getCohortData()
   const gst = getGstTaxReport()
-
-  const [dateRange, setDateRange] = useState('Aug 2026')
 
   // Log revenue access audit event when authorized leaders view financial data
   useEffect(() => {
@@ -71,53 +76,53 @@ export default function OverviewPage() {
     toast.success('GSTR-1 Tax Summary CSV exported successfully')
   }
 
-  // ─── 4 KPI Cells Data (Gated by canRevenue) ───
+  // ─── 4 Unified KPI Cells (Single Source of Truth) ───
   const kpiCells = canRevenue
     ? [
         {
-          label: 'MRR',
+          label: 'COLLECTIONS MTD',
           value: '₹18.4L',
-          unit: 'MONTHLY BILLED',
-          hoverTitle: '₹18,40,000 (Current Month)',
+          unit: 'TOTAL CASH BILLED',
+          hoverTitle: '₹18,40,000 Total Cash Collected MTD',
           strand: { value: 85, max: 100, capsules: 5 as const },
-          delta: { text: '+14.2% MTD', type: 'ok' as const },
+          delta: { text: `Recognised: ₹1.53L · Deferred: ₹16.87L`, type: 'ok' as const },
         },
         {
-          label: 'ACTIVE MEMBERS',
-          value: '659',
-          unit: 'LIVE MEMBERS',
-          hoverTitle: '659 Verified Gymex Live Members',
-          strand: { value: 659, max: 750, capsules: 5 as const },
-          delta: { text: '594 active · 18 grace', type: 'neutral' as const },
+          label: 'TOTAL REGISTERED',
+          value: String(metrics.totalMembers),
+          unit: 'ROSTER COUNT',
+          hoverTitle: `${metrics.totalMembers} Total Members Registered on Record`,
+          strand: { value: metrics.activeMembers, max: metrics.totalMembers, capsules: 5 as const },
+          delta: { text: `${metrics.activeMembers} active · ${metrics.gracePeriodMembers} grace · ${metrics.expiringIn30Days} expiring`, type: 'neutral' as const },
         },
         {
           label: 'EXPIRING IN 30 DAYS',
-          value: '85',
+          value: String(metrics.expiringIn30Days),
           unit: 'RENEWAL QUEUE',
-          hoverTitle: '85 Memberships up for renewal',
-          strand: { value: 85, max: 120, capsules: 5 as const },
-          delta: { text: '18 in next 7 days', type: 'warn' as const },
+          hoverTitle: `${metrics.expiringIn30Days} Memberships expiring within 30 days`,
+          strand: { value: metrics.expiringIn30Days, max: 120, capsules: 5 as const },
+          delta: { text: `${metrics.gracePeriodMembers} in grace · ${metrics.expiringIn30Days} upcoming`, type: 'warn' as const },
         },
         {
           label: 'GST LIABILITY MTD',
-          value: '₹92.0K',
+          value: '₹87.6K',
           unit: '5% FITNESS SAC 999723',
-          hoverTitle: '₹92,000 Total Tax Back-Calculated',
-          delta: { text: 'CGST 2.5% + SGST 2.5%', type: 'neutral' as const },
+          hoverTitle: '₹87,619 Total GST Back-Calculated (Amount × 5 / 105)',
+          delta: { text: 'CGST ₹43.8K + SGST ₹43.8K', type: 'neutral' as const },
         },
       ]
     : [
         {
-          label: 'ACTIVE MEMBERS',
-          value: '659',
+          label: 'TOTAL REGISTERED',
+          value: String(metrics.totalMembers),
           unit: 'CLUB ROSTER',
-          hoverTitle: '659 Live Members Directory',
-          strand: { value: 659, max: 750, capsules: 5 as const },
-          delta: { text: 'Full roster', type: 'neutral' as const },
+          hoverTitle: `${metrics.totalMembers} Live Members Directory (${metrics.activeMembers} active)`,
+          strand: { value: metrics.activeMembers, max: metrics.totalMembers, capsules: 5 as const },
+          delta: { text: `${metrics.activeMembers} active · ${metrics.gracePeriodMembers} grace`, type: 'neutral' as const },
         },
         {
           label: 'TODAY SCHEDULED',
-          value: '14',
+          value: String(metrics.classesScheduledToday),
           unit: 'STUDIO CLASSES',
           hoverTitle: '14 Group & PT slots scheduled today',
           strand: { value: 14, max: 16, capsules: 5 as const },
@@ -125,7 +130,7 @@ export default function OverviewPage() {
         },
         {
           label: 'TURNSTILE TRAFFIC',
-          value: '342',
+          value: String(metrics.turnstileEntriesToday),
           unit: 'CHECK-INS TODAY',
           hoverTitle: '342 Gate entries processed today',
           strand: { value: 342, max: 450, capsules: 5 as const },
@@ -133,43 +138,12 @@ export default function OverviewPage() {
         },
         {
           label: 'RENEWAL QUEUE',
-          value: '85',
+          value: String(metrics.expiringIn30Days),
           unit: 'DUE THIS MONTH',
-          hoverTitle: '85 memberships due for renewal',
+          hoverTitle: `${metrics.expiringIn30Days} memberships due for renewal`,
           delta: { text: 'Front desk follow-ups', type: 'warn' as const },
         },
       ]
-
-  // ─── Needs Attention Real Operational Data ───
-  const needsAttentionItems = [
-    {
-      id: 'att_1',
-      category: 'MEMBERSHIP EXPIRY',
-      badgeStatus: 'warn' as const,
-      title: 'Aarav Mehta · Annual Gold',
-      subtitle: 'Expires in 3 days (31 Aug 2026) · Renewal follow-up scheduled',
-      link: '/members',
-      actionLabel: 'Open Member Profile',
-    },
-    {
-      id: 'att_2',
-      category: 'ENTITLEMENT EXPIRY',
-      badgeStatus: 'neutral' as const,
-      title: 'Rhea Kapoor · Tier 1 PT Pack',
-      subtitle: 'Unused complimentary fitness assessment expiring soon',
-      link: '/classes',
-      actionLabel: 'Schedule Session',
-    },
-    {
-      id: 'att_3',
-      category: 'LEAD INQUIRY',
-      badgeStatus: 'info' as const,
-      title: 'Vikram Sethi · Trial Request',
-      subtitle: 'Walk-in lead assigned to Swati for trial follow-up',
-      link: '/leads',
-      actionLabel: 'View CRM Lead',
-    },
-  ]
 
   return (
     <div className="space-y-7 max-w-7xl mx-auto select-none">
@@ -201,61 +175,22 @@ export default function OverviewPage() {
       {/* 2. Unified 4-Cell KPI Panel */}
       <KpiPanel cells={kpiCells} />
 
-      {/* 3. Operational Attention Queue with Glass Bubble Styling */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between border-b border-[var(--line)] pb-4 mb-4">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-[var(--amber)] shadow-[0_0_8px_#F59E0B] animate-pulse" />
-            <h2 className="font-display font-semibold text-base text-[var(--ink)] tracking-tight">
-              Immediate Attention Items
-            </h2>
-            {/* Glass Bubble Counter Badge */}
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.30)] backdrop-blur-md shadow-[0_0_10px_rgba(59,130,246,0.20)]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-              <span className="font-ui text-[11px] font-bold text-[var(--accent)]">
-                3 items
-              </span>
-            </div>
-          </div>
-          <span className="font-ui text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)] font-semibold">
-            POWAI FLAGSHIP
-          </span>
-        </div>
+      {/* 3. Daily Action Queue (Assigned Operational Tasks with WhatsApp Integration) */}
+      <DailyActionQueue />
 
-        <div className="space-y-3">
-          {needsAttentionItems.map((item) => (
-            <div
-              key={item.id}
-              className="p-4 rounded-[14px] bg-gradient-to-r from-[rgba(255,255,255,0.03)] to-[rgba(255,255,255,0.015)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[rgba(59,130,246,0.40)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.12)] transition-all duration-200"
-            >
-              <div className="space-y-1.5 min-w-0">
-                <div className="flex items-center flex-wrap gap-2.5">
-                  <Badge status={item.badgeStatus} size="sm">
-                    {item.category}
-                  </Badge>
-                  <span className="font-ui font-bold text-[13.5px] text-[var(--ink)] tracking-tight">
-                    {item.title}
-                  </span>
-                </div>
-                <p className="font-ui text-[12px] text-[var(--muted)] pl-0.5 leading-relaxed">
-                  {item.subtitle}
-                </p>
-              </div>
+      {/* 4. PT Pack Burn-Down Upsell Radar */}
+      <PtPackBurndown />
 
-              {/* Glass Bubble Action Button */}
-              <Link
-                href={item.link}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[rgba(59,130,246,0.10)] border border-[rgba(59,130,246,0.25)] hover:bg-[var(--accent)] hover:border-[var(--accent)] hover:text-white text-[var(--accent)] text-xs font-ui font-semibold transition-all duration-150 shadow-sm group shrink-0 self-start sm:self-center cursor-pointer"
-              >
-                <span>{item.actionLabel}</span>
-                <ChevronRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
-              </Link>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {/* 5. Churn Radar with Attendance Frequency Decay */}
+      <ChurnRadar />
 
-      {/* 4. Financial & Revenue Section (The Wall — Exclusive to Owner, HR Head, Marketing Head, Sales Head) */}
+      {/* 6. Studio Attendance Heatmap (16-Hour Peak Distribution) */}
+      <AttendanceHeatmap />
+
+      {/* 7. Forward Renewal Collections Projection */}
+      {canRevenue && <RenewalForecast />}
+
+      {/* 8. Financial & Revenue Section (The Wall — Exclusive to Owner, HR Head, Marketing Head, Sales Head) */}
       {canRevenue ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Revenue Stream Mix (5 cols) */}
@@ -341,10 +276,18 @@ export default function OverviewPage() {
                       <tr key={c.cohort} className="hover:bg-[var(--surface-2)] transition-colors">
                         <td className="py-2.5 font-ui font-semibold text-[var(--ink)]">{c.cohort}</td>
                         <td className="py-2.5 font-ui text-[var(--muted)]">{c.size}</td>
-                        <td className="py-2.5 font-ui font-medium text-[var(--green)]">{c.month1}%</td>
-                        <td className="py-2.5 font-ui font-medium text-[var(--green)]">{c.month3}%</td>
-                        <td className="py-2.5 font-ui text-[var(--ink-2)]">{c.month6}%</td>
-                        <td className="py-2.5 font-ui text-[var(--amber)]">{c.month12}%</td>
+                        <td className="py-2.5 font-ui font-medium text-[var(--green)]">
+                          {c.month1 !== null ? `${c.month1}%` : <span className="text-[var(--muted)]">—</span>}
+                        </td>
+                        <td className="py-2.5 font-ui font-medium text-[var(--green)]">
+                          {c.month3 !== null ? `${c.month3}%` : <span className="text-[var(--muted)]">—</span>}
+                        </td>
+                        <td className="py-2.5 font-ui text-[var(--ink-2)]">
+                          {c.month6 !== null ? `${c.month6}%` : <span className="text-[var(--muted)]">—</span>}
+                        </td>
+                        <td className="py-2.5 font-ui text-[var(--amber)]">
+                          {c.month12 !== null ? `${c.month12}%` : <span className="text-[var(--muted)]">—</span>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -365,7 +308,7 @@ export default function OverviewPage() {
                 Financial Analytics & Revenue Stream Isolation
               </h3>
               <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
-                Financial ledgers and MRR metrics are strictly restricted to executive leadership (Owner, HR Head, Marketing Head, Sales Head).
+                Financial ledgers and revenue metrics are strictly restricted to executive leadership (Owner, HR Head, Marketing Head, Sales Head).
               </p>
             </div>
           </div>

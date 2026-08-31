@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext'
 import { formatDateTime } from '@/lib/utils'
 import type { UserSession } from '@/types/auth'
 import { toast } from '@/components/app/ui/toast'
+import Breadcrumbs from '@/components/app/ui/Breadcrumbs'
 
 export default function SessionsSettingsPage() {
   const { sessions, revokeSession, user } = useAuth()
@@ -62,6 +63,18 @@ export default function SessionsSettingsPage() {
       ),
     },
     {
+      id: 'ipAddress',
+      header: 'IP & Network',
+      accessorKey: 'ipAddress',
+      sortable: true,
+      cell: (val, row) => (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-[var(--app-text-secondary)]">{val as string}</span>
+          <span className="text-[0.6875rem] text-[var(--app-text-muted)]">({row.location})</span>
+        </div>
+      ),
+    },
+    {
       id: 'branch',
       header: 'Branch',
       accessorKey: 'branchName',
@@ -74,19 +87,9 @@ export default function SessionsSettingsPage() {
       ),
     },
     {
-      id: 'location',
-      header: 'Location / IP',
-      cell: (_, row) => (
-        <div>
-          <span className="text-xs text-[var(--app-text-secondary)]">{row.location}</span>
-          <p className="text-[0.6875rem] font-mono text-[var(--app-text-muted)]">{row.ipAddress}</p>
-        </div>
-      ),
-    },
-    {
       id: 'lastActive',
       header: 'Last Active',
-      accessorKey: 'lastActiveAt',
+      accessorKey: 'lastActive',
       sortable: true,
       cell: (val) => (
         <span className="tabular-nums text-xs font-mono text-[var(--app-text-secondary)]">
@@ -117,15 +120,15 @@ export default function SessionsSettingsPage() {
 
   return (
     <div className="space-y-8 max-w-6xl">
+      <Breadcrumbs
+        items={[
+          { label: 'Club Settings', href: '/settings' },
+          { label: 'Active Sessions & Terminals' },
+        ]}
+      />
+
       {/* Header */}
       <div>
-        <Link
-          href="/settings"
-          className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)] transition-colors mb-2"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Settings
-        </Link>
         <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight">
           Active Staff Sessions & Security
         </h1>

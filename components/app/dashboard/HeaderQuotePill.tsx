@@ -77,10 +77,10 @@ export default function HeaderQuotePill() {
           transition={{ duration: 0.22, ease: 'easeOut' }}
           className="flex items-center gap-1 text-[10.5px] sm:text-[11px] font-ui text-[var(--muted)]"
         >
-          <span className="italic text-[var(--ink-2)] truncate max-w-[180px] sm:max-w-[280px] md:max-w-[360px]">
+          <span className="text-[var(--ink-2)] truncate max-w-[180px] sm:max-w-[280px] md:max-w-[360px]">
             &ldquo;{current.quote}&rdquo;
           </span>
-          <span className="font-medium text-[var(--ink)] shrink-0 hidden sm:inline text-[10px] opacity-75">
+          <span className="font-normal text-[var(--muted)] shrink-0 hidden sm:inline text-[10.5px]">
             — {current.author}
           </span>
         </motion.div>

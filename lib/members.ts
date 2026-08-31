@@ -22,7 +22,7 @@ import { logAuditEvent } from '@/lib/audit'
 import { normalizeIndianPhone } from '@/lib/auth'
 import { getEffectiveStatus } from '@/lib/lifecycle'
 
-const STORAGE_KEY = 'dna360_members_v3'
+const STORAGE_KEY = 'dna360_members_v4'
 
 const FIRST_NAMES = [
   'Arjun', 'Priya', 'Vikram', 'Rohan', 'Neha', 'Siddharth', 'Ananya', 'Rahul',
@@ -30,6 +30,11 @@ const FIRST_NAMES = [
   'Shreya', 'Gaurav', 'Divya', 'Sameer', 'Tanvi', 'Deepak', 'Nisha', 'Aakash',
   'Meera', 'Nikhil', 'Simran', 'Vishal', 'Swati', 'Harsh', 'Radhika', 'Kunal',
   'Isha', 'Pranav', 'Payal', 'Yash', 'Rhea', 'Abhishek', 'Shruti', 'Anand',
+  'Rajat', 'Tara', 'Ishaan', 'Kritika', 'Dev', 'Mira', 'Kabir', 'Avani',
+  'Dhruv', 'Sanya', 'Arya', 'Bhavna', 'Armaan', 'Dia', 'Rishi', 'Kiara',
+  'Zayn', 'Alia', 'Madhav', 'Pari', 'Reyansh', 'Anvi', 'Vihaan', 'Myra',
+  'Samarth', 'Lavanya', 'Tushar', 'Siya', 'Naveen', 'Juhi', 'Raghav', 'Trisha',
+  'Kailash', 'Sonal', 'Mayur', 'Komal', 'Prateek', 'Pallavi', 'Sumeet', 'Natasha'
 ]
 
 const LAST_NAMES = [
@@ -37,7 +42,14 @@ const LAST_NAMES = [
   'Nair', 'Joshi', 'Shah', 'Iyer', 'Chopra', 'Gupta', 'Malhotra', 'Bhatia',
   'Agarwal', 'Reddy', 'Pillai', 'Rao', 'Bhatt', 'Trivedi', 'Kashyap', 'Chawla',
   'Saxena', 'Dutta', 'Banerjee', 'Mishra', 'Pandey', 'Gokhale', 'Tendulkar', 'Fernandes',
+  'Shetty', 'Pawar', 'Jadhav', 'Shinde', 'Bhosale', 'More', 'Chavan', 'Wadkar',
+  'Salunkhe', 'Gaikwad', 'Kamble', 'Suryavanshi', 'Sawant', 'Rane', 'Parab', 'Gite',
+  'Menon', 'Nambiar', 'Pillay', 'Kurup', 'Warrier', 'Unnithan', 'Thakur', 'Singh',
+  'Bhandari', 'Chauhan', 'Rawat', 'Negi', 'Bisht', 'Goswami', 'Mukherjee', 'Chatterjee',
+  'Ghosh', 'Sen', 'Roy', 'Bose', 'Majumdar', 'Chakraborty', 'Das', 'Basu'
 ]
+
+const PHONE_PREFIXES = ['98200', '98330', '98190', '97690', '93240', '91670', '98201', '98203', '98331', '97691']
 
 const PACKAGES = [
   { name: 'Annual Gym Membership Package 1', category: 'gym_membership' as const, price: 4350000, durationMonths: 12 },
@@ -53,37 +65,72 @@ export function generate659Members(): Member[] {
   const list: Member[] = []
 
   for (let i = 1; i <= 659; i++) {
-    const fn = FIRST_NAMES[i % FIRST_NAMES.length]
-    const ln = LAST_NAMES[(i * 3) % LAST_NAMES.length]
+    const fn = FIRST_NAMES[(i * 7 + (i % 13)) % FIRST_NAMES.length]
+    const ln = LAST_NAMES[(i * 11 + (i % 17)) % LAST_NAMES.length]
     const fullName = `${fn} ${ln}`
     const memberCode = `DNA-2025-${String(i).padStart(4, '0')}`
     const id = `mem_${String(i).padStart(3, '0')}`
     const pkg = PACKAGES[i % PACKAGES.length]
 
-    // Status distribution across 659 members: 512 active, 18 grace, 82 expiring, 32 expired, 15 blacklisted
+    // Realistic phone generation
+    const prefix = PHONE_PREFIXES[i % PHONE_PREFIXES.length]
+    const suffix = String((i * 173 + 2468) % 90000 + 10000)
+    const phone = `+91${prefix}${suffix}`
+
+    // Status distribution across 659 members:
+    // 1-15: blacklisted (15)
+    // 16-33: grace_period (18)
+    // 34-65: inactive/expired (32)
+    // 66-147: expiring_soon (82)
+    // 148-659: active (512)
     let status: MemberStatus = 'active'
-    let expiryDate = '2026-11-15'
+    let expiryDate = '2027-01-20'
     let isBlacklisted = false
     let isComplimentary = i % 85 === 0
-    let streak = (i * 7) % 15
+    let streak = 0
+    let totalVisits = 0
+    let lastVisitDaysAgo = 1
     let remainingSessions: number | null = null
 
     if (i <= 15) {
       status = 'blacklisted'
       isBlacklisted = true
       expiryDate = '2026-04-10'
+      streak = 0
+      totalVisits = 14 + (i % 8)
+      lastVisitDaysAgo = 120 + i
     } else if (i <= 33) {
       status = 'grace_period'
-      expiryDate = '2026-08-22' // within past 7 days
+      // Expired within past 7 days (today is 2026-08-31)
+      const dayOffset = (i - 16) % 6 + 1
+      expiryDate = `2026-08-${String(31 - dayOffset).padStart(2, '0')}`
+      streak = i % 3 === 0 ? 1 : 0
+      totalVisits = 45 + (i * 3) % 40
+      lastVisitDaysAgo = dayOffset + 1
     } else if (i <= 65) {
       status = 'inactive'
-      expiryDate = '2026-05-10'
+      expiryDate = `2026-0${(i % 4) + 3}-15` // Expired Mar-Jun 2026
+      streak = 0
+      totalVisits = 25 + (i * 2) % 30
+      lastVisitDaysAgo = 45 + (i % 30)
     } else if (i <= 147) {
       status = 'expiring_soon'
-      expiryDate = '2026-09-15' // within 30 days
+      // Expiring in September 2026 (within next 30 days)
+      const expDay = ((i - 66) % 28) + 2
+      expiryDate = `2026-09-${String(expDay).padStart(2, '0')}`
+      streak = (i % 5) + 1
+      totalVisits = 65 + (i * 4) % 80
+      lastVisitDaysAgo = (i % 3)
     } else {
       status = 'active'
-      expiryDate = '2027-01-20'
+      // Active expiring Oct 2026 to Aug 2027
+      const expMonth = ((i % 10) + 10)
+      const yr = expMonth > 12 ? '2027' : '2026'
+      const mth = expMonth > 12 ? String(expMonth - 12).padStart(2, '0') : String(expMonth).padStart(2, '0')
+      expiryDate = `${yr}-${mth}-15`
+      streak = (i % 7) + 1
+      totalVisits = 40 + (i * 3) % 150
+      lastVisitDaysAgo = (i % 2)
     }
 
     if (pkg.totalSessions) {
@@ -130,7 +177,7 @@ export function generate659Members(): Member[] {
       last_name: ln,
       name: fullName,
       email: i % 14 === 0 ? `${fn.toLowerCase()}.${ln.toLowerCase()}@gmail.com` : null, // ~7% have email as per Gymex spec
-      phone: `+9198200${String(10000 + i).slice(-5)}`,
+      phone,
       gender: i % 2 === 0 ? 'male' : 'female',
       dob: `199${(i % 9) + 1}-0${(i % 9) + 1}-15`,
       joined_date: '2025-01-15',
@@ -157,8 +204,8 @@ export function generate659Members(): Member[] {
         updated_at: '2025-01-15T09:00:00Z',
       },
       attendance_streak: streak,
-      last_visit_at: '2026-08-27T10:30:00Z',
-      total_check_ins: 45 + (i % 120),
+      last_visit_at: lastVisitDaysAgo === 0 ? '2026-08-31T09:30:00Z' : `2026-08-${String(31 - lastVisitDaysAgo).padStart(2, '0')}T10:30:00Z`,
+      total_check_ins: totalVisits,
       fitness_metrics: [],
       staff_notes: i % 10 === 0 ? [
         {

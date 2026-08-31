@@ -73,10 +73,10 @@ export function PageHeader({
               )}
             </div>
           )}
-          <h1 className="font-display text-2xl sm:text-[34px] font-semibold text-[var(--ink)] tracking-tight leading-tight">
+          <h1 className="font-ui text-2xl sm:text-3xl font-semibold text-[var(--ink)] tracking-tight leading-tight">
             {title}
             {italicWord && (
-              <span className="italic font-normal text-[var(--ink-2)] ml-2">
+              <span className="font-normal text-[var(--ink-2)] ml-1.5">
                 {italicWord}
               </span>
             )}

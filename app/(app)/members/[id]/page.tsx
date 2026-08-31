@@ -23,6 +23,10 @@ import type { Member, MemberStatus } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
+import Breadcrumbs from '@/components/app/ui/Breadcrumbs'
+import { formatDualDate } from '@/lib/date-format'
+import WhatsAppComposeModal from '@/components/app/whatsapp/WhatsAppComposeModal'
+
 export default function MemberDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -34,6 +38,7 @@ export default function MemberDetailPage() {
   const [newNoteType, setNewNoteType] = useState<'general' | 'call' | 'followup' | 'warning'>('general')
   const [freezeModalOpen, setFreezeModalOpen] = useState(false)
   const [renewModalOpen, setRenewModalOpen] = useState(false)
+  const [waModalOpen, setWaModalOpen] = useState(false)
 
   const loadMember = () => {
     if (!memberId) return
@@ -92,6 +97,13 @@ export default function MemberDetailPage() {
 
   return (
     <div className="space-y-8 max-w-6xl">
+      <Breadcrumbs
+        items={[
+          { label: 'Member Directory', href: '/members' },
+          { label: member.name },
+        ]}
+      />
+
       {/* Back link & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -18,6 +18,8 @@ import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
 import type { RoleDefinition } from '@/types/auth'
 
+import Breadcrumbs from '@/components/app/ui/Breadcrumbs'
+
 export default function RolesSettingsPage() {
   const { roles, deleteCustomRole, can, user } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
@@ -42,6 +44,13 @@ export default function RolesSettingsPage() {
 
   return (
     <div className="space-y-7 max-w-7xl mx-auto select-none">
+      <Breadcrumbs
+        items={[
+          { label: 'Club Settings', href: '/settings' },
+          { label: 'Staff Roles & Capabilities' },
+        ]}
+      />
+
       {/* Header */}
       <PageHeader
         eyebrow="ADMINISTRATION · STAFF ACCESS"

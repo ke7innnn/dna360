@@ -19,6 +19,7 @@ import type {
 } from '@/types/leads'
 import { logAuditEvent } from '@/lib/audit'
 import { createMember } from '@/lib/members'
+import { createInAppNotification } from '@/lib/notifications'
 
 const LEADS_CRM_STORAGE_KEY = 'dna360_crm_leads'
 
@@ -375,4 +376,54 @@ export function updateLeadStage(leadId: string, stage: LeadStage, actorName = 'S
     actor: actorName,
   })
   return updateLead(leadId, { stage })
+}
+
+export interface WebsiteInquiryInput {
+  name: string
+  phone: string
+  service?: string
+  message: string
+}
+
+/**
+ * Handle incoming queries from the public website.
+ * Persists as a CRM Lead, adds staff in-app notification alerts, and triggers live updates.
+ */
+export function submitWebsiteInquiry(input: WebsiteInquiryInput): CrmLead {
+  const rep = { id: 'usr_fc_01', name: 'Amit Sharma' }
+  const goal = input.service?.trim() || 'General Fitness'
+  const notes = input.message.trim()
+    ? `[Website Contact Form Query]\nInterested in: ${goal}\nMessage: ${input.message.trim()}`
+    : `[Website Contact Form Query]\nInterested in: ${goal}`
+
+  const lead = createLead({
+    name: input.name.trim(),
+    phone: input.phone.trim(),
+    type: 'Website',
+    source: 'Website',
+    stage: 'inquiry',
+    goal,
+    expectedDealValueMinor: 4350000, // ₹43,500 standard estimated deal value
+    assignedRepId: rep.id,
+    assignedRepName: rep.name,
+    notes,
+  })
+
+  // Broadcast in-app notification to staff and admin users
+  const notifyUsers = ['usr_admin', 'usr_fc_01', 'usr_fc_02', 'usr_mgr_01', 'usr_owner']
+  notifyUsers.forEach((uid) => {
+    createInAppNotification(uid, {
+      title: `⚡ New Website Query: ${input.name}`,
+      body: `${input.name} (${input.phone}) inquired about ${goal}: "${input.message || 'New contact query'}"`,
+      type: 'custom',
+      link: '/leads',
+    })
+  })
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('dna360_leads_updated'))
+    window.dispatchEvent(new Event('dna360_notifications_updated'))
+  }
+
+  return lead
 }

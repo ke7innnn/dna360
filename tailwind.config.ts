@@ -51,12 +51,12 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['var(--font-display)', 'Clash Display', 'sans-serif'],
-        ui: ['var(--font-ui)', 'Satoshi', 'sans-serif'],
-        sans: ['var(--font-ui)', 'Satoshi', 'sans-serif'],
-        body: ['var(--font-ui)', 'Satoshi', 'sans-serif'],
-        data: ['var(--font-data)', 'Satoshi', 'sans-serif'],
-        mono: ['var(--font-data)', 'Satoshi', 'sans-serif'],
+        display: ['var(--font-display)', 'Inter', 'sans-serif'],
+        ui: ['var(--font-ui)', 'Inter', 'sans-serif'],
+        sans: ['var(--font-ui)', 'Inter', 'sans-serif'],
+        body: ['var(--font-ui)', 'Inter', 'sans-serif'],
+        data: ['var(--font-data)', 'JetBrains Mono', 'monospace'],
+        mono: ['var(--font-data)', 'JetBrains Mono', 'monospace'],
       },
       borderRadius: {
         'sm': 'var(--r-sm)',

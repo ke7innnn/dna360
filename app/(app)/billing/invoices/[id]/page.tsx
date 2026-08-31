@@ -16,6 +16,8 @@ import { formatDateTime } from '@/lib/utils'
 import { getProfile, getBankDetails } from '@/lib/settings'
 import type { TaxInvoice } from '@/types/billing'
 
+import Breadcrumbs from '@/components/app/ui/Breadcrumbs'
+
 export default function InvoiceDetailPage() {
   const params = useParams()
   const invoiceId = params?.id as string
@@ -69,16 +71,16 @@ export default function InvoiceDetailPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <Breadcrumbs
+        items={[
+          { label: 'Invoices & Billing', href: '/billing' },
+          { label: invoice.invoiceNumber },
+        ]}
+      />
+
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <Link
-            href="/billing"
-            className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)] transition-colors mb-2"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Tax Invoices
-          </Link>
           <div className="flex items-center gap-3">
             <h1 className="font-display text-2xl font-bold text-[var(--app-text-primary)]">
               Tax Invoice {invoice.invoiceNumber}

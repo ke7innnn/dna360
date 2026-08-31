@@ -75,15 +75,18 @@ export interface InAppNotification {
   link?: string
 }
 
-export function getInAppNotifications(userId: string): InAppNotification[] {
+export function getInAppNotifications(userId?: string): InAppNotification[] {
   if (typeof window === 'undefined') return []
   const stored = localStorage.getItem(NOTIFICATIONS_KEY)
   if (!stored) return []
   try {
     const all: InAppNotification[] = JSON.parse(stored)
-    return all.filter(n => n.userId === userId).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    if (!userId || userId === 'all') {
+      return all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    }
+    return all
+      .filter(n => n.userId === userId || n.userId === 'all' || n.userId === 'usr_admin')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   } catch { return [] }
 }
 
@@ -93,7 +96,7 @@ export function createInAppNotification(
 ): InAppNotification {
   const newNotif: InAppNotification = {
     ...notification,
-    id: `notif_${Date.now()}`,
+    id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     userId,
     read: false,
     createdAt: new Date().toISOString(),
@@ -104,6 +107,7 @@ export function createInAppNotification(
     const all: InAppNotification[] = stored ? JSON.parse(stored) : []
     all.unshift(newNotif)
     localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(all.slice(0, 1000)))
+    window.dispatchEvent(new Event('dna360_notifications_updated'))
   }
 
   return newNotif
@@ -118,10 +122,26 @@ export function markNotificationRead(notifId: string) {
   if (index !== -1) {
     all[index].read = true
     localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(all))
+    window.dispatchEvent(new Event('dna360_notifications_updated'))
   }
 }
 
-export function getUnreadCount(userId: string): number {
+export function markAllNotificationsRead(userId?: string) {
+  if (typeof window === 'undefined') return
+  const stored = localStorage.getItem(NOTIFICATIONS_KEY)
+  if (!stored) return
+  const all: InAppNotification[] = JSON.parse(stored)
+  const updated = all.map(n => {
+    if (!userId || userId === 'all' || n.userId === userId || n.userId === 'all') {
+      return { ...n, read: true }
+    }
+    return n
+  })
+  localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updated))
+  window.dispatchEvent(new Event('dna360_notifications_updated'))
+}
+
+export function getUnreadCount(userId?: string): number {
   return getInAppNotifications(userId).filter(n => !n.read).length
 }
 

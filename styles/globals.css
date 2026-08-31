@@ -43,10 +43,10 @@
   --r-pill:      999px;
   --r-full:      999px;
 
-  /* Typography */
-  --font-display: 'Clash Display', -apple-system, sans-serif;
-  --font-ui:      'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-data:    'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Minimal Typography System */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-ui:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-data:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Compatibility bindings for legacy component compatibility */
   --text:                     var(--ink);
