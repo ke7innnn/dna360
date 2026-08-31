@@ -7,6 +7,14 @@ export const metadata: Metadata = {
     default: 'DNA 360 — Precision Operations',
   },
   description: 'DNA 360 — Gym Management Platform by Pinnacle Studios',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
 }
 
 export default function RootLayout({
@@ -17,7 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Minimal Modern Typography: Inter & JetBrains Mono */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
