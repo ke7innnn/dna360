@@ -5,7 +5,6 @@ import Link from 'next/link'
 
 const footerLinks = [
   { label: 'Home', href: '/' },
-  { label: 'Portal Login', href: '/login' },
   { label: 'About', href: '/about' },
   { label: 'Partner DNA 360', href: '/partner-dna-360' },
   { label: 'Services', href: '/services' },
