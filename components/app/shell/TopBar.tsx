@@ -265,7 +265,7 @@ import CommandPalette from './CommandPalette'
 // ─── Main TopBar ───
 export default function TopBar() {
   const { setMobileOpen } = useSidebar()
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 
   // Listen for ⌘K / Ctrl+K
@@ -306,17 +306,19 @@ export default function TopBar() {
 
           <LocationBadge />
 
-          {/* ⌘K Command Palette Quick Search Button */}
-          <button
-            onClick={() => setCommandPaletteOpen(true)}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(59,130,246,0.35)] text-xs font-ui text-[var(--muted)] transition-all cursor-pointer shadow-sm"
-          >
-            <Search className="w-3.5 h-3.5 text-[var(--accent)]" />
-            <span className="text-[11.5px]">Search members, actions...</span>
-            <kbd className="ml-1 px-1.5 py-0.5 rounded bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[10px] font-mono text-[var(--muted)]">
-              ⌘K
-            </kbd>
-          </button>
+          {/* ⌘K Command Palette Quick Search Button (Staff Only) */}
+          {user?.type !== 'MEMBER' && (
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(59,130,246,0.35)] text-xs font-ui text-[var(--muted)] transition-all cursor-pointer shadow-sm"
+            >
+              <Search className="w-3.5 h-3.5 text-[var(--accent)]" />
+              <span className="text-[11.5px]">Search members, actions...</span>
+              <kbd className="ml-1 px-1.5 py-0.5 rounded bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[10px] font-mono text-[var(--muted)]">
+                ⌘K
+              </kbd>
+            </button>
+          )}
         </div>
 
         {/* Right: Notification + User Menu + Direct Logout Button */}
