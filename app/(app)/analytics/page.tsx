@@ -12,6 +12,7 @@ import Card from '@/components/app/ui/glass-card'
 import StrandMeter from '@/components/app/ui/StrandMeter'
 import PageHeader from '@/components/app/ui/PageHeader'
 import RenewalForecast from '@/components/app/overview/RenewalForecast'
+import MembershipStatusReportGraph from '@/components/app/overview/MembershipStatusReportGraph'
 import Breadcrumbs from '@/components/app/ui/Breadcrumbs'
 import { useAuth } from '@/context/AuthContext'
 import {
@@ -294,7 +295,10 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* ─── 4. Forward Renewal Scenario Projection ─── */}
+      {/* ─── 4. Membership Status Report Multi-Tier Graph ─── */}
+      <MembershipStatusReportGraph />
+
+      {/* ─── 5. Forward Renewal Scenario Projection ─── */}
       <RenewalForecast />
     </div>
   )

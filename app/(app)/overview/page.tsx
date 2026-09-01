@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import Button from '@/components/app/ui/button'
 import MemberOnboardingModal from '@/components/app/members/MemberOnboardingModal'
+import MembershipStatusReportGraph from '@/components/app/overview/MembershipStatusReportGraph'
 import { useAuth } from '@/context/AuthContext'
 import { getSystemMetrics } from '@/lib/metrics'
 import { logAuditEvent } from '@/lib/audit'
@@ -423,6 +424,9 @@ export default function FloorOverviewPage() {
           </div>
         </div>
       </div>
+
+      {/* ─── Membership Status Report Graph ─── */}
+      <MembershipStatusReportGraph className="mt-5" />
 
       {/* Member Onboarding Modal */}
       <MemberOnboardingModal
