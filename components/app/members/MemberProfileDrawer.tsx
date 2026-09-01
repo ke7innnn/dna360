@@ -4,12 +4,14 @@ import React, { useState } from 'react'
 import {
   User, Mail, Phone, Calendar, ShieldCheck,
   CreditCard, Activity, Clock, FileText, Send,
-  RefreshCw, Sparkles, Check, X,
+  RefreshCw, Sparkles, Check, X, Ban, CheckCircle2,
+  AlertTriangle, ShieldAlert,
 } from 'lucide-react'
 import Drawer from '@/components/app/ui/drawer'
 import Button from '@/components/app/ui/button'
 import Badge from '@/components/app/ui/badge'
 import Input from '@/components/app/ui/input'
+import Modal from '@/components/app/ui/modal'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/app/ui/tabs'
 import RenewMemberModal from '@/components/app/members/RenewMemberModal'
 import { addStaffNote, blacklistMember, unblacklistMember } from '@/lib/members'
@@ -24,18 +26,27 @@ export default function MemberProfileDrawer({
   open,
   onOpenChange,
   onMemberUpdated,
+  onRenew,
+  onFreeze,
 }: {
   member: Member | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onMemberUpdated?: () => void
+  onRenew?: (member: Member) => void
+  onFreeze?: (member: Member) => void
 }) {
   const [activeTab, setActiveTab] = useState('overview')
   const [newNoteContent, setNewNoteContent] = useState('')
   const [newNoteType, setNewNoteType] = useState<'general' | 'call' | 'followup' | 'warning'>('general')
   const [renewModalOpen, setRenewModalOpen] = useState(false)
+  const [blockModalOpen, setBlockModalOpen] = useState(false)
+  const [blockReason, setBlockReason] = useState('Turnstile misconduct / conduct violation')
+  const [customBlockReason, setCustomBlockReason] = useState('')
 
   if (!member) return null
+
+  const isBlocked = member.blacklisted || member.status === 'blacklisted'
 
   const statusMap: Record<string, { status: string; label: string }> = {
     active: { status: 'ok', label: 'Active Member' },
@@ -45,7 +56,10 @@ export default function MemberProfileDrawer({
     blacklisted: { status: 'danger', label: 'Blocked' },
   }
 
-  const currentStatus = statusMap[member.status] || { status: 'neutral', label: member.status || 'Active' }
+  const currentStatus = isBlocked
+    ? { status: 'danger', label: 'Blocked' }
+    : statusMap[member.status] || { status: 'neutral', label: member.status || 'Active' }
+
   const activeMemberships = member.active_memberships || []
   const kyc = member.kyc || {
     id_type: null,
@@ -75,18 +89,28 @@ export default function MemberProfileDrawer({
     if (onMemberUpdated) onMemberUpdated()
   }
 
-  const handleToggleBlacklist = () => {
-    if (member.blacklisted) {
-      unblacklistMember(member.id)
-      toast.success(`${member.name} removed from blacklist`)
-    } else {
-      blacklistMember({
-        memberId: member.id,
-        reason: 'Flagged for payment / conduct violation at front desk',
-        blacklistedBy: 'Amit Sharma',
-      })
-      toast.error(`${member.name} blacklisted — turnstile access blocked`)
-    }
+  // Block member action
+  const handleConfirmBlock = () => {
+    const finalReason = customBlockReason.trim()
+      ? `${blockReason}: ${customBlockReason.trim()}`
+      : blockReason
+
+    blacklistMember({
+      memberId: member.id,
+      reason: finalReason,
+      blacklistedBy: 'Amit Sharma (Duty Manager)',
+    })
+
+    toast.error(`${member.name} is now Blocked — turnstile access revoked`)
+    setBlockModalOpen(false)
+    setCustomBlockReason('')
+    if (onMemberUpdated) onMemberUpdated()
+  }
+
+  // Unblock member action
+  const handleUnblock = () => {
+    unblacklistMember(member.id)
+    toast.success(`${member.name} unblocked — turnstile access restored`)
     if (onMemberUpdated) onMemberUpdated()
   }
 
@@ -130,20 +154,58 @@ export default function MemberProfileDrawer({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setRenewModalOpen(true)}
+                onClick={() => {
+                  if (onRenew) onRenew(member)
+                  else setRenewModalOpen(true)
+                }}
                 icon={<RefreshCw className="w-3.5 h-3.5" />}
               >
                 Renew Plan
               </Button>
-              <Button
-                variant={member.blacklisted ? 'secondary' : 'danger'}
-                size="sm"
-                onClick={handleToggleBlacklist}
-              >
-                {member.blacklisted ? 'Unblock' : 'Blacklist'}
-              </Button>
+
+              {isBlocked ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleUnblock}
+                  className="border-[#4ADE80] text-[#4ADE80] hover:bg-[rgba(74,222,128,0.1)]"
+                  icon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                >
+                  Unblock Member
+                </Button>
+              ) : (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setBlockModalOpen(true)}
+                  icon={<Ban className="w-3.5 h-3.5" />}
+                >
+                  Block Member
+                </Button>
+              )}
             </div>
           </div>
+
+          {/* Blocked Status Banner */}
+          {isBlocked && (
+            <div className="p-3.5 rounded-[var(--r-sm)] bg-[rgba(255,92,122,0.12)] border border-[rgba(255,92,122,0.35)] text-xs text-[#FF5C7A] flex items-center justify-between gap-3 animate-in fade-in">
+              <div className="flex items-center gap-2.5">
+                <ShieldAlert className="w-5 h-5 shrink-0 text-[#FF5C7A]" />
+                <div>
+                  <strong className="block font-semibold text-white">Member is currently Blocked</strong>
+                  <span className="text-[11px] text-[var(--ink-2)]">
+                    Turnstile gate entry denied. Reason: {member.blacklist_reason || 'Administrative hold on account'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={handleUnblock}
+                className="px-3 py-1.5 rounded-full bg-[rgba(74,222,128,0.15)] hover:bg-[#4ADE80] hover:text-[#12040A] text-[#4ADE80] border border-[rgba(74,222,128,0.3)] font-semibold text-xs transition-all shrink-0 cursor-pointer"
+              >
+                Unblock Now
+              </button>
+            </div>
+          )}
 
           {/* Special Inclusions Alert Banner */}
           {member.special_inclusions && (
@@ -248,55 +310,49 @@ export default function MemberProfileDrawer({
             </TabsContent>
 
             {/* TAB 2: Memberships & Packages */}
-            <TabsContent value="memberships" className="space-y-3 pt-4">
-              {activeMemberships.length > 0 ? (
-                activeMemberships.map((ms) => (
-                  <div key={ms.id} className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-data text-[10px] uppercase tracking-[0.14em] text-[var(--accent)] font-semibold">
-                          Active Package
-                        </span>
-                        <h4 className="font-display text-sm font-semibold text-[var(--ink)]">
-                          {ms.product_name}
-                        </h4>
-                      </div>
-                      <Badge status={ms.status === 'active' ? 'ok' : 'info'} size="sm">
-                        {ms.status}
-                      </Badge>
+            <TabsContent value="memberships" className="space-y-4 pt-4">
+              {activeMemberships.map((pkg, idx) => (
+                <div
+                  key={pkg.id || idx}
+                  className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="font-display text-sm font-semibold text-[var(--ink)]">
+                        {pkg.product_name || pkg.packageName}
+                      </h4>
+                      <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                        {pkg.category === 'reformer_pilates' ? 'Reformer Pilates Studio' : 'Gym Floor & Group Fitness'}
+                      </p>
                     </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                      <div>
-                        <span className="font-data text-[10.5px] text-[var(--muted)] block">Enrolled:</span>
-                        <span className="font-data text-[var(--ink-2)]">{ms.enrolment_date}</span>
-                      </div>
-                      <div>
-                        <span className="font-data text-[10.5px] text-[var(--muted)] block">Activation:</span>
-                        <span className="font-data text-[var(--ink-2)]">{ms.activation_date || 'Pending'}</span>
-                      </div>
-                      <div>
-                        <span className="font-data text-[10.5px] text-[var(--muted)] block">Expiry Date:</span>
-                        <span className="font-data font-semibold text-[var(--green)]">{ms.expiry_date || 'N/A'}</span>
-                      </div>
-                      <div>
-                        <span className="font-data text-[10.5px] text-[var(--muted)] block">Amount (GST Inc):</span>
-                        <span className="font-data font-bold text-[var(--ink)] tabular-nums">{formatINR(ms.amount_paid)}</span>
-                      </div>
-                    </div>
-
-                    {ms.sessions_total !== null && (
-                      <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between text-xs">
-                        <span className="font-ui text-[var(--muted)]">Sessions Remaining:</span>
-                        <span className="font-data font-bold text-[var(--accent)] tabular-nums">
-                          {ms.sessions_remaining} of {ms.sessions_total} sessions
-                        </span>
-                      </div>
-                    )}
+                    <Badge status={pkg.status === 'active' ? 'ok' : 'warn'} size="sm">
+                      {pkg.status?.toUpperCase() || 'ACTIVE'}
+                    </Badge>
                   </div>
-                ))
-              ) : (
-                <div className="p-6 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-center text-xs text-[var(--muted)]">
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-[var(--line)] text-xs">
+                    <div>
+                      <span className="font-data text-[10px] text-[var(--muted)] block">Tariff:</span>
+                      <span className="font-data font-bold text-[var(--ink)] tabular-nums">{formatINR(pkg.amount_paid || 0)}</span>
+                    </div>
+                    <div>
+                      <span className="font-data text-[10px] text-[var(--muted)] block">Started:</span>
+                      <span className="font-data tabular-nums text-[var(--ink)]">{pkg.start_date || '12 Oct 2025'}</span>
+                    </div>
+                    <div>
+                      <span className="font-data text-[10px] text-[var(--muted)] block">Expires:</span>
+                      <span className="font-data tabular-nums text-[var(--ink)] font-bold">{pkg.expiry_date || '11 Oct 2026'}</span>
+                    </div>
+                    <div>
+                      <span className="font-data text-[10px] text-[var(--muted)] block">Freeze Used:</span>
+                      <span className="font-data tabular-nums text-[var(--ink)]">{pkg.freeze_days_used || 0} / {pkg.max_freeze_days || 30}d</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {activeMemberships.length === 0 && (
+                <div className="text-center py-8 text-xs text-[var(--muted)]">
                   No active memberships on file.
                 </div>
               )}
@@ -352,12 +408,76 @@ export default function MemberProfileDrawer({
         </div>
       </Drawer>
 
+      {/* Renew Modal */}
       <RenewMemberModal
         member={member}
         open={renewModalOpen}
         onOpenChange={setRenewModalOpen}
         onUpdated={onMemberUpdated}
       />
+
+      {/* Block Member Confirmation Modal */}
+      <Modal
+        open={blockModalOpen}
+        onOpenChange={setBlockModalOpen}
+        title={`Block Member: ${member.name}`}
+        description="Blocking revokes RFID/QR turnstile access immediately at the Powai studio."
+        size="md"
+      >
+        <div className="space-y-4 pt-1 text-xs">
+          <div className="p-3 rounded-xl bg-[rgba(255,92,122,0.12)] border border-[rgba(255,92,122,0.3)] text-[#FF5C7A] flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#FF5C7A]" />
+            <p className="leading-relaxed">
+              <strong>Warning:</strong> The member&apos;s RFID card, QR token, and live check-in access will be disabled until manually unblocked by an authorized manager.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-white block">
+              Reason for Block / Blacklist
+            </label>
+            <select
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              className="w-full h-[38px] px-3 rounded-xl bg-[var(--surface-2)] border border-[var(--line)] text-white text-xs outline-none focus:border-[#FF5C7A]"
+            >
+              <option value="Turnstile misconduct / conduct violation">Turnstile misconduct / conduct violation</option>
+              <option value="Unpaid membership dues over 30 days">Unpaid membership dues over 30 days</option>
+              <option value="Disciplinary hold / studio policy breach">Disciplinary hold / studio policy breach</option>
+              <option value="Medical hold pending physician clearance">Medical hold pending physician clearance</option>
+              <option value="Other administrative restriction">Other administrative restriction</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-white block">
+              Additional Notes / Incident Details (Optional)
+            </label>
+            <textarea
+              value={customBlockReason}
+              onChange={(e) => setCustomBlockReason(e.target.value)}
+              placeholder="e.g. Disputed chargeback, verbal warning issued on 1st floor..."
+              rows={3}
+              className="w-full p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--line)] text-white text-xs outline-none focus:border-[#FF5C7A] placeholder:text-[var(--ink-3)]"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--line)]">
+            <button
+              onClick={() => setBlockModalOpen(false)}
+              className="px-4 py-2 rounded-full bg-[var(--surface)] text-[var(--ink-2)] hover:text-white border border-[var(--line)] font-medium text-xs cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmBlock}
+              className="px-4 py-2 rounded-full bg-[#FF5C7A] text-[#12040A] font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-[0_0_14px_rgba(255,92,122,0.4)] flex items-center gap-1.5 cursor-pointer"
+            >
+              <Ban className="w-3.5 h-3.5" /> Confirm Block
+            </button>
+          </div>
+        </div>
+      </Modal>
     </>
   )
 }
