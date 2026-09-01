@@ -117,7 +117,7 @@ export default function MembersPage() {
       {/* ─── Topbar ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
-          <h2 className="text-xl sm:text-2xl font-semibold text-white font-display tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-normal text-white font-serif tracking-tight">
             Members
           </h2>
           <p className="font-data text-[10px] text-[var(--ink-3)] tracking-wider mt-1 uppercase">

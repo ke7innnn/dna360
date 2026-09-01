@@ -43,10 +43,10 @@
   --r-pill:      999px;
   --r-full:      999px;
 
-  /* Minimal & Artistic Typography System */
-  --font-serif:    'Gambetta', 'Instrument Serif', Georgia, serif;
-  --font-artistic: 'Syne', 'Clash Display', 'Cabinet Grotesk', -apple-system, sans-serif;
-  --font-display:  'Clash Display', 'Syne', 'Cabinet Grotesk', sans-serif;
+  /* Minimal & Editorial Typography System */
+  --font-serif:    'Instrument Serif', 'Gambetta', Georgia, serif;
+  --font-display:  'Instrument Serif', 'Gambetta', Georgia, serif;
+  --font-artistic: 'Instrument Serif', 'Gambetta', Georgia, serif;
   --font-ui:       'Satoshi', 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
   --font-data:     'Martian Mono', 'JetBrains Mono', ui-monospace, monospace;
 
@@ -121,21 +121,25 @@ body {
 
 .font-serif,
 .font-voice,
-[data-surface="app"] .font-serif,
-[data-surface="app"] .font-voice {
-  font-family: var(--font-serif), 'Gambetta', 'Instrument Serif', Georgia, serif;
-}
-
 .font-artistic,
-[data-surface="app"] .font-artistic {
-  font-family: var(--font-artistic), 'Syne', 'Clash Display', sans-serif;
-  letter-spacing: -0.02em;
+.font-display,
+[data-surface="app"] .font-serif,
+[data-surface="app"] .font-voice,
+[data-surface="app"] .font-artistic,
+[data-surface="app"] .font-display {
+  font-family: var(--font-display), 'Instrument Serif', 'Gambetta', Georgia, serif;
 }
 
-.font-display,
-[data-surface="app"] .font-display {
-  font-family: var(--font-display), 'Clash Display', sans-serif;
+h1, h2, h3, .page-title, [data-surface="app"] h1, [data-surface="app"] h2, [data-surface="app"] h3 {
+  font-family: var(--font-display), 'Instrument Serif', 'Gambetta', Georgia, serif;
+  font-weight: 400;
   letter-spacing: -0.01em;
+}
+
+h1 em, h2 em, h3 em, .page-title em {
+  font-family: var(--font-display), 'Instrument Serif', 'Gambetta', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
 }
 
 .font-ui,

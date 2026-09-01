@@ -97,7 +97,7 @@ export default function FloorOverviewPage() {
       {/* ─── Topbar ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold text-white font-artistic tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-normal text-white font-serif tracking-tight">
             Floor overview
           </h1>
           <p className="font-data text-[10.5px] text-[var(--ink-3)] tracking-[0.14em] uppercase mt-1">
