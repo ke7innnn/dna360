@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Wifi,
   RefreshCw,
+  Zap,
 } from 'lucide-react'
 import { toast } from '@/components/app/ui/toast'
 import type { WorkoutSession, SessionExercise, Exercise, PersonalRecord } from '@/types/training'
@@ -42,7 +43,6 @@ export default function ActiveWorkoutSessionPage() {
   const [swapModalOpen, setSwapModalOpen] = useState(false)
   const [swapAlternatives, setSwapAlternatives] = useState<Exercise[]>([])
   const [exerciseCatalog, setExerciseCatalog] = useState<Exercise[]>([])
-  const [addModalOpen, setAddModalOpen] = useState(false)
 
   // Set Inputs Draft State
   const [setInputs, setSetInputs] = useState<Record<string, Record<number, { weightKg: string; reps: string; isDone: boolean }>>>({})
@@ -209,125 +209,150 @@ export default function ActiveWorkoutSessionPage() {
   const currentExNum = currentExIndex + 2 // Matching "EXERCISE 2 OF 6" in mockup
 
   return (
-    <div className="max-w-md mx-auto py-2 sm:py-4 px-1 select-none">
-      {/* ─── Phone Shell Container ─── */}
-      <div className="relative bg-[#08090C] border border-[rgba(255,255,255,0.13)] rounded-[32px] sm:rounded-[38px] p-4 sm:p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] overflow-hidden space-y-4">
-        <div className="absolute -left-[20%] -bottom-[30%] w-[140%] h-[60%] bg-[radial-gradient(ellipse_at_50%_100%,rgba(255,92,122,0.13),rgba(120,90,220,0.07)_45%,transparent_70%)] pointer-events-none" />
+    <div className="max-w-5xl mx-auto py-2 sm:py-6 px-2 sm:px-4 space-y-6 select-none">
+      {/* ─── Top Session Nav Header ─── */}
+      <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
+        <Link href="/dashboard" className="flex items-center gap-2 text-white hover:text-[#FF5C7A] transition-colors">
+          <X className="w-5 h-5" />
+          <span className="font-bold text-base sm:text-lg font-display">Push · Week 3, Day 1</span>
+        </Link>
 
-        {/* ─── Nav Header ─── */}
-        <div className="flex items-center justify-between pt-1 pb-1">
-          <Link href="/dashboard" className="text-white hover:text-[#FF5C7A] transition-colors p-1">
-            <X className="w-5 h-5" />
-          </Link>
-          <span className="font-bold text-sm text-white">Push · W3 D1</span>
-          <span className="font-data text-sm font-semibold text-[#FF5C7A]">
-            {formatTime(elapsedSeconds)}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="px-3.5 py-1.5 rounded-full bg-[var(--surface)] border border-[var(--line)] flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse" />
+            <span className="font-data text-sm font-semibold text-[#FF5C7A]">
+              {formatTime(elapsedSeconds)}
+            </span>
+          </div>
+
+          <button
+            onClick={() => {
+              toast.success('Workout finished and saved!')
+              router.push('/dashboard')
+            }}
+            className="px-4 py-1.5 rounded-full bg-[#4ADE80] text-[#12040A] font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-[0_0_14px_rgba(74,222,128,0.35)]"
+          >
+            Finish workout
+          </button>
         </div>
+      </div>
 
-        {/* ─── Top Progress Line ─── */}
-        <div>
-          <div className="member-bar" style={{ marginTop: 0 }}>
-            <i style={{ width: `${Math.round((currentExNum / totalExCount) * 100)}%` }} />
-          </div>
-          <div className="member-bar-meta" style={{ marginBottom: 12 }}>
-            <span>EXERCISE {currentExNum} OF {totalExCount}</span>
-            <span>PRESCRIBED BY ROHAN</span>
-          </div>
-        </div>
-
-        {/* ─── Current Exercise Card (§3) ─── */}
-        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-card)] p-4 sm:p-5 space-y-3">
-          <div className="flex items-baseline justify-between">
-            <h3 className="text-lg sm:text-xl font-bold text-white font-display">
-              {currentExercise.exercise?.name || 'Barbell bench press'}
-            </h3>
-          </div>
-          <p className="text-xs text-[var(--ink-2)]">
-            4 sets · 8 reps · 60 kg · 90 s rest
-          </p>
-
-          {/* Set Labels Header */}
-          <div className="member-set-labels" style={{ marginTop: 14 }}>
-            <span>SET</span>
-            <span>KG</span>
-            <span>REPS</span>
-            <span />
+      {/* ─── Responsive 2-Column Grid on PC ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left / Main Column (8 cols on PC) */}
+        <div className="lg:col-span-8 space-y-4">
+          {/* Progress Bar */}
+          <div>
+            <div className="member-bar" style={{ marginTop: 0 }}>
+              <i style={{ width: `${Math.round((currentExNum / totalExCount) * 100)}%` }} />
+            </div>
+            <div className="member-bar-meta" style={{ marginBottom: 8 }}>
+              <span>EXERCISE {currentExNum} OF {totalExCount}</span>
+              <span>PRESCRIBED BY ROHAN</span>
+            </div>
           </div>
 
-          {/* Sets List (1 to 4) */}
-          {[1, 2, 3, 4].map((setNum) => {
-            const isInitiallyDone = setNum <= 2
-            const draft = setInputs[currentExercise.id]?.[setNum] || {
-              weightKg: '60',
-              reps: '8',
-              isDone: isInitiallyDone,
-            }
-            const isDone = draft.isDone
-            const lastText = setNum === 4 ? 'Last: 55 kg × 8' : setNum === 3 ? 'Last: 57.5 kg × 7' : 'Last: 57.5 kg × 8'
-
-            return (
-              <div key={setNum} className="member-set">
-                <span className="member-set-i font-data">{setNum}</span>
-
-                <div className={`member-field ${!isDone && setNum > 2 ? 'empty' : ''}`}>
-                  {draft.weightKg}
-                </div>
-
-                <div className={`member-field ${!isDone && setNum > 2 ? 'empty' : ''}`}>
-                  {draft.reps}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleToggleSetDone(setNum)}
-                  className={`member-tick ${isDone ? 'done' : ''}`}
-                >
-                  <Check className="w-3.5 h-3.5" />
-                </button>
-
-                <span className="member-last font-data">
-                  {lastText}
-                </span>
+          {/* Current Exercise Card */}
+          <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-card)] p-5 sm:p-6 space-y-4 shadow-xl">
+            <div className="flex items-baseline justify-between">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white font-display">
+                  {currentExercise.exercise?.name || 'Barbell bench press'}
+                </h3>
+                <p className="text-xs text-[var(--ink-2)] mt-0.5">
+                  4 sets · 8 reps · 60 kg · 90 s rest
+                </p>
               </div>
-            )
-          })}
+              <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[rgba(255,92,122,0.15)] text-[#FF5C7A] border border-[rgba(255,92,122,0.3)]">
+                CHEST
+              </span>
+            </div>
 
-          {/* Rest Countdown Bar */}
-          <div className="member-rest">
-            <span className="text-xs text-[var(--ink-3)]">Rest</span>
-            <b className="font-data text-base text-[#FF5C7A]">
-              0:{String(restSecondsRemaining).padStart(2, '0')}
-            </b>
+            {/* Set Column Labels */}
+            <div className="member-set-labels" style={{ marginTop: 16 }}>
+              <span>SET</span>
+              <span>KG</span>
+              <span>REPS</span>
+              <span />
+            </div>
+
+            {/* Sets Rows */}
+            <div className="space-y-1">
+              {[1, 2, 3, 4].map((setNum) => {
+                const isInitiallyDone = setNum <= 2
+                const draft = setInputs[currentExercise.id]?.[setNum] || {
+                  weightKg: '60',
+                  reps: '8',
+                  isDone: isInitiallyDone,
+                }
+                const isDone = draft.isDone
+                const lastText = setNum === 4 ? 'Last: 55 kg × 8' : setNum === 3 ? 'Last: 57.5 kg × 7' : 'Last: 57.5 kg × 8'
+
+                return (
+                  <div key={setNum} className="member-set">
+                    <span className="member-set-i font-data">{setNum}</span>
+
+                    <div className={`member-field ${!isDone && setNum > 2 ? 'empty' : ''}`}>
+                      {draft.weightKg}
+                    </div>
+
+                    <div className={`member-field ${!isDone && setNum > 2 ? 'empty' : ''}`}>
+                      {draft.reps}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetDone(setNum)}
+                      className={`member-tick ${isDone ? 'done' : ''}`}
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+
+                    <span className="member-last font-data">
+                      {lastText}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Rest Countdown Bar */}
+            <div className="member-rest">
+              <span className="text-xs text-[var(--ink-3)] font-medium">Rest Countdown</span>
+              <b className="font-data text-lg text-[#FF5C7A]">
+                0:{String(restSecondsRemaining).padStart(2, '0')}
+              </b>
+              <button
+                onClick={() => setRestTimerActive(false)}
+                className="text-xs text-[var(--ink-3)] hover:text-white transition-colors font-medium px-2 py-1"
+              >
+                Skip Rest
+              </button>
+            </div>
+          </div>
+
+          {/* Exercise Action Buttons */}
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setRestTimerActive(false)}
-              className="text-xs text-[var(--ink-3)] hover:text-white transition-colors"
+              onClick={handleOpenSwap}
+              className="flex-1 py-3.5 rounded-full bg-[var(--surface)] border border-[var(--line)] text-xs text-[var(--ink-2)] hover:text-white hover:border-[var(--line-strong)] transition-all font-medium flex items-center justify-center gap-2"
             >
-              Skip
+              <ArrowRightLeft className="w-3.5 h-3.5 text-[#FF5C7A]" /> Swap exercise
+            </button>
+            <button
+              onClick={() => toast.success('Set added')}
+              className="flex-1 py-3.5 rounded-full bg-[var(--surface)] border border-[var(--line)] text-xs text-[var(--ink-2)] hover:text-white hover:border-[var(--line-strong)] transition-all font-medium flex items-center justify-center gap-2"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add set
             </button>
           </div>
         </div>
 
-        {/* ─── Exercise Action Buttons (Swap | Add set) ─── */}
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleOpenSwap}
-            className="flex-1 py-3 rounded-full bg-[var(--surface)] border border-[var(--line)] text-xs text-[var(--ink-2)] hover:text-white hover:border-[var(--line-strong)] transition-all font-medium"
-          >
-            Swap exercise
-          </button>
-          <button
-            onClick={() => toast.success('Set 5 added to workout')}
-            className="flex-1 py-3 rounded-full bg-[var(--surface)] border border-[var(--line)] text-xs text-[var(--ink-2)] hover:text-white hover:border-[var(--line-strong)] transition-all font-medium"
-          >
-            Add set
-          </button>
-        </div>
-
-        {/* ─── Up Next Section ─── */}
-        <div>
-          <div className="flex items-center justify-between text-xs font-bold text-white mb-2.5">
-            <h3>Up next</h3>
+        {/* Right Column: Up Next Queue & Session Info (4 cols on PC) */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="flex items-center justify-between text-xs font-bold text-white">
+            <h3>Up next in this workout</h3>
+            <span className="font-data text-[10px] text-[var(--ink-3)]">4 remaining</span>
           </div>
 
           <div className="member-rows">
@@ -354,6 +379,40 @@ export default function ActiveWorkoutSessionPage() {
               </div>
               <span className="member-row-end font-data">04</span>
             </div>
+
+            {/* Up Next 3 */}
+            <div className="member-row">
+              <div className="member-row-ic">
+                <Dumbbell className="w-4 h-4 stroke-[#FF5C7A]" />
+              </div>
+              <div className="member-row-txt">
+                <b className="text-white">Overhead Triceps Extension</b>
+                <span>3 × 12 · 25 kg</span>
+              </div>
+              <span className="member-row-end font-data">05</span>
+            </div>
+
+            {/* Up Next 4 */}
+            <div className="member-row">
+              <div className="member-row-ic">
+                <Dumbbell className="w-4 h-4 stroke-[#FF5C7A]" />
+              </div>
+              <div className="member-row-txt">
+                <b className="text-white">Lateral Shoulder Raises</b>
+                <span>4 × 15 · 10 kg</span>
+              </div>
+              <span className="member-row-end font-data">06</span>
+            </div>
+          </div>
+
+          {/* Quick Tip Box */}
+          <div className="p-4 rounded-[var(--r-card)] bg-[var(--surface)] border border-[var(--line)] space-y-1.5 text-xs text-[var(--ink-2)]">
+            <b className="text-white flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-[#FF5C7A]" /> Coach Note from Rohan
+            </b>
+            <p className="text-[11px] leading-relaxed">
+              Focus on slow 3-second negative descent on the bench press today. Drive through the heels on ascent.
+            </p>
           </div>
         </div>
       </div>
@@ -361,7 +420,7 @@ export default function ActiveWorkoutSessionPage() {
       {/* Exercise Swap Modal */}
       {swapModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#08090C] border border-[var(--line-strong)] rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+          <div className="bg-[#08090C] border border-[var(--line-strong)] rounded-3xl p-5 w-full max-w-md space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-2 border-b border-[var(--line)]">
               <h4 className="text-sm font-bold text-white">Swap Exercise</h4>
               <button onClick={() => setSwapModalOpen(false)} className="text-[var(--ink-3)] hover:text-white">
@@ -370,16 +429,19 @@ export default function ActiveWorkoutSessionPage() {
             </div>
 
             <div className="space-y-2">
-              {['Dumbbell Flat Bench Press', 'Hammer Strength Chest Press', 'Push-Ups (Weighted)'].map((alt) => (
+              {['Dumbbell Flat Bench Press', 'Hammer Strength Chest Press', 'Push-Ups (Weighted)', 'Incline Machine Press'].map((alt) => (
                 <div
                   key={alt}
                   onClick={() => {
                     toast.success(`Swapped to ${alt}`)
                     setSwapModalOpen(false)
                   }}
-                  className="p-3 rounded-2xl bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--line)] cursor-pointer flex items-center justify-between text-xs"
+                  className="p-3.5 rounded-2xl bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--line)] cursor-pointer flex items-center justify-between text-xs"
                 >
-                  <span className="font-semibold text-white">{alt}</span>
+                  <div>
+                    <span className="font-semibold text-white block">{alt}</span>
+                    <span className="text-[10px] text-[var(--ink-3)]">Chest · Equivalent compound movement</span>
+                  </div>
                   <ArrowRightLeft className="w-3.5 h-3.5 text-[#FF5C7A]" />
                 </div>
               ))}
