@@ -2,461 +2,241 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import {
-  Flame, Activity, Dumbbell, Droplets, Calendar,
-  Clock, CheckCircle2, Plus, FileText, PauseCircle,
-  Sparkles, ArrowRight, ShieldCheck, Download,
-  CreditCard, Smartphone, CheckSquare, Square,
-  Check, ArrowUpRight, Lock, AlertTriangle, Play,
+  Bell,
+  Plus,
+  Calendar,
+  Clock,
+  Play,
+  Dumbbell,
+  Check,
+  ChevronRight,
+  PauseCircle,
+  Sparkles,
+  Droplets,
+  Award,
 } from 'lucide-react'
-import Card from '@/components/app/ui/glass-card'
-import StatTile from '@/components/app/ui/StatTile'
-import Button from '@/components/app/ui/button'
-import Badge, { StatusPill } from '@/components/app/ui/badge'
-import TokenReadout from '@/components/app/ui/TokenReadout'
-import PageHeader from '@/components/app/ui/PageHeader'
-import HeaderQuotePill from '@/components/app/dashboard/HeaderQuotePill'
-import MemberFreezeRequestModal from '@/components/app/member/MemberFreezeRequestModal'
-import MemberUpgradeModal from '@/components/app/member/MemberUpgradeModal'
 import { useAuth } from '@/context/AuthContext'
-import {
-  getMemberPortalState,
-  getMemberBookings,
-  addWaterIntake,
-  cancelMemberBooking,
-} from '@/lib/memberportal'
-import { formatINR } from '@/lib/gst'
-import type { MemberPortalState, MemberClassBooking } from '@/types/memberportal'
 import { toast } from '@/components/app/ui/toast'
-import { cn } from '@/lib/utils'
+import FreezeMemberModal from '@/components/app/members/FreezeMemberModal'
+import RenewMemberModal from '@/components/app/members/RenewMemberModal'
 
 export default function MemberDashboardPage() {
-  const { user, can } = useAuth()
-  const [state, setState] = useState<MemberPortalState>(() => getMemberPortalState())
-  const [bookings, setBookings] = useState<MemberClassBooking[]>([])
-  const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({
-    'ex1_s1': true,
-    'ex1_s2': true,
-    'ex1_s3': false,
-    'ex1_s4': false,
-  })
+  const router = useRouter()
+  const { user } = useAuth()
 
   const [freezeModalOpen, setFreezeModalOpen] = useState(false)
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
+  const [renewModalOpen, setRenewModalOpen] = useState(false)
+  const [currentDateStr, setCurrentDateStr] = useState('TUE, 1 SEPTEMBER')
+  const [greetingTime, setGreetingTime] = useState('Good evening')
 
-  const isExpired = user?.membershipStatus === 'EXPIRED' || user?.membershipStatus === 'FROZEN'
-  const canMintToken = !isExpired && (can('portal.token') || user?.type === 'MEMBER' || user?.role?.slug.toUpperCase() === 'OWNER')
-
-  const refreshData = () => {
-    setState(getMemberPortalState())
-    setBookings(getMemberBookings())
-  }
-
+  // Dynamic date & greeting
   useEffect(() => {
-    refreshData()
-    const handleUpdate = () => refreshData()
-    window.addEventListener('dna360_memberportal_updated', handleUpdate)
-    return () => window.removeEventListener('dna360_memberportal_updated', handleUpdate)
+    const now = new Date()
+    const dayName = now.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
+    const dayNum = now.getDate()
+    const monthName = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
+    setCurrentDateStr(`${dayName}, ${dayNum} ${monthName}`)
+
+    const hour = now.getHours()
+    if (hour < 12) setGreetingTime('Good morning')
+    else if (hour < 17) setGreetingTime('Good afternoon')
+    else setGreetingTime('Good evening')
   }, [])
 
-  const handleAddWater = (ml: number) => {
-    const updated = addWaterIntake(ml)
-    setState(updated)
-    toast.success(`Logged +${ml}ml Hydration`, {
-      description: `Daily total: ${updated.waterIntakeMl} / ${updated.waterTargetMl} ml`,
-    })
-  }
-
-  const toggleSet = (setId: string) => {
-    setCompletedSets((prev) => ({
-      ...prev,
-      [setId]: !prev[setId],
-    }))
-  }
-
-  const targetWater = state?.waterTargetMl || 3500
-  const currentWater = state?.waterIntakeMl || 0
-  const waterPct = Math.min(100, Math.round((currentWater / targetWater) * 100))
-  const memberPhone = user?.phone || state?.phone || '+91 98200 11111'
-  const maskedPhone = memberPhone.replace(/(\+91\d{2})\d{4}(\d{4})/, '$1•• ••$2')
+  const memberFirstName = user?.name ? user.name.split(' ')[0] : 'Aditi'
 
   return (
-    <div className="space-y-6 select-none">
-      {/* Header Member Greeting with Subtle Dynamic Quote Pill next to Name */}
-      <PageHeader
-        eyebrow={`MEMBER PORTAL · ${(state?.branchName || 'POWAI FLAGSHIP').toUpperCase()}`}
-        title="Welcome back,"
-        italicWord={user?.name?.split(' ')[0] || state?.memberName?.split(' ')[0] || 'Aarav'}
-        badge={<HeaderQuotePill />}
-        description={
-          isExpired
-            ? "Your membership plan has expired. Renew your plan below to restore turnstile gate access and class bookings."
-            : "Your check-in, plan and today's programming — all live. Tap the gate token at the turnstile to enter."
-        }
-        actions={
-          <>
-            {!isExpired && (
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => setFreezeModalOpen(true)}
-              >
-                Pause membership
-              </Button>
-            )}
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => setUpgradeModalOpen(true)}
-            >
-              {isExpired ? 'Renew membership now' : 'Renew / Upgrade'}
-            </Button>
-          </>
-        }
-      />
+    <div className="max-w-md mx-auto py-2 sm:py-4 px-1 select-none">
+      {/* ─── Ambient Glow Effect ─── */}
+      <div className="relative bg-[#08090C] border border-[rgba(255,255,255,0.13)] rounded-[32px] sm:rounded-[38px] p-4 sm:p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] overflow-hidden space-y-4">
+        <div className="absolute -left-[20%] -bottom-[30%] w-[140%] h-[60%] bg-[radial-gradient(ellipse_at_50%_100%,rgba(255,92,122,0.13),rgba(120,90,220,0.07)_45%,transparent_70%)] pointer-events-none" />
 
-      {/* Main Grid: 2-Column with Right Rail */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left / Main Column (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* Member Feature Card with Signature TokenReadout */}
-          <Card variant="feature" className="p-6 sm:p-7 relative overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              {/* Left Details */}
-              <div className="space-y-4">
-                {/* Plan Badge */}
-                <div className="flex items-center gap-2">
-                  {isExpired ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-ui font-bold tracking-[0.10em] uppercase bg-[rgba(239,68,68,0.15)] text-[#EF4444] border border-[rgba(239,68,68,0.35)]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-                      MEMBERSHIP EXPIRED · RENEWAL REQUIRED
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-ui font-bold tracking-[0.10em] uppercase bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(59,130,246,0.30)]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-                      {state?.planTier || 'PLATINUM ALL-ACCESS'} · {state?.daysRemaining ?? 218} DAYS LEFT
-                    </span>
-                  )}
-                </div>
-
-                {/* Member Name & Code */}
-                <div>
-                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-[var(--ink)] tracking-tight">
-                    {user?.name || state?.memberName || 'Aarav Shah'}
-                  </h2>
-                  <p className="font-ui text-xs text-[var(--muted)] mt-1 tracking-wide">
-                    {state?.memberCode || 'DNA-POW-2025-0892'} · {maskedPhone}
-                  </p>
-                </div>
-
-                {/* Sub Metadata Row */}
-                <div className="pt-2 flex flex-wrap items-center gap-6 sm:gap-10 text-xs">
-                  <div>
-                    <span className="font-ui text-[10px] uppercase tracking-[0.12em] text-[var(--muted)] font-semibold block">
-                      VALID THRU
-                    </span>
-                    <span className="font-ui text-[13px] font-semibold text-[var(--ink)] mt-0.5 block tabular-nums">
-                      {isExpired ? 'Expired (15 Aug 2026)' : (state?.expiryDate || '15 Mar 2027')}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="font-ui text-[10px] uppercase tracking-[0.12em] text-[var(--muted)] font-semibold block">
-                      GATE ACCESS
-                    </span>
-                    <span className={cn(
-                      'font-ui text-[13px] font-medium mt-0.5 block',
-                      isExpired ? 'text-[#EF4444] font-semibold' : 'text-[var(--ink)]'
-                    )}>
-                      {isExpired ? 'Blocked (Expired)' : 'Turnstile Gate 1 & 2'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="font-ui text-[10px] uppercase tracking-[0.12em] text-[var(--muted)] font-semibold block">
-                      STATUS
-                    </span>
-                    <span className={cn(
-                      'font-ui text-[12px] font-bold mt-0.5 block',
-                      isExpired ? 'text-[#EF4444]' : 'text-[var(--green)]'
-                    )}>
-                      {isExpired ? 'Expired' : 'Active'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Signature TokenReadout (Gated by status) */}
-              <div className="pt-4 md:pt-0 md:border-l md:border-[var(--line)] md:pl-8 flex flex-col justify-center items-center">
-                {canMintToken ? (
-                  <TokenReadout initialTtlSeconds={30} />
-                ) : (
-                  <div className="w-[180px] h-[180px] rounded-full bg-[var(--surface-2)] border border-[rgba(239,68,68,0.3)] flex flex-col items-center justify-center p-4 text-center">
-                    <Lock className="w-6 h-6 text-[#EF4444] mb-1" />
-                    <span className="font-ui text-[11px] font-bold text-[#EF4444] uppercase">
-                      TOKEN INACTIVE
-                    </span>
-                    <p className="font-ui text-[10px] text-[var(--muted)] mt-1 leading-tight">
-                      Renew plan to restore gate access
-                    </p>
-                  </div>
-                )}
-              </div>
+        {/* ─── Nav Header ─── */}
+        <div className="flex items-center justify-between pt-1 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-end gap-[2.5px]">
+              <i className="w-[3px] h-[9px] rounded-[2px] bg-[#FF5C7A] block" />
+              <i className="w-[3px] h-[13px] rounded-[2px] bg-[#F0699C] block" />
+              <i className="w-[3px] h-[17px] rounded-[2px] bg-[#C86DD7] block" />
+              <i className="w-[3px] h-[13px] rounded-[2px] bg-[#9B7BE8] block" />
+              <i className="w-[3px] h-[9px] rounded-[2px] bg-[#6E8CF0] block" />
             </div>
-          </Card>
-
-          {/* 4 Stat Tiles Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatTile
-              label="STREAK"
-              value={state?.attendanceStreak ?? 14}
-              unit="days"
-              icon={<Flame className="w-4 h-4 text-[var(--accent)]" />}
-            />
-            <StatTile
-              label="TOTAL VISITS"
-              value={state?.totalVisits ?? 142}
-              icon={<Activity className="w-4 h-4 text-[var(--accent)]" />}
-            />
-            <StatTile
-              label="PT BALANCE"
-              value={`${state?.ptSessionsRemaining ?? 8} / ${state?.ptSessionsTotal ?? 12}`}
-              icon={<Dumbbell className="w-4 h-4 text-[var(--accent)]" />}
-            />
-            <StatTile
-              label="HYDRATION"
-              value={currentWater}
-              unit="ml"
-              icon={<Droplets className="w-4 h-4 text-[var(--accent)]" />}
-            />
+            <span className="font-display text-sm font-semibold tracking-wider text-white">
+              DNA 360
+            </span>
           </div>
 
-          {/* Daily Water Hydration Tracker Card */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <h3 className="font-ui text-base font-semibold text-[var(--ink)]">
-                Daily Water Hydration
-              </h3>
-              <span className="font-data text-xs font-semibold text-[var(--muted)] tracking-wider">
-                {waterPct}% OF {(targetWater / 1000).toFixed(1)}L
-              </span>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mt-4 h-2.5 w-full rounded-full bg-[var(--surface-2)] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#1D4ED8] transition-all duration-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
-                style={{ width: `${waterPct}%` }}
-              />
-            </div>
-
-            {/* Quick Actions & Target Subtext */}
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <p className="font-ui text-xs text-[var(--muted)]">
-                <span className="font-semibold text-[var(--ink)]">{currentWater} ml</span> logged · goal {targetWater} ml
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleAddWater(250)}
-                >
-                  +250 ml
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleAddWater(500)}
-                >
-                  +500 ml
-                </Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Today's Routine Card */}
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-ui text-base font-semibold text-[var(--ink)]">
-                  Today's Routine
-                </h3>
-                <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
-                  Day 1 · Upper Body Push — Coach Rajesh Poojary
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Link href="/m/session">
-                  <Button variant="primary" size="sm" className="gap-1.5 shadow-[0_0_12px_rgba(59,130,246,0.4)]">
-                    <Play className="w-3.5 h-3.5 fill-white" /> Start live tracking
-                  </Button>
-                </Link>
-                <Link href="/m">
-                  <Button variant="secondary" size="sm">
-                    Full plan
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Routine Item */}
-            <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <span className="font-ui text-sm font-semibold text-[var(--ink)] block">
-                  Barbell Incline Bench Press
-                </span>
-                <span className="font-ui text-xs text-[var(--muted)] mt-0.5 block">
-                  3-sec eccentric tempo
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4 text-xs font-ui tabular-nums">
-                <span className="text-[var(--ink-2)] font-semibold">75 kg</span>
-                <span className="text-[var(--muted)]">4 × 8–10</span>
-                <div className="flex items-center gap-1.5">
-                  {(['ex1_s1', 'ex1_s2', 'ex1_s3', 'ex1_s4'] as const).map((setId, i) => (
-                    <button
-                      key={setId}
-                      onClick={() => toggleSet(setId)}
-                      className={cn(
-                        'w-6 h-6 rounded flex items-center justify-center font-ui text-[10.5px] font-bold transition-all cursor-pointer',
-                        completedSets[setId]
-                          ? 'bg-[var(--accent)] text-white shadow-[0_0_8px_rgba(59,130,246,0.5)]'
-                          : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white'
-                      )}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Card>
+          <button
+            onClick={() => toast.info('No new notifications')}
+            className="p-1.5 rounded-full hover:bg-[var(--surface-2)] text-[var(--ink-2)] hover:text-white transition-colors"
+          >
+            <Bell className="w-[19px] h-[19px]" />
+          </button>
         </div>
 
-        {/* Right Rail Column (4 cols) */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Card 1: Access This Week */}
-          <Card className="p-6 space-y-4">
-            <div>
-              <span className="font-ui text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)] block">
-                ACCESS · THIS WEEK
-              </span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-display text-4xl font-semibold text-[var(--ink)] tabular-nums">
-                  5
-                </span>
-                <span className="font-ui text-xs text-[var(--muted)]">
-                  Gym visits logged
-                </span>
-              </div>
-            </div>
+        {/* ─── Greeting ─── */}
+        <div>
+          <p className="eyebrow text-[9.5px] text-[var(--ink-3)] font-data tracking-wider uppercase">
+            {currentDateStr}
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-white font-display tracking-tight leading-tight mt-1">
+            {greetingTime}, {memberFirstName}
+          </h2>
+        </div>
 
-            {/* Weekly Bar Graph */}
-            <div className="pt-2 flex items-end justify-between gap-2 h-24 px-1">
-              {[
-                { day: 'M', h: 65, active: true },
-                { day: 'T', h: 80, active: true },
-                { day: 'W', h: 50, active: true },
-                { day: 'T', h: 100, active: true },
-                { day: 'F', h: 90, active: true },
-                { day: 'S', h: 30, active: false },
-                { day: 'S', h: 15, active: false },
-              ].map((item, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                  <div
-                    className={cn(
-                      'w-full rounded-t-[4px] transition-all duration-300',
-                      item.active
-                        ? 'bg-gradient-to-t from-[#1D4ED8] to-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.4)]'
-                        : 'bg-[var(--surface-2)]'
-                    )}
-                    style={{ height: `${item.h}%` }}
-                  />
-                  <span className="font-ui text-[10.5px] text-[var(--muted)] font-medium">
-                    {item.day}
-                  </span>
-                </div>
-              ))}
+        {/* ─── Signature Strand Meter (§1) ─── */}
+        <div className="member-meter">
+          <div className="member-meter-ring">
+            <svg viewBox="0 0 120 120" width="118" height="118">
+              <defs>
+                <linearGradient id="strandGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#FF5C7A" />
+                  <stop offset="50%" stopColor="#C86DD7" />
+                  <stop offset="100%" stopColor="#6E8CF0" />
+                </linearGradient>
+              </defs>
+              <g transform="rotate(-90 60 60)">
+                {/* Background Ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="rgba(255,255,255,.07)"
+                  strokeWidth="9"
+                  strokeLinecap="round"
+                  strokeDasharray="57.4 8"
+                />
+                {/* Gradient Strand Value Ring (3 of 5) */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="url(#strandGradient)"
+                  strokeWidth="9"
+                  strokeLinecap="round"
+                  strokeDasharray="57.4 8"
+                  pathLength={326.7}
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="#08090C"
+                  strokeWidth="11"
+                  strokeDasharray="130.7 196"
+                  strokeDashoffset="-196"
+                />
+              </g>
+            </svg>
+            <div className="member-meter-val">
+              <b className="text-white">3</b>
+              <span className="text-[10.5px] text-[var(--ink-3)] font-data">of 5 this week</span>
             </div>
-          </Card>
+          </div>
 
-          {/* Card 2: Gate Status */}
-          <Card className="p-6 space-y-2.5">
-            <span className="font-ui text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)] block">
-              GATE STATUS
-            </span>
-            <div className="flex items-center gap-2">
-              <span className={cn(
-                'w-2 h-2 rounded-full',
-                isExpired ? 'bg-[#EF4444]' : 'bg-[var(--green)] shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse'
-              )} />
-              <span className="font-ui text-sm font-semibold text-[var(--ink)]">
-                {isExpired ? 'Turnstile gate locked' : 'Turnstile online · ready'}
-              </span>
-            </div>
-            <p className="font-ui text-xs text-[var(--muted)] leading-relaxed">
-              {isExpired
-                ? 'Your membership is inactive. Renew above to enable turnstile entrance.'
-                : 'Token rotates every 30s. Present the code above at Gate 1 or 2.'}
+          <div className="flex-1 text-xs text-[var(--ink-2)] leading-relaxed">
+            <p>
+              Two sessions left to close the week. Your last one was <strong className="text-white font-bold">Saturday</strong>.
             </p>
-          </Card>
+          </div>
+        </div>
 
-          {/* Card 3: PT Coaching */}
-          <Card className="p-6 space-y-3">
-            <span className="font-ui text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)] block">
-              PT COACHING
-            </span>
-            <div className="flex items-baseline gap-2">
-              <span className="font-display text-3xl font-semibold text-[var(--ink)] tabular-nums">
-                8
-              </span>
-              <span className="font-ui text-xs text-[var(--muted)]">
-                of 12 sessions left
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div className="h-2 w-full rounded-full bg-[var(--surface-2)] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#1D4ED8]"
-                style={{ width: `${(8 / 12) * 100}%` }}
-              />
-            </div>
-          </Card>
-
-          {/* Card 4: Tax Invoice */}
-          <Card className="p-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
-                TAX INVOICE · 2026-27
-              </span>
-              <Button variant="secondary" size="sm" icon={<FileText className="w-3.5 h-3.5" />}>
-                PDF
-              </Button>
-            </div>
+        {/* ─── Today's Scheduled Workout Card ─── */}
+        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-card)] p-4 sm:p-5 space-y-3.5">
+          <div className="flex items-start justify-between">
             <div>
-              <div className="font-display text-2xl font-semibold text-[var(--ink)] tabular-nums">
-                ₹56,640
-              </div>
-              <p className="font-data text-[11px] text-[var(--muted)] mt-1">
-                SAC 999723 · 18% GST (₹8,640)
+              <p className="eyebrow text-[9.5px] text-[var(--ink-3)] font-data tracking-wider uppercase">
+                TODAY · WEEK 3, DAY 1
+              </p>
+              <h3 className="text-xl font-semibold text-white font-display tracking-tight mt-1">
+                Push
+              </h3>
+              <p className="text-xs text-[var(--ink-2)] mt-0.5">
+                6 exercises · about 52 min
               </p>
             </div>
-          </Card>
+            <span className="member-pill member-pill-live">
+              SCHEDULED
+            </span>
+          </div>
+
+          <Link href="/m/session" className="block pt-1">
+            <button className="w-full py-3.5 rounded-full bg-[#FF5C7A] text-[#12040A] font-bold text-sm hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(255,92,122,0.35)] flex items-center justify-center gap-2">
+              <Play className="w-4 h-4 fill-current" /> Start workout
+            </button>
+          </Link>
         </div>
+
+        {/* ─── 2-Tile Grid ─── */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <Link href="/m/session">
+            <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-tile)] p-3.5 flex flex-col gap-2 hover:border-[rgba(255,92,122,0.3)] transition-colors cursor-pointer group">
+              <Plus className="w-4 h-4 text-[var(--ink-2)] group-hover:text-white transition-colors" />
+              <b className="text-xs font-medium text-white block">Log a workout</b>
+            </div>
+          </Link>
+
+          <Link href="/classes">
+            <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-tile)] p-3.5 flex flex-col gap-2 hover:border-[rgba(255,92,122,0.3)] transition-colors cursor-pointer group">
+              <Calendar className="w-4 h-4 text-[var(--ink-2)] group-hover:text-white transition-colors" />
+              <b className="text-xs font-medium text-white block">Book a class</b>
+            </div>
+          </Link>
+        </div>
+
+        {/* ─── Streak Section ─── */}
+        <div>
+          <div className="flex items-center justify-between text-xs mb-2">
+            <h3 className="font-bold text-white tracking-tight">Your streak</h3>
+            <span className="font-data text-[11px] text-[var(--ink-3)]">12 days</span>
+          </div>
+          <div className="member-streak">
+            <i className="on" title="Mon" />
+            <i className="on" title="Tue" />
+            <i title="Wed (Rest)" />
+            <i className="on" title="Thu" />
+            <i className="on" title="Fri" />
+            <i className="on" title="Sat" />
+            <i className="today" title="Today (Tue)" />
+          </div>
+        </div>
+
+        {/* ─── Plan Status Card ─── */}
+        <Link href="/profile">
+          <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-card)] p-3.5 flex items-center gap-3 hover:border-[rgba(255,92,122,0.3)] transition-colors cursor-pointer">
+            <div className="w-8 h-8 rounded-[10px] bg-[var(--surface-2)] flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4 stroke-[#FF5C7A]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <b className="text-xs font-medium text-white block tracking-tight">
+                47 days left on your plan
+              </b>
+              <span className="text-[11px] text-[var(--ink-3)] block mt-0.5">
+                Renew before 11 Oct to keep your rate
+              </span>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Modals */}
-      <MemberFreezeRequestModal
+      <FreezeMemberModal
         open={freezeModalOpen}
         onOpenChange={setFreezeModalOpen}
-        onRequested={() => refreshData()}
+        member={null}
+        onFrozen={() => toast.success('Membership frozen')}
       />
-      <MemberUpgradeModal
-        open={upgradeModalOpen}
-        onOpenChange={setUpgradeModalOpen}
-        onUpgraded={() => refreshData()}
+
+      <RenewMemberModal
+        open={renewModalOpen}
+        onOpenChange={setRenewModalOpen}
+        member={null}
+        onRenewed={() => toast.success('Membership renewed')}
       />
     </div>
   )
