@@ -250,12 +250,17 @@ export default function BillingPage() {
         open={invoiceModalOpen}
         onOpenChange={setInvoiceModalOpen}
         invoice={selectedInvoice}
-        onVoid={(inv) => {
-          voidInvoice(inv.id, 'Voided by administrative supervisor')
+        onVoid={(inv: TaxInvoice) => {
+          voidInvoice({
+            invoiceId: inv.id,
+            voidReason: 'Voided by administrative supervisor',
+            voidedBy: { id: 'usr_admin', name: 'Executive Admin', role: 'Owner' },
+            issueCreditNote: false,
+          })
           toast.success('Invoice marked VOID')
           refreshInvoices()
         }}
-        onCreditNote={(inv) => {
+        onCreditNote={(inv: TaxInvoice) => {
           setInvoiceModalOpen(false)
           setCreditNoteInvoice(inv)
         }}

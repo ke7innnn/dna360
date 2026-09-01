@@ -15,11 +15,13 @@ export default function FreezeMemberModal({
   open,
   onOpenChange,
   onUpdated,
+  onFrozen,
 }: {
-  member: Member | null
+  member?: Member | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onUpdated?: () => void
+  onFrozen?: () => void
 }) {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10))
   const [endDate, setEndDate] = useState(

@@ -21,12 +21,14 @@ export default function ClassRosterDrawer({
   onOpenChange,
   onSessionUpdated,
   onOpenBookModal,
+  onBookMember,
 }: {
   session: ClassSession | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSessionUpdated?: () => void
   onOpenBookModal?: (session: ClassSession) => void
+  onBookMember?: (session: ClassSession) => void
 }) {
   if (!session) return null
 

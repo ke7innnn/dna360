@@ -309,7 +309,7 @@ export default function ProductsPage() {
               <div className="pt-3 border-t border-[var(--line)] space-y-2 text-xs">
                 <div className="flex justify-between text-[var(--muted)] font-data">
                   <span>Taxable Base Value:</span>
-                  <span className="text-[var(--ink)] font-semibold">{formatINR(gstBreakdown.basePrice)}</span>
+                  <span className="text-[var(--ink)] font-semibold">{formatINR(gstBreakdown.taxable)}</span>
                 </div>
                 <div className="flex justify-between text-[var(--muted)] font-data">
                   <span>GST Rate:</span>
@@ -325,7 +325,7 @@ export default function ProductsPage() {
                 </div>
                 <div className="flex justify-between text-[var(--muted)] font-data pt-1 border-t border-[var(--line-soft)]">
                   <span className="font-semibold text-[var(--ink)]">Total GST Embedded:</span>
-                  <span className="font-bold text-[var(--accent)]">{formatINR(gstBreakdown.taxAmount)}</span>
+                  <span className="font-bold text-[var(--accent)]">{formatINR(gstBreakdown.totalTax)}</span>
                 </div>
               </div>
             </div>

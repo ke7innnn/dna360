@@ -15,11 +15,13 @@ export default function ManualOverrideModal({
   member: initialMember,
   open,
   onOpenChange,
+  gateId: initialGateId,
   onOverridden,
 }: {
   member: Member | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  gateId?: string
   onOverridden?: () => void
 }) {
   const members = getStoredMembers()

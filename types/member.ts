@@ -80,7 +80,9 @@ export interface MembershipRecord {
   /** FK to the product purchased */
   product_id: string
   product_name: string
+  packageName?: string // alias
   product_category: string
+  category?: string // alias
   /**
    * When the sale was made.
    * Activation must occur within 15 days of this date.
@@ -92,6 +94,7 @@ export interface MembershipRecord {
    * null if not yet activated.
    */
   activation_date: string | null // YYYY-MM-DD
+  start_date?: string // alias
   /**
    * When the membership expires.
    * Calculated as activation_date + product's validity_days.
@@ -118,6 +121,9 @@ export interface MembershipRecord {
   sales_rep_name: string
   /** Session-based tracking */
   sessions_total: number | null
+  sessions_used?: number
+  freeze_days_used?: number
+  max_freeze_days?: number
   sessions_consumed: number | null
   sessions_remaining: number | null
   /** Access window if time-restricted */

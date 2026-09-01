@@ -89,7 +89,7 @@ export default function SessionsSettingsPage() {
     {
       id: 'lastActive',
       header: 'Last Active',
-      accessorKey: 'lastActive',
+      accessorKey: 'lastActiveAt',
       sortable: true,
       cell: (val) => (
         <span className="tabular-nums text-xs font-mono text-[var(--app-text-secondary)]">

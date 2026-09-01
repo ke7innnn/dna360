@@ -109,6 +109,7 @@ export type AuditAction =
   | 'CREATE'
   | 'UPDATE'
   | 'DELETE'
+  | 'VIEW'
   | 'LOGIN'
   | 'LOGOUT'
   | 'REVOKE_SESSION'
@@ -124,11 +125,16 @@ export type AuditAction =
   | 'PERMISSION_GRANT'
   | 'PERMISSION_REVOKE'
   | 'VIEW_AS_MEMBER'
+  | 'MEMBER_PHONE_REVEAL'
+  | 'STATUS_CHANGE'
+  | 'SEND_WHATSAPP'
+  | 'PT_SESSION_SIGNOFF'
+  | 'TURNSTILE_SCAN'
 
 export interface AuditActor {
   id: string
   name: string
-  email: string
+  email?: string
   role: string
 }
 

@@ -24,6 +24,7 @@ export interface GstBreakdown {
   inclusive: number
   /** Taxable value (inclusive minus tax) */
   taxable: number
+  basePrice?: number // alias for taxable
   /** CGST (Central GST) — half of total tax for intra-state */
   cgst: number
   /** SGST (State GST) — half of total tax for intra-state */
@@ -32,6 +33,7 @@ export interface GstBreakdown {
   igst: number
   /** Total tax (cgst + sgst + igst) */
   totalTax: number
+  taxAmount?: number // alias for totalTax
   /** The tax rate used (e.g. 0.05 or 0.18) */
   taxRate: number
 }

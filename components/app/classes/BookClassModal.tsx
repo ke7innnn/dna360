@@ -17,12 +17,14 @@ export default function BookClassModal({
   open,
   onOpenChange,
   onBookingCreated,
+  onBooked,
 }: {
   session: ClassSession | null
   sessions?: ClassSession[]
   open: boolean
   onOpenChange: (open: boolean) => void
   onBookingCreated?: () => void
+  onBooked?: () => void
 }) {
   const members = getStoredMembers().filter((m) => !m.blacklisted)
   const [selectedSessionId, setSelectedSessionId] = useState<string>(session?.id || sessions[0]?.id || '')

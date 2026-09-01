@@ -17,10 +17,14 @@ export default function InvoiceModal({
   invoice,
   open,
   onOpenChange,
+  onVoid,
+  onCreditNote,
 }: {
   invoice: TaxInvoice | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onVoid?: (inv: TaxInvoice) => void
+  onCreditNote?: (inv: TaxInvoice) => void
 }) {
   if (!invoice) return null
 

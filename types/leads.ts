@@ -69,10 +69,13 @@ export interface CrmLead {
   stage: LeadStage
   /** What they're looking for */
   goal: string
+  planInterest?: string
   expectedDealValueMinor: number // paise
+  potentialValueMinor?: number // alias
   /** Sales rep (Fitness Consultant) assigned */
   assignedRepId: string
   assignedRepName: string
+  assignedStaffName?: string // alias
   /** Trial pass issued */
   trialPassCode?: string
   trialDate?: string
@@ -94,8 +97,10 @@ export interface CrmLead {
 
 export interface CrmKpis {
   totalLeadsMtd: number
+  totalLeads?: number
   pipelineValueMinor: number
   conversionRatePct: number
   avgDaysToClose: number
   overdueFollowUps: number
+  trialsThisWeek?: number
 }

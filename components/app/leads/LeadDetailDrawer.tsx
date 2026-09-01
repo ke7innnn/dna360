@@ -21,13 +21,17 @@ export default function LeadDetailDrawer({
   open,
   onOpenChange,
   onUpdated,
+  onLeadUpdated,
   onConvertToMember,
+  onConvert,
 }: {
   lead: CrmLead | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onUpdated?: () => void
+  onLeadUpdated?: () => void
   onConvertToMember?: (lead: CrmLead) => void
+  onConvert?: () => void
 }) {
   const [newNote, setNewNote] = useState('')
   const [noteType, setNoteType] = useState<'note' | 'call' | 'whatsapp'>('call')

@@ -16,11 +16,13 @@ export default function CreditNoteModal({
   open,
   onOpenChange,
   onCreditNoteIssued,
+  onIssued,
 }: {
   invoice: TaxInvoice | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreditNoteIssued?: () => void
+  onIssued?: () => void
 }) {
   const [reason, setReason] = useState<string>('Billing Error / Incorrect Plan Charged')
   const [notes, setNotes] = useState('')

@@ -100,8 +100,8 @@ export default function AuditLogPage() {
       header: 'Entity / Target',
       cell: (_, row) => (
         <div>
-          <span className="font-data text-xs text-[var(--ink)]">{row.entity.type}</span>
-          <span className="font-data text-[10px] text-[var(--muted)] block">ID: {row.entity.id}</span>
+          <span className="font-data text-xs text-[var(--ink)]">{row.entity}</span>
+          <span className="font-data text-[10px] text-[var(--muted)] block">ID: {row.entityId}</span>
         </div>
       ),
     },
@@ -144,7 +144,7 @@ export default function AuditLogPage() {
         .concat(
           logs.map(
             (l) =>
-              `"${l.timestamp}","${l.actor.name}","${l.actor.role}","${l.action}","${l.entity.type}","${l.entity.id}","${l.ipAddress || ''}"`
+              `"${l.timestamp}","${l.actor.name}","${l.actor.role}","${l.action}","${l.entity}","${l.entityId}","${l.ipAddress || ''}"`
           )
         )
         .join('\n')

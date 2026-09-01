@@ -66,8 +66,7 @@ async function runTests() {
   const unauthOverviewReq = new NextRequest('http://localhost:3000/overview')
   const unauthOverviewRes = middleware(unauthOverviewReq)
   assert(
-    unauthOverviewRes.status === 307 &&
-    unauthOverviewRes.headers.get('location')?.includes('/login?redirect=%2Foverview'),
+    Boolean(unauthOverviewRes.status === 307 && unauthOverviewRes.headers.get('location')?.includes('/login?redirect=%2Foverview')),
     'Unauthenticated page request to /overview returns HTTP 307 Redirect to /login'
   )
 
@@ -105,7 +104,7 @@ async function runTests() {
   // ─── Test 4: Security Headers ───
   console.log('\n--- 3. Defense-in-Depth Security Headers ---')
   assert(
-    unauthOverviewRes.headers.get('X-Robots-Tag')?.includes('noindex'),
+    Boolean(unauthOverviewRes.headers.get('X-Robots-Tag')?.includes('noindex')),
     'X-Robots-Tag: noindex, nofollow is set on responses'
   )
   assert(

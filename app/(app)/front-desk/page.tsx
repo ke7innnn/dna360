@@ -395,10 +395,10 @@ export default function FrontDeskPage() {
       </Card>
 
       {/* Modals */}
-      <WalkInLeadModal isOpen={leadModalOpen} onClose={() => setLeadModalOpen(false)} onLeadCreated={refreshData} />
-      <PosRetailModal isOpen={posModalOpen} onClose={() => setPosModalOpen(false)} onSaleCompleted={refreshData} />
-      <ShiftHandoverModal isOpen={shiftModalOpen} onClose={() => setShiftModalOpen(false)} />
-      <LockerModal isOpen={lockerModalOpen} onClose={() => setLockerModalOpen(false)} />
+      <WalkInLeadModal open={leadModalOpen} onOpenChange={setLeadModalOpen} onLeadCreated={refreshData} />
+      <PosRetailModal open={posModalOpen} onOpenChange={setPosModalOpen} onSaleCompleted={refreshData} />
+      <ShiftHandoverModal open={shiftModalOpen} onOpenChange={setShiftModalOpen} />
+      <LockerModal open={lockerModalOpen} onOpenChange={setLockerModalOpen} />
     </div>
   )
 }

@@ -220,15 +220,14 @@ export default function DesignSystemPage() {
               <p className="text-sm font-medium text-[var(--app-text-primary)]">Default glass card</p>
               <p className="text-sm text-[var(--app-text-muted)] mt-1">border-radius: 16px</p>
             </GlassCard>
-            <GlassCard hover>
+            <GlassCard className="hover:border-white/20 hover:scale-[1.01] transition-all">
               <p className="text-sm font-medium text-[var(--app-text-primary)]">Hover card</p>
               <p className="text-sm text-[var(--app-text-muted)] mt-1">Lifts 2px, border brightens</p>
             </GlassCard>
-            <GlassCard
-              header={<p className="text-sm font-semibold text-[var(--app-text-primary)]">With header</p>}
-              footer={<p className="text-xs text-[var(--app-text-muted)]">Card footer</p>}
-            >
+            <GlassCard>
+              <p className="text-sm font-semibold text-[var(--app-text-primary)] mb-1">With header</p>
               <p className="text-sm text-[var(--app-text-secondary)]">Card with header and footer slots.</p>
+              <p className="text-xs text-[var(--app-text-muted)] mt-2 pt-2 border-t border-[var(--line)]">Card footer</p>
             </GlassCard>
           </div>
         </Section>
@@ -241,29 +240,21 @@ export default function DesignSystemPage() {
             <StatCard
               label="Active members"
               value={1247}
-              trend={{ value: 12, label: 'vs last month' }}
               icon={<Users className="w-5 h-5" />}
             />
             <StatCard
               label="Revenue (MTD)"
-              value={1823400}
-              prefix="₹"
-              formatValue={(v) => formatINR(v * 100).replace('₹', '')}
-              trend={{ value: 8, label: 'vs last month' }}
+              value="₹18.23L"
               icon={<TrendingUp className="w-5 h-5" />}
             />
             <StatCard
               label="Outstanding dues"
-              value={456700}
-              prefix="₹"
-              formatValue={(v) => formatINR(v * 100).replace('₹', '')}
-              trend={{ value: -5, label: 'improving' }}
+              value="₹4.56L"
               icon={<CreditCard className="w-5 h-5" />}
             />
             <StatCard
               label="Attendance today"
               value={89}
-              trend={{ value: 0 }}
               icon={<Activity className="w-5 h-5" />}
             />
           </div>
@@ -372,13 +363,13 @@ export default function DesignSystemPage() {
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-3">Filled</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-3">Filled / Solid</p>
                 <div className="flex flex-wrap gap-2">
-                  <Badge status="success" variant="filled">Active</Badge>
-                  <Badge status="warning" variant="filled">Expiring</Badge>
-                  <Badge status="danger" variant="filled">Expired</Badge>
-                  <Badge status="info" variant="filled">Frozen</Badge>
-                  <Badge status="neutral" variant="filled">Draft</Badge>
+                  <Badge status="success" variant="solid">Active</Badge>
+                  <Badge status="warning" variant="solid">Expiring</Badge>
+                  <Badge status="danger" variant="solid">Expired</Badge>
+                  <Badge status="info" variant="solid">Frozen</Badge>
+                  <Badge status="neutral" variant="solid">Draft</Badge>
                 </div>
               </div>
               <div>

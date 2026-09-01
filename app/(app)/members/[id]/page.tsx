@@ -160,8 +160,6 @@ export default function MemberDetailPage() {
         <StatCard
           label="Attendance Streak"
           value={`${member.attendance_streak} days`}
-          strandValue={member.attendance_streak}
-          strandMax={7}
           icon={<Activity className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard
@@ -172,8 +170,6 @@ export default function MemberDetailPage() {
         <StatCard
           label="Pilates Adjustment Credits"
           value={`${member.adjustment_credits_remaining} / 2`}
-          strandValue={member.adjustment_credits_remaining}
-          strandMax={2}
           icon={<Clock className="w-4 h-4 text-[var(--teal)]" />}
         />
         <StatCard

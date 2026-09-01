@@ -24,11 +24,13 @@ export default function RenewMemberModal({
   open,
   onOpenChange,
   onUpdated,
+  onRenewed,
 }: {
   member: Member | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onUpdated?: () => void
+  onRenewed?: () => void
 }) {
   const [selectedPlanId, setSelectedPlanId] = useState('prod_001')
   const [discountMinor, setDiscountMinor] = useState(200000) // ₹2,000 renewal loyalty discount

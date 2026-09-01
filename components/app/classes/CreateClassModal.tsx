@@ -13,13 +13,17 @@ import { toast } from '@/components/app/ui/toast'
 export default function CreateClassModal({
   open,
   onOpenChange,
+  studios: propStudios,
   onSessionCreated,
+  onCreated,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  studios?: StudioRoom[]
   onSessionCreated?: (session: ClassSession) => void
+  onCreated?: () => void
 }) {
-  const [studios, setStudios] = useState<StudioRoom[]>([])
+  const [studios, setStudios] = useState<StudioRoom[]>(propStudios || [])
 
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<ClassCategory>('crossfit')
@@ -37,7 +41,8 @@ export default function CreateClassModal({
 
   useEffect(() => {
     if (open) {
-      const allStudios = getStoredStudios()
+      const allStudios = propStudios && propStudios.length > 0 ? propStudios : getStoredStudios()
+      setStudios(allStudios)
       setStudios(allStudios)
       const defaultStudio = allStudios[0]
       if (defaultStudio) {

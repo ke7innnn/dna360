@@ -61,7 +61,7 @@ export function generateDailyActionQueue(): ActionQueueItem[] {
       dueCountdown: `${5 - idx} days left in grace`,
       ltvMinor: m.lifetime_value,
       planName: m.active_memberships[0]?.product_name || 'Annual Gym',
-      expiryDate: m.active_memberships[0]?.expiry_date,
+      expiryDate: m.active_memberships[0]?.expiry_date || undefined,
     })
   })
 
@@ -88,7 +88,7 @@ export function generateDailyActionQueue(): ActionQueueItem[] {
       dueCountdown: `in ${idx + 2} days`,
       ltvMinor: m.lifetime_value,
       planName: m.active_memberships[0]?.product_name,
-      expiryDate: m.active_memberships[0]?.expiry_date,
+      expiryDate: m.active_memberships[0]?.expiry_date || undefined,
     })
   })
 

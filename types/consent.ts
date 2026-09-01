@@ -72,6 +72,11 @@ export interface SignedAgreement {
   template_id: string
   /** Version of the template at signing time */
   template_version: number
+  templateVersion?: number // alias
+  documentType?: ConsentDocumentType
+  memberName?: string
+  memberPhone?: string
+  status?: string
   /** Full rendered text with merge fields resolved — immutable snapshot */
   rendered_text: string
   /** SHA-256 hash of the rendered text */
@@ -103,6 +108,7 @@ export interface SignatureRecord {
   signer_name: string
   /** Role in which they signed */
   signer_role: SignerRole
+  role?: string // alias
   /** When they signed (ISO timestamp) */
   timestamp: string
   /** IP address at signing time */

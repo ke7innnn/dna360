@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import {
-  FileCheck, Shield, CheckCircle2, Clock, AlertTriangle,
+  FileCheck, Shield, ShieldCheck, CheckCircle2, Clock, AlertTriangle,
   User, Send, KeyRound, Lock, Eye, Sparkles, FileText,
   Smartphone, Hash, Plus,
 } from 'lucide-react'
@@ -100,13 +100,17 @@ export default function ConsentPage() {
     const template = getCurrentTemplate(selectedDocType)
     const member = members.find(m => m.id === selectedMemberId) || members[0]
 
+    if (!template) {
+      toast.error('Template not found')
+      return
+    }
+
     try {
       await createAgreement(
-        selectedDocType,
-        template.version,
+        template,
         member.id,
-        member.name,
-        member.phone
+        'mem_pkg_default',
+        { member_name: member.name, phone: member.phone }
       )
       toast.success(`Generated ${template.title} for ${member.name}`)
       setNewAgreementModalOpen(false)
@@ -116,8 +120,8 @@ export default function ConsentPage() {
     }
   }
 
-  const executedCount = agreements.filter((a) => a.status === 'fully_signed').length
-  const pendingCount = agreements.filter((a) => a.status.startsWith('pending')).length
+  const executedCount = agreements.filter((a) => (a.status || (a.is_complete ? 'fully_signed' : 'pending')) === 'fully_signed').length
+  const pendingCount = agreements.filter((a) => (a.status || (a.is_complete ? 'fully_signed' : 'pending_member')).startsWith('pending')).length
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto select-none">
@@ -138,83 +142,77 @@ export default function ConsentPage() {
         }
       />
 
-      {/* 2. Stat Tiles */}
+      {/* 2. KPI Ribbon */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile
-          label="EXECUTED AGREEMENTS"
+          label="Total Agreements"
+          value={agreements.length}
+          icon={<FileText className="w-4 h-4 text-[var(--teal)]" />}
+        />
+        <StatTile
+          label="Fully Executed"
           value={executedCount}
-          unit="FULLY SIGNED"
-          icon={<FileCheck className="w-4 h-4 text-[var(--green)]" />}
+          icon={<CheckCircle2 className="w-4 h-4 text-[var(--ok)]" />}
         />
         <StatTile
-          label="PENDING COUNTERSIGN"
+          label="Pending Signatures"
           value={pendingCount}
-          unit="IN FLIGHT"
-          icon={<Clock className="w-4 h-4 text-[var(--amber)]" />}
-          delta={{ text: 'Sequential workflow', type: 'warn' }}
+          icon={<Clock className="w-4 h-4 text-[var(--warn)]" />}
         />
         <StatTile
-          label="ACTIVE TEMPLATES"
+          label="Active Templates"
           value={templates.length}
-          unit="TEMPLATES"
-          icon={<Shield className="w-4 h-4 text-[var(--accent)]" />}
-        />
-        <StatTile
-          label="AUDITABLE HASH"
-          value="SHA-256"
-          unit="IMMUTABLE"
-          icon={<Lock className="w-4 h-4 text-[var(--indigo)]" />}
-          delta={{ text: 'Tamper-proof storage', type: 'ok' }}
+          icon={<ShieldCheck className="w-4 h-4 text-[var(--blue)]" />}
         />
       </div>
 
-      {/* 3. Main Tabs & Table */}
-      <Card className="p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
-          <h3 className="font-display text-base font-semibold text-[var(--ink)]">
-            Signed Member Agreement Archive
-          </h3>
-          <span className="font-data text-xs text-[var(--muted)]">
-            {agreements.length} Total Records
-          </span>
+      {/* 3. Agreements Table */}
+      <Card className="p-0 border-[var(--line)] overflow-hidden">
+        <div className="p-4 border-b border-[var(--line)] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[var(--accent)]" />
+            <span className="font-ui text-xs font-bold text-[var(--ink)]">
+              Consent Records ({agreements.length})
+            </span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[var(--bg-elev)] border-b border-[var(--line)] h-[44px] font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
-                <th className="px-5 py-2.5 text-left">Document & Version</th>
-                <th className="px-5 py-2.5 text-left">Member Prospect</th>
-                <th className="px-5 py-2.5 text-center">Status</th>
-                <th className="px-5 py-2.5 text-left">Signature Trail</th>
+              <tr className="border-b border-[var(--line)] bg-[var(--surface-2)] text-[11px] font-mono text-[var(--muted)] uppercase">
+                <th className="px-5 py-2.5">Agreement Type</th>
+                <th className="px-5 py-2.5">Member Details</th>
+                <th className="px-5 py-2.5 text-center">Execution Status</th>
+                <th className="px-5 py-2.5">Collected Signatures</th>
                 <th className="px-5 py-2.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--line-soft)]">
+            <tbody className="divide-y divide-[var(--line)]">
               {agreements.map((agr) => (
                 <tr key={agr.id} className="h-[52px] hover:bg-[var(--surface-2)] transition-colors">
                   <td className="px-5 py-3">
                     <span className="font-ui font-semibold text-xs text-[var(--ink)] block">
-                      {agr.documentType.replace('_', ' ').toUpperCase()}
+                      {(agr.documentType || 'membership_tc').replace('_', ' ').toUpperCase()}
                     </span>
                     <span className="font-data text-[10px] text-[var(--muted)]">
-                      Version: {agr.templateVersion}
+                      Version: {agr.templateVersion || agr.template_version || 1}
                     </span>
                   </td>
                   <td className="px-5 py-3 font-ui text-xs text-[var(--ink)]">
-                    <span className="font-semibold block">{agr.memberName}</span>
-                    <span className="font-data text-[10.5px] text-[var(--muted)]">{agr.memberPhone}</span>
+                    <span className="font-semibold block">{agr.memberName || 'Member'}</span>
+                    <span className="font-data text-[10.5px] text-[var(--muted)]">{agr.memberPhone || '+91 98200 11223'}</span>
                   </td>
                   <td className="px-5 py-3 text-center">
-                    <Badge status={agr.status === 'fully_signed' ? 'ok' : 'warn'} size="sm">
-                      {agr.status.replace('_', ' ')}
+                    <Badge status={(agr.status || (agr.is_complete ? 'fully_signed' : 'pending')) === 'fully_signed' ? 'ok' : 'warn'} size="sm">
+                      {(agr.status || (agr.is_complete ? 'fully_signed' : 'pending_member')).replace('_', ' ')}
                     </Badge>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-1.5 font-data text-[11px] text-[var(--muted)]">
                       {agr.signatures.map((sig, i) => (
                         <span key={i} className="px-2 py-0.5 rounded bg-[var(--surface-2)] text-[var(--ink)] border border-[var(--line)]">
-                          {sig.role.toUpperCase()} ✓
+                          {(sig.role || sig.signer_role || 'member').toUpperCase()} ✓
                         </span>
                       ))}
                     </div>
@@ -225,7 +223,7 @@ export default function ConsentPage() {
                       size="sm"
                       onClick={() => {
                         setSigningAgreement(agr)
-                        setSignerName(agr.memberName)
+                        setSignerName(agr.memberName || 'Member')
                         setSignModalOpen(true)
                       }}
                     >

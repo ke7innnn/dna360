@@ -11,15 +11,17 @@ import { toast } from '@/components/app/ui/toast'
 export default function EmergencyModal({
   open,
   onOpenChange,
-  isUnlocked,
+  isUnlocked = false,
   branchId = 'pow',
   onTriggered,
+  onUpdated,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  isUnlocked: boolean
+  isUnlocked?: boolean
   branchId?: string
   onTriggered?: () => void
+  onUpdated?: () => void
 }) {
   const [confirmPhrase, setConfirmPhrase] = useState('')
   const [loading, setLoading] = useState(false)

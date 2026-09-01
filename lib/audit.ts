@@ -208,7 +208,7 @@ export function getAuditLogs(filter?: {
       (l) =>
         l.description.toLowerCase().includes(q) ||
         l.actor.name.toLowerCase().includes(q) ||
-        l.actor.email.toLowerCase().includes(q) ||
+        (l.actor.email ? l.actor.email.toLowerCase().includes(q) : false) ||
         l.entity.toLowerCase().includes(q) ||
         l.entityId.toLowerCase().includes(q) ||
         (l.ipAddress ? l.ipAddress.includes(q) : false)
