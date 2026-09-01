@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:training": "npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts",
+    "test:all": "npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts && npx tsx tests/security-auth.test.ts && npx tsx tests/data-integrity.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",

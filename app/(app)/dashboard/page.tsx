@@ -8,7 +8,7 @@ import {
   Clock, CheckCircle2, Plus, FileText, PauseCircle,
   Sparkles, ArrowRight, ShieldCheck, Download,
   CreditCard, Smartphone, CheckSquare, Square,
-  Check, ArrowUpRight, Lock, AlertTriangle,
+  Check, ArrowUpRight, Lock, AlertTriangle, Play,
 } from 'lucide-react'
 import Card from '@/components/app/ui/glass-card'
 import StatTile from '@/components/app/ui/StatTile'
@@ -286,9 +286,18 @@ export default function MemberDashboardPage() {
                   Day 1 · Upper Body Push — Coach Rajesh Poojary
                 </p>
               </div>
-              <Button variant="secondary" size="sm">
-                Full routine
-              </Button>
+              <div className="flex items-center gap-2">
+                <Link href="/m/session">
+                  <Button variant="primary" size="sm" className="gap-1.5 shadow-[0_0_12px_rgba(59,130,246,0.4)]">
+                    <Play className="w-3.5 h-3.5 fill-white" /> Start live tracking
+                  </Button>
+                </Link>
+                <Link href="/m">
+                  <Button variant="secondary" size="sm">
+                    Full plan
+                  </Button>
+                </Link>
+              </div>
             </div>
 
             {/* Routine Item */}

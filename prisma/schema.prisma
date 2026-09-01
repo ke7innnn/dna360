@@ -1,0 +1,315 @@
+// DNA 360 — Coaching & Training Module Prisma Schema
+// Single Source of Truth for Training Models and Enums
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CALVES
+  CORE
+  FULL_BODY
+  CARDIO
+}
+
+enum Equipment {
+  BARBELL
+  DUMBBELL
+  MACHINE
+  CABLE
+  BODYWEIGHT
+  KETTLEBELL
+  BAND
+  CARDIO_MACHINE
+  REFORMER
+  OTHER
+}
+
+enum ProgramGoal {
+  FAT_LOSS
+  MUSCLE_GAIN
+  STRENGTH
+  ENDURANCE
+  REHAB
+  GENERAL
+}
+
+enum ProgramOwner {
+  TRAINER
+  MEMBER
+  GYM
+}
+
+enum ProgramVisibility {
+  PRIVATE
+  ASSIGNED_ONLY
+  GYM_LIBRARY
+}
+
+enum CoachingMode {
+  SELF_COACHED
+  TRAINER_LED
+}
+
+enum AdaptationPolicy {
+  LOCKED
+  SWAP_ONLY
+  FLEXIBLE
+}
+
+enum ScheduleMode {
+  FIXED_DAYS
+  FLEXIBLE
+  SEQUENTIAL
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  EXPIRED
+}
+
+enum ExerciseSource {
+  PROGRAM
+  MEMBER_ADDED
+  SWAPPED
+}
+
+model Exercise {
+  id               String            @id @default(cuid())
+  name             String
+  primaryMuscle    MuscleGroup
+  secondaryMuscles MuscleGroup[]
+  equipment        Equipment
+  instructions     String?
+  demoMediaKey     String?
+  isCustom         Boolean           @default(false)
+  createdById      String?           // member OR trainer — both can add
+  approvedAt       DateTime?         // custom exercises enter a review queue
+  mergedIntoId     String?           // dedupe target when a manager merges duplicates
+  archivedAt       DateTime?
+  programExercises ProgramExercise[]
+  sessionExercises SessionExercise[]
+
+  @@unique([name, equipment])
+  @@index([primaryMuscle])
+  @@index([equipment])
+}
+
+model Program {
+  id           String            @id @default(cuid())
+  name         String
+  goal         ProgramGoal
+  weeks        Int               @default(4)
+  daysPerWeek  Int
+  notes        String?
+  ownerType    ProgramOwner
+  ownerId      String            // trainer id, member id, or gym id
+  visibility   ProgramVisibility @default(PRIVATE)
+  clonedFromId String?           // provenance when copied out of the gym library
+  days         ProgramDay[]
+  archivedAt   DateTime?
+
+  @@index([ownerType, ownerId])
+  @@index([visibility])
+}
+
+model ProgramDay {
+  id        String            @id @default(cuid())
+  programId String
+  weekIndex Int
+  dayIndex  Int
+  label     String
+  program   Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises ProgramExercise[]
+
+  @@unique([programId, weekIndex, dayIndex])
+  @@index([programId])
+}
+
+model ProgramExercise {
+  id           String     @id @default(cuid())
+  programDayId String
+  exerciseId   String
+  order        Int
+  sets         Int
+  repsMin      Int?
+  repsMax      Int?
+  targetWeight Float?
+  rpe          Float?
+  restSeconds  Int?
+  tempo        String?
+  supersetTag  String?
+  coachNote    String?
+  isOptional   Boolean    @default(false) // "if you have time" accessory work
+  programDay   ProgramDay @relation(fields: [programDayId], references: [id], onDelete: Cascade)
+  exercise     Exercise   @relation(fields: [exerciseId], references: [id])
+
+  @@index([programDayId])
+  @@index([exerciseId])
+}
+
+model MemberProgram {
+  id               String                  @id @default(cuid())
+  memberId         String
+  trainerId        String?                 // NULL for self-coached — this is the pivot
+  coachingMode     CoachingMode
+  sourceProgramId  String?
+  currentVersion   Int                     @default(1)
+  snapshot         Json                    // frozen programme at current version
+  adaptationPolicy AdaptationPolicy        @default(FLEXIBLE)
+  scheduleMode     ScheduleMode            @default(FLEXIBLE)
+  scheduleDays     Int[]                   // used only when scheduleMode = FIXED_DAYS
+  sessionsPerWeek  Int?                    // used when FLEXIBLE
+  startDate        DateTime
+  endDate          DateTime?
+  status           String                  @default("ACTIVE")
+  revisions        MemberProgramRevision[]
+  sessions         WorkoutSession[]
+
+  @@index([memberId, status])
+  @@index([trainerId, status])
+}
+
+model MemberProgramRevision {
+  id              String        @id @default(cuid())
+  memberProgramId String
+  version         Int
+  snapshot        Json
+  changedById     String
+  changedByRole   String        // MEMBER | TRAINER | MANAGER
+  changeNote      String?
+  createdAt       DateTime      @default(now())
+  memberProgram   MemberProgram @relation(fields: [memberProgramId], references: [id], onDelete: Cascade)
+
+  @@unique([memberProgramId, version])
+  @@index([memberProgramId])
+}
+
+model WorkoutSession {
+  id              String            @id @default(cuid())
+  memberId        String            // always set — freestyle sessions have no programme
+  memberProgramId String?           // NULL for freestyle
+  programVersion  Int?              // which revision this session was run under
+  weekIndex       Int?
+  dayIndex        Int?
+  title           String?           // freestyle label: "Back and biceps"
+  scheduledDate   DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  status          SessionStatus     @default(SCHEDULED)
+  memberFeedback  String?
+  perceivedEffort Int?
+  ptSessionId     String?           // set only if this consumed a paid PT session
+  memberProgram   MemberProgram?    @relation(fields: [memberProgramId], references: [id], onDelete: SetNull)
+  exercises       SessionExercise[]
+
+  @@index([memberId, scheduledDate])
+  @@index([memberProgramId, scheduledDate])
+}
+
+model SessionExercise {
+  id            String          @id @default(cuid())
+  sessionId     String
+  exerciseId    String
+  order         Int
+  prescribed    Json?           // frozen prescription; NULL for freestyle or member-added
+  source        ExerciseSource  @default(PROGRAM)
+  swappedFromId String?
+  skipped       Boolean         @default(false)
+  note          String?
+  session       WorkoutSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise      Exercise        @relation(fields: [exerciseId], references: [id])
+  setLogs       SetLog[]
+
+  @@index([sessionId])
+  @@index([exerciseId])
+}
+
+model SetLog {
+  id                String          @id @default(cuid())
+  sessionExerciseId String
+  setIndex          Int
+  reps              Int?
+  weightKg          Float?
+  durationSeconds   Int?            // cardio and timed holds
+  distanceMetres    Float?          // cardio
+  rpe               Float?
+  isWarmup          Boolean         @default(false)
+  completedAt       DateTime        @default(now())
+  clientLogId       String          @unique // idempotency key for offline sync
+  sessionExercise   SessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
+
+  @@index([sessionExerciseId])
+  @@index([clientLogId])
+}
+
+model BodyMetric {
+  id           String   @id @default(cuid())
+  memberId     String
+  recordedAt   DateTime
+  weightKg     Float?
+  bodyFatPct   Float?
+  measurements Json?
+  photoKeys    String[]
+  recordedById String
+
+  @@index([memberId, recordedAt])
+}
+
+model CoachNote {
+  id        String    @id @default(cuid())
+  authorId  String
+  memberId  String
+  sessionId String?
+  body      String
+  mediaKey  String?
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([memberId, createdAt])
+  @@index([authorId])
+}
+
+model FormCheck {
+  id         String    @id @default(cuid())
+  memberId   String
+  trainerId  String
+  exerciseId String?
+  videoKey   String
+  memberNote String?
+  reviewedAt DateTime?
+  reviewBody String?
+  createdAt  DateTime  @default(now())
+
+  @@index([memberId, createdAt])
+  @@index([trainerId, reviewedAt])
+}
+
+model GymTrainingSettings {
+  id                      String  @id @default(cuid())
+  gymId                   String  @unique
+  weightUnit              String  @default("kg")
+  defaultRestSeconds      Int     @default(90)
+  membersCanBuildPrograms Boolean @default(true)
+  gymLibraryEnabled       Boolean @default(true)
+  freestyleLoggingEnabled Boolean @default(true)
+  ptUpsellPromptsEnabled  Boolean @default(true)
+  mediaRetentionDays      Int     @default(180)
+  customExerciseApproval  Boolean @default(true)
+}

@@ -31,11 +31,13 @@ export const ALL_NAV_GROUPS: AppNavGroup[] = [
     items: [
       { id: 'overview', label: 'Overview', icon: 'BarChart3', href: '/overview', staffOnly: true },
       { id: 'dashboard', label: 'Member Portal', icon: 'LayoutDashboard', href: '/dashboard', requiredCapability: 'portal.access' },
+      { id: 'training', label: 'Workout & Training', icon: 'Dumbbell', href: '/m' },
     ],
   },
   {
     label: 'Operations',
     items: [
+      { id: 'my-clients', label: 'Trainer Clients & PT', icon: 'Users', href: '/my-clients', requiredCapability: 'workouts.log' },
       { id: 'members', label: 'Member Directory', icon: 'Users', href: '/members', badge: 659, requiredCapability: 'members.view.all' },
       { id: 'front-desk', label: 'Front Desk Terminal', icon: 'Monitor', href: '/front-desk', requiredCapability: 'checkin.operate' },
       { id: 'products', label: 'Product Catalogue', icon: 'CreditCard', href: '/products', requiredCapability: 'products.view' },

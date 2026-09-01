@@ -44,9 +44,9 @@
   --r-full:      999px;
 
   /* Minimal Typography System */
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-ui:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-data:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-display: 'Clash Display', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui:      'Satoshi', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-data:    'Martian Mono', 'JetBrains Mono', ui-monospace, monospace;
 
   /* Compatibility bindings for legacy component compatibility */
   --text:                     var(--ink);
@@ -132,10 +132,17 @@ body {
 .font-data,
 .font-mono,
 [data-surface="app"] .font-data {
-  font-family: var(--font-data), 'Satoshi', sans-serif;
+  font-family: var(--font-data), 'Martian Mono', 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' on, 'ss01' on;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
+}
+
+.font-martian {
+  font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' on;
+  letter-spacing: -0.02em;
 }
 
 .tabular-nums {
