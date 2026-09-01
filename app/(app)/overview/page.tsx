@@ -2,321 +2,445 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   TrendingUp, Download, Receipt, Users, AlertTriangle,
   Clock, ShieldAlert, FileSignature, ArrowUpRight,
   ChevronRight, Calendar, Sparkles, Lock, ShieldCheck,
+  CreditCard, Dumbbell, ShoppingBag, Zap, Check, ArrowRight,
+  ChevronDown,
 } from 'lucide-react'
 import Button from '@/components/app/ui/button'
-import Badge from '@/components/app/ui/badge'
-import Card from '@/components/app/ui/glass-card'
-import KpiPanel from '@/components/app/ui/KpiPanel'
-import StrandMeter from '@/components/app/ui/StrandMeter'
-import PageHeader from '@/components/app/ui/PageHeader'
-import DailyActionQueue from '@/components/app/overview/DailyActionQueue'
-import ChurnRadar from '@/components/app/overview/ChurnRadar'
-import PtPackBurndown from '@/components/app/overview/PtPackBurndown'
-import AttendanceHeatmap from '@/components/app/overview/AttendanceHeatmap'
-import RenewalForecast from '@/components/app/overview/RenewalForecast'
+import MemberOnboardingModal from '@/components/app/members/MemberOnboardingModal'
 import { useAuth } from '@/context/AuthContext'
-import {
-  getExecutiveKpis,
-  getRevenueMix,
-  getCohortData,
-  getGstTaxReport,
-} from '@/lib/analytics'
 import { getSystemMetrics } from '@/lib/metrics'
-import { formatINR } from '@/lib/gst'
 import { logAuditEvent } from '@/lib/audit'
 import { toast } from '@/components/app/ui/toast'
-import { cn } from '@/lib/utils'
 
-export default function OverviewPage() {
-  const { user, can, canRevenue } = useAuth()
+export default function FloorOverviewPage() {
+  const router = useRouter()
+  const { user, canRevenue } = useAuth()
   const metrics = getSystemMetrics()
-  const kpis = getExecutiveKpis()
-  const revenueMix = getRevenueMix()
-  const cohorts = getCohortData()
-  const gst = getGstTaxReport()
 
-  // Log revenue access audit event when authorized leaders view financial data
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState('This month')
+  const [currentTime, setCurrentTime] = useState('POWAI · TUESDAY 1 SEPTEMBER · 6:42 PM')
+
+  // Live timestamp formatting
   useEffect(() => {
-    if (user && canRevenue) {
-      logAuditEvent({
-        actor: { id: user.id, name: user.name, email: user.email || user.phone, role: user.role.name },
-        action: 'REVENUE_VIEW',
-        entity: 'RevenueAnalytics',
-        entityId: 'overview_mrr_aug_2026',
-        branchId: user.branchId,
-        description: `${user.name} viewed executive revenue totals & GST breakdown`,
-      })
+    const updateTime = () => {
+      const now = new Date()
+      const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
+      const dayNum = now.getDate()
+      const monthName = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
+      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      setCurrentTime(`POWAI · ${dayName} ${dayNum} ${monthName} · ${timeStr}`)
     }
-  }, [user?.id, canRevenue])
+    updateTime()
+    const timer = setInterval(updateTime, 60000)
+    return () => clearInterval(timer)
+  }, [])
 
-  const handleExportGstr1 = () => {
-    if (!can('billing.export') && user?.role.slug.toUpperCase() !== 'OWNER') {
-      toast.error('Exporting financial tax data is restricted to Club Owner.')
-      return
-    }
+  // Days in current calendar month for the Month Activity calendar
+  const calendarDays = [
+    { day: 31, isMute: true, hasCheckin: true, hasPT: false },
+    { day: 1, isToday: true, hasCheckin: true, hasPT: true },
+    { day: 2, hasCheckin: false, hasPT: false },
+    { day: 3, hasCheckin: false, hasPT: false },
+    { day: 4, hasCheckin: false, hasPT: false },
+    { day: 5, hasCheckin: false, hasPT: false },
+    { day: 6, hasCheckin: false, hasPT: false },
+    { day: 7, hasCheckin: false, hasPT: false },
+    { day: 8, hasCheckin: false, hasPT: false },
+    { day: 9, hasCheckin: false, hasPT: false },
+    { day: 10, hasCheckin: false, hasPT: false },
+    { day: 11, hasCheckin: false, hasPT: false },
+    { day: 12, hasCheckin: false, hasPT: false },
+    { day: 13, hasCheckin: false, hasPT: false },
+    { day: 14, hasCheckin: false, hasPT: false },
+    { day: 15, hasCheckin: false, hasPT: false },
+    { day: 16, hasCheckin: false, hasPT: false },
+    { day: 17, hasCheckin: false, hasPT: false },
+    { day: 18, hasCheckin: false, hasPT: false },
+    { day: 19, hasCheckin: false, hasPT: false },
+    { day: 20, hasCheckin: false, hasPT: false },
+    { day: 21, hasCheckin: false, hasPT: false },
+    { day: 22, hasCheckin: false, hasPT: false },
+    { day: 23, hasCheckin: false, hasPT: false },
+    { day: 24, hasCheckin: false, hasPT: false },
+    { day: 25, hasCheckin: false, hasPT: false },
+    { day: 26, hasCheckin: false, hasPT: false },
+    { day: 27, hasCheckin: false, hasPT: false },
+    { day: 28, hasCheckin: false, hasPT: false },
+    { day: 29, hasCheckin: false, hasPT: false },
+    { day: 30, hasCheckin: false, hasPT: false },
+    { day: 1, isMute: true, hasCheckin: false, hasPT: false },
+    { day: 2, isMute: true, hasCheckin: false, hasPT: false },
+    { day: 3, isMute: true, hasCheckin: false, hasPT: false },
+    { day: 4, isMute: true, hasCheckin: false, hasPT: false },
+  ]
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      ['SAC Code,Description,Taxable Value (INR),CGST (2.5%),SGST (2.5%),Total 5% GST (INR),Invoice Count']
-        .concat(
-          `"${gst.sacCode}","Gymnasium & Fitness Centre Services","${(gst.taxableValueMinor / 100).toFixed(2)}","${(gst.cgstMinor / 100).toFixed(2)}","${(gst.sgstMinor / 100).toFixed(2)}","${(gst.totalTaxMinor / 100).toFixed(2)}","${gst.invoiceCount}"`
-        )
-
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `dna360_gstr1_summary_aug_2026.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    toast.success('GSTR-1 Tax Summary CSV exported successfully')
-  }
-
-  // ─── 4 Unified KPI Cells (Single Source of Truth) ───
-  const kpiCells = canRevenue
-    ? [
-        {
-          label: 'COLLECTIONS MTD',
-          value: '₹18.4L',
-          unit: 'TOTAL CASH BILLED',
-          hoverTitle: '₹18,40,000 Total Cash Collected MTD',
-          strand: { value: 85, max: 100, capsules: 5 as const },
-          delta: { text: `Recognised: ₹1.53L · Deferred: ₹16.87L`, type: 'ok' as const },
-        },
-        {
-          label: 'TOTAL REGISTERED',
-          value: String(metrics.totalMembers),
-          unit: 'ROSTER COUNT',
-          hoverTitle: `${metrics.totalMembers} Total Members Registered on Record`,
-          strand: { value: metrics.activeMembers, max: metrics.totalMembers, capsules: 5 as const },
-          delta: { text: `${metrics.activeMembers} active · ${metrics.gracePeriodMembers} grace · ${metrics.expiringIn30Days} expiring`, type: 'neutral' as const },
-        },
-        {
-          label: 'EXPIRING IN 30 DAYS',
-          value: String(metrics.expiringIn30Days),
-          unit: 'RENEWAL QUEUE',
-          hoverTitle: `${metrics.expiringIn30Days} Memberships expiring within 30 days`,
-          strand: { value: metrics.expiringIn30Days, max: 120, capsules: 5 as const },
-          delta: { text: `${metrics.gracePeriodMembers} in grace · ${metrics.expiringIn30Days} upcoming`, type: 'warn' as const },
-        },
-        {
-          label: 'GST LIABILITY MTD',
-          value: '₹87.6K',
-          unit: '5% FITNESS SAC 999723',
-          hoverTitle: '₹87,619 Total GST Back-Calculated (Amount × 5 / 105)',
-          delta: { text: 'CGST ₹43.8K + SGST ₹43.8K', type: 'neutral' as const },
-        },
-      ]
-    : [
-        {
-          label: 'TOTAL REGISTERED',
-          value: String(metrics.totalMembers),
-          unit: 'CLUB ROSTER',
-          hoverTitle: `${metrics.totalMembers} Live Members Directory (${metrics.activeMembers} active)`,
-          strand: { value: metrics.activeMembers, max: metrics.totalMembers, capsules: 5 as const },
-          delta: { text: `${metrics.activeMembers} active · ${metrics.gracePeriodMembers} grace`, type: 'neutral' as const },
-        },
-        {
-          label: 'TODAY SCHEDULED',
-          value: String(metrics.classesScheduledToday),
-          unit: 'STUDIO CLASSES',
-          hoverTitle: '14 Group & PT slots scheduled today',
-          strand: { value: 14, max: 16, capsules: 5 as const },
-          delta: { text: 'MWF Master timetable', type: 'ok' as const },
-        },
-        {
-          label: 'TURNSTILE TRAFFIC',
-          value: String(metrics.turnstileEntriesToday),
-          unit: 'CHECK-INS TODAY',
-          hoverTitle: '342 Gate entries processed today',
-          strand: { value: 342, max: 450, capsules: 5 as const },
-          delta: { text: 'Peak 6:00 PM – 8:30 PM', type: 'neutral' as const },
-        },
-        {
-          label: 'RENEWAL QUEUE',
-          value: String(metrics.expiringIn30Days),
-          unit: 'DUE THIS MONTH',
-          hoverTitle: `${metrics.expiringIn30Days} memberships due for renewal`,
-          delta: { text: 'Front desk follow-ups', type: 'warn' as const },
-        },
-      ]
+  // Weekly bar comparison: This week vs Last week
+  const weeklyData = [
+    { day: 'Mon', ghostHeight: 88, fillHeight: 74 },
+    { day: 'Tue', ghostHeight: 70, fillHeight: 81 },
+    { day: 'Wed', ghostHeight: 62, fillHeight: 66 },
+    { day: 'Thu', ghostHeight: 74, fillHeight: 59 },
+    { day: 'Fri', ghostHeight: 80, fillHeight: 71 },
+    { day: 'Sat', ghostHeight: 52, fillHeight: 44 },
+    { day: 'Sun', ghostHeight: 34, fillHeight: 28 },
+  ]
 
   return (
-    <div className="space-y-7 max-w-7xl mx-auto select-none">
-      {/* 1. Page Header */}
-      <PageHeader
-        eyebrow="EXECUTIVE DASHBOARD · POWAI FLAGSHIP"
-        title="Club Overview,"
-        italicWord="Operations"
-        description="High-level operational health, turnstile throughput, membership lifecycles, and financial analytics."
-        actions={
-          canRevenue ? (
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={handleExportGstr1}
-              icon={<Download className="w-3.5 h-3.5" />}
-            >
-              Export GSTR-1
-            </Button>
-          ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--line)] text-xs text-[var(--muted)]">
-              <Lock className="w-3.5 h-3.5 text-[var(--amber)]" />
-              <span className="font-data text-[10.5px]">Revenue View Restricted</span>
-            </div>
-          )
-        }
-      />
-
-      {/* 2. Unified 4-Cell KPI Panel */}
-      <KpiPanel cells={kpiCells} />
-
-      {/* 3. Daily Action Queue (Assigned Operational Tasks with WhatsApp Integration) */}
-      <DailyActionQueue />
-
-      {/* 4. PT Pack Burn-Down Upsell Radar */}
-      <PtPackBurndown />
-
-      {/* 5. Churn Radar with Attendance Frequency Decay */}
-      <ChurnRadar />
-
-      {/* 6. Studio Attendance Heatmap (16-Hour Peak Distribution) */}
-      <AttendanceHeatmap />
-
-      {/* 7. Forward Renewal Collections Projection */}
-      {canRevenue && <RenewalForecast />}
-
-      {/* 8. Financial & Revenue Section (The Wall — Exclusive to Owner, HR Head, Marketing Head, Sales Head) */}
-      {canRevenue ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Revenue Stream Mix (5 cols) */}
-          <div className="lg:col-span-5">
-            <Card className="p-6 h-full flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4">
-                  <div>
-                    <h3 className="font-display font-semibold text-base text-[var(--ink)]">
-                      Revenue Stream Mix
-                    </h3>
-                    <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
-                      GST-inclusive breakdown (Aug 2026)
-                    </p>
-                  </div>
-                  <span className="font-ui text-xs font-semibold text-[var(--green)] tabular-nums tracking-tight bg-[rgba(52,211,153,0.10)] border border-[rgba(52,211,153,0.25)] px-2.5 py-0.5 rounded-full">
-                    ₹18,40,000 MTD
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    { stream: 'Memberships (SAC 999723)', percentage: revenueMix.membershipPct, revenueMinor: Math.round(kpis.mrrMinor * (revenueMix.membershipPct / 100)) },
-                    { stream: 'Personal Training (PT)', percentage: revenueMix.ptPct, revenueMinor: Math.round(kpis.mrrMinor * (revenueMix.ptPct / 100)) },
-                    { stream: 'Lockers & Valet Amenities', percentage: revenueMix.lockersPct, revenueMinor: Math.round(kpis.mrrMinor * (revenueMix.lockersPct / 100)) },
-                  ].map((stream) => (
-                    <div key={stream.stream} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs font-ui">
-                        <span className="text-[var(--ink-2)] font-medium">
-                          {stream.stream}
-                        </span>
-                        <div className="flex items-center gap-2 font-ui tabular-nums">
-                          <span className="text-[var(--ink)] font-semibold text-xs tracking-tight">
-                            {formatINR(stream.revenueMinor)}
-                          </span>
-                          <span className="text-[var(--muted)] text-[11px]">
-                            ({stream.percentage}%)
-                          </span>
-                        </div>
-                      </div>
-                      <StrandMeter
-                        value={stream.percentage}
-                        max={100}
-                        capsules={5}
-                        color="accent"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Cohort Retention Grid (7 cols) */}
-          <div className="lg:col-span-7">
-            <Card className="p-6">
-              <div className="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4">
-                <div>
-                  <h3 className="font-display font-semibold text-base text-[var(--ink)]">
-                    12-Month Cohort Retention Decay
-                  </h3>
-                  <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
-                    Monthly active renewal decay rate
-                  </p>
-                </div>
-                <Badge status="ok" size="sm">78.4% Average Retention</Badge>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs font-ui tabular-nums">
-                  <thead>
-                    <tr className="border-b border-[var(--line)] text-[var(--muted)] text-left">
-                      <th className="pb-2.5 font-ui font-semibold uppercase tracking-wider text-[10.5px]">Cohort</th>
-                      <th className="pb-2.5 font-ui font-semibold uppercase tracking-wider text-[10.5px]">Enrolled</th>
-                      <th className="pb-2.5 font-ui font-semibold uppercase tracking-wider text-[10.5px]">M+1</th>
-                      <th className="pb-2.5 font-ui font-semibold uppercase tracking-wider text-[10.5px]">M+3</th>
-                      <th className="pb-2.5 font-ui font-semibold uppercase tracking-wider text-[10.5px]">M+6</th>
-                      <th className="pb-2.5 font-ui font-semibold uppercase tracking-wider text-[10.5px]">M+12</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--line)] text-[var(--ink-2)]">
-                    {cohorts.map((c) => (
-                      <tr key={c.cohort} className="hover:bg-[var(--surface-2)] transition-colors">
-                        <td className="py-2.5 font-ui font-semibold text-[var(--ink)]">{c.cohort}</td>
-                        <td className="py-2.5 font-ui text-[var(--muted)]">{c.size}</td>
-                        <td className="py-2.5 font-ui font-medium text-[var(--green)]">
-                          {c.month1 !== null ? `${c.month1}%` : <span className="text-[var(--muted)]">—</span>}
-                        </td>
-                        <td className="py-2.5 font-ui font-medium text-[var(--green)]">
-                          {c.month3 !== null ? `${c.month3}%` : <span className="text-[var(--muted)]">—</span>}
-                        </td>
-                        <td className="py-2.5 font-ui text-[var(--ink-2)]">
-                          {c.month6 !== null ? `${c.month6}%` : <span className="text-[var(--muted)]">—</span>}
-                        </td>
-                        <td className="py-2.5 font-ui text-[var(--amber)]">
-                          {c.month12 !== null ? `${c.month12}%` : <span className="text-[var(--muted)]">—</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </div>
+    <div className="space-y-4 max-w-[1340px] mx-auto pb-14">
+      {/* ─── Topbar ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-white font-display tracking-tight">
+            Floor overview
+          </h1>
+          <p className="font-data text-[10px] text-[var(--ink-3)] tracking-wider mt-1">
+            {currentTime}
+          </p>
         </div>
-      ) : (
-        /* Discreet Security Wall Notice for Staff without revenue.view */
-        <Card className="p-6 border-dashed border-[var(--line)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(245,158,11,0.12)] border border-[rgba(245,158,11,0.25)] flex items-center justify-center text-[var(--amber)] shrink-0">
-              <Lock className="w-5 h-5" />
+
+        <div className="flex items-center gap-2">
+          <div className="relative group">
+            <button className="console-chip flex items-center gap-1.5">
+              <span>{selectedPeriod}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--ink-3)]" />
+            </button>
+          </div>
+
+          <button
+            onClick={() => setOnboardingOpen(true)}
+            className="console-chip solid flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition-all"
+          >
+            Add member
+          </button>
+        </div>
+      </div>
+
+      {/* ─── 4 Stat Strip ─── */}
+      <div className="console-strip">
+        <div className="console-stat">
+          <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
+            CHECKED IN TODAY
+          </p>
+          <p className="v text-white">184</p>
+          <p className="d text-[#4ADE80] font-data">▲ 12% vs last Tue</p>
+        </div>
+
+        <div className="console-stat">
+          <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
+            ACTIVE MEMBERS
+          </p>
+          <p className="v text-white">{metrics.totalMembers || 679}</p>
+          <p className="d text-[#4ADE80] font-data">▲ 9 this week</p>
+        </div>
+
+        <div className="console-stat">
+          <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
+            REVENUE · SEPTEMBER
+          </p>
+          <p className="v text-white">₹8.4L</p>
+          <p className="d text-[var(--ink-3)] font-data">68% of target</p>
+        </div>
+
+        <div className="console-stat">
+          <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
+            EXPIRING IN 30 DAYS
+          </p>
+          <p className="v text-white">47</p>
+          <p className="d text-[var(--rose)] font-data">▼ 11 unreached</p>
+        </div>
+      </div>
+
+      {/* ─── Bento Layout: 400px | 1fr | 250px ─── */}
+      <div className="console-bento">
+        {/* ─── LEFT COLUMN: Month Activity (400px) ─── */}
+        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-card)] p-5 space-y-4">
+          <div className="flex items-start justify-between">
+            <h3 className="text-xl sm:text-2xl font-normal text-white font-display tracking-tight">
+              Month activity
+            </h3>
+            <Link href="/attendance">
+              <ArrowUpRight className="w-4 h-4 text-[var(--ink-3)] hover:text-white transition-colors cursor-pointer" />
+            </Link>
+          </div>
+
+          {/* Month Calendar */}
+          <div>
+            <div className="console-cal">
+              <span className="wd">Mo</span>
+              <span className="wd">Tu</span>
+              <span className="wd">We</span>
+              <span className="wd">Th</span>
+              <span className="wd">Fr</span>
+              <span className="wd">Sa</span>
+              <span className="wd">Su</span>
+
+              {calendarDays.map((c, idx) => (
+                <div
+                  key={idx}
+                  className={`d ${c.isMute ? 'mute' : ''} ${c.isToday ? 'today' : ''}`}
+                >
+                  <span>{c.day}</span>
+                  <div className="console-dots">
+                    {c.hasCheckin && (
+                      <i className="dr" style={c.isToday ? { background: '#12040A' } : undefined} />
+                    )}
+                    {c.hasPT && (
+                      <i className="dv" style={c.isToday ? { background: '#12040A' } : undefined} />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-4 mt-3 text-[10.5px] text-[var(--ink-3)]">
+              <span className="flex items-center gap-1.5">
+                <i className="w-1.5 h-1.5 rounded-full bg-[var(--rose)] inline-block" /> Check-ins
+              </span>
+              <span className="flex items-center gap-1.5">
+                <i className="w-1.5 h-1.5 rounded-full bg-[var(--blue)] inline-block" /> PT sessions
+              </span>
+            </div>
+          </div>
+
+          {/* Tri Stats */}
+          <div className="console-tri">
+            <div>
+              <p className="l">Peak hour</p>
+              <p className="v text-white font-display">7–8 pm</p>
             </div>
             <div>
-              <h3 className="font-ui font-semibold text-sm text-[var(--ink)]">
-                Financial Analytics & Revenue Stream Isolation
-              </h3>
-              <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
-                Financial ledgers and revenue metrics are strictly restricted to executive leadership (Owner, HR Head, Marketing Head, Sales Head).
-              </p>
+              <p className="l">Avg. daily</p>
+              <p className="v text-white font-display">171</p>
+            </div>
+            <div>
+              <p className="l">Busiest day</p>
+              <p className="v text-white font-display">Monday</p>
             </div>
           </div>
-          <Badge status="warn" size="sm">
-            RBAC Protected
-          </Badge>
-        </Card>
-      )}
+
+          {/* Revenue Mix Progress Rows */}
+          <div>
+            <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase mb-2.5">
+              REVENUE MIX · SEPTEMBER
+            </p>
+
+            <div className="space-y-2">
+              <div className="console-grow g1">
+                <div className="console-grow-ic">
+                  <CreditCard className="w-3.5 h-3.5 stroke-white" />
+                </div>
+                <div className="console-grow-t">
+                  <b>Memberships</b>
+                  <span className="text-white">₹5.2L</span>
+                </div>
+                <span className="console-grow-p font-data text-white">62%</span>
+              </div>
+
+              <div className="console-grow g2">
+                <div className="console-grow-ic">
+                  <Users className="w-3.5 h-3.5 stroke-white" />
+                </div>
+                <div className="console-grow-t">
+                  <b>Personal training</b>
+                  <span className="text-white">₹2.4L</span>
+                </div>
+                <span className="console-grow-p font-data text-white">29%</span>
+              </div>
+
+              <div className="console-grow g3">
+                <div className="console-grow-ic">
+                  <ShoppingBag className="w-3.5 h-3.5 stroke-white" />
+                </div>
+                <div className="console-grow-t">
+                  <b>Store · 205 SKUs</b>
+                  <span className="text-white">₹0.8L</span>
+                </div>
+                <span className="console-grow-p font-data text-white">9%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── MIDDLE COLUMN: Needs Attention + This Week ─── */}
+        <div className="space-y-4">
+          {/* Needs Attention Card */}
+          <div className="console-att">
+            <div className="console-att-head">
+              <div>
+                <h3 className="text-white">Needs attention</h3>
+                <p>
+                  Nine things are waiting on someone today. Cleared items drop off this list automatically.
+                </p>
+              </div>
+              <span className="console-att-count">9</span>
+            </div>
+
+            {/* Row 1: Memberships Expiring */}
+            <div className="console-arow">
+              <div className="console-arow-ic">
+                <Clock className="w-3.5 h-3.5 stroke-[var(--rose)]" />
+              </div>
+              <div className="console-arow-t">
+                <b className="text-white">Memberships expiring this week</b>
+                <span>None contacted yet</span>
+              </div>
+              <span className="console-arow-n">11</span>
+              <button
+                onClick={() => router.push('/members?filter=expiring_soon')}
+                className="console-arow-go"
+              >
+                Open
+              </button>
+            </div>
+
+            {/* Row 2: Unpaid Dues */}
+            <div className="console-arow">
+              <div className="console-arow-ic">
+                <AlertTriangle className="w-3.5 h-3.5 stroke-[var(--warn)]" />
+              </div>
+              <div className="console-arow-t">
+                <b className="text-white">Unpaid dues over 15 days</b>
+                <span>₹1,42,000 outstanding</span>
+              </div>
+              <span className="console-arow-n">6</span>
+              <button
+                onClick={() => router.push('/billing')}
+                className="console-arow-go"
+              >
+                Open
+              </button>
+            </div>
+
+            {/* Row 3: Churn Risk */}
+            <div className="console-arow">
+              <div className="console-arow-ic">
+                <ActivityIcon className="w-3.5 h-3.5 stroke-[var(--violet)]" />
+              </div>
+              <div className="console-arow-t">
+                <b className="text-white">No check-in in 14 days</b>
+                <span>Churn risk · assign a call</span>
+              </div>
+              <span className="console-arow-n">23</span>
+              <button
+                onClick={() => router.push('/attendance')}
+                className="console-arow-go"
+              >
+                Open
+              </button>
+            </div>
+
+            {/* Row 4: PT Sessions Awaiting Sign-off */}
+            <div className="console-arow">
+              <div className="console-arow-ic">
+                <Check className="w-3.5 h-3.5 stroke-[var(--blue)]" />
+              </div>
+              <div className="console-arow-t">
+                <b className="text-white">PT sessions awaiting sign-off</b>
+                <span>Rohan · 3, Nikhil · 1</span>
+              </div>
+              <span className="console-arow-n">4</span>
+              <button
+                onClick={() => router.push('/my-clients')}
+                className="console-arow-go"
+              >
+                Open
+              </button>
+            </div>
+          </div>
+
+          {/* This Week Bar Chart Card */}
+          <div className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-card)] p-5">
+            <div className="flex items-center justify-between mb-2.5">
+              <h3 className="text-lg font-normal text-white font-display">
+                This week
+              </h3>
+              <div className="console-chart-legend">
+                <i /> Last week
+              </div>
+            </div>
+
+            <div className="console-bars">
+              {weeklyData.map((item) => (
+                <div key={item.day} className="console-bcol">
+                  <div
+                    className="console-bghost"
+                    style={{ height: `${item.ghostHeight}px` }}
+                  />
+                  <div
+                    className="console-bfill"
+                    style={{ height: `${item.fillHeight}px` }}
+                  />
+                  <span className="console-blab">{item.day}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ─── RIGHT COLUMN: 3 Mini Tiles (250px) ─── */}
+        <div className="space-y-4">
+          {/* Mini 1: PT Sessions Today */}
+          <div className="console-mini">
+            <div className="console-mini-ic">
+              <Zap className="w-4 h-4 stroke-[var(--warn)]" />
+            </div>
+            <div>
+              <p className="v text-white font-display">12</p>
+              <p className="l font-medium">PT sessions today</p>
+              <p className="s">4 done · 8 upcoming</p>
+            </div>
+          </div>
+
+          {/* Mini 2: Class Fill Rate with Wave */}
+          <div className="console-mini">
+            <div className="console-mini-ic">
+              <Calendar className="w-4 h-4 stroke-[var(--blue)]" />
+            </div>
+            <div>
+              <p className="v text-white font-display">78%</p>
+              <p className="l font-medium">Class fill rate</p>
+              <p className="s">Spin 7 pm nearly full</p>
+            </div>
+            <div className="console-wave" />
+          </div>
+
+          {/* Mini 3: Staff on Roster */}
+          <div className="console-mini">
+            <div className="console-mini-ic">
+              <ActivityIcon className="w-4 h-4 stroke-[var(--ok)]" />
+            </div>
+            <div>
+              <p className="v text-white font-display">34</p>
+              <p className="l font-medium">Staff on roster</p>
+              <p className="s">9 on floor now</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Member Onboarding Modal */}
+      <MemberOnboardingModal
+        open={onboardingOpen}
+        onOpenChange={setOnboardingOpen}
+        onMemberCreated={() => {
+          setOnboardingOpen(false)
+          toast.success('Member onboarded successfully')
+        }}
+      />
     </div>
+  )
+}
+
+function ActivityIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} {...props}>
+      <path d="M3 12h4l3 8 4-16 3 8h4" />
+    </svg>
   )
 }

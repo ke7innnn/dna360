@@ -24,20 +24,20 @@ const iconMap: Record<string, LucideIcon> = {
 
 import Image from 'next/image'
 
-// ─── DNA 360 Logo Mark Motif ───
+// ─── DNA 360 Logo Mark Motif (Staff Console Direction) ───
 function DnaLogoMark() {
   return (
     <div
-      className="w-8 h-8 rounded-xl bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center p-1 shadow-[0_0_14px_rgba(59,130,246,0.35)] shrink-0 overflow-hidden"
+      className="w-9 h-9 rounded-[13px] bg-gradient-to-br from-[#FF5C7A] to-[#C86DD7] flex items-center justify-center shadow-[0_0_16px_rgba(255,92,122,0.4)] shrink-0"
       aria-label="DNA 360 Brand Mark"
     >
-      <Image
-        src="/images/logo-2.png"
-        alt="DNA 360 Logo"
-        width={32}
-        height={32}
-        className="w-full h-full object-contain drop-shadow-[0_0_6px_#3B82F6]"
-      />
+      <div className="flex items-center gap-[2px]">
+        <i className="w-[2.5px] h-[8px] rounded-[2px] bg-[#0A0A0C]/80 block" />
+        <i className="w-[2.5px] h-[12px] rounded-[2px] bg-[#0A0A0C]/80 block" />
+        <i className="w-[2.5px] h-[16px] rounded-[2px] bg-[#0A0A0C]/80 block" />
+        <i className="w-[2.5px] h-[12px] rounded-[2px] bg-[#0A0A0C]/80 block" />
+        <i className="w-[2.5px] h-[8px] rounded-[2px] bg-[#0A0A0C]/80 block" />
+      </div>
     </div>
   )
 }

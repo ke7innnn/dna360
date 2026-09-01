@@ -265,3 +265,527 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.22);
 }
+
+/* ============================================================
+   STAFF CONSOLE DIRECTION TOKENS & UTILITIES
+   ============================================================ */
+:root {
+  --rose: #FF5C7A;
+  --violet: #C86DD7;
+  --blue: #6E8CF0;
+  --ok: #4ADE80;
+  --warn: #FFC24B;
+  --r-card: 22px;
+  --r-tile: 14px;
+}
+
+/* Staff Console Rail */
+.staff-rail {
+  width: 66px;
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.staff-rail-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: linear-gradient(150deg, #FF5C7A, #C86DD7);
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+  box-shadow: 0 0 16px rgba(255, 92, 122, 0.4);
+}
+.staff-rail-logo .caps {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.staff-rail-logo .caps i {
+  width: 2.5px;
+  border-radius: 2px;
+  background: rgba(10, 10, 12, 0.82);
+  display: block;
+}
+.staff-rail-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.staff-rail-btn svg {
+  width: 17px;
+  height: 17px;
+  stroke: var(--ink-3);
+  fill: none;
+  stroke-width: 1.7;
+}
+.staff-rail-btn.on {
+  background: var(--surface-2);
+}
+.staff-rail-btn.on svg {
+  stroke: var(--ink);
+}
+.staff-rail-sep {
+  width: 26px;
+  height: 1px;
+  background: var(--line);
+  margin: 8px 0;
+}
+.staff-rail-av {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(140deg, #3A3D4A, #22242C);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-data), 'Martian Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+/* Console Chips */
+.console-chip {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.console-chip:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.console-chip.solid {
+  background: var(--rose);
+  color: #12040A;
+  border-color: var(--rose);
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(255, 92, 122, 0.35);
+}
+
+/* Console Stat Strip */
+.console-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .console-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .console-strip {
+    grid-template-columns: 1fr;
+  }
+}
+.console-stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  padding: 15px 17px;
+}
+.console-stat .v {
+  font-family: var(--font-display), sans-serif;
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 7px 0 4px;
+}
+.console-stat .d {
+  font-family: var(--font-data), 'Martian Mono', monospace;
+  font-size: 9.5px;
+}
+
+/* Console Bento */
+.console-bento {
+  display: grid;
+  grid-template-columns: 400px 1fr 250px;
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1200px) {
+  .console-bento {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 840px) {
+  .console-bento {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Calendar */
+.console-cal {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  text-align: center;
+}
+.console-cal .wd {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  padding-bottom: 7px;
+}
+.console-cal .d {
+  padding: 6px 0 4px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  position: relative;
+}
+.console-cal .d.mute {
+  color: var(--ink-3);
+}
+.console-cal .d.today {
+  background: var(--rose);
+  color: #12040A;
+  font-weight: 700;
+}
+.console-dots {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  height: 5px;
+  margin-top: 3px;
+}
+.console-dots i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  display: block;
+}
+.console-dots .dr {
+  background: var(--rose);
+}
+.console-dots .dv {
+  background: var(--blue);
+}
+
+.console-tri {
+  display: flex;
+  margin: 18px 0;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.console-tri > div {
+  flex: 1;
+  padding-right: 12px;
+}
+.console-tri > div + div {
+  border-left: 1px solid var(--line);
+  padding-left: 14px;
+}
+.console-tri .l {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.console-tri .v {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 4px;
+  letter-spacing: -0.01em;
+}
+
+/* Gradient progress rows */
+.console-grow {
+  border-radius: 13px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--line);
+}
+.console-grow + .console-grow {
+  margin-top: 8px;
+}
+.console-grow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+}
+.console-grow.g1::before {
+  width: 62%;
+  background: linear-gradient(90deg, rgba(255, 92, 122, 0.42), rgba(255, 92, 122, 0.06));
+}
+.console-grow.g2::before {
+  width: 41%;
+  background: linear-gradient(90deg, rgba(200, 109, 215, 0.42), rgba(200, 109, 215, 0.06));
+}
+.console-grow.g3::before {
+  width: 78%;
+  background: linear-gradient(90deg, rgba(110, 140, 240, 0.4), rgba(110, 140, 240, 0.06));
+}
+.console-grow > * {
+  position: relative;
+}
+.console-grow-ic {
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.console-grow-ic svg {
+  width: 14px;
+  height: 14px;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 1.8;
+}
+.console-grow-t {
+  flex: 1;
+  min-width: 0;
+}
+.console-grow-t b {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-2);
+  font-weight: 400;
+}
+.console-grow-t span {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-top: 2px;
+  letter-spacing: -0.01em;
+}
+.console-grow-p {
+  font-family: var(--font-data), 'Martian Mono', monospace;
+  font-size: 12px;
+}
+
+/* Attention card */
+.console-att {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.console-att-head {
+  padding: 20px 20px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(255, 92, 122, 0.13), rgba(200, 109, 215, 0.05) 55%, transparent);
+}
+.console-att-head h3 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+.console-att-head p {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  margin-top: 5px;
+  max-width: 330px;
+  line-height: 1.5;
+}
+.console-att-count {
+  font-family: var(--font-display), sans-serif;
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--rose);
+  letter-spacing: -0.02em;
+}
+.console-arow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+}
+.console-arow-ic {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+}
+.console-arow-ic svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke-width: 1.8;
+}
+.console-arow-t {
+  flex: 1;
+  min-width: 0;
+}
+.console-arow-t b {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.console-arow-t span {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.console-arow-n {
+  font-family: var(--font-data), 'Martian Mono', monospace;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.console-arow-go {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.console-arow-go:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+/* Bars chart */
+.console-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 118px;
+  margin-top: 6px;
+}
+.console-bcol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+  height: 100%;
+  position: relative;
+}
+.console-bghost {
+  width: 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  position: absolute;
+  bottom: 20px;
+}
+.console-bfill {
+  width: 16px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #FF7E96, #FF5C7A);
+  position: relative;
+}
+.console-blab {
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+.console-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.console-chart-legend i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Small Mini tiles */
+.console-mini {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.console-mini-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+}
+.console-mini-ic svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke-width: 1.8;
+}
+.console-mini .v {
+  font-family: var(--font-display), sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.console-mini .l {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.console-mini .s {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: -6px;
+}
+.console-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 52px;
+  background: linear-gradient(180deg, rgba(110, 140, 240, 0.22), rgba(110, 140, 240, 0.09));
+  border-radius: 50% 50% 0 0 / 26px 26px 0 0;
+  pointer-events: none;
+}
+
+/* Working Density Table Tags */
+.tag-pill {
+  display: inline-flex;
+  font-family: var(--font-data), 'Martian Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.tag-ok {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--ok);
+}
+.tag-warn {
+  background: rgba(255, 194, 75, 0.13);
+  color: var(--warn);
+}
+.tag-risk {
+  background: rgba(255, 92, 122, 0.14);
+  color: var(--rose);
+}
+
