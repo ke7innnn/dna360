@@ -101,53 +101,98 @@ export default function MemberDashboardPage() {
             <div className="absolute -left-[10%] -bottom-[20%] w-[120%] h-[50%] bg-[radial-gradient(ellipse_at_50%_100%,rgba(255,92,122,0.08),rgba(120,90,220,0.04)_45%,transparent_70%)] pointer-events-none" />
 
             <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-5">
-              {/* Strand Meter Ring */}
-              <div className="relative w-[110px] h-[110px] shrink-0">
-                <svg viewBox="0 0 120 120" width="110" height="110">
+              {/* Polished 5-Segment Strand Meter Ring */}
+              <div className="relative w-[124px] h-[124px] shrink-0 flex items-center justify-center">
+                <svg viewBox="0 0 128 128" width="124" height="124" className="overflow-visible">
                   <defs>
-                    <linearGradient id="strandGradientAligned" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#FF5C7A" />
-                      <stop offset="50%" stopColor="#C86DD7" />
-                      <stop offset="100%" stopColor="#6E8CF0" />
+                    <linearGradient id="seg1Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#6E8CF0" />
+                      <stop offset="100%" stopColor="#9B7BE8" />
                     </linearGradient>
+                    <linearGradient id="seg2Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#9B7BE8" />
+                      <stop offset="100%" stopColor="#C86DD7" />
+                    </linearGradient>
+                    <linearGradient id="seg3Grad" x1="100%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#C86DD7" />
+                      <stop offset="100%" stopColor="#FF5C7A" />
+                    </linearGradient>
+                    <filter id="glowPink" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
                   </defs>
-                  <g transform="rotate(-90 60 60)">
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="50"
-                      fill="none"
-                      stroke="rgba(255,255,255,.07)"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray="55 8"
-                    />
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="50"
-                      fill="none"
-                      stroke="url(#strandGradientAligned)"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray="55 8"
-                      pathLength={314.16}
-                    />
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="50"
-                      fill="none"
-                      stroke="#111318"
-                      strokeWidth="10"
-                      strokeDasharray="125.6 188.5"
-                      strokeDashoffset="-188.5"
-                    />
-                  </g>
+
+                  {/* 5 Background Tracks */}
+                  <path
+                    d="M 67.35 16.12 A 48 48 0 0 1 108.50 46.02"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 110.57 52.39 A 48 48 0 0 1 94.85 100.77"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 89.44 104.71 A 48 48 0 0 1 38.56 104.71"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 33.15 100.77 A 48 48 0 0 1 17.43 52.39"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 19.50 46.02 A 48 48 0 0 1 60.65 16.12"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+
+                  {/* 3 Active Completed Segments with Continuous Luxe Gradient */}
+                  <path
+                    d="M 67.35 16.12 A 48 48 0 0 1 108.50 46.02"
+                    fill="none"
+                    stroke="url(#seg1Grad)"
+                    strokeWidth="8.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 110.57 52.39 A 48 48 0 0 1 94.85 100.77"
+                    fill="none"
+                    stroke="url(#seg2Grad)"
+                    strokeWidth="8.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 89.44 104.71 A 48 48 0 0 1 38.56 104.71"
+                    fill="none"
+                    stroke="url(#seg3Grad)"
+                    strokeWidth="8.5"
+                    strokeLinecap="round"
+                    filter="url(#glowPink)"
+                  />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <b className="text-white text-3xl font-display font-semibold leading-none">3</b>
-                  <span className="text-[10px] text-[var(--ink-3)] font-data mt-0.5">of 5 this week</span>
+
+                {/* Centered Minimal Readout */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none select-none">
+                  <span className="text-3xl sm:text-[34px] font-bold text-white font-display leading-none tracking-tight">
+                    3
+                  </span>
+                  <span className="text-[10px] font-medium text-[var(--ink-2)] mt-1 tracking-tight">
+                    of 5 this week
+                  </span>
                 </div>
               </div>
 
