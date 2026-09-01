@@ -5,7 +5,6 @@ import Hero from '@/components/sections/Hero'
 import About from '@/components/sections/About'
 import Services from '@/components/sections/Services'
 import WhyChoose from '@/components/sections/WhyChoose'
-import DynamicQuotes from '@/components/sections/DynamicQuotes'
 import Videos from '@/components/sections/Videos'
 import Testimonials from '@/components/sections/Testimonials'
 import Stats from '@/components/sections/Stats'
@@ -19,7 +18,6 @@ export default function HomePage() {
       <About />
       <Services />
       <WhyChoose />
-      <DynamicQuotes />
       <Videos />
       <Testimonials />
       <Stats />
