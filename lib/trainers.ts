@@ -28,10 +28,17 @@ const APPOINTMENTS_KEY = 'dna360_pt_appointments'
 
 export const SEEDED_TRAINERS = [
   { id: 'usr_tr_head_01', name: 'Rajesh Poojary', role: 'Head Coach & Performance Specialist', phone: '+919820041001', pt_tier: 'super_elite' },
-  { id: 'usr_tr_02', name: 'Krish Rawat', role: 'Strength & Conditioning Coach', phone: '+919820041002', pt_tier: 'elite' },
-  { id: 'usr_tr_03', name: 'Sneha Rao', role: 'Reformer Pilates & Yoga Lead', phone: '+919820041003', pt_tier: 'premium' },
-  { id: 'usr_tr_04', name: 'Aftab Memon', role: 'Senior RPM Cycling Coach', phone: '+919820041004', pt_tier: 'elite' },
-  { id: 'usr_tr_05', name: 'Zeebran Shaikh', role: 'Boxing & Muay Thai Conditioning', phone: '+919820041005', pt_tier: 'premium' },
+  { id: 'usr_tr_02', name: 'Aftab Memon', role: 'Head Coach (K11 Diploma, CPR/AED)', phone: '+919820041002', pt_tier: 'super_elite' },
+  { id: 'usr_tr_03', name: 'Hemant Shirke', role: 'Reformer Pilates & Power Yoga Lead (K11/ACSM)', phone: '+919820041003', pt_tier: 'elite' },
+  { id: 'usr_tr_04', name: 'Zeebran Shaikh', role: 'Functional & Strength Coach (PEFSA/IFSA)', phone: '+919820041004', pt_tier: 'elite' },
+  { id: 'usr_tr_05', name: 'Afzal Shah', role: 'Certified Personal Trainer & Sports Nutrition (ACSM)', phone: '+919820041005', pt_tier: 'elite' },
+  { id: 'usr_tr_06', name: 'Kunal Chavan', role: 'Sports Nutritionist & CPT (K11/ACSM)', phone: '+919820041006', pt_tier: 'elite' },
+  { id: 'usr_tr_07', name: 'Mandar Shirke', role: 'FMS & Powerlifting Expert (K11/ACSM)', phone: '+919820041007', pt_tier: 'elite' },
+  { id: 'usr_tr_08', name: 'Ankur Saravade', role: 'Fat Loss Transformation Coach (IFSA/Clean-Health)', phone: '+919820041008', pt_tier: 'premium' },
+  { id: 'usr_tr_09', name: 'Pramod Sawant', role: 'Personal Trainer & Conditioning Coach (IFSA)', phone: '+919820041009', pt_tier: 'premium' },
+  { id: 'usr_tr_10', name: 'Vaibhav Mulik', role: 'Hypertrophy & CPR Specialist (K11)', phone: '+919820041010', pt_tier: 'premium' },
+  { id: 'usr_tr_11', name: 'Aniket Jadhav', role: 'Functional & Special Population Trainer (K11)', phone: '+919820041011', pt_tier: 'premium' },
+  { id: 'usr_tr_12', name: 'Siddhesh Parab', role: 'Certified Personal Trainer (K11)', phone: '+919820041012', pt_tier: 'premium' },
 ]
 
 export const SEEDED_PT_CLIENTS: PTClient[] = [

@@ -22,7 +22,7 @@ export default function MemberPTLedgerPage() {
   const [remainingSessions, setRemainingSessions] = useState(8)
   const [totalSessions, setTotalSessions] = useState(12)
   const [ptTier, setPtTier] = useState('Premium PT (₹1,699 / Session)')
-  const [trainerName, setTrainerName] = useState('Sneha Rao')
+  const [trainerName, setTrainerName] = useState('Rajesh Poojary')
 
   // Sample Immutable Deduction History (§8.7)
   const deductionHistory = [
@@ -30,7 +30,7 @@ export default function MemberPTLedgerPage() {
       id: 'pt_deduct_004',
       date: '28 Aug 2026',
       time: '08:30 AM',
-      trainer: 'Sneha Rao',
+      trainer: 'Rajesh Poojary',
       workoutFocus: 'Upper Body Hypertrophy & Rotator Stability',
       sessionsDeducted: 1,
       balanceAfter: 8,
@@ -40,7 +40,7 @@ export default function MemberPTLedgerPage() {
       id: 'pt_deduct_003',
       date: '25 Aug 2026',
       time: '08:00 AM',
-      trainer: 'Sneha Rao',
+      trainer: 'Rajesh Poojary',
       workoutFocus: 'Quad Hypertrophy & Allegro Reformer Jumpboard',
       sessionsDeducted: 1,
       balanceAfter: 9,
@@ -50,7 +50,7 @@ export default function MemberPTLedgerPage() {
       id: 'pt_deduct_002',
       date: '22 Aug 2026',
       time: '08:15 AM',
-      trainer: 'Sneha Rao',
+      trainer: 'Rajesh Poojary',
       workoutFocus: 'Deadlift Form Calibration & Core Bracing',
       sessionsDeducted: 1,
       balanceAfter: 10,
@@ -60,7 +60,7 @@ export default function MemberPTLedgerPage() {
       id: 'pt_deduct_001',
       date: '18 Aug 2026',
       time: '08:00 AM',
-      trainer: 'Sneha Rao',
+      trainer: 'Rajesh Poojary',
       workoutFocus: 'Initial Postural Assessment & Movement Screen',
       sessionsDeducted: 1,
       balanceAfter: 11,

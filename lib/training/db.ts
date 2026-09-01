@@ -77,7 +77,7 @@ function initSeedMemberData() {
   memMemberPrograms.push({
     id: memberProgId,
     memberId: 'mem_001',
-    trainerId: 'usr_staff_03', // Sneha Rao
+    trainerId: 'usr_staff_03', // Rajesh Poojary (Head Trainer)
     coachingMode: 'TRAINER_LED',
     sourceProgramId: sampleProg.id,
     currentVersion: 1,

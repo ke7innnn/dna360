@@ -1,6 +1,6 @@
 /* ============================================================
    DNA 360 — Seeded Gym Library Programs
-   Curated by Head Coach Rajesh Poojary & Sneha Rao (Reformer Lead)
+   Curated by Head Coach Rajesh Poojary & Hemant Shirke (Reformer Lead)
    Available to all 679 members for 2-tap clone & start.
    ============================================================ */
 

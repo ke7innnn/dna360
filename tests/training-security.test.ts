@@ -42,12 +42,12 @@ async function runTests() {
   console.log('============================================================\n')
 
   const ownerUser = SEEDED_USERS.find(u => u.role.slug.toUpperCase() === 'OWNER')!
-  const trainerSneha = SEEDED_USERS.find(u => u.id === 'usr_staff_03') || {
+  const trainerRajesh = SEEDED_USERS.find(u => u.id === 'usr_staff_03') || {
     id: 'usr_staff_03',
     clubId: 'club_powai',
     type: 'STAFF' as const,
-    name: 'Sneha Rao',
-    phone: '+919820041003',
+    name: 'Rajesh Poojary',
+    phone: '+919820041001',
     role: { id: 'r_tr', name: 'Trainer', slug: 'TRAINER' as const, description: '', capabilities: ['members.view.own', 'workouts.log'] as any, isSystem: true, createdAt: '' },
     branchId: 'pow',
     branches: [],
@@ -133,7 +133,7 @@ async function runTests() {
     'Trainer CANNOT view workout logs of unassigned self-coached member (§1 Rule 2)'
   )
 
-  const trainerAccessAssigned = canAccessMemberTraining(trainerSneha, 'mem_001')
+  const trainerAccessAssigned = canAccessMemberTraining(trainerRajesh, 'mem_001')
   assert(
     trainerAccessAssigned.allowed === true,
     'Trainer CAN access workout logs of assigned client with active assignment row'
@@ -175,11 +175,11 @@ async function runTests() {
   // ─── 5. Audit Logging (§1 Rule 6) ───
   console.log('--- 5. Audit Trail Integration ---')
   auditTrainingEvent(
-    trainerSneha,
+    trainerRajesh,
     'UPDATE',
     'PT_SESSION',
     'sess_001',
-    'Trainer Sneha Rao signed off 1-on-1 PT session (Remaining: 7)',
+    'Trainer Rajesh Poojary signed off 1-on-1 PT session (Remaining: 7)',
     { before: { remaining: 8 }, after: { remaining: 7 } }
   )
 

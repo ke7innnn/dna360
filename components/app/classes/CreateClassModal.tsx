@@ -56,9 +56,14 @@ export default function CreateClassModal({
     setInstructorId(id)
     const map: Record<string, string> = {
       usr_trainer_01: 'Rajesh Poojary',
-      usr_trainer_02: 'Sneha Rao',
-      usr_trainer_03: 'Aftab Memon',
+      usr_trainer_02: 'Aftab Memon',
+      usr_trainer_03: 'Hemant Shirke',
       usr_trainer_04: 'Zeebran Shaikh',
+      usr_trainer_05: 'Afzal Shah',
+      usr_trainer_06: 'Kunal Chavan',
+      usr_trainer_07: 'Mandar Shirke',
+      usr_trainer_08: 'Ankur Saravade',
+      usr_trainer_09: 'Pramod Sawant',
     }
     setInstructorName(map[id] || 'Rajesh Poojary')
   }
@@ -101,14 +106,12 @@ export default function CreateClassModal({
       maxWaitlist: 5,
       intensity,
       caloriesEstimate,
-      description: description.trim() || 'Signature high performance group fitness workout at DNA 360.',
+      description: description.trim() || undefined,
     })
 
-    toast.success(`Class Scheduled: ${newSession.title}`, {
-      description: `${newSession.date} at ${newSession.startTime} in ${newSession.studioName}`,
-    })
-
-    if (onSessionCreated) onSessionCreated(newSession)
+    toast.success(`Class scheduled: ${title}`)
+    onSessionCreated?.(newSession)
+    onCreated?.()
     onOpenChange(false)
   }
 
@@ -116,22 +119,24 @@ export default function CreateClassModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Schedule Class Session"
-      description="Create a new scheduled group class, assign trainer and studio room."
-      size="md"
+      title="Create New Studio Session"
+      description="Schedule a class session on the DNA 360 floor."
+      size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Class Title"
-          placeholder="e.g. Reformer Pilates (Level 2)"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--app-text-secondary)]">Class Category</label>
+            <label className="text-sm font-medium text-[var(--app-text-secondary)]">Class Title</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Reformer Pilates: Sculpt & Stretch"
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[var(--app-text-secondary)]">Category</label>
             <Select value={category} onValueChange={(val: any) => setCategory(val)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -155,9 +160,14 @@ export default function CreateClassModal({
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="usr_trainer_01">Rajesh Poojary (Head Coach)</SelectItem>
-                <SelectItem value="usr_trainer_02">Sneha Rao (Yoga & Pilates Lead)</SelectItem>
-                <SelectItem value="usr_trainer_03">Aftab Memon (Cycling & Spin)</SelectItem>
-                <SelectItem value="usr_trainer_04">Zeebran Shaikh (Strength & Boxing)</SelectItem>
+                <SelectItem value="usr_trainer_02">Aftab Memon (Head Coach)</SelectItem>
+                <SelectItem value="usr_trainer_03">Hemant Shirke (Reformer & Power Yoga Lead)</SelectItem>
+                <SelectItem value="usr_trainer_04">Zeebran Shaikh (Functional & Boxing)</SelectItem>
+                <SelectItem value="usr_trainer_05">Afzal Shah (Personal Trainer & Nutrition)</SelectItem>
+                <SelectItem value="usr_trainer_06">Kunal Chavan (Sports Nutritionist & CPT)</SelectItem>
+                <SelectItem value="usr_trainer_07">Mandar Shirke (FMS & Powerlifting Expert)</SelectItem>
+                <SelectItem value="usr_trainer_08">Ankur Saravade (Fat Loss Transformation)</SelectItem>
+                <SelectItem value="usr_trainer_09">Pramod Sawant (Conditioning Coach)</SelectItem>
               </SelectContent>
             </Select>
           </div>
