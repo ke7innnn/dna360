@@ -196,7 +196,7 @@ export default function LeadsPage() {
         />
         <StatTile
           label="CONVERSION RATE"
-          value={`${kpis.conversionRate}%`}
+          value={`${kpis.conversionRatePct}%`}
           icon={<TrendingUp className="w-4 h-4 text-[var(--green)]" />}
           delta={{ text: 'Target: 28%', type: 'ok' }}
         />
