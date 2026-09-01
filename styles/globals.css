@@ -43,9 +43,10 @@
   --r-pill:      999px;
   --r-full:      999px;
 
-  /* Minimal Typography System */
-  --font-display: 'Clash Display', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-ui:      'Satoshi', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Minimal & Artistic Typography System */
+  --font-artistic: 'Syne', 'Clash Display', 'Cabinet Grotesk', -apple-system, sans-serif;
+  --font-display: 'Clash Display', 'Syne', 'Cabinet Grotesk', sans-serif;
+  --font-ui:      'Satoshi', 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
   --font-data:    'Martian Mono', 'JetBrains Mono', ui-monospace, monospace;
 
   /* Compatibility bindings for legacy component compatibility */
@@ -115,6 +116,12 @@ body {
   font-family: var(--font-ui), 'Satoshi', sans-serif;
   color: var(--ink);
   background-color: transparent;
+}
+
+.font-artistic,
+[data-surface="app"] .font-artistic {
+  font-family: var(--font-artistic), 'Syne', 'Clash Display', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .font-display,

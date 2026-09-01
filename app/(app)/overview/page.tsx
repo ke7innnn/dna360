@@ -97,10 +97,10 @@ export default function FloorOverviewPage() {
       {/* ─── Topbar ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-white font-display tracking-tight">
+          <h1 className="text-2xl sm:text-[28px] font-bold text-white font-artistic tracking-tight">
             Floor overview
           </h1>
-          <p className="font-data text-[10px] text-[var(--ink-3)] tracking-wider mt-1">
+          <p className="font-data text-[10.5px] text-[var(--ink-3)] tracking-[0.14em] uppercase mt-1">
             {currentTime}
           </p>
         </div>
