@@ -147,12 +147,13 @@ export default function Sidebar({ role }: { role?: RoleName }) {
   const visibleGroups: AppNavGroup[] = isMember
     ? [
         {
-          label: 'Member Portal',
+          label: '',
           items: [
-            { id: 'dashboard', label: 'Member Dashboard', icon: 'LayoutDashboard', href: '/dashboard' },
-            { id: 'classes', label: 'Book Classes', icon: 'Calendar', href: '/classes' },
-            { id: 'attendance', label: 'My Access Log', icon: 'CheckCircle', href: '/attendance' },
-            { id: 'profile', label: 'Profile & Plan', icon: 'User', href: '/profile' },
+            { id: 'dashboard', label: 'Home', icon: 'LayoutDashboard', href: '/dashboard' },
+            { id: 'workouts', label: 'Workouts', icon: 'Dumbbell', href: '/m/programs' },
+            { id: 'progress', label: 'Progress', icon: 'TrendingUp', href: '/m/progress' },
+            { id: 'classes', label: 'Classes', icon: 'Calendar', href: '/classes' },
+            { id: 'membership', label: 'Membership', icon: 'CreditCard', href: '/profile' },
           ],
         },
       ]
@@ -247,10 +248,25 @@ export default function Sidebar({ role }: { role?: RoleName }) {
           ))}
         </nav>
 
-        {/* Sidebar Footer: Quick Search + User Chip */}
+        {/* Sidebar Footer: Early renewal card (Member) or Quick Search (Staff) + User Chip */}
         <div className="p-3 border-t border-[rgba(255,255,255,0.06)] space-y-2.5 shrink-0 bg-transparent">
-          {/* Quick Search Hint */}
-          {(!collapsed || mobileOpen) && (
+          {/* Member Early Renewal Notice */}
+          {isMember && (!collapsed || mobileOpen) && (
+            <Link
+              href="/profile"
+              className="block p-3 rounded-[16px] bg-[#0E131F]/90 border border-[rgba(59,130,246,0.28)] hover:border-[#3B82F6] transition-all text-xs group"
+            >
+              <div className="font-ui font-semibold text-white group-hover:text-[#60A5FA] transition-colors">
+                47 days left
+              </div>
+              <div className="text-[11px] text-[var(--ink-2)] mt-0.5 leading-snug">
+                Renew before 11 Oct to keep your rate
+              </div>
+            </Link>
+          )}
+
+          {/* Quick Search Hint (Staff Only) */}
+          {!isMember && (!collapsed || mobileOpen) && (
             <div className="flex items-center justify-between px-3 py-1.5 rounded-[var(--r-sm)] bg-[var(--surface)] border border-[var(--line)] text-xs text-[var(--muted)] select-none">
               <div className="flex items-center gap-2">
                 <Search className="w-3 h-3 text-[var(--muted)]" />

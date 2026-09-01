@@ -44,10 +44,11 @@
   --r-full:      999px;
 
   /* Minimal & Artistic Typography System */
+  --font-serif:    'Gambetta', 'Instrument Serif', Georgia, serif;
   --font-artistic: 'Syne', 'Clash Display', 'Cabinet Grotesk', -apple-system, sans-serif;
-  --font-display: 'Clash Display', 'Syne', 'Cabinet Grotesk', sans-serif;
-  --font-ui:      'Satoshi', 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
-  --font-data:    'Martian Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --font-display:  'Clash Display', 'Syne', 'Cabinet Grotesk', sans-serif;
+  --font-ui:       'Satoshi', 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+  --font-data:     'Martian Mono', 'JetBrains Mono', ui-monospace, monospace;
 
   /* Compatibility bindings for legacy component compatibility */
   --text:                     var(--ink);
@@ -116,6 +117,13 @@ body {
   font-family: var(--font-ui), 'Satoshi', sans-serif;
   color: var(--ink);
   background-color: transparent;
+}
+
+.font-serif,
+.font-voice,
+[data-surface="app"] .font-serif,
+[data-surface="app"] .font-voice {
+  font-family: var(--font-serif), 'Gambetta', 'Instrument Serif', Georgia, serif;
 }
 
 .font-artistic,
@@ -891,7 +899,7 @@ body {
   display: block;
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, #FF5C7A, #C86DD7);
+  background: linear-gradient(90deg, #2563EB, #60A5FA);
 }
 .member-bar-meta {
   display: flex;
@@ -1022,11 +1030,12 @@ body {
   stroke-width: 2.4;
 }
 .member-tick.done {
-  background: var(--rose);
-  border-color: var(--rose);
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  border-color: #3B82F6;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
 }
 .member-tick.done svg {
-  stroke: #12040A;
+  stroke: #FFFFFF;
 }
 .member-last {
   grid-column: 2 / span 2;
