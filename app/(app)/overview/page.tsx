@@ -253,17 +253,6 @@ export default function FloorOverviewPage() {
                 </div>
                 <span className="console-grow-p font-data text-white">29%</span>
               </div>
-
-              <div className="console-grow g3">
-                <div className="console-grow-ic">
-                  <ShoppingBag className="w-3.5 h-3.5 stroke-white" />
-                </div>
-                <div className="console-grow-t">
-                  <b>Store · 205 SKUs</b>
-                  <span className="text-white">₹0.8L</span>
-                </div>
-                <span className="console-grow-p font-data text-white">9%</span>
-              </div>
             </div>
           </div>
         </div>
