@@ -25,11 +25,11 @@ export default function MemberTopNav({ onOpenQr }: { onOpenQr?: () => void }) {
   ]
 
   return (
-    <header className="hidden md:flex items-center justify-between h-16 px-6 lg:px-8 border-b border-[rgba(255,255,255,0.07)] bg-[#05070E]/90 backdrop-blur-xl sticky top-0 z-30 select-none">
+    <header className="hidden md:flex items-center justify-between h-16 px-6 lg:px-8 border-b border-[rgba(56,189,248,0.15)] bg-gradient-to-b from-[#091024]/95 via-[#060914]/95 to-[#05070E]/95 backdrop-blur-2xl sticky top-0 z-30 select-none shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
       {/* Brand & Badge */}
       <div className="flex items-center gap-6">
         <Link href="/m" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#0C1220] border border-[rgba(56,189,248,0.3)] flex items-center justify-center p-1 shadow-[0_0_14px_rgba(59,130,246,0.35)] shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0E162B] to-[#0A0E1A] border border-[rgba(56,189,248,0.35)] flex items-center justify-center p-1 shadow-[0_0_14px_rgba(59,130,246,0.4)] shrink-0">
             <Image
               src="/images/dna-emblem.png"
               alt="DNA 360"
@@ -50,22 +50,22 @@ export default function MemberTopNav({ onOpenQr }: { onOpenQr?: () => void }) {
           </div>
         </Link>
 
-        {/* Desktop Links */}
-        <nav className="flex items-center gap-1 ml-4">
+        {/* Desktop Links in Gradient Capsule */}
+        <nav className="flex items-center gap-1.5 ml-4 p-1 rounded-full bg-gradient-to-r from-[#0C1324]/90 via-[#0F1B35]/90 to-[#0C1324]/90 border border-[rgba(56,189,248,0.22)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_4px_16px_rgba(0,0,0,0.4)] backdrop-blur-md">
           {navLinks.map((link) => {
             const isActive =
               link.href === '/m'
-                ? pathname === '/m'
+                ? pathname === '/m' || pathname === '/dashboard'
                 : pathname.startsWith(link.href)
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'px-3 py-1.5 rounded-full font-ui text-xs font-medium transition-all',
+                  'px-3.5 py-1.5 rounded-full font-ui text-xs transition-all border',
                   isActive
-                    ? 'bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white shadow-[0_2px_10px_rgba(59,130,246,0.35)]'
-                    : 'text-[var(--ink-2)] hover:text-white hover:bg-[var(--surface-2)]'
+                    ? 'bg-gradient-to-r from-[#1E40AF] via-[#3B82F6] to-[#38BDF8] text-white font-semibold border-transparent shadow-[0_0_16px_rgba(59,130,246,0.6)]'
+                    : 'text-[var(--ink-2)] border-transparent hover:text-white hover:bg-gradient-to-r hover:from-[rgba(59,130,246,0.18)] hover:to-[rgba(56,189,248,0.15)] hover:border-[rgba(56,189,248,0.25)] hover:shadow-[0_0_10px_rgba(56,189,248,0.2)]'
                 )}
               >
                 {link.label}
