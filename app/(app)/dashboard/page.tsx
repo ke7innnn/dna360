@@ -284,9 +284,9 @@ export default function MemberDashboardPage() {
           </div>
 
           {/* Card 2: PT Sessions Left */}
-          <div
-            onClick={() => router.push('/m/progress')}
-            className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
+          <Link
+            href="/m/ledger"
+            className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] hover:border-[#38BDF8] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.15)] border border-[rgba(59,130,246,0.3)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform">
@@ -302,12 +302,12 @@ export default function MemberDashboardPage() {
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-[var(--ink-3)] group-hover:text-white transition-colors" />
-          </div>
+          </Link>
 
           {/* Card 3: Class Booking */}
-          <div
-            onClick={() => router.push('/classes')}
-            className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
+          <Link
+            href="/m/classes"
+            className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] hover:border-[#38BDF8] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.15)] border border-[rgba(59,130,246,0.3)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform">
@@ -323,12 +323,12 @@ export default function MemberDashboardPage() {
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-[var(--ink-3)] group-hover:text-white transition-colors" />
-          </div>
+          </Link>
 
           {/* Card 4: Log a Workout */}
-          <div
-            onClick={() => router.push('/m/session')}
-            className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
+          <Link
+            href="/m/session"
+            className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] hover:border-[#38BDF8] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-white group-hover:scale-105 transition-transform">
@@ -344,7 +344,7 @@ export default function MemberDashboardPage() {
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-[var(--ink-3)] group-hover:text-white transition-colors" />
-          </div>
+          </Link>
         </div>
       </div>
 
