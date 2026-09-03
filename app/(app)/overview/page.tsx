@@ -153,7 +153,7 @@ export default function FloorOverviewPage() {
             EXPIRING IN 30 DAYS
           </p>
           <p className="v text-white">47</p>
-          <p className="d text-[var(--rose)] font-data">▼ 11 unreached</p>
+          <p className="d text-[#38BDF8] font-data">▼ 11 unreached</p>
         </div>
       </div>
 
@@ -189,10 +189,10 @@ export default function FloorOverviewPage() {
                   <span>{c.day}</span>
                   <div className="console-dots">
                     {c.hasCheckin && (
-                      <i className="dr" style={c.isToday ? { background: '#12040A' } : undefined} />
+                      <i className="dr" style={c.isToday ? { background: '#FFFFFF' } : undefined} />
                     )}
                     {c.hasPT && (
-                      <i className="dv" style={c.isToday ? { background: '#12040A' } : undefined} />
+                      <i className="dv" style={c.isToday ? { background: '#FFFFFF' } : undefined} />
                     )}
                   </div>
                 </div>
@@ -201,7 +201,7 @@ export default function FloorOverviewPage() {
 
             <div className="flex items-center gap-4 mt-3 text-[10.5px] text-[var(--ink-3)]">
               <span className="flex items-center gap-1.5">
-                <i className="w-1.5 h-1.5 rounded-full bg-[var(--rose)] inline-block" /> Check-ins
+                <i className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] inline-block" /> Check-ins
               </span>
               <span className="flex items-center gap-1.5">
                 <i className="w-1.5 h-1.5 rounded-full bg-[var(--blue)] inline-block" /> PT sessions
@@ -274,7 +274,7 @@ export default function FloorOverviewPage() {
             {/* Row 1: Memberships Expiring */}
             <div className="console-arow">
               <div className="console-arow-ic">
-                <Clock className="w-3.5 h-3.5 stroke-[var(--rose)]" />
+                <Clock className="w-3.5 h-3.5 stroke-[#38BDF8]" />
               </div>
               <div className="console-arow-t">
                 <b className="text-white">Memberships expiring this week</b>

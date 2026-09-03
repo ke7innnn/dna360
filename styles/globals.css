@@ -289,7 +289,7 @@ h1 em, h2 em, h3 em, .page-title em {
    STAFF CONSOLE DIRECTION TOKENS & UTILITIES
    ============================================================ */
 :root {
-  --rose: #FF5C7A;
+  --rose: #38BDF8;
   --violet: #C86DD7;
   --blue: #6E8CF0;
   --ok: #4ADE80;
@@ -315,11 +315,11 @@ h1 em, h2 em, h3 em, .page-title em {
   width: 40px;
   height: 40px;
   border-radius: 13px;
-  background: linear-gradient(150deg, #FF5C7A, #C86DD7);
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 50%, #38BDF8 100%);
   display: grid;
   place-items: center;
   margin-bottom: 10px;
-  box-shadow: 0 0 16px rgba(255, 92, 122, 0.4);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
 }
 .staff-rail-logo .caps {
   display: flex;
@@ -388,11 +388,11 @@ h1 em, h2 em, h3 em, .page-title em {
   color: var(--ink);
 }
 .console-chip.solid {
-  background: var(--rose);
-  color: #12040A;
-  border-color: var(--rose);
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 48%, #38BDF8 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(56, 189, 248, 0.45);
   font-weight: 700;
-  box-shadow: 0 0 14px rgba(255, 92, 122, 0.35);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
 }
 
 /* Console Stat Strip */
@@ -469,9 +469,10 @@ h1 em, h2 em, h3 em, .page-title em {
   color: var(--ink-3);
 }
 .console-cal .d.today {
-  background: var(--rose);
-  color: #12040A;
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 48%, #38BDF8 100%);
+  color: #FFFFFF;
   font-weight: 700;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.55);
 }
 .console-dots {
   display: flex;
@@ -487,7 +488,7 @@ h1 em, h2 em, h3 em, .page-title em {
   display: block;
 }
 .console-dots .dr {
-  background: var(--rose);
+  background: #38BDF8;
 }
 .console-dots .dv {
   background: var(--blue);
@@ -541,7 +542,7 @@ h1 em, h2 em, h3 em, .page-title em {
 }
 .console-grow.g1::before {
   width: 62%;
-  background: linear-gradient(90deg, rgba(255, 92, 122, 0.42), rgba(255, 92, 122, 0.06));
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.45), rgba(56, 189, 248, 0.08));
 }
 .console-grow.g2::before {
   width: 41%;
@@ -604,7 +605,7 @@ h1 em, h2 em, h3 em, .page-title em {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  background: linear-gradient(135deg, rgba(255, 92, 122, 0.13), rgba(200, 109, 215, 0.05) 55%, transparent);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(56, 189, 248, 0.05) 55%, transparent);
 }
 .console-att-head h3 {
   font-family: var(--font-display), sans-serif;
@@ -623,7 +624,8 @@ h1 em, h2 em, h3 em, .page-title em {
   font-family: var(--font-display), sans-serif;
   font-size: 34px;
   font-weight: 500;
-  color: var(--rose);
+  color: #38BDF8;
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
   letter-spacing: -0.02em;
 }
 .console-arow {
@@ -712,7 +714,8 @@ h1 em, h2 em, h3 em, .page-title em {
 .console-bfill {
   width: 16px;
   border-radius: 8px;
-  background: linear-gradient(180deg, #FF7E96, #FF5C7A);
+  background: linear-gradient(180deg, #38BDF8 0%, #2563EB 100%);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
   position: relative;
 }
 .console-blab {
@@ -804,8 +807,8 @@ h1 em, h2 em, h3 em, .page-title em {
   color: var(--warn);
 }
 .tag-risk {
-  background: rgba(255, 92, 122, 0.14);
-  color: var(--rose);
+  background: rgba(56, 189, 248, 0.14);
+  color: #38BDF8;
 }
 
 /* ============================================================
@@ -980,11 +983,12 @@ h1 em, h2 em, h3 em, .page-title em {
   background: rgba(255, 255, 255, 0.055);
 }
 .member-streak i.on {
-  background: rgba(255, 92, 122, 0.14);
-  border: 1px solid rgba(255, 92, 122, 0.3);
+  background: rgba(77, 141, 255, 0.28);
+  border: 1px solid rgba(77, 141, 255, 0.45);
 }
 .member-streak i.today {
-  background: var(--rose);
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 48%, #38BDF8 100%);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 .member-set {
   display: grid;
@@ -1074,7 +1078,7 @@ h1 em, h2 em, h3 em, .page-title em {
 .member-rest b {
   font-family: var(--font-data), 'Martian Mono', monospace;
   font-size: 15px;
-  color: var(--rose);
+  color: #38BDF8;
 }
 .member-rest span {
   font-size: 11.5px;

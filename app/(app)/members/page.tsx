@@ -200,8 +200,8 @@ export default function MembersPage() {
           className={cn(
             'console-chip flex items-center gap-1.5 text-xs transition-all',
             statusFilter === 'at_risk'
-              ? 'bg-[rgba(255,92,122,0.18)] border-[var(--rose)] text-[var(--rose)] font-semibold'
-              : 'border-[rgba(255,92,122,0.4)] text-[var(--rose)] hover:bg-[rgba(255,92,122,0.1)]'
+              ? 'bg-[rgba(56,189,248,0.18)] border-[#38BDF8] text-[#38BDF8] font-semibold'
+              : 'border-[rgba(56,189,248,0.4)] text-[#38BDF8] hover:bg-[rgba(56,189,248,0.1)]'
           )}
         >
           <span>At risk · 23</span>
@@ -342,7 +342,7 @@ export default function MembersPage() {
                     {/* Dues */}
                     <td className="py-2.5 px-3 font-data text-[11.5px]">
                       {duesAmount ? (
-                        <span className="text-[var(--rose)] font-semibold">{duesAmount}</span>
+                        <span className="text-[#38BDF8] font-semibold">{duesAmount}</span>
                       ) : (
                         <span className="text-[var(--ink-3)]">—</span>
                       )}
