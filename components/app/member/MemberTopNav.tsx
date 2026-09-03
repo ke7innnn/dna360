@@ -8,6 +8,8 @@ import { useAuth } from '@/context/AuthContext'
 import { getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
+import Image from 'next/image'
+
 export default function MemberTopNav({ onOpenQr }: { onOpenQr?: () => void }) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
@@ -27,8 +29,16 @@ export default function MemberTopNav({ onOpenQr }: { onOpenQr?: () => void }) {
       {/* Brand & Badge */}
       <div className="flex items-center gap-6">
         <Link href="/m" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#1E40AF] via-[#3B82F6] to-[#38BDF8] flex items-center justify-center font-bold text-white font-serif text-sm shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-            360
+          <div className="w-8 h-8 rounded-xl bg-[#0C1220] border border-[rgba(56,189,248,0.3)] flex items-center justify-center p-1 shadow-[0_0_14px_rgba(59,130,246,0.35)] shrink-0">
+            <Image
+              src="/images/dna-emblem.png"
+              alt="DNA 360"
+              width={24}
+              height={24}
+              priority
+              unoptimized
+              className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(56,189,248,0.7)]"
+            />
           </div>
           <div>
             <span className="font-display font-semibold text-sm tracking-tight text-white block leading-tight">

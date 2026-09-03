@@ -24,20 +24,22 @@ const iconMap: Record<string, LucideIcon> = {
 
 import Image from 'next/image'
 
-// ─── DNA 360 Logo Mark Motif (Staff Console Direction) ───
+// ─── DNA 360 Official Logo Mark ───
 function DnaLogoMark() {
   return (
     <div
-      className="w-9 h-9 rounded-[13px] bg-gradient-to-br from-[#FF5C7A] to-[#C86DD7] flex items-center justify-center shadow-[0_0_16px_rgba(255,92,122,0.4)] shrink-0"
+      className="w-10 h-10 rounded-[12px] bg-[#0C1220] border border-[rgba(56,189,248,0.3)] flex items-center justify-center p-1.5 shadow-[0_0_16px_rgba(59,130,246,0.35)] shrink-0 overflow-hidden relative group transition-all"
       aria-label="DNA 360 Brand Mark"
     >
-      <div className="flex items-center gap-[2px]">
-        <i className="w-[2.5px] h-[8px] rounded-[2px] bg-[#0A0A0C]/80 block" />
-        <i className="w-[2.5px] h-[12px] rounded-[2px] bg-[#0A0A0C]/80 block" />
-        <i className="w-[2.5px] h-[16px] rounded-[2px] bg-[#0A0A0C]/80 block" />
-        <i className="w-[2.5px] h-[12px] rounded-[2px] bg-[#0A0A0C]/80 block" />
-        <i className="w-[2.5px] h-[8px] rounded-[2px] bg-[#0A0A0C]/80 block" />
-      </div>
+      <Image
+        src="/images/dna-emblem.png"
+        alt="DNA 360"
+        width={34}
+        height={34}
+        priority
+        unoptimized
+        className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(56,189,248,0.7)] transition-transform duration-200 group-hover:scale-110"
+      />
     </div>
   )
 }
