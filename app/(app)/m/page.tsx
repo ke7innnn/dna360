@@ -1,379 +1,291 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import {
-  Flame,
+  Bell,
+  QrCode,
   Calendar,
   Clock,
-  Play,
   Dumbbell,
-  ArrowRight,
+  Play,
   TrendingUp,
-  Award,
-  BookOpen,
   Sparkles,
   ChevronRight,
-  RotateCcw,
+  Flame,
+  Award,
   CheckCircle2,
-  ShieldCheck,
-  Zap,
 } from 'lucide-react'
-import { Card } from '@/components/app/ui/glass-card'
-import Button from '@/components/app/ui/button'
-import Badge, { StatusPill } from '@/components/app/ui/badge'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
-import type { WorkoutSession, MemberProgram } from '@/types/training'
+import MemberQrModal from '@/components/app/member/MemberQrModal'
+import { getInitials, cn } from '@/lib/utils'
 
-export default function MemberTrainingHomePage() {
+export default function MemberAppHomePage() {
   const router = useRouter()
   const { user } = useAuth()
 
-  const [loading, setLoading] = useState(true)
-  const [activeSession, setActiveSession] = useState<WorkoutSession | null>(null)
-  const [activeProgram, setActiveProgram] = useState<MemberProgram | null>(null)
-  const [history, setHistory] = useState<WorkoutSession[]>([])
-  const [isStarting, setIsStarting] = useState(false)
+  const userName = user?.name ? user.name.split(' ')[0] : 'Aditi'
+  const userFullName = user?.name || 'Aditi Deshpande'
+  const initials = getInitials(userFullName) || 'AD'
 
-  // Fetch member sessions & active program
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const res = await fetch('/api/training/sessions')
-        if (res.ok) {
-          const data = await res.json()
-          setActiveSession(data.activeSession)
-          setActiveProgram(data.activeProgram)
-          setHistory(data.history || [])
-        }
-      } catch (err) {
-        console.error('Failed to load training home:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadData()
-  }, [])
+  const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [selectedDay, setSelectedDay] = useState('Tue 1')
 
-  // Start freestyle workout
-  const handleStartFreestyle = async (title?: string) => {
-    setIsStarting(true)
-    try {
-      const res = await fetch('/api/training/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title || 'Freestyle Workout' }),
-      })
-      if (res.ok) {
-        toast.success('Workout session started')
-        router.push('/m/session')
-      } else {
-        toast.error('Failed to start session')
-      }
-    } catch {
-      toast.error('Network error starting session')
-    } finally {
-      setIsStarting(false)
-    }
-  }
-
-  // Attendance Heatmap simulation (last 28 days)
-  const streakDays = 18
-  const daysGrid = Array.from({ length: 28 }, (_, i) => {
-    const isAttended = i >= 28 - streakDays || (i % 3 === 0 && i < 10)
-    return { day: i + 1, attended: isAttended }
-  })
-
-  // Expiry calculation (simulated 14 days remaining for high-retention nudge)
-  const daysUntilExpiry = 14
-  const expiryDateFormatted = '15 Sep 2026'
+  const weekDays = [
+    { day: 'Sat', num: '29', hasDot: true },
+    { day: 'Sun', num: '30', hasDot: false },
+    { day: 'Mon', num: '31', hasDot: true },
+    { day: 'Tue', num: '1', hasDot: false, isSelected: true },
+    { day: 'Wed', num: '2', hasDot: false },
+    { day: 'Thu', num: '3', hasDot: false },
+    { day: 'Fri', num: '4', hasDot: false },
+  ]
 
   return (
-    <div className="space-y-6">
-      {/* ─── Hero Answering the Three Questions (§8.1) ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Q1: What's my workout today? */}
-        <Card className="md:col-span-2 relative overflow-hidden p-5 sm:p-6 border-[rgba(59,130,246,0.3)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface)] to-[rgba(59,130,246,0.08)]">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#3B82F6] opacity-[0.07] rounded-full blur-3xl pointer-events-none" />
-
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <span className="text-[11px] font-mono tracking-wider uppercase text-[#60A5FA] font-semibold flex items-center gap-1.5">
-              <Zap className="w-3 h-3" /> Question 1 · Today's Workout
-            </span>
-            {activeProgram ? (
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[rgba(52,211,153,0.15)] text-[#34D399] border border-[rgba(52,211,153,0.3)] font-medium">
-                {activeProgram.coachingMode === 'TRAINER_LED' ? 'Trainer-Led' : 'Self-Coached'}
-              </span>
-            ) : (
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--muted)] border border-[var(--line)]">
-                Freestyle Mode
-              </span>
-            )}
-          </div>
-
-          {activeSession ? (
-            // Active session in progress
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white font-display">
-                  {activeSession.title || 'In-Progress Workout'}
-                </h3>
-                <p className="text-xs text-[var(--muted)] mt-1 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#34D399] animate-pulse" />
-                  Currently running · {activeSession.exercises.length} exercises logged
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Link href="/m/session">
-                  <Button variant="primary" className="gap-2 shadow-[0_0_16px_rgba(59,130,246,0.4)]">
-                    <Play className="w-4 h-4 fill-white" /> Resume Workout
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          ) : activeProgram ? (
-            // Scheduled program day
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white font-display">
-                  {activeProgram.snapshot?.name || 'Assigned Programme'}
-                </h3>
-                <p className="text-xs text-[var(--muted)] mt-1">
-                  Week {activeProgram.currentVersion} · {activeProgram.snapshot?.daysPerWeek || 3} days per week
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Button
-                  variant="primary"
-                  onClick={() => handleStartFreestyle(activeProgram.snapshot?.days?.[0]?.label || 'Scheduled Workout')}
-                  disabled={isStarting}
-                  className="gap-2 shadow-[0_0_16px_rgba(59,130,246,0.4)]"
-                >
-                  <Play className="w-4 h-4 fill-white" /> Start Workout
-                </Button>
-                <Link href="/m/programs">
-                  <Button variant="secondary" className="gap-1.5 text-xs">
-                    View Plan <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          ) : (
-            // Freestyle lifter with no program — high contrast primary CTA (§8.1)
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white font-display">
-                  Ready to Train
-                </h3>
-                <p className="text-xs text-[var(--ink-2)] mt-1">
-                  Walk in, lift, and log sets with offline-first tracking and automatic rest timer.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Button
-                  variant="primary"
-                  onClick={() => handleStartFreestyle()}
-                  disabled={isStarting}
-                  className="gap-2 bg-gradient-to-r from-[#3B82F6] to-[#1D4ED8] text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] font-semibold px-5"
-                >
-                  <Dumbbell className="w-4 h-4" /> Log a Workout
-                </Button>
-
-                {history.length > 0 && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleStartFreestyle(`Repeat: ${history[0].title || 'Last Workout'}`)}
-                    className="gap-1.5 text-xs text-[var(--ink-2)]"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" /> Repeat Last Session
-                  </Button>
-                )}
-
-                <Link href="/m/programs">
-                  <Button variant="ghost" className="gap-1 text-xs text-[#60A5FA]">
-                    Browse Gym Library <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* Q2: When does my plan expire? (§8.6) */}
-        <Card className="p-5 flex flex-col justify-between border-[rgba(245,158,11,0.25)] bg-gradient-to-br from-[var(--surface)] to-[rgba(245,158,11,0.06)]">
+    <div className="w-full max-w-6xl mx-auto pt-1 pb-24 px-4 select-none">
+      {/* ─── Mobile Header (Avatar, Greeting, Notification Bell) ─── */}
+      <div className="member-hdr md:hidden">
+        <div className="member-who">
+          <div className="member-pfp">{initials}</div>
           <div>
-            <span className="text-[11px] font-mono tracking-wider uppercase text-[#F59E0B] font-semibold flex items-center gap-1.5 mb-2">
-              <Calendar className="w-3 h-3" /> Question 2 · Plan Status
-            </span>
-            <div className="mt-2">
-              <div className="text-3xl font-extrabold text-white font-display flex items-baseline gap-1.5">
-                {daysUntilExpiry} <span className="text-sm font-normal text-[var(--muted)]">days left</span>
-              </div>
-              <p className="text-xs text-[var(--muted)] mt-1">
-                Annual Gym Membership · Valid till {expiryDateFormatted}
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-4 mt-auto">
-            <button
-              onClick={() => toast.success('One-Tap Renewal Initiated', { description: 'Razorpay checkout opening for Annual Plan renew.' })}
-              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-black font-semibold text-xs shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
-            >
-              Renew Membership <Sparkles className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Q3: Am I on a streak? (§8.5 Turnstile Attendance Heatmap) */}
-      <Card className="p-5 sm:p-6 border-[var(--line)]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <span className="text-[11px] font-mono tracking-wider uppercase text-[#34D399] font-semibold flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 fill-[#34D399]" /> Question 3 · Consistency & Streak
-            </span>
-            <h4 className="text-lg font-bold text-white font-display mt-1">
-              {streakDays} Day Turnstile Streak
-            </h4>
-            <p className="text-xs text-[var(--muted)]">
-              Verified physical check-ins at DNA 360 Powai Studio
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs text-[var(--ink-2)]">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded bg-[rgba(255,255,255,0.06)] border border-[var(--line)]" />
-              <span>Rest</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded bg-[#34D399] shadow-[0_0_6px_#34D399]" />
-              <span>Checked In</span>
-            </div>
+            <p className="hi">Good evening</p>
+            <p className="nm">{userName}</p>
           </div>
         </div>
 
-        {/* 28-Day Heatmap Grid */}
-        <div className="grid grid-cols-7 sm:grid-cols-14 gap-2 pt-2">
-          {daysGrid.map((d) => (
-            <div
-              key={d.day}
-              className={`h-7 rounded-lg flex items-center justify-center text-[10px] font-mono transition-all ${
-                d.attended
-                  ? 'bg-gradient-to-br from-[#34D399] to-[#059669] text-black font-bold shadow-[0_0_8px_rgba(52,211,153,0.3)]'
-                  : 'bg-[var(--surface-2)] text-[var(--muted)] border border-[var(--line)]'
-              }`}
-              title={`Day ${d.day}: ${d.attended ? 'Checked In' : 'Rest'}`}
-            >
-              {d.day}
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* ─── Quick Feature Grid (§8) ─── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Link href="/m/programs">
-          <Card className="p-4 hover:border-[rgba(59,130,246,0.4)] transition-all group cursor-pointer h-full flex flex-col justify-between">
-            <div className="w-8 h-8 rounded-lg bg-[rgba(59,130,246,0.15)] text-[#60A5FA] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <div>
-              <h5 className="text-sm font-semibold text-white group-hover:text-[#60A5FA] transition-colors">
-                Gym Library
-              </h5>
-              <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                Browse curated programs & start in 2 taps
-              </p>
-            </div>
-          </Card>
-        </Link>
-
-        <Link href="/m/progress">
-          <Card className="p-4 hover:border-[rgba(52,211,153,0.4)] transition-all group cursor-pointer h-full flex flex-col justify-between">
-            <div className="w-8 h-8 rounded-lg bg-[rgba(52,211,153,0.15)] text-[#34D399] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Award className="w-4 h-4" />
-            </div>
-            <div>
-              <h5 className="text-sm font-semibold text-white group-hover:text-[#34D399] transition-colors">
-                PR Trophy Board
-              </h5>
-              <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                All-time heaviest lifts & 1RM records
-              </p>
-            </div>
-          </Card>
-        </Link>
-
-        <Link href="/classes">
-          <Card className="p-4 hover:border-[rgba(245,158,11,0.4)] transition-all group cursor-pointer h-full flex flex-col justify-between">
-            <div className="w-8 h-8 rounded-lg bg-[rgba(245,158,11,0.15)] text-[#F59E0B] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <div>
-              <h5 className="text-sm font-semibold text-white group-hover:text-[#F59E0B] transition-colors">
-                Studio Classes
-              </h5>
-              <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                Reformer Pilates, Yoga & Spinning timetable
-              </p>
-            </div>
-          </Card>
-        </Link>
-
-        <Link href="/m/ledger">
-          <Card className="p-4 hover:border-[rgba(129,140,248,0.4)] transition-all group cursor-pointer h-full flex flex-col justify-between">
-            <div className="w-8 h-8 rounded-lg bg-[rgba(129,140,248,0.15)] text-[#818CF8] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <h5 className="text-sm font-semibold text-white group-hover:text-[#818CF8] transition-colors">
-                PT Balance
-              </h5>
-              <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                Immutable deduction history & entitlements
-              </p>
-            </div>
-          </Card>
-        </Link>
+        <button
+          onClick={() => {
+            toast.info('No new notifications', {
+              description: 'Next PT session confirmed for tomorrow at 7:00 AM.',
+            })
+          }}
+          className="member-icbtn"
+          aria-label="Notifications"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.7 21a2 2 0 01-3.4 0" />
+          </svg>
+          <span className="member-dotb" />
+        </button>
       </div>
 
-      {/* ─── Recent Workout Timeline ─── */}
-      {history.length > 0 && (
-        <Card className="p-5 sm:p-6 border-[var(--line)]">
-          <h4 className="text-sm font-bold text-white font-display mb-3 flex items-center justify-between">
-            <span>Recent Completed Workouts</span>
-            <Link href="/m/progress" className="text-xs font-normal text-[#60A5FA] hover:underline">
-              Full History & Charts →
-            </Link>
-          </h4>
+      {/* ─── Responsive Grid: 1 col on Mobile, 12 cols on Desktop PC ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left / Main Column (7 cols on PC) */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* QR Bar Shortcut */}
+          <div
+            onClick={() => setQrModalOpen(true)}
+            className="member-qrbar"
+          >
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <path d="M14 14h3v3M20 20h1M17 21h1" />
+            </svg>
+            <b>Your check-in code</b>
+            <div className="go">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </div>
+          </div>
 
-          <div className="divide-y divide-[var(--line)]">
-            {history.slice(0, 3).map((s) => (
-              <div key={s.id} className="py-3 flex items-center justify-between gap-4">
-                <div>
-                  <h6 className="text-sm font-medium text-white">
-                    {s.title || 'Workout Session'}
-                  </h6>
-                  <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                    {s.completedAt ? new Date(s.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recent'} · {s.exercises.length} movements · RPE {s.perceivedEffort || 8}/10
-                  </p>
+          {/* Week Day Pill Selector */}
+          <div className="member-week">
+            {weekDays.map((w) => {
+              const id = `${w.day} ${w.num}`
+              const isSel = selectedDay === id || (!selectedDay && w.isSelected)
+              return (
+                <div
+                  key={id}
+                  onClick={() => setSelectedDay(id)}
+                  className={cn(
+                    'member-day',
+                    w.hasDot && 'dot',
+                    isSel && 'sel'
+                  )}
+                >
+                  <p className="dn">{w.day}</p>
+                  <p className="dd">{w.num}</p>
                 </div>
-
-                <span className="text-xs px-2.5 py-1 rounded-full bg-[rgba(52,211,153,0.1)] text-[#34D399] border border-[rgba(52,211,153,0.2)] flex items-center gap-1 font-mono">
-                  <CheckCircle2 className="w-3 h-3" /> Done
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
-        </Card>
-      )}
+
+          {/* Section: Today */}
+          <div className="member-sec">
+            <h3>Today</h3>
+            <Link href="/m/programs">History</Link>
+          </div>
+
+          {/* Hero Workout Card (wcard) */}
+          <div className="member-wcard">
+            <div>
+              <span className="member-tag">FROM ROHAN · WEEK 3</span>
+              <h2>Push Day</h2>
+              <p>Chest, shoulders and triceps</p>
+              <p className="meta">6 exercises · 52 min</p>
+            </div>
+
+            <button
+              onClick={() => router.push('/m/session')}
+              className="member-cta"
+            >
+              Start now
+            </button>
+
+            {/* Silhouette Figure */}
+            <div className="member-figure">
+              <span>DNA 360</span>
+            </div>
+          </div>
+
+          {/* Next Class Row */}
+          <div className="member-sec pt-2">
+            <h3>Next class</h3>
+            <Link href="/m/classes">See all</Link>
+          </div>
+
+          <Link href="/m/classes" className="member-lrow block">
+            <div className="flex items-center gap-3">
+              <div className="member-lic" style={{ background: 'var(--t2)' }}>
+                <svg viewBox="0 0 24 24" style={{ stroke: '#6FD4F5' }}>
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+              </div>
+              <div className="member-lt">
+                <b>Spin · Thu 7:00 pm</b>
+                <span>Booked · Tanvi · 2 spots left</span>
+              </div>
+              <div className="member-go2">
+                <svg viewBox="0 0 24 24">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+
+          {/* Mobile Membership & Streak (visible only on mobile) */}
+          <div className="space-y-4 lg:hidden pt-2">
+            {/* Membership Card */}
+            <div className="member-card">
+              <div className="member-mem-top">
+                <b>Premium Annual</b>
+                <span className="member-pill member-p-ok">ACTIVE</span>
+              </div>
+              <div className="member-bar">
+                <i style={{ width: '71%' }} />
+              </div>
+              <div className="member-meta2">
+                <span>47 days left</span>
+                <span>6 of 12 PT sessions</span>
+              </div>
+            </div>
+
+            {/* Streak */}
+            <div className="member-sec">
+              <h3>Streak</h3>
+              <a href="#">12 days</a>
+            </div>
+            <div className="member-streak-bar">
+              <i className="on" />
+              <i className="on" />
+              <i />
+              <i className="on" />
+              <i className="on" />
+              <i className="on" />
+              <i className="now" />
+            </div>
+          </div>
+        </div>
+
+        {/* Right / Desktop PC Column (5 cols on PC) */}
+        <div className="hidden lg:block lg:col-span-5 space-y-4">
+          {/* Live Rolling QR Check-in Box on PC */}
+          <div className="member-card p-5 text-center flex flex-col items-center">
+            <div className="flex items-center justify-between w-full mb-2">
+              <span className="font-ui text-xs font-bold text-white">Digital Access Pass</span>
+              <span className="font-data text-[10px] text-[#38BDF8]">Live Rolling OTP</span>
+            </div>
+
+            <div
+              onClick={() => setQrModalOpen(true)}
+              className="w-44 h-44 bg-white rounded-2xl p-3 my-2 shadow-[0_0_35px_rgba(59,130,246,0.4)] cursor-pointer hover:scale-105 transition-transform"
+              title="Click to enlarge"
+            >
+              <svg viewBox="0 0 100 100" className="w-full h-full">
+                <rect x="4" y="4" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
+                <rect x="12" y="12" width="8" height="8" fill="#000" rx="1.5" />
+                <rect x="72" y="4" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
+                <rect x="80" y="12" width="8" height="8" fill="#000" rx="1.5" />
+                <rect x="4" y="72" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
+                <rect x="12" y="80" width="8" height="8" fill="#000" rx="1.5" />
+                <g fill="#000">
+                  <rect x="36" y="6" width="5" height="5" /><rect x="46" y="6" width="5" height="5" />
+                  <rect x="36" y="16" width="5" height="5" /><rect x="51" y="16" width="5" height="5" />
+                  <rect x="41" y="21" width="5" height="5" /><rect x="56" y="21" width="5" height="5" />
+                  <rect x="6" y="36" width="5" height="5" /><rect x="16" y="36" width="5" height="5" />
+                  <rect x="36" y="36" width="5" height="5" /><rect x="46" y="41" width="5" height="5" />
+                  <rect x="71" y="36" width="5" height="5" /><rect x="81" y="41" width="5" height="5" />
+                  <rect x="36" y="56" width="5" height="5" /><rect x="46" y="61" width="5" height="5" />
+                  <rect x="36" y="71" width="5" height="5" /><rect x="46" y="76" width="5" height="5" />
+                </g>
+              </svg>
+            </div>
+
+            <p className="font-display font-semibold text-base text-white mt-1">{userFullName}</p>
+            <p className="font-data text-[10px] text-[var(--ink-3)]">DNA-0412 · PREMIUM ANNUAL</p>
+            <div className="member-qrtimer mt-3 text-xs">
+              <i />
+              <span>Rotates every 30s</span>
+            </div>
+          </div>
+
+          {/* Membership Plan Card */}
+          <div className="member-card">
+            <div className="member-mem-top">
+              <b>Premium Annual</b>
+              <span className="member-pill member-p-ok">ACTIVE</span>
+            </div>
+            <div className="member-bar">
+              <i style={{ width: '71%' }} />
+            </div>
+            <div className="member-meta2">
+              <span>47 days left</span>
+              <span>6 of 12 PT sessions</span>
+            </div>
+          </div>
+
+          {/* Streak Card */}
+          <div className="member-card">
+            <div className="member-sec mb-2">
+              <h3>Workout streak</h3>
+              <span className="text-xs text-[#38BDF8] font-bold">12 days</span>
+            </div>
+            <div className="member-streak-bar">
+              <i className="on" />
+              <i className="on" />
+              <i />
+              <i className="on" />
+              <i className="on" />
+              <i className="on" />
+              <i className="now" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Check-in QR Modal */}
+      <MemberQrModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+      />
     </div>
   )
 }

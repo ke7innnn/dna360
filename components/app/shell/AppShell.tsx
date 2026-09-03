@@ -20,9 +20,10 @@ function AppShellInner({
   const pathname = usePathname()
 
   const isAuthRoute = pathname === '/login' || pathname === '/forgot-password'
+  const isMemberRoute = pathname.startsWith('/m')
 
-  if (isAuthRoute) {
-    return <div className="min-h-screen relative z-10">{children}</div>
+  if (isAuthRoute || isMemberRoute) {
+    return <div className="min-h-screen relative z-10" data-surface={isMemberRoute ? 'member' : 'app'}>{children}</div>
   }
 
   const activeRoleSlug = (user?.role?.slug as RoleName) || role || 'owner'

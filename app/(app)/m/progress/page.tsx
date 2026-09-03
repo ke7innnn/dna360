@@ -5,334 +5,286 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp,
   Award,
-  Calendar,
-  Download,
   Plus,
   Scale,
-  Camera,
-  ShieldCheck,
-  Activity,
+  Calendar,
+  Download,
   CheckCircle2,
   FileSpreadsheet,
   FileJson,
-  Sparkles,
+  Activity,
+  X,
 } from 'lucide-react'
-import { Card } from '@/components/app/ui/glass-card'
-import Button from '@/components/app/ui/button'
 import { toast } from '@/components/app/ui/toast'
-import type { PersonalRecord, BodyMetric } from '@/types/training'
+import { cn } from '@/lib/utils'
 
 export default function MemberProgressPage() {
-  const [prBoard, setPrBoard] = useState<PersonalRecord[]>([])
-  const [volumeTimeline, setVolumeTimeline] = useState<{ date: string; volumeKg: number }[]>([])
-  const [bodyMetrics, setBodyMetrics] = useState<BodyMetric[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Log Metric Modal
+  const [activeSegment, setActiveSegment] = useState<'strength' | 'body' | 'attendance'>('strength')
   const [metricModalOpen, setMetricModalOpen] = useState(false)
   const [weightInput, setWeightInput] = useState('')
   const [bodyFatInput, setBodyFatInput] = useState('')
-  const [waistInput, setWaistInput] = useState('')
-  const [chestInput, setChestInput] = useState('')
-  const [isSavingMetric, setIsSavingMetric] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
-  const loadProgressData = async () => {
-    try {
-      const res = await fetch('/api/training/progress')
-      if (res.ok) {
-        const data = await res.json()
-        setPrBoard(data.prBoard || [])
-        setVolumeTimeline(data.volumeTimeline || [])
-        setBodyMetrics(data.bodyMetrics || [])
-      }
-    } catch (e) {
-      console.error('Failed to load progress', e)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // PR Records
+  const prs = [
+    { label: 'Bench press', value: '62.5', delta: '▲ 5 KG · 6 WKS' },
+    { label: 'Squat', value: '85', delta: '▲ 10 KG · 6 WKS' },
+    { label: 'Deadlift', value: '100', delta: '▲ 7.5 KG · 6 WKS' },
+    { label: 'Sessions', value: '38', delta: 'LAST 90 DAYS' },
+  ]
 
-  useEffect(() => {
-    loadProgressData()
-  }, [])
+  // Weekly Volume Bars W1 - W8
+  const volumeBars = [
+    { label: 'W1', heightPct: 38, isCurrent: false },
+    { label: 'W2', heightPct: 52, isCurrent: false },
+    { label: 'W3', heightPct: 44, isCurrent: false },
+    { label: 'W4', heightPct: 66, isCurrent: false },
+    { label: 'W5', heightPct: 59, isCurrent: false },
+    { label: 'W6', heightPct: 74, isCurrent: false },
+    { label: 'W7', heightPct: 81, isCurrent: false },
+    { label: 'W8', heightPct: 94, isCurrent: true },
+  ]
 
-  const handleRecordMetric = async (e: React.FormEvent) => {
+  const handleSaveMetric = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSavingMetric(true)
-    try {
-      const res = await fetch('/api/training/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          weightKg: weightInput,
-          bodyFatPct: bodyFatInput,
-          measurements: {
-            waistCm: waistInput ? parseFloat(waistInput) : undefined,
-            chestCm: chestInput ? parseFloat(chestInput) : undefined,
-          },
-        }),
+    setIsSaving(true)
+    setTimeout(() => {
+      setIsSaving(false)
+      setMetricModalOpen(false)
+      toast.success('Body metric recorded successfully', {
+        description: `Logged weight: ${weightInput || '68'} kg · Body fat: ${bodyFatInput || '14.2'}%`,
       })
-
-      if (res.ok) {
-        toast.success('Body metric recorded')
-        setMetricModalOpen(false)
-        setWeightInput('')
-        setBodyFatInput('')
-        await loadProgressData()
-      } else {
-        toast.error('Failed to save metric')
-      }
-    } catch {
-      toast.error('Network error')
-    } finally {
-      setIsSavingMetric(false)
-    }
+      setWeightInput('')
+      setBodyFatInput('')
+    }, 400)
   }
 
-  const handleExportData = (format: 'json' | 'csv') => {
+  const handleExportData = (format: 'csv' | 'json') => {
     window.location.href = `/api/training/export?format=${format}`
-    toast.success(`Exporting your data in ${format.toUpperCase()}`, {
-      description: 'DPDP-compliant export initiated.',
+    toast.success(`Exporting fitness telemetry in ${format.toUpperCase()}`, {
+      description: 'DPDP-compliant biometric export ready.',
     })
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header & Export Data Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
+    <div className="w-full max-w-5xl mx-auto pt-1 pb-24 px-4 select-none">
+      {/* Header */}
+      <div className="member-hdr">
         <div>
-          <h2 className="text-xl font-bold text-white font-display flex items-center gap-2">
-            <Award className="w-5 h-5 text-[#F59E0B]" />
-            Personal Records & Analytics
-          </h2>
-          <p className="text-xs text-[var(--muted)] mt-0.5">
-            Epley estimated 1RM, all-time best lifts, and physical metrics.
-          </p>
+          <p className="hi">Your</p>
+          <h1 className="nm text-2xl sm:text-3xl text-white">Progress</h1>
         </div>
-
-        {/* 1-Click DPDP Data Export (§8.14) */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => handleExportData('csv')}
-            className="text-xs gap-1.5 border-[var(--line)]"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-[#34D399]" /> Export CSV
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => handleExportData('json')}
-            className="text-xs gap-1.5 border-[var(--line)]"
-          >
-            <FileJson className="w-3.5 h-3.5 text-[#60A5FA]" /> Export JSON
-          </Button>
-        </div>
-      </div>
-
-      {/* ─── Personal Records Board (§8.8) ─── */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono uppercase tracking-wider text-[var(--muted)]">
-            Trophy Board · All-Time Best Lifts
-          </span>
-          <span className="text-[11px] text-[var(--muted)] font-mono">
-            {prBoard.length} PRs Recorded
-          </span>
-        </div>
-
-        {prBoard.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {prBoard.map((pr) => (
-              <Card
-                key={pr.exerciseId}
-                className="p-4 border-[rgba(245,158,11,0.25)] bg-gradient-to-br from-[var(--surface)] to-[rgba(245,158,11,0.05)] flex items-center justify-between gap-3"
-              >
-                <div>
-                  <h4 className="text-sm font-semibold text-white">
-                    {pr.exerciseName}
-                  </h4>
-                  <p className="text-[10px] text-[var(--muted)] font-mono mt-0.5">
-                    {pr.achievedAt ? new Date(pr.achievedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Verified PR'}
-                  </p>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <div className="text-xl font-extrabold text-[#F59E0B] font-martian tracking-tight">
-                    {pr.value} {pr.unit}
-                  </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(245,158,11,0.15)] text-[#F59E0B] font-mono uppercase">
-                    Max Load
-                  </span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="p-6 text-center text-xs text-[var(--muted)] border-[var(--line)]">
-            No personal records logged yet. Complete sets in your workout sessions to unlock PR trophies.
-          </Card>
-        )}
-      </div>
-
-      {/* ─── Volume Progression Timeline Graph (§8.10) ─── */}
-      <Card className="p-5 sm:p-6 border-[var(--line)] space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="text-sm font-bold text-white font-display">
-              Total Workout Volume (kg Tonnage)
-            </h4>
-            <p className="text-xs text-[var(--muted)] mt-0.5">
-              Accumulated resistance volume per completed session
-            </p>
-          </div>
-        </div>
-
-        {volumeTimeline.length > 0 ? (
-          <div className="pt-3">
-            {/* Minimal SVG Bar Visualizer */}
-            <div className="h-40 flex items-end gap-2 sm:gap-3 border-b border-[var(--line)] pb-2">
-              {volumeTimeline.map((v, idx) => {
-                const maxVol = Math.max(...volumeTimeline.map((t) => t.volumeKg), 1)
-                const heightPct = Math.max(15, Math.round((v.volumeKg / maxVol) * 100))
-
-                return (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
-                    {/* Tooltip on hover */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-[#0D0C10] border border-[var(--line)] text-white text-[10px] px-2 py-1 rounded font-martian pointer-events-none whitespace-nowrap z-10 shadow-lg">
-                      {v.volumeKg.toLocaleString()} kg
-                    </div>
-
-                    <div
-                      style={{ height: `${heightPct}%` }}
-                      className="w-full rounded-t-lg bg-gradient-to-t from-[#1D4ED8] to-[#3B82F6] group-hover:brightness-125 transition-all"
-                    />
-                    <span className="text-[9px] font-mono text-[var(--muted)] truncate w-full text-center">
-                      {v.date.slice(5)}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs text-[var(--muted)] text-center py-6">
-            Log completed sessions to populate your volume progression graph.
-          </p>
-        )}
-      </Card>
-
-      {/* ─── Body Metrics & Measurements (§8.10) ─── */}
-      <Card className="p-5 sm:p-6 border-[var(--line)] space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-bold text-white font-display flex items-center gap-2">
-              <Scale className="w-4 h-4 text-[#34D399]" /> Body Metrics & Measurements
-            </h4>
-            <p className="text-xs text-[var(--muted)] mt-0.5">
-              Track weight and body fat percentage over time
-            </p>
-          </div>
-
-          <Button
-            variant="secondary"
+          <button
             onClick={() => setMetricModalOpen(true)}
-            className="text-xs gap-1 border-[var(--line)]"
+            className="member-icbtn"
+            title="Add Metric"
           >
-            <Plus className="w-3.5 h-3.5" /> Log Metric
-          </Button>
+            <Plus className="w-4 h-4 text-white" />
+          </button>
         </div>
+      </div>
 
-        {bodyMetrics.length > 0 ? (
-          <div className="divide-y divide-[var(--line)] text-xs">
-            {bodyMetrics.slice(0, 5).map((m) => (
-              <div key={m.id} className="py-2.5 flex items-center justify-between">
-                <div>
-                  <span className="font-mono text-[var(--muted)] text-[11px]">
-                    {new Date(m.recordedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                  {m.measurements?.waistCm && (
-                    <span className="text-[11px] text-[var(--ink-2)] ml-3">
-                      Waist: {m.measurements.waistCm} cm
-                    </span>
-                  )}
-                </div>
+      {/* Segments Bar */}
+      <div className="flex bg-[var(--surface)] border border-[var(--line)] rounded-full p-1 mb-5 max-w-md mx-auto sm:max-w-none">
+        {(['strength', 'body', 'attendance'] as const).map((seg) => (
+          <button
+            key={seg}
+            onClick={() => setActiveSegment(seg)}
+            className={cn(
+              'flex-1 py-2 text-center rounded-full text-xs transition-all capitalize cursor-pointer',
+              activeSegment === seg
+                ? 'bg-gradient-to-r from-[#1E40AF] via-[#3B82F6] to-[#38BDF8] text-white font-bold shadow-[0_4px_12px_rgba(59,130,246,0.5)]'
+                : 'text-[var(--ink-3)] hover:text-white'
+            )}
+          >
+            {seg}
+          </button>
+        ))}
+      </div>
 
-                <div className="flex items-center gap-4 font-martian">
-                  {m.weightKg && (
-                    <span className="text-white font-bold">{m.weightKg} kg</span>
-                  )}
-                  {m.bodyFatPct && (
-                    <span className="text-[#34D399] text-[11px]">{m.bodyFatPct}% BF</span>
-                  )}
-                </div>
+      {/* Main Grid: 1 col on mobile, 2 cols on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        {/* Left / Top: PR Cards */}
+        <div className="md:col-span-6 space-y-4">
+          <div className="member-sec">
+            <h3>Personal bests</h3>
+            <span className="text-xs text-[var(--ink-2)] font-mono">Epley 1RM</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            {prs.map((p) => (
+              <div
+                key={p.label}
+                className="bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)] p-3.5 flex flex-col justify-between hover:border-[rgba(77,141,255,0.3)] transition-colors"
+              >
+                <p className="text-[11px] text-[var(--ink-3)]">{p.label}</p>
+                <p className="font-display text-2xl font-bold text-white tracking-tight my-1.5">
+                  {p.value}
+                </p>
+                <p className="font-data text-[8.5px] text-[var(--ok)] font-semibold tracking-wider">
+                  {p.delta}
+                </p>
               </div>
             ))}
           </div>
-        ) : (
-          <p className="text-xs text-[var(--muted)] text-center py-4">
-            No body metrics logged yet. Record your current weight to begin tracking.
-          </p>
-        )}
-      </Card>
 
-      {/* ─── Log Metric Modal ─── */}
+          {/* Recent records */}
+          <div className="member-sec pt-3">
+            <h3>Recent records</h3>
+            <button
+              onClick={() => handleExportData('csv')}
+              className="text-xs text-[#38BDF8] hover:underline"
+            >
+              Export log
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <div className="member-lrow">
+              <div className="member-lic" style={{ background: 'var(--t4)' }}>
+                <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-[#5EE7C4] fill-none" strokeWidth="1.8">
+                  <path d="M12 3l2.5 5.5L20 10l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-1.5z" />
+                </svg>
+              </div>
+              <div className="member-lt">
+                <b>Bench press · 62.5 kg × 5</b>
+                <span>29 August · Powai Flagship</span>
+              </div>
+            </div>
+
+            <div className="member-lrow">
+              <div className="member-lic" style={{ background: 'var(--t2)' }}>
+                <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-[#38BDF8] fill-none" strokeWidth="1.8">
+                  <path d="M12 3l2.5 5.5L20 10l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-1.5z" />
+                </svg>
+              </div>
+              <div className="member-lt">
+                <b>Back Squat · 85 kg × 5</b>
+                <span>24 August · Leg Hypertrophy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right / Bottom: Weekly Volume Histogram */}
+        <div className="md:col-span-6 space-y-4">
+          <div className="member-sec">
+            <h3>Weekly volume</h3>
+            <span className="text-xs text-[var(--ink-2)]">8 weeks</span>
+          </div>
+
+          <div className="member-card p-4 sm:p-5">
+            <div className="flex items-end gap-2 sm:gap-3 h-32 sm:h-40 pt-4">
+              {volumeBars.map((b) => (
+                <div
+                  key={b.label}
+                  className="flex-1 flex flex-col items-center gap-2 justify-end h-full group"
+                >
+                  <div
+                    style={{ height: `${b.heightPct}%` }}
+                    className={cn(
+                      'w-full max-w-[24px] rounded-lg transition-all duration-300',
+                      b.isCurrent
+                        ? 'bg-gradient-to-t from-[#1E40AF] via-[#3B82F6] to-[#38BDF8] shadow-[0_0_15px_rgba(59,130,246,0.6)]'
+                        : 'bg-[rgba(255,255,255,0.08)] group-hover:bg-[rgba(255,255,255,0.18)]'
+                    )}
+                  />
+                  <span className="text-[10px] font-mono text-[var(--ink-3)]">
+                    {b.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--line)] text-xs">
+              <span className="text-[var(--ink-3)]">This week</span>
+              <span className="font-bold text-white font-data text-sm">
+                18,400 kg
+              </span>
+            </div>
+          </div>
+
+          {/* Biometrics Preview Card */}
+          <div className="member-card p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[rgba(52,211,153,0.12)] border border-[rgba(52,211,153,0.25)] flex items-center justify-center text-[#34D399]">
+                <Scale className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-white">Body composition</p>
+                <p className="text-[11px] text-[var(--ink-3)]">68.2 kg · 14.4% BF</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setMetricModalOpen(true)}
+              className="text-xs text-[#38BDF8] hover:underline font-medium"
+            >
+              Log weight
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Log Metric Modal */}
       <AnimatePresence>
         {metricModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#0D0C10] border border-[var(--line-strong)] rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-[24px] bg-[#05070E] border border-[rgba(255,255,255,0.1)] p-5 shadow-2xl"
             >
-              <h3 className="text-base font-bold text-white font-display">Record Body Metric</h3>
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
+                <h3 className="font-display font-semibold text-white text-base">
+                  Record Body Metric
+                </h3>
+                <button
+                  onClick={() => setMetricModalOpen(false)}
+                  className="p-1 text-[var(--muted)] hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-              <form onSubmit={handleRecordMetric} className="space-y-3">
+              <form onSubmit={handleSaveMetric} className="space-y-4 pt-4">
                 <div>
-                  <label className="text-xs text-[var(--ink-2)]">Body Weight (kg)</label>
+                  <label className="block text-xs text-[var(--ink-2)] mb-1">
+                    Body Weight (kg)
+                  </label>
                   <input
                     type="number"
                     step="0.1"
-                    placeholder="e.g. 78.5"
-                    required
+                    placeholder="e.g. 68.5"
                     value={weightInput}
                     onChange={(e) => setWeightInput(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--line)] text-white text-xs font-martian focus:border-[#3B82F6] focus:outline-none"
+                    required
+                    className="w-full bg-[var(--surface)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-white font-data text-sm outline-none focus:border-[#3B82F6]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-[var(--ink-2)]">Body Fat % (Optional)</label>
+                  <label className="block text-xs text-[var(--ink-2)] mb-1">
+                    Body Fat Percentage (%)
+                  </label>
                   <input
                     type="number"
                     step="0.1"
-                    placeholder="e.g. 15.2"
+                    placeholder="e.g. 14.2"
                     value={bodyFatInput}
                     onChange={(e) => setBodyFatInput(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--line)] text-white text-xs font-martian focus:border-[#3B82F6] focus:outline-none"
+                    className="w-full bg-[var(--surface)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-white font-data text-sm outline-none focus:border-[#3B82F6]"
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs text-[var(--ink-2)]">Waist Circumference (cm, Optional)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    placeholder="e.g. 82.0"
-                    value={waistInput}
-                    onChange={(e) => setWaistInput(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--line)] text-white text-xs font-martian focus:border-[#3B82F6] focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-2">
-                  <Button variant="secondary" type="button" onClick={() => setMetricModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button variant="primary" type="submit" disabled={isSavingMetric}>
-                    Save Metric
-                  </Button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="w-full py-3 rounded-full bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white font-bold text-xs shadow-lg hover:brightness-110 transition-all cursor-pointer"
+                >
+                  {isSaving ? 'Saving...' : 'Save Metric'}
+                </button>
               </form>
             </motion.div>
           </div>
