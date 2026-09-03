@@ -127,24 +127,24 @@ export default function MemberProgramsPage() {
         {/* 3 Telemetry Metrics */}
         <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-[rgba(255,255,255,0.06)] text-xs">
           <div className="space-y-0.5">
-            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1">
+            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium">
               <Clock className="w-3 h-3 text-[#60A5FA]" /> Duration
             </span>
-            <span className="font-data font-bold text-white text-sm">52 mins</span>
+            <span className="font-ui font-semibold text-white text-sm">52 mins</span>
           </div>
 
           <div className="space-y-0.5">
-            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1">
+            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium">
               <Dumbbell className="w-3 h-3 text-[#60A5FA]" /> Volume
             </span>
-            <span className="font-data font-bold text-white text-sm">~4,200 kg</span>
+            <span className="font-ui font-semibold text-white text-sm">~4,200 kg</span>
           </div>
 
           <div className="space-y-0.5">
-            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1">
+            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium">
               <Activity className="w-3 h-3 text-[#60A5FA]" /> Level
             </span>
-            <span className="font-data font-bold text-white text-sm">Intermediate</span>
+            <span className="font-ui font-semibold text-white text-sm">Intermediate</span>
           </div>
         </div>
       </div>

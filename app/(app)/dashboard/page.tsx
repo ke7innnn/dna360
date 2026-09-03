@@ -171,31 +171,49 @@ export default function MemberDashboardPage() {
 
           {/* 3-Stat Metric Tiles */}
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <div className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)]">
-              <span className="text-[11px] font-ui text-[var(--ink-3)] block">
+            <div className="p-4 sm:p-4.5 rounded-[20px] bg-[#0D1322]/90 border border-[rgba(255,255,255,0.07)] hover:border-[rgba(56,189,248,0.3)] transition-colors flex flex-col justify-between">
+              <span className="text-[11px] font-ui text-[var(--ink-3)] block font-medium">
                 This week
               </span>
-              <span className="text-2xl sm:text-3xl font-data font-bold text-white mt-1 block">
-                3 / 5
-              </span>
+              <div className="flex items-baseline gap-1 mt-1.5">
+                <span className="text-2xl sm:text-3xl font-display font-semibold text-white tracking-tight leading-none">
+                  3
+                </span>
+                <span className="text-sm sm:text-base font-ui text-[var(--ink-3)] font-normal mx-0.5">
+                  /
+                </span>
+                <span className="text-lg sm:text-xl font-display font-medium text-[var(--ink-2)] leading-none">
+                  5
+                </span>
+              </div>
             </div>
 
-            <div className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)]">
-              <span className="text-[11px] font-ui text-[var(--ink-3)] block">
+            <div className="p-4 sm:p-4.5 rounded-[20px] bg-[#0D1322]/90 border border-[rgba(255,255,255,0.07)] hover:border-[rgba(56,189,248,0.3)] transition-colors flex flex-col justify-between">
+              <span className="text-[11px] font-ui text-[var(--ink-3)] block font-medium">
                 Streak
               </span>
-              <span className="text-2xl sm:text-3xl font-data font-bold text-white mt-1 block">
-                12 days
-              </span>
+              <div className="flex items-baseline gap-1.5 mt-1.5">
+                <span className="text-2xl sm:text-3xl font-display font-semibold text-white tracking-tight leading-none">
+                  12
+                </span>
+                <span className="text-xs sm:text-sm font-ui font-medium text-[var(--ink-2)]">
+                  days
+                </span>
+              </div>
             </div>
 
-            <div className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)]">
-              <span className="text-[11px] font-ui text-[var(--ink-3)] block">
+            <div className="p-4 sm:p-4.5 rounded-[20px] bg-[#0D1322]/90 border border-[rgba(255,255,255,0.07)] hover:border-[rgba(56,189,248,0.3)] transition-colors flex flex-col justify-between">
+              <span className="text-[11px] font-ui text-[var(--ink-3)] block font-medium">
                 Bench PR
               </span>
-              <span className="text-2xl sm:text-3xl font-data font-bold text-white mt-1 block">
-                62.5 kg
-              </span>
+              <div className="flex items-baseline gap-1.5 mt-1.5">
+                <span className="text-2xl sm:text-3xl font-display font-semibold text-white tracking-tight leading-none">
+                  62.5
+                </span>
+                <span className="text-xs sm:text-sm font-ui font-medium text-[var(--ink-2)]">
+                  kg
+                </span>
+              </div>
             </div>
           </div>
 
