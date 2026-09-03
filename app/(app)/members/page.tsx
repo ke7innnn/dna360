@@ -115,7 +115,7 @@ export default function MembersPage() {
   return (
     <div className="space-y-4 max-w-[1340px] mx-auto pb-14">
       {/* ─── Topbar ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl sm:text-4xl font-normal text-white font-serif tracking-tight">
             Members

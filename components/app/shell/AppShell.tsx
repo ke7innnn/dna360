@@ -35,11 +35,11 @@ function AppShellInner({
       {/* Main content area */}
       <main
         className={cn(
-          'pt-14 sm:pt-16 min-h-screen transition-all duration-200',
+          'pt-14 md:pt-3 min-h-screen transition-all duration-200',
           collapsed ? 'md:pl-[68px]' : 'md:pl-[250px]'
         )}
       >
-        <div className="px-4 pt-1.5 pb-6 sm:px-6 sm:pt-2 sm:pb-8 lg:px-8 lg:pt-3 lg:pb-10 max-w-[1560px] mx-auto">
+        <div className="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10 max-w-[1560px] mx-auto">
           {children}
         </div>
       </main>

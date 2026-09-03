@@ -282,7 +282,7 @@ export default function TopBar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-16 z-30 flex items-center justify-between px-4 sm:px-8 border-b border-[rgba(255,255,255,0.06)] bg-[#07090E]/80 backdrop-blur-2xl relative overflow-hidden">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 z-30 flex items-center justify-between px-4 border-b border-[rgba(255,255,255,0.06)] bg-[#07090E]/90 backdrop-blur-2xl overflow-hidden">
         {/* Top subtle glowing aurora blue edge-light */}
         <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(59,130,246,0.6)] to-transparent pointer-events-none" />
 
