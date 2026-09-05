@@ -38,70 +38,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 2. Find matching user
-    let matchedUser = SEEDED_USERS.find(
-      (u) =>
-        u.email?.toLowerCase() === cleanId ||
-        u.phone === cleanPhone ||
-        u.phone === identifier.trim()
-    )
-
-    // Member fallback
-    if (!matchedUser) {
-      try {
-        const members = getStoredMembers()
-        const found = members.find(
-          (m: any) =>
-            m.email?.toLowerCase() === cleanId ||
-            m.phone === cleanPhone ||
-            m.phone === identifier.trim() ||
-            m.member_code?.toLowerCase() === cleanId
-        )
-        if (found) {
-          matchedUser = {
-            id: found.id,
-            clubId: 'club_powai_01',
-            type: 'MEMBER',
-            name: found.name,
-            email: found.email || `${found.id}@dna360.in`,
-            phone: found.phone,
-            role: {
-              id: 'role_member',
-              name: 'Member',
-              slug: 'MEMBER',
-              description: 'Member self-service portal',
-              capabilities: ['portal.access', 'portal.book', 'portal.token', 'portal.invoices', 'portal.renew'],
-              isSystem: true,
-              createdAt: '2025-01-01T00:00:00.000Z',
-            },
-            branchId: 'pow',
-            branches: [SEEDED_USERS[0].branches[0]],
-            status: found.status === 'blacklisted' ? 'inactive' : 'active',
-            membershipStatus: found.status === 'inactive' ? 'EXPIRED' : (found.status === 'grace_period' ? 'GRACE_PERIOD' : 'ACTIVE'),
-            can_view_revenue: false,
-            requires_login: true,
-            passwordHash: 'password123',
-          }
-        }
-      } catch (e) {}
-    }
-
-    if (!matchedUser) {
-      const lockResult = recordFailedLogin(cleanId)
-      return NextResponse.json(
-        {
-          error: lockResult.isLocked
-            ? 'Account locked due to 5 consecutive failed attempts. Try again in 15 minutes.'
-            : 'Invalid credentials. Check email/phone and password.',
-          locked: lockResult.isLocked,
-        },
-        { status: 401 }
-      )
-    }
-
-    // 3. Verify Credentials via Supabase Auth or Local Store
+    // 2. Authentication Flow
+    let matchedUser: any = null
     let authenticated = false
 
+    // Step A: Attempt Supabase Auth first (for email + password)
     if (password && cleanId.includes('@')) {
       try {
         const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
@@ -138,20 +79,70 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!authenticated && password && matchedUser) {
-      const isCorrectPassword =
-        matchedUser.passwordHash === password ||
-        password === 'Password@123'
-      if (isCorrectPassword) authenticated = true
+    // Step B: If not authenticated by Supabase Auth, check SEEDED_USERS or Member Directory
+    if (!authenticated) {
+      matchedUser = SEEDED_USERS.find(
+        (u) =>
+          u.email?.toLowerCase() === cleanId ||
+          u.phone === cleanPhone ||
+          u.phone === identifier.trim()
+      )
+
+      if (!matchedUser) {
+        try {
+          const members = getStoredMembers()
+          const found = members.find(
+            (m: any) =>
+              m.email?.toLowerCase() === cleanId ||
+              m.phone === cleanPhone ||
+              m.phone === identifier.trim() ||
+              m.member_code?.toLowerCase() === cleanId
+          )
+          if (found) {
+            matchedUser = {
+              id: found.id,
+              clubId: 'club_powai_01',
+              type: 'MEMBER',
+              name: found.name,
+              email: found.email || `${found.id}@dna360.in`,
+              phone: found.phone,
+              role: {
+                id: 'role_member',
+                name: 'Member',
+                slug: 'MEMBER',
+                description: 'Member self-service portal',
+                capabilities: ['portal.access', 'portal.book', 'portal.token', 'portal.invoices', 'portal.renew'],
+                isSystem: true,
+                createdAt: '2025-01-01T00:00:00.000Z',
+              },
+              branchId: 'pow',
+              branches: [SEEDED_USERS[0].branches[0]],
+              status: found.status === 'blacklisted' ? 'inactive' : 'active',
+              membershipStatus: found.status === 'inactive' ? 'EXPIRED' : (found.status === 'grace_period' ? 'GRACE_PERIOD' : 'ACTIVE'),
+              can_view_revenue: false,
+              requires_login: true,
+              passwordHash: 'Password@123',
+            }
+          }
+        } catch (e) {}
+      }
+
+      // If matchedUser found in local store, verify password
+      if (matchedUser && password) {
+        const isCorrectPassword =
+          matchedUser.passwordHash === password ||
+          password === 'Password@123'
+        if (isCorrectPassword) authenticated = true
+      }
     }
 
-    if (!authenticated) {
+    if (!authenticated || !matchedUser) {
       const lockResult = recordFailedLogin(cleanId)
       return NextResponse.json(
         {
           error: lockResult.isLocked
             ? 'Account locked due to 5 consecutive failed attempts. Try again in 15 minutes.'
-            : 'Invalid credentials.',
+            : 'Invalid credentials. Check email/phone and password.',
           locked: lockResult.isLocked,
         },
         { status: 401 }

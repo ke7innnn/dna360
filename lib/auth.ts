@@ -331,6 +331,22 @@ export const SEEDED_USERS: AuthUser[] = [
 
   // ─── Fitness Consultants (Sales & Desk Floor) (§9) ───
   {
+    id: 'usr_frontdesk_01',
+    clubId: CLUB_ID_POWAI,
+    type: 'STAFF',
+    name: 'Front Desk Operations',
+    email: 'frontdesk@dna360.in',
+    phone: '+919820036000',
+    role: findRole('FITNESS_CONSULTANT'),
+    designation: 'Front Desk Supervisor',
+    branchId: 'pow',
+    branches: [POWAI_BRANCH],
+    status: 'active',
+    can_view_revenue: false,
+    requires_login: true,
+    passwordHash: 'Password@123',
+  },
+  {
     id: 'usr_staff_11',
     clubId: CLUB_ID_POWAI,
     type: 'STAFF',
