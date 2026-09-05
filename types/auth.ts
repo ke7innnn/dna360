@@ -13,6 +13,17 @@ export type UserType = 'STAFF' | 'MEMBER'
 export type MembershipStatus = 'ACTIVE' | 'FROZEN' | 'EXPIRED' | 'GRACE_PERIOD'
 
 export type RoleSlug =
+  | 'owner_admin'
+  | 'hr_head'
+  | 'sales_head'
+  | 'sales_consultant'
+  | 'front_desk'
+  | 'supervisor'
+  | 'head_trainer'
+  | 'general_trainer'
+  | 'masseur'
+  | 'member'
+  // Uppercase and legacy aliases for backward compatibility
   | 'OWNER'
   | 'HR_HEAD'
   | 'MARKETING_HEAD'
@@ -24,21 +35,13 @@ export type RoleSlug =
   | 'SUPERVISOR'
   | 'EMPLOYEE'
   | 'MEMBER'
-  // Lowercase aliases for backward compatibility
   | 'owner'
-  | 'hr_head'
   | 'marketing_head'
-  | 'sales_head'
-  | 'head_trainer'
   | 'trainer'
   | 'fitness_consultant'
-  | 'masseur'
-  | 'supervisor'
   | 'employee'
-  | 'member'
   | 'manager'
   | 'sales'
-  | 'front_desk'
   | 'staff_no_login'
 
 export interface RoleDefinition {
@@ -84,6 +87,8 @@ export interface AuthUser {
   /** Whether this staff member needs app login */
   requires_login: boolean
   passwordHash?: string
+  /** Mandatory first-login password change flag */
+  must_change_password?: boolean
 }
 
 export interface UserSession {
@@ -130,6 +135,9 @@ export type AuditAction =
   | 'SEND_WHATSAPP'
   | 'PT_SESSION_SIGNOFF'
   | 'TURNSTILE_SCAN'
+  | 'ACCOUNT_LOCKED'
+  | 'LOGIN_FAILED'
+  | 'PASSWORD_CHANGED'
 
 export interface AuditActor {
   id: string

@@ -54,9 +54,9 @@ export function canAccessMemberTraining(
     return { allowed: false, reason: 'Members cannot access other members’ workout data.' }
   }
 
-  // 2. Owner has club-wide management oversight
+  // 2. Owner / Admin has club-wide management oversight
   const roleSlug = user.role?.slug.toUpperCase()
-  if (roleSlug === 'OWNER') {
+  if (roleSlug === 'OWNER' || roleSlug === 'OWNER_ADMIN') {
     return { allowed: true }
   }
 

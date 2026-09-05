@@ -14,8 +14,9 @@ export async function GET(req: NextRequest) {
     }
 
     const user = session.user
+    const roleSlug = user.role.slug.toLowerCase()
     const userCaps = user.role.capabilities || []
-    const isOwner = user.role.slug === 'OWNER' || user.role.slug === 'owner'
+    const isOwner = roleSlug === 'owner_admin' || roleSlug === 'owner'
     const canExport = isOwner || userCaps.includes('billing.export')
 
     if (!canExport) {

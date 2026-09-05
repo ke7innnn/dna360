@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:training": "npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts",
-    "test:all": "npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts && npx tsx tests/security-auth.test.ts && npx tsx tests/data-integrity.test.ts"
+    "test:rbac": "npx tsx tests/rbac-access-matrix.test.ts",
+    "test:all": "npx tsx tests/rbac-access-matrix.test.ts && npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts && npx tsx tests/security-auth.test.ts && npx tsx tests/data-integrity.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

@@ -14,15 +14,14 @@ export async function GET(req: NextRequest) {
     }
 
     const user = session.user
-    const userCaps = user.role.capabilities || []
-    const isOwner = user.role.slug === 'OWNER' || user.role.slug === 'owner'
-    const canViewRevenue = isOwner || userCaps.includes('revenue.view') || user.can_view_revenue
+    const roleSlug = user.role.slug.toLowerCase()
+    const isOwner = roleSlug === 'owner_admin' || roleSlug === 'owner'
 
-    if (!canViewRevenue) {
+    if (!isOwner) {
       return NextResponse.json(
         {
           error: `Forbidden: Role '${user.role.name}' is not authorized to view financial revenue data.`,
-          code: 'REVENUE_ACCESS_DENIED',
+          code: 'FORBIDDEN',
         },
         { status: 403 }
       )

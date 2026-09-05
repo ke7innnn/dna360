@@ -45,7 +45,13 @@ export default function LoginForm() {
     }
 
     if (res.success && res.redirectUrl) {
-      toast.success('Signed in successfully')
+      if (res.redirectUrl === '/change-password') {
+        toast.info('Initial Login Security Requirement', {
+          description: 'Please set your permanent password to access the platform.',
+        })
+      } else {
+        toast.success('Signed in successfully')
+      }
       router.push(res.redirectUrl)
     } else {
       setError(res.error || 'Authentication failed')

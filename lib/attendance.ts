@@ -19,6 +19,7 @@ import type {
 import { getStoredMembers, updateMember } from '@/lib/members'
 import { evaluateCheckIn } from '@/lib/checkin'
 import { logAuditEvent } from '@/lib/audit'
+import { validateAndConsumeQrToken, recordInvalidScan } from '@/lib/qr-security'
 
 const ACCESS_LOGS_STORAGE_KEY = 'dna360_access_logs'
 
@@ -158,7 +159,28 @@ export function getLiveOccupancy(_branchId?: string): FloorOccupancy {
 export function scanTurnstilePass(query: string, gateId = 'gate_pow_01', scanType: ScanType = 'QR') {
   const members = getStoredMembers()
   let cleanQuery = query.trim()
-  if (cleanQuery.startsWith('DNA360:')) {
+
+  if (scanType === 'QR' && cleanQuery.startsWith('DNA360:')) {
+    const qrValidation = validateAndConsumeQrToken(cleanQuery)
+    if (!qrValidation.valid) {
+      const logEntry: AccessLogEntry = {
+        id: `acc_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        memberId: 'unknown',
+        memberName: 'Unverified QR Token',
+        memberPhone: query,
+        gateId,
+        gateName: gateId === 'gate_pow_01' ? 'Gate 1 - Main Turnstile' : 'Gate 2 - Secondary Turnstile',
+        scanType,
+        decision: 'DENIED_EXPIRED',
+        reason: qrValidation.message || 'Dynamic QR validation failed.',
+      }
+      const logs = getStoredAccessLogs()
+      saveAccessLogs([logEntry, ...logs])
+      return { entry: logEntry, member: undefined }
+    }
+    cleanQuery = qrValidation.memberCode || cleanQuery
+  } else if (cleanQuery.startsWith('DNA360:')) {
     const parts = cleanQuery.split(':')
     cleanQuery = parts[1] === 'MEMBER' ? parts[2] || '' : parts[1] || ''
   }
@@ -180,6 +202,7 @@ export function scanTurnstilePass(query: string, gateId = 'gate_pow_01', scanTyp
   let adjustmentCreditsRemaining: number | undefined
 
   if (!member) {
+    recordInvalidScan()
     decision = 'DENIED_EXPIRED'
     reason = 'No active member record or QR pass found in database.'
   } else {

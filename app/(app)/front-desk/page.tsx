@@ -20,6 +20,11 @@ import CameraQrScannerModal from '@/components/app/attendance/CameraQrScannerMod
 import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 import {
+  validateAndConsumeQrToken,
+  recordInvalidScan,
+  getScannerLockStatus,
+} from '@/lib/qr-security'
+import {
   getStoredLeads,
   getStoredPosSales,
   getStoredLockers,
@@ -98,13 +103,22 @@ export default function FrontDeskPage() {
   const executeScanLookup = (rawText: string) => {
     if (!rawText.trim()) return
 
-    let query = rawText.trim()
-    // Extract member code from DNA360:code:tokenSeed or DNA360:MEMBER:code:tokenSeed
-    if (query.startsWith('DNA360:')) {
-      const parts = query.split(':')
-      query = parts[1] === 'MEMBER' ? parts[2] || '' : parts[1] || ''
+    const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+    // 1. QR Security Validation (90s expiration, anti-replay, invalid-scan cooldown)
+    const qrValidation = validateAndConsumeQrToken(rawText)
+    if (!qrValidation.valid) {
+      setLastCheckInResult({
+        status: 'DENIED',
+        message: qrValidation.message || 'QR Verification Failed',
+        timestamp: now,
+      })
+      toast.error(qrValidation.message || 'QR Verification Failed')
+      setScanInput('')
+      return
     }
 
+    const query = qrValidation.memberCode || rawText.trim()
     const normalizedQuery = query.toLowerCase()
     const members = getStoredMembers()
 
@@ -116,9 +130,8 @@ export default function FrontDeskPage() {
         m.name.toLowerCase().includes(normalizedQuery)
     )
 
-    const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
     if (!found) {
+      recordInvalidScan()
       setLastCheckInResult({
         status: 'DENIED',
         message: `Unknown code '${query}'. No member found on record.`,

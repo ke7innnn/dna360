@@ -24,8 +24,17 @@ export const POWAI_BRANCH = {
   isActive: true,
 }
 
-// ─── 11 Role Definitions ───
+// ─── 13 Role Definitions (9 Canonical + Support & Member) ───
 export const SEEDED_ROLE_DEFINITIONS: RoleDefinition[] = [
+  {
+    id: 'role_owner_admin',
+    name: 'Executive Admin / Owner',
+    slug: 'owner_admin',
+    description: 'Unrestricted administrative access. Full revenue, all exports, settings, pricing, and role management.',
+    capabilities: ROLE_CAPS.owner_admin,
+    isSystem: true,
+    createdAt: '2025-01-01T00:00:00.000Z',
+  },
   {
     id: 'role_owner',
     name: 'Owner / Executive',
@@ -37,52 +46,88 @@ export const SEEDED_ROLE_DEFINITIONS: RoleDefinition[] = [
   },
   {
     id: 'role_hr_head',
-    name: 'HR Head (Revenue Tier)',
-    slug: 'HR_HEAD',
-    description: 'Manages people, staff rosters, attendance, and audit trail. Revenue visibility enabled.',
-    capabilities: ROLE_CAPS.HR_HEAD,
+    name: 'HR Head',
+    slug: 'hr_head',
+    description: 'Manages people, staff rosters, attendance, and audit trail.',
+    capabilities: ROLE_CAPS.hr_head,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
   {
     id: 'role_marketing_head',
-    name: 'Marketing Head (Revenue Tier)',
-    slug: 'MARKETING_HEAD',
-    description: 'Runs marketing campaigns, CRM leads pipeline, and member directory overview. Revenue visibility enabled.',
-    capabilities: ROLE_CAPS.MARKETING_HEAD,
+    name: 'Marketing Head',
+    slug: 'marketing_head',
+    description: 'Runs marketing campaigns, CRM leads pipeline, and member directory overview.',
+    capabilities: ROLE_CAPS.manager,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
   {
     id: 'role_sales_head',
-    name: 'Asst Sales Head (Revenue Tier)',
-    slug: 'SALES_HEAD',
-    description: 'Directs sales desk, memberships, enrollments, and operational tax billing. Revenue visibility enabled.',
-    capabilities: ROLE_CAPS.SALES_HEAD,
+    name: 'Asst Sales Head',
+    slug: 'sales_head',
+    description: 'Directs sales desk, memberships, enrollments, and operational tax billing.',
+    capabilities: ROLE_CAPS.sales_head,
+    isSystem: true,
+    createdAt: '2025-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'role_sales_consultant',
+    name: 'Sales Consultant',
+    slug: 'sales_consultant',
+    description: 'Lead pipeline, member enrollments, and operational invoices.',
+    capabilities: ROLE_CAPS.sales_consultant,
+    isSystem: true,
+    createdAt: '2025-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'role_front_desk',
+    name: 'Front Desk Operations',
+    slug: 'front_desk',
+    description: 'Front desk turnstile scanning, check-in operations, and day passes.',
+    capabilities: ROLE_CAPS.front_desk,
+    isSystem: true,
+    createdAt: '2025-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'role_supervisor',
+    name: 'Supervisor',
+    slug: 'supervisor',
+    description: 'Turnstile gate operations, check-in feeds, and staff attendance monitoring.',
+    capabilities: ROLE_CAPS.supervisor,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
   {
     id: 'role_head_trainer',
     name: 'Head Trainer',
-    slug: 'HEAD_TRAINER',
+    slug: 'head_trainer',
     description: 'Studio timetables, trainer allocations, class bookings, workout programming, check-in view.',
-    capabilities: ROLE_CAPS.HEAD_TRAINER,
+    capabilities: ROLE_CAPS.head_trainer,
+    isSystem: true,
+    createdAt: '2025-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'role_general_trainer',
+    name: 'General Trainer',
+    slug: 'general_trainer',
+    description: 'Scoped to assigned personal training clients and assigned sessions only. Log workouts and self-service.',
+    capabilities: ROLE_CAPS.general_trainer,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
   {
     id: 'role_trainer',
-    name: 'General Trainer',
+    name: 'General Trainer (Legacy)',
     slug: 'TRAINER',
-    description: 'Scoped to assigned personal training clients and assigned sessions only. Log workouts and self-service.',
+    description: 'Scoped to assigned personal training clients and assigned sessions only.',
     capabilities: ROLE_CAPS.TRAINER,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
   {
     id: 'role_fitness_consultant',
-    name: 'Fitness Consultant',
+    name: 'Fitness Consultant (Legacy)',
     slug: 'FITNESS_CONSULTANT',
     description: 'Sales floor & front desk: lead pipeline, member enrollments, operational invoices, and turnstile check-ins.',
     capabilities: ROLE_CAPS.FITNESS_CONSULTANT,
@@ -92,36 +137,27 @@ export const SEEDED_ROLE_DEFINITIONS: RoleDefinition[] = [
   {
     id: 'role_masseur',
     name: 'Masseur (Service)',
-    slug: 'MASSEUR',
+    slug: 'masseur',
     description: 'Scoped to assigned clients and therapy session bookings + staff self-service.',
-    capabilities: ROLE_CAPS.MASSEUR,
-    isSystem: true,
-    createdAt: '2025-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'role_supervisor',
-    name: 'Supervisor',
-    slug: 'SUPERVISOR',
-    description: 'Turnstile gate operations, check-in feeds, and staff attendance monitoring + self-service.',
-    capabilities: ROLE_CAPS.SUPERVISOR,
+    capabilities: ROLE_CAPS.masseur,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
   {
     id: 'role_employee',
     name: 'Employee (Support Staff)',
-    slug: 'EMPLOYEE',
+    slug: 'employee',
     description: 'Staff self-service baseline: attendance punch logs, shift schedules, payslips, and profile.',
-    capabilities: ROLE_CAPS.EMPLOYEE,
+    capabilities: ROLE_CAPS.employee,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
   {
     id: 'role_member',
     name: 'Member',
-    slug: 'MEMBER',
+    slug: 'member',
     description: 'Member self-service portal: rolling QR token, class bookings, tax invoice receipts, and renewals.',
-    capabilities: ROLE_CAPS.MEMBER,
+    capabilities: ROLE_CAPS.member,
     isSystem: true,
     createdAt: '2025-01-01T00:00:00.000Z',
   },
@@ -165,7 +201,7 @@ export const SEEDED_USERS: AuthUser[] = [
     branchId: 'pow',
     branches: [POWAI_BRANCH],
     status: 'active',
-    can_view_revenue: true,
+    can_view_revenue: false,
     twoFactorEnabled: true,
     twoFactorRequired: true,
     requires_login: true,
@@ -178,7 +214,7 @@ export const SEEDED_USERS: AuthUser[] = [
     name: 'Keith Shah',
     email: 'keith.mktg@dna360.in',
     phone: '+919820021002',
-    role: findRole('OWNER'),
+    role: findRole('owner_admin'),
     designation: 'Administrator (All Features Access)',
     branchId: 'pow',
     branches: [POWAI_BRANCH],
@@ -201,7 +237,7 @@ export const SEEDED_USERS: AuthUser[] = [
     branchId: 'pow',
     branches: [POWAI_BRANCH],
     status: 'active',
-    can_view_revenue: true,
+    can_view_revenue: false,
     twoFactorEnabled: true,
     twoFactorRequired: true,
     requires_login: true,
@@ -741,25 +777,37 @@ export function maskPhoneNumber(phone: string): string {
 /**
  * Default Redirect after Login based on Role & Population
  */
-export function getRoleDefaultRedirect(user: AuthUser): string {
-  if (user.type === 'MEMBER') {
+export function getRoleDefaultRedirect(userOrSlug: AuthUser | string, maybeUser?: AuthUser): string {
+  const user = typeof userOrSlug === 'object' ? userOrSlug : maybeUser
+  const rawSlug = typeof userOrSlug === 'string' ? userOrSlug : user?.role?.slug || ''
+  const slug = rawSlug.toLowerCase()
+
+  if (user?.must_change_password) {
+    return '/change-password'
+  }
+  if (user?.type === 'MEMBER' || slug === 'member') {
     return '/dashboard'
   }
   // Staff routing
-  const slug = user.role.slug.toUpperCase()
-  if (slug === 'OWNER' || slug === 'HR_HEAD' || slug === 'MARKETING_HEAD' || slug === 'SALES_HEAD') {
+  if (slug === 'owner_admin' || slug === 'owner' || slug === 'sales_head' || slug === 'marketing_head') {
     return '/overview'
   }
-  if (slug === 'HEAD_TRAINER' || slug === 'TRAINER') {
+  if (slug === 'hr_head') {
+    return '/staff'
+  }
+  if (slug === 'head_trainer' || slug === 'general_trainer' || slug === 'trainer' || slug === 'masseur') {
     return '/classes'
   }
-  if (slug === 'FITNESS_CONSULTANT') {
+  if (slug === 'sales_consultant' || slug === 'fitness_consultant') {
     return '/leads'
   }
-  if (slug === 'SUPERVISOR') {
+  if (slug === 'front_desk') {
+    return '/front-desk'
+  }
+  if (slug === 'supervisor') {
     return '/attendance'
   }
-  return '/dashboard'
+  return '/overview'
 }
 
 /**
@@ -767,7 +815,8 @@ export function getRoleDefaultRedirect(user: AuthUser): string {
  */
 export function requireCapability(user: AuthUser | null, capability: Capability): boolean {
   if (!user) return false
-  if (user.role.slug.toUpperCase() === 'OWNER') return true
+  const slug = user.role.slug.toLowerCase()
+  if (slug === 'owner_admin' || slug === 'owner') return true
   return hasCapability(user.role.slug, capability)
 }
 
@@ -776,13 +825,14 @@ export function requireCapability(user: AuthUser | null, capability: Capability)
  */
 export function canAccessMemberRecord(user: AuthUser | null, targetMemberId: string): boolean {
   if (!user) return false
-  if (user.role.slug.toUpperCase() === 'OWNER' || hasCapability(user.role.slug, 'members.view.all')) {
+  const slug = user.role.slug.toLowerCase()
+  if (slug === 'owner_admin' || slug === 'owner' || hasCapability(user.role.slug, 'members.view.all')) {
     return true
   }
   if (hasCapability(user.role.slug, 'members.view.own')) {
     return user.assignedClientIds?.includes(targetMemberId) ?? false
   }
-  if (user.type === 'MEMBER') {
+  if (user.type === 'MEMBER' || slug === 'member') {
     return user.id === targetMemberId
   }
   return false

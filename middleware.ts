@@ -70,6 +70,21 @@ function isTokenValid(token: string | undefined): boolean {
   }
 }
 
+/**
+ * Parses payload without validating signature (already verified by isTokenValid)
+ */
+function parseTokenPayload(token: string | undefined): any | null {
+  if (!token || !token.includes('.')) return null
+  const [data] = token.split('.')
+  if (!data) return null
+  try {
+    const json = Buffer.from(data, 'base64url').toString('utf-8')
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
@@ -102,15 +117,49 @@ export function middleware(req: NextRequest) {
     return redirectResponse
   }
 
-  // 4. Authenticated user visiting /login -> redirect to /overview or their role default
+  // 4. Mandatory first-login password change enforcement (§1)
+  if (hasValidSession) {
+    const payload = parseTokenPayload(token)
+    if (payload?.must_change_password === true) {
+      const isAllowedPwdPath =
+        pathname === '/change-password' ||
+        pathname === '/api/auth/change-password' ||
+        pathname === '/api/auth/logout' ||
+        pathname.startsWith('/_next/')
+
+      if (!isAllowedPwdPath) {
+        if (pathname.startsWith('/api/')) {
+          const mustChangeResponse = NextResponse.json(
+            {
+              error: 'Forbidden: Mandatory password change required before accessing the platform.',
+              code: 'MUST_CHANGE_PASSWORD',
+              redirectUrl: '/change-password',
+            },
+            { status: 403 }
+          )
+          addSecurityHeaders(mustChangeResponse)
+          return mustChangeResponse
+        }
+
+        const changePwdUrl = new URL('/change-password', req.url)
+        const redirectResponse = NextResponse.redirect(changePwdUrl, 307)
+        addSecurityHeaders(redirectResponse)
+        return redirectResponse
+      }
+    }
+  }
+
+  // 5. Authenticated user visiting /login -> redirect to /overview or /change-password
   if (pathname === '/login' && hasValidSession) {
-    const overviewUrl = new URL('/overview', req.url)
-    const redirectResponse = NextResponse.redirect(overviewUrl, 307)
+    const payload = parseTokenPayload(token)
+    const targetPath = payload?.must_change_password ? '/change-password' : '/overview'
+    const targetUrl = new URL(targetPath, req.url)
+    const redirectResponse = NextResponse.redirect(targetUrl, 307)
     addSecurityHeaders(redirectResponse)
     return redirectResponse
   }
 
-  // 5. Proceed with security headers applied
+  // 6. Proceed with security headers applied
   const response = NextResponse.next()
   addSecurityHeaders(response)
   return response

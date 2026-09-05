@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Camera, SwitchCamera, AlertCircle, Volume2, VolumeX, ShieldCheck } from 'lucide-react'
 import { toast } from '@/components/app/ui/toast'
+import { getScannerLockStatus } from '@/lib/qr-security'
 
 interface CameraQrScannerModalProps {
   isOpen: boolean
@@ -80,6 +81,12 @@ export default function CameraQrScannerModal({
 
     hasScannedRef.current = false
     setErrorMsg(null)
+
+    const lockStatus = getScannerLockStatus()
+    if (lockStatus.isLocked) {
+      setErrorMsg(`Scanner Locked: Excessive invalid scans detected. Cooldown in effect (${lockStatus.cooldownRemainingSeconds}s remaining).`)
+      return
+    }
 
     let isMounted = true
 

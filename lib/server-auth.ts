@@ -149,6 +149,37 @@ export function checkExportRateLimit(userId: string): { allowed: boolean; remain
 }
 
 /**
+ * Enforce minimum password strength rules (§1)
+ * - Minimum 10 characters
+ * - Uppercase, lowercase, numeric digit, special character
+ * - No common static defaults
+ */
+export function validatePasswordComplexity(password: string): { valid: boolean; error?: string } {
+  if (!password || typeof password !== 'string') {
+    return { valid: false, error: 'Password is required.' }
+  }
+  if (password.length < 10) {
+    return { valid: false, error: 'Password must be at least 10 characters long.' }
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one uppercase letter (A-Z).' }
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one lowercase letter (a-z).' }
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one numeric digit (0-9).' }
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?~`\\/]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one special character (!@#$%^&*...).' }
+  }
+  if (password.toLowerCase().includes('password') || password === 'Password@123') {
+    return { valid: false, error: 'Password cannot contain common patterns or match the default credentials.' }
+  }
+  return { valid: true }
+}
+
+/**
  * Create a new server session and return the signed session token
  */
 export function createServerSession(user: AuthUser, tenantId: string = 'tenant_powai'): string {
@@ -161,6 +192,7 @@ export function createServerSession(user: AuthUser, tenantId: string = 'tenant_p
     userId: user.id,
     tenantId,
     role: user.role.slug,
+    must_change_password: !!user.must_change_password,
     issuedAt: now,
     expiresAt,
   }
@@ -312,7 +344,8 @@ export function requireCapabilityApi(
 
   const user = session.user
   const userCaps = user.role.capabilities || []
-  const hasCap = userCaps.includes(capability) || user.role.slug === 'OWNER' || user.role.slug === 'owner'
+  const roleSlug = user.role.slug.toLowerCase()
+  const hasCap = userCaps.includes(capability) || roleSlug === 'owner_admin' || roleSlug === 'owner'
 
   if (!hasCap) {
     return NextResponse.json(

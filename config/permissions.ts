@@ -84,22 +84,21 @@ export const SELF_SERVICE_BASELINE: Capability[] = [
  * Single Source of Truth for Role -> Capabilities Mapping (§3)
  */
 export const ROLE_CAPS: Record<string, Capability[]> = {
-  // OWNER / ADMIN — Full unrestricted system access. Sole holder of settings.manage, pricing.manage, roles.assign, members.delete, and all *.export
+  // 1. OWNER / ADMIN — Full unrestricted system access
+  owner_admin: [...ALL_CAPABILITIES],
   OWNER: [...ALL_CAPABILITIES],
   owner: [...ALL_CAPABILITIES],
 
-  // HR HEAD (Revenue Tier)
-  HR_HEAD: [
-    'revenue.view',
-    'staff.view',
-    'staff.manage',
-    'staff.schedule',
-    'staff_attendance.view',
-    'audit.view',
-    ...SELF_SERVICE_BASELINE,
-  ],
+  // 2. HR HEAD — Staff rosters, shift schedules, attendance (NO revenue, NO editing sales/memberships)
   hr_head: [
-    'revenue.view',
+    'staff.view',
+    'staff.manage',
+    'staff.schedule',
+    'staff_attendance.view',
+    'audit.view',
+    ...SELF_SERVICE_BASELINE,
+  ],
+  HR_HEAD: [
     'staff.view',
     'staff.manage',
     'staff.schedule',
@@ -108,35 +107,17 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
     ...SELF_SERVICE_BASELINE,
   ],
 
-  // MARKETING HEAD (Revenue Tier)
-  MARKETING_HEAD: [
-    'revenue.view',
-    'leads.manage',
-    'campaigns.manage',
-    'members.view.all',
-    ...SELF_SERVICE_BASELINE,
-  ],
-  marketing_head: [
-    'revenue.view',
-    'leads.manage',
-    'campaigns.manage',
-    'members.view.all',
-    ...SELF_SERVICE_BASELINE,
-  ],
-
-  // SALES HEAD (Asst Sales Head — Revenue Tier)
-  SALES_HEAD: [
-    'revenue.view',
-    'leads.manage',
-    'members.view.all',
-    'members.edit',
-    'members.enrol',
-    'billing.view',
-    'billing.create',
-    ...SELF_SERVICE_BASELINE,
-  ],
+  // 3. SALES HEAD (Asst Sales Head) — Memberships, full sales pipeline, invoicing (NO HR, NO admin)
   sales_head: [
-    'revenue.view',
+    'leads.manage',
+    'members.view.all',
+    'members.edit',
+    'members.enrol',
+    'billing.view',
+    'billing.create',
+    ...SELF_SERVICE_BASELINE,
+  ],
+  SALES_HEAD: [
     'leads.manage',
     'members.view.all',
     'members.edit',
@@ -146,41 +127,17 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
     ...SELF_SERVICE_BASELINE,
   ],
 
-  // HEAD TRAINER
-  HEAD_TRAINER: [
+  // 4. SALES CONSULTANT — Own leads, enrollments, operational invoices
+  sales_consultant: [
+    'leads.manage',
     'members.view.all',
-    'classes.manage.all',
+    'members.enrol',
+    'billing.view',
+    'billing.create',
+    'checkin.operate',
     'classes.book_member',
-    'workouts.log',
-    'trainers.assign',
-    'checkin.view',
     ...SELF_SERVICE_BASELINE,
   ],
-  head_trainer: [
-    'members.view.all',
-    'classes.manage.all',
-    'classes.book_member',
-    'workouts.log',
-    'trainers.assign',
-    'checkin.view',
-    ...SELF_SERVICE_BASELINE,
-  ],
-
-  // GENERAL TRAINER
-  TRAINER: [
-    'members.view.own',
-    'classes.manage.own',
-    'workouts.log',
-    ...SELF_SERVICE_BASELINE,
-  ],
-  trainer: [
-    'members.view.own',
-    'classes.manage.own',
-    'workouts.log',
-    ...SELF_SERVICE_BASELINE,
-  ],
-
-  // FITNESS CONSULTANT (Sales Floor / Front Desk)
   FITNESS_CONSULTANT: [
     'leads.manage',
     'members.view.all',
@@ -202,45 +159,87 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
     ...SELF_SERVICE_BASELINE,
   ],
 
-  // MASSEUR (Service)
-  MASSEUR: [
-    'members.view.own',
-    'classes.manage.own',
-    ...SELF_SERVICE_BASELINE,
-  ],
-  masseur: [
-    'members.view.own',
-    'classes.manage.own',
+  // 5. FRONT DESK — QR check-in scanner, turnstile operation, day passes
+  front_desk: [
+    'checkin.operate',
+    'checkin.view',
+    'members.view.all',
+    'classes.book_member',
     ...SELF_SERVICE_BASELINE,
   ],
 
-  // SUPERVISOR (Floor Oversight)
-  SUPERVISOR: [
-    'checkin.operate',
-    'checkin.view',
-    'staff_attendance.view',
-    ...SELF_SERVICE_BASELINE,
-  ],
+  // 6. SUPERVISOR — Floor access logs, attendance (NO sales, revenue, or HR editing)
   supervisor: [
     'checkin.operate',
     'checkin.view',
     'staff_attendance.view',
     ...SELF_SERVICE_BASELINE,
   ],
+  SUPERVISOR: [
+    'checkin.operate',
+    'checkin.view',
+    'staff_attendance.view',
+    ...SELF_SERVICE_BASELINE,
+  ],
 
-  // EMPLOYEE (Support Staff — DJ, Housekeeping, Chef, Valet)
-  EMPLOYEE: [...SELF_SERVICE_BASELINE],
+  // 7. HEAD TRAINER — Studio timetable, trainer allocations, class booking, workout logging
+  head_trainer: [
+    'members.view.all',
+    'classes.manage.all',
+    'classes.book_member',
+    'workouts.log',
+    'trainers.assign',
+    'checkin.view',
+    ...SELF_SERVICE_BASELINE,
+  ],
+  HEAD_TRAINER: [
+    'members.view.all',
+    'classes.manage.all',
+    'classes.book_member',
+    'workouts.log',
+    'trainers.assign',
+    'checkin.view',
+    ...SELF_SERVICE_BASELINE,
+  ],
+
+  // 8. GENERAL TRAINER — Scoped ONLY to assigned PT clients & own sessions
+  general_trainer: [
+    'members.view.own',
+    'classes.manage.own',
+    'workouts.log',
+    ...SELF_SERVICE_BASELINE,
+  ],
+  TRAINER: [
+    'members.view.own',
+    'classes.manage.own',
+    'workouts.log',
+    ...SELF_SERVICE_BASELINE,
+  ],
+  trainer: [
+    'members.view.own',
+    'classes.manage.own',
+    'workouts.log',
+    ...SELF_SERVICE_BASELINE,
+  ],
+
+  // 9. MASSEUR — Scoped to spa/therapy appointment calendar & assigned clients
+  masseur: [
+    'members.view.own',
+    'classes.manage.own',
+    ...SELF_SERVICE_BASELINE,
+  ],
+  MASSEUR: [
+    'members.view.own',
+    'classes.manage.own',
+    ...SELF_SERVICE_BASELINE,
+  ],
+
+  // SUPPORT STAFF (DJ, Housekeeping, Chef, Valet)
   employee: [...SELF_SERVICE_BASELINE],
+  EMPLOYEE: [...SELF_SERVICE_BASELINE],
   staff_no_login: [...SELF_SERVICE_BASELINE],
 
-  // MEMBER (All gated by membership status)
-  MEMBER: [
-    'portal.access',
-    'portal.book',
-    'portal.token',
-    'portal.invoices',
-    'portal.renew',
-  ],
+  // MEMBER — Gated by membership status
   member: [
     'portal.access',
     'portal.book',
@@ -248,10 +247,16 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
     'portal.invoices',
     'portal.renew',
   ],
+  MEMBER: [
+    'portal.access',
+    'portal.book',
+    'portal.token',
+    'portal.invoices',
+    'portal.renew',
+  ],
 
-  // Compatibility aliases
+  // Aliases for compatibility
   manager: [
-    'revenue.view',
     'staff.view',
     'staff.manage',
     'staff.schedule',
@@ -273,14 +278,6 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
     'classes.book_member',
     ...SELF_SERVICE_BASELINE,
   ],
-  front_desk: [
-    'checkin.operate',
-    'checkin.view',
-    'staff_attendance.view',
-    'members.view.all',
-    'billing.view',
-    ...SELF_SERVICE_BASELINE,
-  ],
 }
 
 /** Legacy export alias for compatibility */
@@ -291,18 +288,24 @@ export const SEEDED_ROLES = ROLE_CAPS
  */
 export function hasCapability(role: string, capability: Capability): boolean {
   if (!role) return false
-  const r = role.toUpperCase()
-  if (r === 'OWNER') return true
-  const caps = ROLE_CAPS[role] || ROLE_CAPS[r] || []
+  const r = role.toLowerCase()
+  if (r === 'owner' || r === 'owner_admin') return true
+  const caps = ROLE_CAPS[role] || ROLE_CAPS[r] || ROLE_CAPS[role.toUpperCase()] || []
   return caps.includes(capability)
 }
 
 /**
  * Check if a role is allowed through "The Wall" (Revenue Visibility).
- * ONLY Owner, HR Head, Marketing Head, Sales Head.
+ * Strictly restricted to owner_admin (§3 Access Matrix).
  */
-export function canAccessRevenue(role: string): boolean {
-  return hasCapability(role, 'revenue.view')
+export function canAccessRevenue(roleOrUser: string | any): boolean {
+  if (!roleOrUser) return false
+  const roleSlug = typeof roleOrUser === 'string'
+    ? roleOrUser
+    : roleOrUser?.role?.slug || roleOrUser?.role || ''
+  if (!roleSlug || typeof roleSlug !== 'string') return false
+  const r = roleSlug.toLowerCase()
+  return r === 'owner_admin' || r === 'owner'
 }
 
 /**
