@@ -167,35 +167,6 @@ export default function OtpLoginForm() {
         >
           {loading ? 'Sending OTP...' : 'Send WhatsApp / SMS OTP'}
         </Button>
-
-        {/* 1-Click Quick Demo Number */}
-        <div className="pt-2 border-t border-[var(--line)] space-y-2">
-          <p className="font-ui text-[11px] text-[var(--muted)] text-center font-medium">
-            Quick Demo Mobile (1-Click Fill):
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setPhone('9999900001')
-                setError(null)
-              }}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--r-sm)] bg-[rgba(59,130,246,0.12)] hover:bg-[rgba(59,130,246,0.22)] text-[#60A5FA] border border-[rgba(59,130,246,0.30)] text-xs font-ui font-semibold transition-all cursor-pointer shadow-sm"
-            >
-              <span>👤 Member (+91 99999 00001)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPhone('9820011111')
-                setError(null)
-              }}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--r-sm)] bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.10)] text-[var(--ink)] border border-[rgba(255,255,255,0.12)] text-xs font-ui font-semibold transition-all cursor-pointer shadow-sm"
-            >
-              <span>👑 Exec (+91 98200 11111)</span>
-            </button>
-          </div>
-        </div>
       </form>
     )
   }
@@ -214,14 +185,7 @@ export default function OtpLoginForm() {
           <span>OTP Sent to {normaliseIndianPhone(phone)}</span>
         </div>
         <p className="font-ui text-xs text-[var(--muted)]">
-          Enter code below or click{' '}
-          <button
-            type="button"
-            onClick={() => setOtp(['1', '2', '3', '4', '5', '6'])}
-            className="text-[var(--accent)] underline font-data font-semibold cursor-pointer"
-          >
-            123456
-          </button>
+          Enter the 6-digit verification code sent to your registered device.
         </p>
       </div>
 

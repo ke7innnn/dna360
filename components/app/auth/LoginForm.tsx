@@ -39,7 +39,7 @@ export default function LoginForm() {
 
     if (res.requires2FA) {
       toast.info('2FA Challenge Required', {
-        description: 'Enter your 6-digit authenticator code (Demo code: 123456)',
+        description: 'Enter your 6-digit authenticator code from your authenticator app.',
       })
       return
     }
@@ -98,7 +98,6 @@ export default function LoginForm() {
           icon={<KeyRound className="w-4 h-4" />}
           autoFocus
           disabled={loading}
-          hint="Demo 2FA Code: 123456"
         />
 
         <Button
@@ -183,37 +182,6 @@ export default function LoginForm() {
         >
           {loading ? 'Authenticating...' : 'Sign In'}
         </Button>
-      </div>
-
-      {/* 1-Click Quick Demo Credentials */}
-      <div className="pt-3 border-t border-[var(--line)] space-y-2">
-        <p className="font-ui text-[11px] text-[var(--muted)] text-center font-medium">
-          Quick Demo Accounts (1-Click Fill):
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setIdentifier('member@dna360.in')
-              setPassword('password123')
-              setError(null)
-            }}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--r-sm)] bg-[rgba(59,130,246,0.12)] hover:bg-[rgba(59,130,246,0.22)] text-[#60A5FA] border border-[rgba(59,130,246,0.30)] text-xs font-ui font-semibold transition-all cursor-pointer shadow-sm"
-          >
-            <span>👤 Mock Member</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIdentifier('admin@dna360.in')
-              setPassword('password123')
-              setError(null)
-            }}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--r-sm)] bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.10)] text-[var(--ink)] border border-[rgba(255,255,255,0.12)] text-xs font-ui font-semibold transition-all cursor-pointer shadow-sm"
-          >
-            <span>👑 Exec Admin</span>
-          </button>
-        </div>
       </div>
     </form>
   )

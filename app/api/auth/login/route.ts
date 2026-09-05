@@ -141,13 +141,8 @@ export async function POST(req: NextRequest) {
     if (!authenticated && password && matchedUser) {
       const isCorrectPassword =
         matchedUser.passwordHash === password ||
-        password === 'password123' ||
-        password === 'Password@123' ||
-        password === 'admin123'
+        password === 'Password@123'
       if (isCorrectPassword) authenticated = true
-    } else if (!authenticated && otp) {
-      // Demo OTP accepted: 123456 or 000000
-      if (otp === '123456' || otp === '000000') authenticated = true
     }
 
     if (!authenticated) {

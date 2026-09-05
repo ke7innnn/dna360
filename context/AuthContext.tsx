@@ -72,28 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem(AUTH_STORAGE_KEY)
           }
         } else {
-          // Check if there was local stored session and verify against server
-          const stored = localStorage.getItem(AUTH_STORAGE_KEY)
-          if (stored) {
-            const parsed = JSON.parse(stored)
-            if (parsed?.email || parsed?.phone) {
-              const loginRes = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier: parsed.email || parsed.phone, password: 'password123' }),
-              })
-              if (loginRes.ok) {
-                const loginData = await loginRes.json()
-                setUser(loginData.user)
-                if (loginData.user?.branches?.[0]) setActiveBranch(loginData.user.branches[0])
-              } else {
-                setUser(null)
-                localStorage.removeItem(AUTH_STORAGE_KEY)
-              }
-            }
-          } else {
-            setUser(null)
-          }
+          setUser(null)
+          localStorage.removeItem(AUTH_STORAGE_KEY)
         }
 
         const storedRoles = localStorage.getItem(ROLES_STORAGE_KEY)

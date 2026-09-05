@@ -683,42 +683,6 @@ export const SEEDED_USERS: AuthUser[] = [
     can_view_revenue: false,
     requires_login: false,
   },
-
-  // ─── Member Personas (§5) ───
-  {
-    id: 'mem_001',
-    clubId: CLUB_ID_POWAI,
-    type: 'MEMBER',
-    name: 'Aarav Mehta (Member)',
-    email: 'member@dna360.in',
-    phone: '+919999900001',
-    role: findRole('MEMBER'),
-    designation: 'Platinum Member',
-    branchId: 'pow',
-    branches: [POWAI_BRANCH],
-    status: 'active',
-    membershipStatus: 'ACTIVE',
-    can_view_revenue: false,
-    requires_login: true,
-    passwordHash: 'password123',
-  },
-  {
-    id: 'mem_002',
-    clubId: CLUB_ID_POWAI,
-    type: 'MEMBER',
-    name: 'Rohan Verma (Expired)',
-    email: 'rohan.verma@gmail.com',
-    phone: '+919999900002',
-    role: findRole('MEMBER'),
-    designation: 'Expired Member',
-    branchId: 'pow',
-    branches: [POWAI_BRANCH],
-    status: 'active',
-    membershipStatus: 'EXPIRED',
-    can_view_revenue: false,
-    requires_login: true,
-    passwordHash: 'password123',
-  },
 ]
 
 export const SEEDED_ACTIVE_SESSIONS: UserSession[] = [
