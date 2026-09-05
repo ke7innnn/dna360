@@ -27,6 +27,7 @@ import {
   getGoLiveBlockers,
 } from '@/lib/settings'
 import { executeGymexMigration, type GymexRawRow } from '@/lib/migration'
+import { openRazorpayCheckout } from '@/lib/razorpay'
 import type {
   BusinessProfile,
   PendingConfig,
@@ -48,6 +49,7 @@ export default function SettingsPage() {
   const [migrationJson, setMigrationJson] = useState('')
   const [migrationReport, setMigrationReport] = useState<any>(null)
   const [isDryRun, setIsDryRun] = useState(true)
+  const [testPaymentLoading, setTestPaymentLoading] = useState(false)
 
   const refreshData = () => {
     setProfile(getProfile())
@@ -98,6 +100,59 @@ export default function SettingsPage() {
       }
     } catch (err: any) {
       toast.error(`Invalid JSON data: ${err.message}`)
+    }
+  }
+
+  const handleTestRazorpayPayment = async () => {
+    setTestPaymentLoading(true)
+    try {
+      // 1. Create a ₹1 live verification test order (100 paise)
+      const res = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountMinor: 100, // ₹1.00
+          receipt: `rcpt_live_test_${Date.now()}`,
+          notes: {
+            description: 'Live Gateway ₹1 Verification Test',
+            tester: profile.legalName,
+          },
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.orderId) {
+        throw new Error(data.error || 'Failed to initialize test payment order.')
+      }
+
+      // 2. Launch Razorpay live checkout modal
+      await openRazorpayCheckout({
+        orderId: data.orderId,
+        amountMinor: 100,
+        name: 'DNA 360 Fitness',
+        description: 'Gateway Live ₹1 Connectivity Verification',
+        prefill: {
+          name: profile.legalName,
+          email: profile.email,
+          contact: profile.phone,
+        },
+        onSuccess: (paymentData) => {
+          setTestPaymentLoading(false)
+          toast.success('Live Payment Completed & Verified!', {
+            description: `Razorpay Payment ID: ${paymentData.razorpay_payment_id}. Funds routed to your merchant account.`,
+          })
+        },
+        onDismiss: () => {
+          setTestPaymentLoading(false)
+          toast.info('Test checkout modal dismissed')
+        },
+      })
+    } catch (err: any) {
+      console.error('Test payment failed:', err)
+      setTestPaymentLoading(false)
+      toast.error('Payment Test Error', {
+        description: err.message || 'Unable to launch Razorpay checkout modal.',
+      })
     }
   }
 
@@ -302,7 +357,27 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--aurora-1)]/40 space-y-2 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">Razorpay Payment Gateway</span>
+                  <Badge status="ok" size="sm">Live Mode</Badge>
+                </div>
+                <p className="font-ui text-xs text-[var(--muted)]">Key: <code className="text-[10px] font-mono text-[var(--aurora-1)]">rzp_live_TYHC...</code>. Real-time UPI QR, Cards, and NetBanking.</p>
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    loading={testPaymentLoading}
+                    onClick={handleTestRazorpayPayment}
+                    icon={<CreditCard className="w-3.5 h-3.5" />}
+                  >
+                    Test ₹1 Live Checkout
+                  </Button>
+                </div>
+              </div>
+
               <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-ui font-semibold text-xs text-[var(--ink)]">WhatsApp Business API</span>
