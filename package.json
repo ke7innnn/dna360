@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "test:training": "npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts",
@@ -35,6 +36,7 @@
     "lucide-react": "^1.33.0",
     "next": "14.2.0",
     "postcss": "^8.4.24",
+    "prisma": "^5.22.0",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-day-picker": "^10.0.1",
@@ -45,7 +47,6 @@
     "typescript": "^5.0.4"
   },
   "devDependencies": {
-    "prisma": "^5.22.0",
     "vercel": "^59.9.1"
   }
 }
