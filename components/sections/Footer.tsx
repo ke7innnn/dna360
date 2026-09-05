@@ -11,6 +11,9 @@ const footerLinks = [
   { label: 'Trainers', href: '/trainers' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'Contact Us', href: '/contact' },
+  { label: 'Privacy Policy', href: '/privacy-policy' },
+  { label: 'Terms & Conditions', href: '/terms-and-conditions' },
+  { label: 'Refund Policy', href: '/cancellation-refund-policy' },
 ]
 
 export default function Footer() {
@@ -166,10 +169,25 @@ export default function Footer() {
       </div>
 
       {/* Copyright */}
-      <div className="border-t border-white/5 py-4 px-4 text-center">
-        <p className="text-[#666] font-opensans text-sm">
-          DNA 360 Fitness © 2021. All Rights Reserved.
-        </p>
+      <div className="border-t border-white/5 py-6 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#777] font-opensans">
+          <p>
+            DNA 360 Fitness © {new Date().getFullYear()}. All Rights Reserved. 502, Hiranandani Knowledge Park, Powai, Mumbai.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <Link href="/privacy-policy" className="hover:text-[#00c8c8] transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link href="/terms-and-conditions" className="hover:text-[#00c8c8] transition-colors">
+              Terms & Conditions
+            </Link>
+            <span>•</span>
+            <Link href="/cancellation-refund-policy" className="hover:text-[#00c8c8] transition-colors">
+              Cancellation & Refund Policy
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   )
