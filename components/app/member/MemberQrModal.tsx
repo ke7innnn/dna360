@@ -11,12 +11,24 @@ import { QRCodeSVG } from 'qrcode.react'
 interface MemberQrModalProps {
   isOpen: boolean
   onClose: () => void
+  memberCode?: string
+  memberName?: string
+  planName?: string
+  onSimulateScan?: (code: string) => void
 }
 
-export default function MemberQrModal({ isOpen, onClose }: MemberQrModalProps) {
+export default function MemberQrModal({
+  isOpen,
+  onClose,
+  memberCode: propMemberCode,
+  memberName: propMemberName,
+  planName: propPlanName,
+  onSimulateScan,
+}: MemberQrModalProps) {
   const { user } = useAuth()
-  const userName = user?.name || 'Aditi Deshpande'
-  const memberCode = (user as any)?.member_code || 'DNA-0412'
+  const userName = propMemberName || user?.name || 'Arjun Mehta'
+  const memberCode = propMemberCode || (user as any)?.member_code || 'DNA-2025-0001'
+  const planName = propPlanName || 'PREMIUM ANNUAL'
 
   const [secondsRemaining, setSecondsRemaining] = useState(18)
   const [tokenSeed, setTokenSeed] = useState(Date.now())
@@ -37,6 +49,8 @@ export default function MemberQrModal({ isOpen, onClose }: MemberQrModalProps) {
   }, [isOpen])
 
   if (!isOpen) return null
+
+  const qrPayload = `DNA360:${memberCode}:${tokenSeed}`
 
   return (
     <AnimatePresence>
@@ -62,7 +76,7 @@ export default function MemberQrModal({ isOpen, onClose }: MemberQrModalProps) {
             >
               <ArrowLeft className="w-4 h-4 text-white" />
             </button>
-            <span className="font-ui font-bold text-[15px] text-white">Check in</span>
+            <span className="font-ui font-bold text-[15px] text-white">Member QR Pass</span>
             <div style={{ width: '36px' }} />
           </div>
 
@@ -72,9 +86,9 @@ export default function MemberQrModal({ isOpen, onClose }: MemberQrModalProps) {
             </p>
 
             {/* Glowing High-Definition Optical QR Code Box */}
-            <div className="member-qrbox mx-auto flex items-center justify-center overflow-hidden bg-white">
+            <div className="member-qrbox mx-auto flex items-center justify-center overflow-hidden bg-white shadow-[0_0_30px_rgba(56,189,248,0.25)]">
               <QRCodeSVG
-                value={`DNA360:${memberCode}:${tokenSeed}`}
+                value={qrPayload}
                 size={204}
                 level="H"
                 includeMargin={false}
@@ -85,31 +99,44 @@ export default function MemberQrModal({ isOpen, onClose }: MemberQrModalProps) {
 
             {/* Member Details */}
             <p className="member-qrname">{userName}</p>
-            <p className="member-qrid">{memberCode} · PREMIUM ANNUAL</p>
+            <p className="member-qrid">{memberCode} · {planName}</p>
 
             {/* Dynamic Countdown Pill */}
             <div className="member-qrtimer">
               <i />
-              <span>Refreshes in {secondsRemaining}s</span>
+              <span>Rolling TOTP Token · Refreshes in {secondsRemaining}s</span>
             </div>
 
             {/* Anti-Fraud / Security Note */}
             <p className="member-qrhelp">
-              This code changes every 30 seconds. Screenshots won't work — that's deliberate.
+              This dynamic code rotates every 30 seconds to prevent unauthorized screenshot sharing.
             </p>
 
-            {/* Guest Pass Action */}
-            <div className="w-full mt-6">
+            {/* Action Buttons */}
+            <div className="w-full mt-5 space-y-2">
+              {onSimulateScan ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSimulateScan(qrPayload)
+                    onClose()
+                  }}
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-900/30"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Test Turnstile Check-in</span>
+                </button>
+              ) : null}
+
               <button
+                type="button"
                 onClick={() => {
-                  toast.success('Guest day pass link copied to clipboard', {
-                    description: 'Valid for 24 hours at Powai flagship location.',
-                  })
+                  navigator.clipboard.writeText(memberCode)
+                  toast.success(`Member code ${memberCode} copied to clipboard`)
                 }}
-                className="w-full py-3.5 px-4 rounded-full bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--line-2)] text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--line-2)] text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <UserPlus className="w-3.5 h-3.5 text-[#38BDF8]" />
-                <span>Add a guest day pass</span>
+                <span>Copy Member ID ({memberCode})</span>
               </button>
             </div>
           </div>

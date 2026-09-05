@@ -20,6 +20,7 @@ import OccupancyHeatmap from '@/components/app/attendance/OccupancyHeatmap'
 import EmergencyModal from '@/components/app/attendance/EmergencyModal'
 import ManualOverrideModal from '@/components/app/attendance/ManualOverrideModal'
 import CameraQrScannerModal from '@/components/app/attendance/CameraQrScannerModal'
+import MemberQrModal from '@/components/app/member/MemberQrModal'
 import {
   getAccessLogs,
   getStoredGates,
@@ -50,6 +51,7 @@ export default function AttendancePage() {
   const [overrideModalOpen, setOverrideModalOpen] = useState(false)
   const [overrideMember, setOverrideMember] = useState<any | null>(null)
   const [cameraModalOpen, setCameraModalOpen] = useState(false)
+  const [qrModalOpen, setQrModalOpen] = useState(false)
 
   const refreshData = () => {
     const list = getAccessLogs({
@@ -255,6 +257,16 @@ export default function AttendancePage() {
             <Button
               variant="secondary"
               size="md"
+              onClick={() => setQrModalOpen(true)}
+              icon={<QrCode className="w-4 h-4 text-emerald-400" />}
+              className="border-emerald-500/40 hover:border-emerald-500 hover:bg-emerald-500/10 text-emerald-400 flex-1 sm:flex-initial"
+            >
+              Show Member QR
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="md"
               onClick={() => setCameraModalOpen(true)}
               icon={<Camera className="w-4 h-4 text-[#38BDF8]" />}
               className="border-[#38BDF8]/40 hover:border-[#38BDF8] hover:bg-[#38BDF8]/10 text-[#38BDF8] flex-1 sm:flex-initial"
@@ -323,9 +335,17 @@ export default function AttendancePage() {
       <CameraQrScannerModal
         isOpen={cameraModalOpen}
         onClose={() => setCameraModalOpen(false)}
-        onScanSuccess={(decodedText) => handleSimulateScan(decodedText)}
-        title="Live Turnstile Optical Camera Scanner"
-        description="Point camera at member optical badge or dynamic QR token"
+        onScanSuccess={(scannedText) => handleSimulateScan(scannedText)}
+        title="Optical Turnstile Scanner"
+        description="Align member QR pass or rolling OTP code within the frame"
+      />
+      <MemberQrModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        memberCode="DNA-2025-0001"
+        memberName="Arjun Mehta"
+        planName="Annual Gym Package 1"
+        onSimulateScan={(code) => handleSimulateScan(code)}
       />
     </div>
   )

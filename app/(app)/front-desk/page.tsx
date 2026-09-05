@@ -17,6 +17,7 @@ import PosRetailModal from '@/components/app/frontdesk/PosRetailModal'
 import ShiftHandoverModal from '@/components/app/frontdesk/ShiftHandoverModal'
 import LockerModal from '@/components/app/frontdesk/LockerModal'
 import CameraQrScannerModal from '@/components/app/attendance/CameraQrScannerModal'
+import MemberQrModal from '@/components/app/member/MemberQrModal'
 import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 import {
@@ -57,6 +58,7 @@ export default function FrontDeskPage() {
   const [shiftModalOpen, setShiftModalOpen] = useState(false)
   const [lockerModalOpen, setLockerModalOpen] = useState(false)
   const [cameraModalOpen, setCameraModalOpen] = useState(false)
+  const [qrModalOpen, setQrModalOpen] = useState(false)
 
   // Network listener
   useEffect(() => {
@@ -315,6 +317,16 @@ export default function FrontDeskPage() {
                   type="button"
                   variant="secondary"
                   size="lg"
+                  onClick={() => setQrModalOpen(true)}
+                  className="flex items-center gap-2 border-emerald-500/40 hover:border-emerald-500 hover:bg-emerald-500/10 text-emerald-400"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Show Member QR</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="lg"
                   onClick={() => setCameraModalOpen(true)}
                   className="flex items-center gap-2 border-[#38BDF8]/40 hover:border-[#38BDF8] hover:bg-[#38BDF8]/10 text-[#38BDF8]"
                 >
@@ -443,6 +455,14 @@ export default function FrontDeskPage() {
         onScanSuccess={executeScanLookup}
         title="Gate 1 Optical Camera Scanner"
         description="Hold member dynamic QR badge or token in front of camera"
+      />
+      <MemberQrModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        memberCode="DNA-2025-0001"
+        memberName="Arjun Mehta"
+        planName="Annual Gym Package 1"
+        onSimulateScan={(code) => executeScanLookup(code)}
       />
     </div>
   )
