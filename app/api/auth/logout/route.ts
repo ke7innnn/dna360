@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { destroyServerSession, getServerSession, SESSION_COOKIE_NAME } from '@/lib/server-auth'
 import { logAuditEvent } from '@/lib/audit'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     const { session } = getServerSession(req)
