@@ -133,8 +133,8 @@ export const SEEDED_NOTIFICATIONS_CONFIG: NotificationGatewayConfig = {
 // ─── Payment Config ───
 
 export const SEEDED_PAYMENTS_CONFIG: PaymentGatewayConfig = {
-  onlinePaymentEnabled: false, // PENDING — gateway provider not named
-  gatewayProvider: null,
+  onlinePaymentEnabled: true,
+  gatewayProvider: 'Razorpay',
   manualPaymentEnabled: true, // Manual recording always works
 }
 

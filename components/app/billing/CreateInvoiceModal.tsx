@@ -75,30 +75,7 @@ export default function CreateInvoiceModal({
   const netPayableMinor = Math.max(0, listPriceMinor - discountMinor)
   const gst = backCalculateGst(netPayableMinor, selectedProduct?.tax_rate || 0.05)
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedMember || !selectedProduct) {
-      setError('Please select a member and a product')
-      return
-    }
-
-    // Validate discount against ceiling
-    const discountCheck = validateDiscount({
-      totalGrossMinor: listPriceMinor,
-      discountMinor,
-      managerApproval: discountMinor > 0 ? {
-        approvedBy: discountApprover,
-        reason: discountReason || 'Promotional Override',
-      } : undefined,
-    })
-
-    if (!discountCheck.allowed) {
-      setError(discountCheck.reason || 'Discount ceiling exceeded')
-      return
-    }
-
-    setLoading(true)
-
+  const executeIssueInvoice = (ref?: string, mode?: PaymentMode) => {
     const lineItem = buildLineItem({
       productId: selectedProduct.id,
       description: selectedProduct.name,
@@ -112,9 +89,9 @@ export default function CreateInvoiceModal({
     const payments: PaymentSplit[] = [
       {
         id: `pay_${Date.now()}`,
-        mode: paymentMode,
+        mode: mode || paymentMode,
         amountMinor: netPayableMinor,
-        transactionRef: transactionRef || undefined,
+        transactionRef: ref || transactionRef || undefined,
         recordedAt: new Date().toISOString(),
       },
     ]
@@ -140,11 +117,119 @@ export default function CreateInvoiceModal({
 
     setLoading(false)
     toast.success(`Tax Invoice Generated: ${newInvoice.invoiceNumber}`, {
-      description: `Billed to ${selectedMember.name} · ${formatINR(netPayableMinor)}`,
+      description: `Billed to ${selectedMember.name} · ${formatINR(netPayableMinor)}${ref ? ` (Ref: ${ref})` : ''}`,
     })
 
     if (onInvoiceCreated) onInvoiceCreated(newInvoice)
     onOpenChange(false)
+  }
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedMember || !selectedProduct) {
+      setError('Please select a member and a product')
+      return
+    }
+
+    // Validate discount against ceiling
+    const discountCheck = validateDiscount({
+      totalGrossMinor: listPriceMinor,
+      discountMinor,
+      managerApproval: discountMinor > 0 ? {
+        approvedBy: discountApprover,
+        reason: discountReason || 'Promotional Override',
+      } : undefined,
+    })
+
+    if (!discountCheck.allowed) {
+      setError(discountCheck.reason || 'Discount ceiling exceeded')
+      return
+    }
+
+    setLoading(true)
+    executeIssueInvoice()
+  }
+
+  const handleRazorpayCollect = async () => {
+    if (!selectedMember || !selectedProduct) {
+      setError('Please select a member and a product')
+      return
+    }
+
+    const discountCheck = validateDiscount({
+      totalGrossMinor: listPriceMinor,
+      discountMinor,
+      managerApproval: discountMinor > 0 ? {
+        approvedBy: discountApprover,
+        reason: discountReason || 'Promotional Override',
+      } : undefined,
+    })
+
+    if (!discountCheck.allowed) {
+      setError(discountCheck.reason || 'Discount ceiling exceeded')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const { openRazorpayCheckout } = await import('@/lib/razorpay')
+      const res = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountMinor: netPayableMinor,
+          receipt: `rcpt_inv_${Date.now()}`,
+          notes: {
+            memberId: selectedMember.id,
+            memberName: selectedMember.name,
+            productId: selectedProduct.id,
+            productName: selectedProduct.name,
+          },
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.orderId) {
+        throw new Error(data.error || 'Failed to initialize Razorpay checkout order.')
+      }
+
+      await openRazorpayCheckout({
+        orderId: data.orderId,
+        amountMinor: netPayableMinor,
+        name: 'DNA 360 Gym & Wellness',
+        description: selectedProduct.name,
+        prefill: {
+          name: selectedMember.name,
+          email: selectedMember.email || '',
+          contact: selectedMember.phone || '',
+        },
+        onSuccess: async (rzpRes) => {
+          try {
+            await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: rzpRes.razorpay_order_id,
+                paymentId: rzpRes.razorpay_payment_id,
+                signature: rzpRes.razorpay_signature,
+              }),
+            })
+          } catch (e) {
+            console.warn('Verification call:', e)
+          }
+
+          executeIssueInvoice(rzpRes.razorpay_payment_id, 'UPI')
+        },
+        onDismiss: () => {
+          setLoading(false)
+          toast.info('Checkout cancelled', { description: 'Razorpay checkout was dismissed.' })
+        },
+      })
+    } catch (err: any) {
+      console.error('Razorpay collection error:', err)
+      setLoading(false)
+      toast.error('Payment Error', { description: err.message || 'Razorpay checkout could not start.' })
+    }
   }
 
   return (
@@ -289,13 +374,25 @@ export default function CreateInvoiceModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--app-glass-border)]">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-[var(--app-glass-border)]">
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" loading={loading} icon={<CheckCircle className="w-4 h-4" />}>
-            Generate Tax Invoice
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="submit" variant="outline" loading={loading} icon={<Receipt className="w-4 h-4" />}>
+              Record Manual Invoice
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              loading={loading}
+              onClick={handleRazorpayCollect}
+              icon={<CreditCard className="w-4 h-4 text-white" />}
+              className="bg-gradient-to-r from-emerald-500 to-[#00c8c8] hover:opacity-90 shadow-lg shadow-emerald-500/20 text-white font-medium"
+            >
+              Collect via Razorpay Live (UPI / Card)
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

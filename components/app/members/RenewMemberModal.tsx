@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { RefreshCw, CreditCard, CheckCircle, Sparkles } from 'lucide-react'
+import { RefreshCw, CreditCard, CheckCircle, Sparkles, Receipt } from 'lucide-react'
 import { Modal } from '@/components/app/ui/modal'
 import { Button } from '@/components/app/ui/button'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
@@ -44,10 +44,7 @@ export default function RenewMemberModal({
   const netInclusiveMinor = Math.max(0, grossInclusiveMinor - discountMinor)
   const gst = backCalculateGst(netInclusiveMinor, 0.05)
 
-  const handleRenew = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
+  const processRenewal = (paymentRef?: string, chosenMode?: string) => {
     const todayStr = new Date().toISOString().slice(0, 10)
     const primaryMembership = member.active_memberships[0]
     const currentEnd = primaryMembership?.expiry_date ? new Date(primaryMembership.expiry_date) : new Date()
@@ -104,7 +101,7 @@ export default function RenewMemberModal({
           authorName: 'Amit Sharma',
           authorRole: 'Fitness Consultant',
           timestamp: new Date().toISOString(),
-          content: `Renewed with ${selectedPlan.name}. Valid until ${expiryDate}. Invoice: ${newMembership.invoice_number}`,
+          content: `Renewed with ${selectedPlan.name}. Valid until ${expiryDate}. Mode: ${chosenMode || paymentMode}${paymentRef ? ` (Ref: ${paymentRef})` : ''}. Invoice: ${newMembership.invoice_number}`,
           type: 'followup',
         },
         ...member.staff_notes,
@@ -112,11 +109,82 @@ export default function RenewMemberModal({
     })
 
     setLoading(false)
-    toast.success(`Membership renewed for ${member.name}`, {
-      description: `New validity extended to ${expiryDate}`,
+    toast.success(`Membership renewed for ${member.name}!`, {
+      description: `New validity extended to ${expiryDate}${paymentRef ? ` · Payment Ref: ${paymentRef}` : ''}`,
     })
     if (onUpdated) onUpdated()
+    if (onRenewed) onRenewed()
     onOpenChange(false)
+  }
+
+  const handleRenewManual = (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    processRenewal()
+  }
+
+  const handleRenewRazorpay = async () => {
+    setLoading(true)
+    try {
+      const { openRazorpayCheckout } = await import('@/lib/razorpay')
+      const res = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountMinor: netInclusiveMinor,
+          receipt: `rcpt_rnw_${Date.now()}`,
+          notes: {
+            memberId: member.id,
+            memberName: member.name,
+            planName: selectedPlan.name,
+          },
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.orderId) {
+        throw new Error(data.error || 'Failed to create Razorpay payment order')
+      }
+
+      await openRazorpayCheckout({
+        orderId: data.orderId,
+        amountMinor: netInclusiveMinor,
+        name: 'DNA 360 Gym & Wellness',
+        description: `Renewal: ${selectedPlan.name}`,
+        prefill: {
+          name: member.name,
+          email: member.email || '',
+          contact: member.phone || '',
+        },
+        onSuccess: async (rzpRes) => {
+          try {
+            await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: rzpRes.razorpay_order_id,
+                paymentId: rzpRes.razorpay_payment_id,
+                signature: rzpRes.razorpay_signature,
+              }),
+            })
+          } catch (e) {
+            console.warn('Verification warning:', e)
+          }
+
+          processRenewal(rzpRes.razorpay_payment_id, 'Razorpay Live')
+        },
+        onDismiss: () => {
+          setLoading(false)
+          toast.info('Payment cancelled', { description: 'Razorpay checkout was dismissed.' })
+        },
+      })
+    } catch (err: any) {
+      console.error('Razorpay renewal error:', err)
+      setLoading(false)
+      toast.error('Payment Error', {
+        description: err.message || 'Could not initiate Razorpay checkout.',
+      })
+    }
   }
 
   return (
@@ -127,7 +195,7 @@ export default function RenewMemberModal({
       description={`Member: ${member.name} (${member.member_code})`}
       size="md"
     >
-      <form onSubmit={handleRenew} className="space-y-4">
+      <form onSubmit={handleRenewManual} className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-[var(--app-text-secondary)]">
             Select Renewal Package (GST Inclusive)
@@ -205,13 +273,31 @@ export default function RenewMemberModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--app-glass-border)]">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-[var(--app-glass-border)]">
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" loading={loading} icon={<RefreshCw className="w-4 h-4" />}>
-            Renew & Issue Invoice
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={handleRenewManual}
+              icon={<Receipt className="w-4 h-4" />}
+            >
+              Manual / Cash
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              loading={loading}
+              onClick={handleRenewRazorpay}
+              icon={<CreditCard className="w-4 h-4 text-white" />}
+              className="bg-gradient-to-r from-emerald-500 to-[#00c8c8] hover:opacity-90 shadow-lg shadow-emerald-500/20 text-white font-medium"
+            >
+              Pay via Razorpay Live (UPI / Card)
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

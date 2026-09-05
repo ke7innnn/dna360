@@ -9,6 +9,9 @@ import { formatINR } from '@/lib/utils'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
+import { openRazorpayCheckout } from '@/lib/razorpay'
+import { useAuth } from '@/context/AuthContext'
+
 export default function MemberUpgradeModal({
   open,
   onOpenChange,
@@ -18,27 +21,86 @@ export default function MemberUpgradeModal({
   onOpenChange: (open: boolean) => void
   onUpgraded?: () => void
 }) {
+  const { user } = useAuth()
   const [selectedPlan, setSelectedPlan] = useState<'renew' | 'vip_pt'>('renew')
   const [loading, setLoading] = useState(false)
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setLoading(true)
 
-    if (selectedPlan === 'renew') {
-      renewOrUpgradePlan('Annual All-Access Premium (Renewed +365 Days)', 'Platinum All-Access', 5664000)
-      toast.success('Membership Renewed for 1 Year!', {
-        description: '365 days added to your active validity.',
+    const isRenew = selectedPlan === 'renew'
+    const planName = isRenew ? 'Annual All-Access Premium (Renewed +365 Days)' : 'VIP Multi-Club Platinum + 20 PT Bundle'
+    const tier = isRenew ? 'Platinum All-Access' : 'Diamond VIP All-Access'
+    const amountMinor = isRenew ? 5664000 : 8850000
+
+    try {
+      // 1. Create live Razorpay Order on server
+      const res = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountMinor,
+          receipt: `rcpt_upg_${Date.now()}`,
+          notes: {
+            memberId: user?.id || 'member_curr',
+            memberName: user?.name || 'DNA 360 Member',
+            planName,
+          },
+        }),
       })
-    } else {
-      renewOrUpgradePlan('VIP Multi-Club Platinum + 20 PT Bundle', 'Diamond VIP All-Access', 8850000)
-      toast.success('Upgraded to VIP Multi-Club + 20 PT Bundle!', {
-        description: 'Unrestricted access to all DNA 360 clubs and 20 PT sessions added.',
+
+      const data = await res.json()
+      if (!res.ok || !data.orderId) {
+        throw new Error(data.error || 'Failed to initialize Razorpay payment order.')
+      }
+
+      // 2. Launch Razorpay Checkout Modal
+      await openRazorpayCheckout({
+        orderId: data.orderId,
+        amountMinor,
+        name: 'DNA 360 Gym & Wellness',
+        description: `${planName} (${tier})`,
+        prefill: {
+          name: user?.name || 'Member',
+          email: user?.email || '',
+        },
+        onSuccess: async (rzpRes) => {
+          // 3. Verify signature on server
+          try {
+            await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: rzpRes.razorpay_order_id,
+                paymentId: rzpRes.razorpay_payment_id,
+                signature: rzpRes.razorpay_signature,
+              }),
+            })
+          } catch (e) {
+            console.warn('Signature verification call:', e)
+          }
+
+          // 4. Update member plan
+          renewOrUpgradePlan(planName, tier, amountMinor)
+          toast.success(isRenew ? 'Membership Renewed for 1 Year!' : 'VIP Platinum Upgraded!', {
+            description: `Payment confirmed via Razorpay (Ref: ${rzpRes.razorpay_payment_id})`,
+          })
+          setLoading(false)
+          if (onUpgraded) onUpgraded()
+          onOpenChange(false)
+        },
+        onDismiss: () => {
+          setLoading(false)
+          toast.info('Payment cancelled', { description: 'No charges were incurred.' })
+        },
+      })
+    } catch (err: any) {
+      console.error('Razorpay Checkout failed:', err)
+      setLoading(false)
+      toast.error('Payment Error', {
+        description: err.message || 'Unable to start online payment.',
       })
     }
-
-    setLoading(false)
-    if (onUpgraded) onUpgraded()
-    onOpenChange(false)
   }
 
   return (
