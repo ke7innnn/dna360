@@ -12,6 +12,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { formatINR, backCalculateGst } from '@/lib/gst'
 import { createMember } from '@/lib/members'
 import { getNextInvoiceNumber } from '@/lib/billing'
+import { openRazorpayCheckout } from '@/lib/razorpay'
 import type { Member, IdDocumentType } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
@@ -73,6 +74,165 @@ export default function MemberOnboardingModal({
   const netInclusiveMinor = Math.max(0, grossInclusiveMinor - discountMinor)
   const gst = backCalculateGst(netInclusiveMinor, 0.05)
 
+  const [loading, setLoading] = useState(false)
+
+  const executeCompleteOnboarding = (paymentRef?: string, chosenMode?: string) => {
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const endDateObj = new Date()
+    endDateObj.setDate(endDateObj.getDate() + selectedPlan.validityDays)
+    const expiryDate = endDateObj.toISOString().slice(0, 10)
+    const invoiceNumber = getNextInvoiceNumber()
+
+    const member = createMember({
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      name: `${firstName.trim()} ${lastName.trim()}`,
+      email: email.trim() || null,
+      phone: phone.trim(),
+      gender,
+      dob,
+      status: 'active',
+      kyc: {
+        id_type: idType,
+        id_last_four: idLastFour.trim() || null,
+        id_verified: !!idLastFour.trim(),
+        id_verifier: salesRep,
+        id_verified_at: new Date().toISOString(),
+        blood_group: bloodGroup,
+        emergency_contact_name: emergencyName.trim() || null,
+        emergency_contact_phone: emergencyPhone.trim() || null,
+        emergency_contact_relation: emergencyRelation || null,
+        medical_notes: medicalNotes.trim() || null,
+        injuries: null,
+      },
+      consent: {
+        sms: consentSms,
+        email: consentEmail,
+        whatsapp: consentWhatsapp,
+        updated_at: new Date().toISOString(),
+      },
+      active_memberships: [
+        {
+          id: `ms_${Date.now()}`,
+          product_id: selectedPlan.id,
+          product_name: selectedPlan.name,
+          product_category: selectedPlan.category,
+          enrolment_date: todayStr,
+          activation_date: todayStr,
+          expiry_date: expiryDate,
+          amount_paid: netInclusiveMinor,
+          discount_amount: discountMinor,
+          discount_reason: discountMinor > 0 ? 'Onboarding Discount' : null,
+          discount_approved_by: null,
+          tax_rate: 0.05,
+          status: 'active',
+          invoice_id: `inv_${Date.now()}`,
+          invoice_number: invoiceNumber,
+          sales_rep_id: 'usr_fc_01',
+          sales_rep_name: salesRep,
+          sessions_total: selectedPlan.category === 'reformer_pilates' ? 36 : null,
+          sessions_consumed: 0,
+          sessions_remaining: selectedPlan.category === 'reformer_pilates' ? 36 : null,
+          access_window: selectedPlan.name.includes('Happy Hours') ? { start: '12:00', end: '15:30' } : null,
+          void_reason: null,
+          voided_by: null,
+          voided_at: null,
+          transferred_from: null,
+          transferred_to: null,
+          transfer_fee_invoice_id: null,
+        },
+      ],
+      past_memberships: [],
+      fitness_metrics: [],
+      staff_notes: [
+        {
+          id: `sn_onb_${Date.now()}`,
+          authorId: 'usr_fc_01',
+          authorName: salesRep,
+          authorRole: 'Fitness Consultant',
+          timestamp: new Date().toISOString(),
+          content: `Onboarded with ${selectedPlan.name}. Invoice: ${invoiceNumber}${paymentRef ? ` (Razorpay Ref: ${paymentRef})` : ''}`,
+          type: 'general',
+        },
+      ],
+      tags: ['New Member', selectedPlan.category === 'gym_membership' ? 'Gym Tier' : 'Pilates Tier'],
+      blacklisted: false,
+      blacklist_reason: null,
+      blacklisted_by: null,
+      blacklisted_at: null,
+      complimentary: false,
+      special_inclusions: specialInclusions.trim() || null,
+      referred_by: referredBy.trim() || null,
+      referral_code: `${firstName.toUpperCase()}360`,
+      media_consent: null,
+      adjustment_credits_remaining: selectedPlan.category === 'reformer_pilates' ? 2 : 0,
+      assigned_trainer_id: null,
+      assigned_trainer_name: null,
+    })
+
+    setCreatedMember(member)
+    if (onMemberCreated) onMemberCreated(member)
+    toast.success(`Member registered: ${member.name}`, {
+      description: `Member Code: ${member.member_code}${paymentRef ? ` · Ref: ${paymentRef}` : ''}`,
+    })
+    setLoading(false)
+    setStep(4)
+  }
+
+  const handleRazorpayOnboard = async () => {
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountMinor: netInclusiveMinor,
+          receipt: `rcpt_onb_${Date.now()}`,
+          notes: {
+            memberName: `${firstName.trim()} ${lastName.trim()}`,
+            planName: selectedPlan.name,
+            phone: phone.trim(),
+          },
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.orderId) {
+        throw new Error(data.error || 'Failed to initialize Razorpay payment order.')
+      }
+
+      await openRazorpayCheckout({
+        orderId: data.orderId,
+        amountMinor: netInclusiveMinor,
+        name: 'DNA 360 Gym & Wellness',
+        description: `New Membership Onboarding: ${selectedPlan.name}`,
+        prefill: {
+          name: `${firstName.trim()} ${lastName.trim()}`,
+          email: email.trim() || undefined,
+          contact: phone.trim() || undefined,
+        },
+        onSuccess: (paymentData) => {
+          executeCompleteOnboarding(paymentData.razorpay_payment_id, 'UPI')
+          toast.success('Razorpay Payment Verified', {
+            description: `Payment ID: ${paymentData.razorpay_payment_id}`,
+          })
+        },
+        onDismiss: () => {
+          setLoading(false)
+          toast.info('Online payment cancelled')
+        },
+      })
+    } catch (err: any) {
+      console.error('Razorpay Onboarding Checkout failed:', err)
+      setLoading(false)
+      setError(err.message || 'Unable to open Razorpay payment gateway.')
+      toast.error('Payment Initialization Failed', {
+        description: err.message || 'Unable to open Razorpay payment gateway.',
+      })
+    }
+  }
+
   const handleNext = () => {
     setError(null)
     if (step === 1) {
@@ -92,105 +252,7 @@ export default function MemberOnboardingModal({
       }
       setStep(3)
     } else if (step === 3) {
-      const todayStr = new Date().toISOString().slice(0, 10)
-      const endDateObj = new Date()
-      endDateObj.setDate(endDateObj.getDate() + selectedPlan.validityDays)
-      const expiryDate = endDateObj.toISOString().slice(0, 10)
-      const invoiceNumber = getNextInvoiceNumber()
-
-      const member = createMember({
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        name: `${firstName.trim()} ${lastName.trim()}`,
-        email: email.trim() || null,
-        phone: phone.trim(),
-        gender,
-        dob,
-        status: 'active',
-        kyc: {
-          id_type: idType,
-          id_last_four: idLastFour.trim() || null,
-          id_verified: !!idLastFour.trim(),
-          id_verifier: salesRep,
-          id_verified_at: new Date().toISOString(),
-          blood_group: bloodGroup,
-          emergency_contact_name: emergencyName.trim() || null,
-          emergency_contact_phone: emergencyPhone.trim() || null,
-          emergency_contact_relation: emergencyRelation || null,
-          medical_notes: medicalNotes.trim() || null,
-          injuries: null,
-        },
-        consent: {
-          sms: consentSms,
-          email: consentEmail,
-          whatsapp: consentWhatsapp,
-          updated_at: new Date().toISOString(),
-        },
-        active_memberships: [
-          {
-            id: `ms_${Date.now()}`,
-            product_id: selectedPlan.id,
-            product_name: selectedPlan.name,
-            product_category: selectedPlan.category,
-            enrolment_date: todayStr,
-            activation_date: todayStr,
-            expiry_date: expiryDate,
-            amount_paid: netInclusiveMinor,
-            discount_amount: discountMinor,
-            discount_reason: discountMinor > 0 ? 'Onboarding Discount' : null,
-            discount_approved_by: null,
-            tax_rate: 0.05,
-            status: 'active',
-            invoice_id: `inv_${Date.now()}`,
-            invoice_number: invoiceNumber,
-            sales_rep_id: 'usr_fc_01',
-            sales_rep_name: salesRep,
-            sessions_total: selectedPlan.category === 'reformer_pilates' ? 36 : null,
-            sessions_consumed: 0,
-            sessions_remaining: selectedPlan.category === 'reformer_pilates' ? 36 : null,
-            access_window: selectedPlan.name.includes('Happy Hours') ? { start: '12:00', end: '15:30' } : null,
-            void_reason: null,
-            voided_by: null,
-            voided_at: null,
-            transferred_from: null,
-            transferred_to: null,
-            transfer_fee_invoice_id: null,
-          },
-        ],
-        past_memberships: [],
-        fitness_metrics: [],
-        staff_notes: [
-          {
-            id: `sn_onb_${Date.now()}`,
-            authorId: 'usr_fc_01',
-            authorName: salesRep,
-            authorRole: 'Fitness Consultant',
-            timestamp: new Date().toISOString(),
-            content: `Onboarded with ${selectedPlan.name}. Invoice: ${invoiceNumber}`,
-            type: 'general',
-          },
-        ],
-        tags: ['New Member', selectedPlan.category === 'gym_membership' ? 'Gym Tier' : 'Pilates Tier'],
-        blacklisted: false,
-        blacklist_reason: null,
-        blacklisted_by: null,
-        blacklisted_at: null,
-        complimentary: false,
-        special_inclusions: specialInclusions.trim() || null,
-        referred_by: referredBy.trim() || null,
-        referral_code: `${firstName.toUpperCase()}360`,
-        media_consent: null,
-        adjustment_credits_remaining: selectedPlan.category === 'reformer_pilates' ? 2 : 0,
-        assigned_trainer_id: null,
-        assigned_trainer_name: null,
-      })
-
-      setCreatedMember(member)
-      if (onMemberCreated) onMemberCreated(member)
-      toast.success(`Member registered: ${member.name}`, {
-        description: `Member Code: ${member.member_code}`,
-      })
-      setStep(4)
+      executeCompleteOnboarding(undefined, paymentMode)
     }
   }
 
@@ -518,13 +580,28 @@ export default function MemberOnboardingModal({
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-3 border-t border-[var(--app-glass-border)]">
+          <div className="flex items-center justify-between pt-3 border-t border-[var(--app-glass-border)] gap-2">
             <Button variant="secondary" onClick={() => setStep(2)} icon={<ArrowLeft className="w-4 h-4" />}>
               Back
             </Button>
-            <Button variant="primary" onClick={handleNext} icon={<CheckCircle className="w-4 h-4" />}>
-              Complete Onboarding & Generate Invoice
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                disabled={loading}
+                onClick={handleNext}
+                icon={<CheckCircle className="w-4 h-4" />}
+              >
+                Complete (Manual / Cash)
+              </Button>
+              <Button
+                variant="primary"
+                loading={loading}
+                onClick={handleRazorpayOnboard}
+                icon={<CreditCard className="w-4 h-4" />}
+              >
+                Pay via Razorpay Live ({formatINR(netInclusiveMinor)})
+              </Button>
+            </div>
           </div>
         </div>
       )}
