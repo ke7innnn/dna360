@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import {
   UserPlus, ShoppingBag, KeyRound, Calculator,
   Sparkles, Receipt, CheckCircle, Clock,
-  Users, ArrowUpRight, Search, QrCode,
+  Users, ArrowUpRight, Search, QrCode, Camera,
   ShieldCheck, AlertTriangle, XCircle, Wifi, WifiOff,
 } from 'lucide-react'
 import Card from '@/components/app/ui/glass-card'
@@ -16,6 +16,7 @@ import WalkInLeadModal from '@/components/app/frontdesk/WalkInLeadModal'
 import PosRetailModal from '@/components/app/frontdesk/PosRetailModal'
 import ShiftHandoverModal from '@/components/app/frontdesk/ShiftHandoverModal'
 import LockerModal from '@/components/app/frontdesk/LockerModal'
+import CameraQrScannerModal from '@/components/app/attendance/CameraQrScannerModal'
 import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 import {
@@ -50,6 +51,7 @@ export default function FrontDeskPage() {
   const [posModalOpen, setPosModalOpen] = useState(false)
   const [shiftModalOpen, setShiftModalOpen] = useState(false)
   const [lockerModalOpen, setLockerModalOpen] = useState(false)
+  const [cameraModalOpen, setCameraModalOpen] = useState(false)
 
   // Network listener
   useEffect(() => {
@@ -93,19 +95,25 @@ export default function FrontDeskPage() {
     return () => window.removeEventListener('dna360_frontdesk_updated', handleUpdate)
   }, [])
 
-  const handleProcessScan = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!scanInput.trim()) return
+  const executeScanLookup = (rawText: string) => {
+    if (!rawText.trim()) return
 
-    const query = scanInput.trim().toLowerCase()
+    let query = rawText.trim()
+    // Extract member code from DNA360:code:tokenSeed or DNA360:MEMBER:code:tokenSeed
+    if (query.startsWith('DNA360:')) {
+      const parts = query.split(':')
+      query = parts[1] === 'MEMBER' ? parts[2] || '' : parts[1] || ''
+    }
+
+    const normalizedQuery = query.toLowerCase()
     const members = getStoredMembers()
 
     const found = members.find(
       (m) =>
-        m.member_code.toLowerCase() === query ||
-        m.id.toLowerCase() === query ||
-        m.phone.includes(query) ||
-        m.name.toLowerCase().includes(query)
+        m.member_code.toLowerCase() === normalizedQuery ||
+        m.id.toLowerCase() === normalizedQuery ||
+        m.phone.includes(normalizedQuery) ||
+        m.name.toLowerCase().includes(normalizedQuery)
     )
 
     const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -113,7 +121,7 @@ export default function FrontDeskPage() {
     if (!found) {
       setLastCheckInResult({
         status: 'DENIED',
-        message: `Unknown code '${scanInput}'. No member found on record.`,
+        message: `Unknown code '${query}'. No member found on record.`,
         timestamp: now,
       })
       setScanInput('')
@@ -154,6 +162,11 @@ export default function FrontDeskPage() {
     }
 
     setScanInput('')
+  }
+
+  const handleProcessScan = (e: React.FormEvent) => {
+    e.preventDefault()
+    executeScanLookup(scanInput)
   }
 
   const logCheckIn = (member: Member, accessStatus: string) => {
@@ -275,7 +288,7 @@ export default function FrontDeskPage() {
               Scan turnstile RFID card, dynamic member QR token, or enter code (e.g. DNA-2025-0012)
             </p>
 
-            <form onSubmit={handleProcessScan} className="flex gap-2">
+            <form onSubmit={handleProcessScan} className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={scanInput}
@@ -284,9 +297,21 @@ export default function FrontDeskPage() {
                 className="flex-1 bg-[#090B10] border border-[rgba(255,255,255,0.15)] focus:border-[var(--accent)] text-[var(--ink)] text-sm font-mono rounded-xl px-4 py-3 focus:outline-none shadow-inner"
                 autoFocus
               />
-              <Button type="submit" variant="primary" size="lg">
-                Process Gate
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setCameraModalOpen(true)}
+                  className="flex items-center gap-2 border-[#38BDF8]/40 hover:border-[#38BDF8] hover:bg-[#38BDF8]/10 text-[#38BDF8]"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Scan Camera</span>
+                </Button>
+                <Button type="submit" variant="primary" size="lg">
+                  Process Gate
+                </Button>
+              </div>
             </form>
           </div>
 
@@ -399,6 +424,13 @@ export default function FrontDeskPage() {
       <PosRetailModal open={posModalOpen} onOpenChange={setPosModalOpen} onSaleCompleted={refreshData} />
       <ShiftHandoverModal open={shiftModalOpen} onOpenChange={setShiftModalOpen} />
       <LockerModal open={lockerModalOpen} onOpenChange={setLockerModalOpen} />
+      <CameraQrScannerModal
+        isOpen={cameraModalOpen}
+        onClose={() => setCameraModalOpen(false)}
+        onScanSuccess={executeScanLookup}
+        title="Gate 1 Optical Camera Scanner"
+        description="Hold member dynamic QR badge or token in front of camera"
+      />
     </div>
   )
 }

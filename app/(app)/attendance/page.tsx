@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ShieldCheck, ShieldAlert, KeyRound, QrCode,
+  ShieldCheck, ShieldAlert, KeyRound, QrCode, Camera,
   Users, Clock, AlertTriangle, CheckCircle,
   XCircle, RotateCcw, AlertOctagon,
   Search, Filter, Smartphone, CreditCard,
@@ -19,6 +19,7 @@ import PageHeader from '@/components/app/ui/PageHeader'
 import OccupancyHeatmap from '@/components/app/attendance/OccupancyHeatmap'
 import EmergencyModal from '@/components/app/attendance/EmergencyModal'
 import ManualOverrideModal from '@/components/app/attendance/ManualOverrideModal'
+import CameraQrScannerModal from '@/components/app/attendance/CameraQrScannerModal'
 import {
   getAccessLogs,
   getStoredGates,
@@ -48,6 +49,7 @@ export default function AttendancePage() {
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false)
   const [overrideModalOpen, setOverrideModalOpen] = useState(false)
   const [overrideMember, setOverrideMember] = useState<any | null>(null)
+  const [cameraModalOpen, setCameraModalOpen] = useState(false)
 
   const refreshData = () => {
     const list = getAccessLogs({
@@ -249,15 +251,28 @@ export default function AttendancePage() {
             />
           </div>
 
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => scanQuery && handleSimulateScan(scanQuery)}
-            icon={<QrCode className="w-4 h-4" />}
-            disabled={!scanQuery.trim()}
-          >
-            Simulate scan
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setCameraModalOpen(true)}
+              icon={<Camera className="w-4 h-4 text-[#38BDF8]" />}
+              className="border-[#38BDF8]/40 hover:border-[#38BDF8] hover:bg-[#38BDF8]/10 text-[#38BDF8] flex-1 sm:flex-initial"
+            >
+              Scan with Camera
+            </Button>
+
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => scanQuery && handleSimulateScan(scanQuery)}
+              icon={<QrCode className="w-4 h-4" />}
+              disabled={!scanQuery.trim()}
+              className="flex-1 sm:flex-initial"
+            >
+              Simulate scan
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -304,6 +319,13 @@ export default function AttendancePage() {
         member={overrideMember}
         gateId={selectedGateId}
         onOverridden={refreshData}
+      />
+      <CameraQrScannerModal
+        isOpen={cameraModalOpen}
+        onClose={() => setCameraModalOpen(false)}
+        onScanSuccess={(decodedText) => handleSimulateScan(decodedText)}
+        title="Live Turnstile Optical Camera Scanner"
+        description="Point camera at member optical badge or dynamic QR token"
       />
     </div>
   )

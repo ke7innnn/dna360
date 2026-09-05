@@ -157,11 +157,16 @@ export function getLiveOccupancy(_branchId?: string): FloorOccupancy {
  */
 export function scanTurnstilePass(query: string, gateId = 'gate_pow_01', scanType: ScanType = 'QR') {
   const members = getStoredMembers()
-  const q = query.trim().toLowerCase()
+  let cleanQuery = query.trim()
+  if (cleanQuery.startsWith('DNA360:')) {
+    const parts = cleanQuery.split(':')
+    cleanQuery = parts[1] === 'MEMBER' ? parts[2] || '' : parts[1] || ''
+  }
+  const q = cleanQuery.trim().toLowerCase()
 
   const member = members.find(
     m =>
-      m.id === query ||
+      m.id === cleanQuery ||
       m.member_code.toLowerCase() === q ||
       m.phone.includes(q) ||
       m.name.toLowerCase().includes(q)

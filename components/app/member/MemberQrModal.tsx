@@ -6,6 +6,8 @@ import { X, ArrowLeft, ShieldCheck, UserPlus, RefreshCw } from 'lucide-react'
 import { toast } from '@/components/app/ui/toast'
 import { useAuth } from '@/context/AuthContext'
 
+import { QRCodeSVG } from 'qrcode.react'
+
 interface MemberQrModalProps {
   isOpen: boolean
   onClose: () => void
@@ -70,65 +72,15 @@ export default function MemberQrModal({ isOpen, onClose }: MemberQrModalProps) {
             </p>
 
             {/* Glowing High-Definition Optical QR Code Box */}
-            <div className="member-qrbox mx-auto flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                {/* Standard 3 Corner Positional Finder Markers */}
-                <rect x="4" y="4" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
-                <rect x="12" y="12" width="8" height="8" fill="#000" rx="1.5" />
-                <rect x="72" y="4" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
-                <rect x="80" y="12" width="8" height="8" fill="#000" rx="1.5" />
-                <rect x="4" y="72" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
-                <rect x="12" y="80" width="8" height="8" fill="#000" rx="1.5" />
-
-                {/* High Density QR Data Grid */}
-                <g fill="#000">
-                  <rect x="36" y="6" width="5" height="5" />
-                  <rect x="46" y="6" width="5" height="5" />
-                  <rect x="56" y="11" width="5" height="5" />
-                  <rect x="36" y="16" width="5" height="5" />
-                  <rect x="51" y="16" width="5" height="5" />
-                  <rect x="61" y="6" width="5" height="5" />
-                  <rect x="41" y="21" width="5" height="5" />
-                  <rect x="56" y="21" width="5" height="5" />
-                  <rect x="36" y="26" width="5" height="5" />
-                  <rect x="6" y="36" width="5" height="5" />
-                  <rect x="16" y="36" width="5" height="5" />
-                  <rect x="26" y="41" width="5" height="5" />
-                  <rect x="6" y="46" width="5" height="5" />
-                  <rect x="21" y="46" width="5" height="5" />
-                  <rect x="11" y="51" width="5" height="5" />
-                  <rect x="6" y="61" width="5" height="5" />
-                  <rect x="21" y="56" width="5" height="5" />
-                  <rect x="16" y="61" width="5" height="5" />
-                  <rect x="36" y="36" width="5" height="5" />
-                  <rect x="46" y="41" width="5" height="5" />
-                  <rect x="56" y="36" width="5" height="5" />
-                  <rect x="41" y="46" width="5" height="5" />
-                  <rect x="51" y="51" width="5" height="5" />
-                  <rect x="61" y="46" width="5" height="5" />
-                  <rect x="36" y="56" width="5" height="5" />
-                  <rect x="46" y="61" width="5" height="5" />
-                  <rect x="66" y="56" width="5" height="5" />
-                  <rect x="71" y="36" width="5" height="5" />
-                  <rect x="81" y="41" width="5" height="5" />
-                  <rect x="91" y="36" width="5" height="5" />
-                  <rect x="76" y="51" width="5" height="5" />
-                  <rect x="86" y="56" width="5" height="5" />
-                  <rect x="71" y="61" width="5" height="5" />
-                  <rect x="36" y="71" width="5" height="5" />
-                  <rect x="46" y="76" width="5" height="5" />
-                  <rect x="41" y="86" width="5" height="5" />
-                  <rect x="56" y="71" width="5" height="5" />
-                  <rect x="66" y="81" width="5" height="5" />
-                  <rect x="51" y="91" width="5" height="5" />
-                  <rect x="76" y="71" width="5" height="5" />
-                  <rect x="86" y="76" width="5" height="5" />
-                  <rect x="71" y="86" width="5" height="5" />
-                  <rect x="91" y="86" width="5" height="5" />
-                  <rect x="81" y="91" width="5" height="5" />
-                  <rect x="61" y="91" width="5" height="5" />
-                </g>
-              </svg>
+            <div className="member-qrbox mx-auto flex items-center justify-center overflow-hidden bg-white">
+              <QRCodeSVG
+                value={`DNA360:${memberCode}:${tokenSeed}`}
+                size={204}
+                level="H"
+                includeMargin={false}
+                bgColor="#FFFFFF"
+                fgColor="#000000"
+              />
             </div>
 
             {/* Member Details */}
