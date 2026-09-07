@@ -38,6 +38,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/auth/session',
   '/api/webhooks/',
   '/api/health',
+  '/api/razorpay/',
 ]
 
 /**
