@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import Button from '@/components/app/ui/button'
 import Input from '@/components/app/ui/input'
 import { useAuth } from '@/context/AuthContext'
@@ -11,113 +11,37 @@ import { toast } from '@/components/app/ui/toast'
 
 export default function LoginForm() {
   const router = useRouter()
-  const { loginWithPassword, verifyTwoFactor, isTwoFactorPending } = useAuth()
+  const { loginWithPassword } = useAuth()
 
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [twoFactorOtp, setTwoFactorOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!identifier.trim()) {
-      setError('Please enter your email or phone number')
+      setError('Please enter your Username (e.g. Keith Shah) or Email/Phone')
       return
     }
     if (!password) {
-      setError('Please enter your password')
+      setError('Please enter your password (e.g. Keith@123)')
       return
     }
 
     setError(null)
     setLoading(true)
 
-    const res = await loginWithPassword(identifier, password)
+    const res = await loginWithPassword(identifier.trim(), password)
     setLoading(false)
-
-    if (res.requires2FA) {
-      toast.info('2FA Challenge Required', {
-        description: 'Enter your 6-digit authenticator code from your authenticator app.',
-      })
-      return
-    }
 
     if (res.success && res.redirectUrl) {
-      if (res.redirectUrl === '/change-password') {
-        toast.info('Initial Login Security Requirement', {
-          description: 'Please set your permanent password to access the platform.',
-        })
-      } else {
-        toast.success('Signed in successfully')
-      }
+      toast.success('Signed in successfully')
       router.push(res.redirectUrl)
     } else {
-      setError(res.error || 'Authentication failed')
+      setError(res.error || 'Invalid credentials. Check your name/email and password.')
     }
-  }
-
-  const handle2FASubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (twoFactorOtp.length < 6) {
-      setError('Please enter the 6-digit 2FA authenticator code')
-      return
-    }
-    setLoading(true)
-    const res = await verifyTwoFactor(twoFactorOtp)
-    setLoading(false)
-    if (!res.success) {
-      setError(res.error || 'Invalid 2FA code')
-    }
-  }
-
-  if (isTwoFactorPending) {
-    return (
-      <form onSubmit={handle2FASubmit} className="space-y-4">
-        <div className="text-center space-y-1.5 pb-2 border-b border-[var(--line)]">
-          <div className="w-10 h-10 rounded-full bg-[var(--accent-soft)] border border-[rgba(59,130,246,0.30)] flex items-center justify-center text-[var(--accent)] mx-auto shadow-sm">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <h3 className="font-display font-semibold text-base text-[var(--ink)]">
-            Two-Factor Authentication
-          </h3>
-          <p className="font-ui text-xs text-[var(--muted)]">
-            Required for Owner & Revenue Leadership tiers. Enter your 6-digit TOTP code.
-          </p>
-        </div>
-
-        {error && (
-          <div className="p-3 rounded-[var(--r-sm)] bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] text-xs text-[#EF4444] leading-relaxed">
-            {error}
-          </div>
-        )}
-
-        <Input
-          label="6-Digit Authenticator Code"
-          placeholder="123456"
-          value={twoFactorOtp}
-          onChange={(e) => {
-            setTwoFactorOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
-            if (error) setError(null)
-          }}
-          icon={<KeyRound className="w-4 h-4" />}
-          autoFocus
-          disabled={loading}
-        />
-
-        <Button
-          type="submit"
-          variant="primary"
-          size="md"
-          className="w-full"
-          disabled={loading || twoFactorOtp.length < 6}
-          icon={<ArrowRight className="w-4 h-4" />}
-        >
-          {loading ? 'Verifying 2FA...' : 'Verify & Continue'}
-        </Button>
-      </form>
-    )
   }
 
   return (
@@ -129,14 +53,14 @@ export default function LoginForm() {
       )}
 
       <Input
-        label="Email or Phone Number"
-        placeholder="admin@dna360.in or +919820011111"
+        label="Username (Name & Surname), Email, or Phone"
+        placeholder="e.g. Keith Shah or Keith.mktg@dna360.in"
         value={identifier}
         onChange={(e) => {
           setIdentifier(e.target.value)
           if (error) setError(null)
         }}
-        icon={<Mail className="w-4 h-4" />}
+        icon={<User className="w-4 h-4" />}
         autoComplete="username"
         disabled={loading}
       />
@@ -156,7 +80,7 @@ export default function LoginForm() {
         <div className="relative">
           <Input
             type={showPassword ? 'text' : 'password'}
-            placeholder="••••••••"
+            placeholder="e.g. Keith@123"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value)
@@ -177,7 +101,11 @@ export default function LoginForm() {
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="p-2.5 rounded-[var(--r-sm)] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-[11px] text-[var(--muted)] leading-relaxed">
+        <span className="text-[var(--accent)] font-semibold">Tip:</span> Login using your registered Name & Surname as Username (e.g. <span className="text-white font-mono">Keith Shah</span>) and password (<span className="text-white font-mono">Keith@123</span>).
+      </div>
+
+      <div className="pt-1">
         <Button
           type="submit"
           variant="primary"

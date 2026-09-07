@@ -1,17 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { KeyRound, Smartphone, Sparkles, Building2, Shield } from 'lucide-react'
 import LoginForm from '@/components/app/auth/LoginForm'
-import OtpLoginForm from '@/components/app/auth/OtpLoginForm'
 import Card from '@/components/app/ui/glass-card'
-import { cn } from '@/lib/utils'
 
 export default function LoginPage() {
-  const [activeTab, setActiveTab] = useState<'password' | 'otp'>('password')
-
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative select-none overflow-hidden">
       {/* 1. Custom Fluted Blue Slats Background */}
@@ -59,38 +54,17 @@ export default function LoginPage() {
           {/* Top Edge Aurora Glow Accent */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent opacity-90 shadow-[0_0_12px_#3B82F6]" />
 
-          {/* Auth Method Tabs */}
-          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-[var(--r-sm)] bg-[var(--surface-2)] border border-[var(--line)] mb-6">
-            <button
-              type="button"
-              onClick={() => setActiveTab('password')}
-              className={cn(
-                'flex items-center justify-center gap-2 py-2 text-xs font-ui font-semibold rounded-[var(--r-sm)] transition-all cursor-pointer',
-                activeTab === 'password'
-                  ? 'bg-[var(--accent-soft)] text-white border border-[rgba(59,130,246,0.40)] shadow-glow-sm'
-                  : 'text-[var(--muted)] hover:text-white'
-              )}
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              Password
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('otp')}
-              className={cn(
-                'flex items-center justify-center gap-2 py-2 text-xs font-ui font-semibold rounded-[var(--r-sm)] transition-all cursor-pointer',
-                activeTab === 'otp'
-                  ? 'bg-[var(--accent-soft)] text-white border border-[rgba(59,130,246,0.40)] shadow-glow-sm'
-                  : 'text-[var(--muted)] hover:text-white'
-              )}
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              Phone OTP
-            </button>
+          <div className="text-center space-y-1 pb-4 mb-5 border-b border-[var(--line)]">
+            <h2 className="font-display font-semibold text-lg text-white">
+              Member & Staff Portal Sign In
+            </h2>
+            <p className="font-ui text-xs text-[var(--muted)]">
+              Sign in with your Name & Surname or Email, and your password.
+            </p>
           </div>
 
-          {/* Form views */}
-          {activeTab === 'password' ? <LoginForm /> : <OtpLoginForm />}
+          {/* Form view */}
+          <LoginForm />
         </Card>
       </motion.div>
     </div>

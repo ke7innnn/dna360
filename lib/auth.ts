@@ -386,7 +386,7 @@ export const SEEDED_USERS: AuthUser[] = [
     id: 'usr_staff_11',
     clubId: CLUB_ID_POWAI,
     type: 'STAFF',
-    name: 'Pallavi',
+    name: 'Pallavi More',
     email: 'pallavi.fc@dna360.in',
     phone: '+919820031001',
     role: findRole('FITNESS_CONSULTANT'),
