@@ -39,6 +39,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/webhooks/',
   '/api/health',
   '/api/razorpay/',
+  '/api/whatsapp/',
 ]
 
 /**

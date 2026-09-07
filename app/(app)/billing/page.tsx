@@ -6,8 +6,9 @@ import {
   CreditCard, Receipt, Plus, Search, Filter,
   Download, CheckCircle, Clock, AlertTriangle,
   RotateCcw, Eye, FileText, ArrowUpDown, Building2,
-  Sparkles, Layers, ShieldAlert,
+  Sparkles, Layers, ShieldAlert, MessageSquare,
 } from 'lucide-react'
+import WhatsAppComposeModal from '@/components/app/whatsapp/WhatsAppComposeModal'
 import Card from '@/components/app/ui/glass-card'
 import StatTile from '@/components/app/ui/StatTile'
 import DataTable, { type DataTableColumn } from '@/components/app/ui/data-table'
@@ -34,6 +35,7 @@ export default function BillingPage() {
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
   const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false)
   const [creditNoteInvoice, setCreditNoteInvoice] = useState<TaxInvoice | null>(null)
+  const [whatsAppTargetInvoice, setWhatsAppTargetInvoice] = useState<TaxInvoice | null>(null)
 
   const [page, setPage] = useState(1)
   const pageSize = 12
@@ -135,6 +137,18 @@ export default function BillingPage() {
       align: 'right',
       cell: (_, row) => (
         <div className="flex items-center justify-end gap-1.5">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              setWhatsAppTargetInvoice(row)
+            }}
+            className="hover:text-[#25D366] hover:border-[#25D366]/40"
+            icon={<MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />}
+          >
+            WhatsApp
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -278,6 +292,21 @@ export default function BillingPage() {
         invoice={creditNoteInvoice}
         onIssued={refreshInvoices}
       />
+
+      {whatsAppTargetInvoice && (
+        <WhatsAppComposeModal
+          isOpen={!!whatsAppTargetInvoice}
+          onClose={() => setWhatsAppTargetInvoice(null)}
+          defaultTemplateCategory="BILLING"
+          recipient={{
+            memberId: whatsAppTargetInvoice.memberId || 'mem_billing',
+            memberName: whatsAppTargetInvoice.customerName || 'Customer',
+            phone: whatsAppTargetInvoice.customerPhone || '+919820011111',
+            dueAmount: formatINR(whatsAppTargetInvoice.grandTotalMinor || 0),
+            memberCode: whatsAppTargetInvoice.invoiceNumber,
+          }}
+        />
+      )}
     </div>
   )
 }

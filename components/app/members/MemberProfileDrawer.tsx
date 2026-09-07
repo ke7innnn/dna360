@@ -5,8 +5,9 @@ import {
   User, Mail, Phone, Calendar, ShieldCheck,
   CreditCard, Activity, Clock, FileText, Send,
   RefreshCw, Sparkles, Check, X, Ban, CheckCircle2,
-  AlertTriangle, ShieldAlert,
+  AlertTriangle, ShieldAlert, MessageSquare,
 } from 'lucide-react'
+import WhatsAppComposeModal from '@/components/app/whatsapp/WhatsAppComposeModal'
 import Drawer from '@/components/app/ui/drawer'
 import Button from '@/components/app/ui/button'
 import Badge from '@/components/app/ui/badge'
@@ -40,6 +41,7 @@ export default function MemberProfileDrawer({
   const [newNoteContent, setNewNoteContent] = useState('')
   const [newNoteType, setNewNoteType] = useState<'general' | 'call' | 'followup' | 'warning'>('general')
   const [renewModalOpen, setRenewModalOpen] = useState(false)
+  const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false)
   const [blockModalOpen, setBlockModalOpen] = useState(false)
   const [blockReason, setBlockReason] = useState('Turnstile misconduct / conduct violation')
   const [customBlockReason, setCustomBlockReason] = useState('')
@@ -151,6 +153,16 @@ export default function MemberProfileDrawer({
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setWhatsAppModalOpen(true)}
+                className="bg-[#25D366] hover:bg-[#20bd5a] text-black font-semibold border-none shadow-[0_0_12px_rgba(37,211,102,0.25)]"
+                icon={<MessageSquare className="w-3.5 h-3.5" />}
+              >
+                WhatsApp
+              </Button>
+
               <Button
                 variant="secondary"
                 size="sm"
@@ -478,6 +490,20 @@ export default function MemberProfileDrawer({
           </div>
         </div>
       </Modal>
+
+      <WhatsAppComposeModal
+        isOpen={whatsAppModalOpen}
+        onClose={() => setWhatsAppModalOpen(false)}
+        recipient={{
+          memberId: member.id,
+          memberName: member.name,
+          phone: member.phone,
+          planName: primaryMembership?.product_name,
+          expiryDate: primaryMembership?.expiry_date,
+          memberCode: member.member_code,
+          trainerName: member.assigned_trainer_name,
+        }}
+      />
     </>
   )
 }

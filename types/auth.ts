@@ -33,6 +33,7 @@ export type RoleSlug =
   | 'FITNESS_CONSULTANT'
   | 'MASSEUR'
   | 'SUPERVISOR'
+  | 'FRONT_DESK'
   | 'EMPLOYEE'
   | 'MEMBER'
   | 'owner'
