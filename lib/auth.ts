@@ -373,7 +373,7 @@ export const SEEDED_USERS: AuthUser[] = [
     name: 'Front Desk Operations',
     email: 'frontdesk@dna360.in',
     phone: '+919820036000',
-    role: findRole('FITNESS_CONSULTANT'),
+    role: findRole('FRONT_DESK'),
     designation: 'Front Desk Supervisor',
     branchId: 'pow',
     branches: [POWAI_BRANCH],

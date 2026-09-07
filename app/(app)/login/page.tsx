@@ -64,7 +64,9 @@ export default function LoginPage() {
           </div>
 
           {/* Form view */}
-          <LoginForm />
+          <React.Suspense fallback={<div className="py-8 text-center text-xs text-[var(--muted)]">Loading secure portal...</div>}>
+            <LoginForm />
+          </React.Suspense>
         </Card>
       </motion.div>
     </div>

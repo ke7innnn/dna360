@@ -51,16 +51,47 @@ function isPublicPath(pathname: string): boolean {
   return false
 }
 
+const SESSION_SECRET = process.env.SESSION_SECRET || 'dna360_secure_session_secret_key_powai_2026'
+
+const STAFF_ONLY_PREFIXES = [
+  '/overview',
+  '/analytics',
+  '/revenue',
+  '/billing',
+  '/staff',
+  '/settings',
+  '/audit-log',
+  '/leads',
+  '/front-desk',
+  '/attendance',
+]
+
 /**
- * Validates HMAC token signature directly in Edge Middleware
+ * Validates HMAC token signature with Web Crypto API directly in Edge Middleware
  */
-function isTokenValid(token: string | undefined): boolean {
+async function isTokenValid(token: string | undefined): Promise<boolean> {
   if (!token || !token.includes('.')) return false
   const [data, signature] = token.split('.')
   if (!data || !signature) return false
 
   try {
-    const json = Buffer.from(data, 'base64url').toString('utf-8')
+    const enc = new TextEncoder()
+    const key = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(SESSION_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    )
+    let b64 = signature.replace(/-/g, '+').replace(/_/g, '/')
+    while (b64.length % 4) b64 += '='
+    const sigBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
+    const isSigMatch = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(data))
+    if (!isSigMatch) return false
+
+    let dataB64 = data.replace(/-/g, '+').replace(/_/g, '/')
+    while (dataB64.length % 4) dataB64 += '='
+    const json = atob(dataB64)
     const payload = JSON.parse(json)
     if (!payload.sessionId || !payload.userId) return false
     if (payload.expiresAt && Date.now() > payload.expiresAt) return false
@@ -78,14 +109,26 @@ function parseTokenPayload(token: string | undefined): any | null {
   const [data] = token.split('.')
   if (!data) return null
   try {
-    const json = Buffer.from(data, 'base64url').toString('utf-8')
+    let dataB64 = data.replace(/-/g, '+').replace(/_/g, '/')
+    while (dataB64.length % 4) dataB64 += '='
+    const json = atob(dataB64)
     return JSON.parse(json)
   } catch {
     return null
   }
 }
 
-export function middleware(req: NextRequest) {
+function getStaffRedirect(roleSlug?: string): string {
+  const slug = (roleSlug || '').toLowerCase()
+  if (slug === 'hr_head') return '/staff'
+  if (slug.includes('trainer') || slug === 'masseur') return '/classes'
+  if (slug.includes('consultant')) return '/leads'
+  if (slug === 'front_desk') return '/front-desk'
+  if (slug === 'supervisor') return '/attendance'
+  return '/overview'
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // 1. Static and public route bypass
@@ -93,7 +136,7 @@ export function middleware(req: NextRequest) {
 
   // 2. Extract session token
   const token = req.cookies.get('dna360_session')?.value || req.headers.get('authorization')?.replace('Bearer ', '')
-  const hasValidSession = isTokenValid(token)
+  const hasValidSession = await isTokenValid(token)
 
   // 3. Unauthenticated access handling for private routes
   if (!isPublic && !hasValidSession) {
@@ -109,9 +152,10 @@ export function middleware(req: NextRequest) {
       return unauthorizedResponse
     }
 
-    // Redirect private page to login with target redirect param
+    // Redirect private page to login with safe target redirect param (prevent Open Redirects)
+    const safePath = pathname.startsWith('/') && !pathname.startsWith('//') ? pathname : '/overview'
     const loginUrl = new URL('/login', req.url)
-    loginUrl.searchParams.set('redirect', pathname)
+    loginUrl.searchParams.set('redirect', safePath)
     const redirectResponse = NextResponse.redirect(loginUrl, 307)
     addSecurityHeaders(redirectResponse)
     return redirectResponse
@@ -147,19 +191,36 @@ export function middleware(req: NextRequest) {
         return redirectResponse
       }
     }
+
+    // 5. Role-Based Route Barrier (Prevent Member Privilege Escalation)
+    const roleSlug = (payload?.role || '').toLowerCase()
+    const isMember = roleSlug === 'member' || payload?.type === 'MEMBER'
+
+    if (isMember) {
+      // Members cannot access staff management and operations routes
+      const isStaffRoute = STAFF_ONLY_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+      if (isStaffRoute) {
+        const memberHome = new URL('/dashboard', req.url)
+        const redirectResponse = NextResponse.redirect(memberHome, 307)
+        addSecurityHeaders(redirectResponse)
+        return redirectResponse
+      }
+    }
+
+    // 6. Authenticated user visiting /login -> redirect to their role's dashboard
+    if (pathname === '/login') {
+      let targetPath = isMember ? '/dashboard' : getStaffRedirect(payload?.role)
+      if (payload?.must_change_password) {
+        targetPath = '/change-password'
+      }
+      const targetUrl = new URL(targetPath, req.url)
+      const redirectResponse = NextResponse.redirect(targetUrl, 307)
+      addSecurityHeaders(redirectResponse)
+      return redirectResponse
+    }
   }
 
-  // 5. Authenticated user visiting /login -> redirect to /overview or /change-password
-  if (pathname === '/login' && hasValidSession) {
-    const payload = parseTokenPayload(token)
-    const targetPath = payload?.must_change_password ? '/change-password' : '/overview'
-    const targetUrl = new URL(targetPath, req.url)
-    const redirectResponse = NextResponse.redirect(targetUrl, 307)
-    addSecurityHeaders(redirectResponse)
-    return redirectResponse
-  }
-
-  // 6. Proceed with security headers applied
+  // 7. Proceed with security headers applied
   const response = NextResponse.next()
   addSecurityHeaders(response)
   return response

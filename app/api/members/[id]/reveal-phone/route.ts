@@ -18,7 +18,8 @@ export async function POST(
 
     const user = session.user
     const userCaps = user.role.capabilities || []
-    const isOwner = user.role.slug === 'OWNER' || user.role.slug === 'owner'
+    const roleSlugLower = user.role.slug.toLowerCase()
+    const isOwner = roleSlugLower === 'owner' || roleSlugLower === 'owner_admin'
     const canViewAll = isOwner || userCaps.includes('members.view.all')
     const canViewOwn = userCaps.includes('members.view.own')
 

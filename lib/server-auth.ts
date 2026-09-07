@@ -190,8 +190,16 @@ export function createServerSession(user: AuthUser, tenantId: string = 'tenant_p
   const tokenPayload = {
     sessionId,
     userId: user.id,
+    email: user.email,
+    name: user.name,
+    phone: user.phone,
+    type: user.type,
     tenantId,
     role: user.role.slug,
+    roleName: user.role.name,
+    branchId: user.branchId,
+    can_view_revenue: !!user.can_view_revenue,
+    membershipStatus: (user as any).membershipStatus,
     must_change_password: !!user.must_change_password,
     issuedAt: now,
     expiresAt,
@@ -227,17 +235,23 @@ export function destroyServerSession(tokenOrId: string) {
 }
 
 /**
- * Find user by ID across staff and members
+ * Find user by ID across staff and members, with email fallback
  */
-export function findUserById(userId: string): AuthUser | null {
-  const staff = SEEDED_USERS.find(u => u.id === userId)
+export function findUserById(userId: string, email?: string): AuthUser | null {
+  const staff = SEEDED_USERS.find(
+    (u) => u.id === userId || (email && u.email?.toLowerCase() === email.toLowerCase())
+  )
   if (staff) return staff
 
   try {
     const members = getStoredMembers()
-    const member = members.find(m => m.id === userId)
+    const member = members.find(
+      (m) => m.id === userId || (email && m.email?.toLowerCase() === email.toLowerCase())
+    )
     if (member) {
-      const memberRole = SEEDED_ROLE_DEFINITIONS.find(r => r.slug === 'MEMBER') || SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1]
+      const memberRole =
+        SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toLowerCase() === 'member') ||
+        SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1]
       return {
         id: member.id,
         clubId: CLUB_ID_POWAI,
@@ -249,7 +263,12 @@ export function findUserById(userId: string): AuthUser | null {
         branchId: 'pow',
         branches: [POWAI_BRANCH],
         status: member.status === 'blacklisted' ? 'inactive' : 'active',
-        membershipStatus: member.status === 'inactive' ? 'EXPIRED' : (member.status === 'grace_period' ? 'GRACE_PERIOD' : 'ACTIVE'),
+        membershipStatus:
+          member.status === 'inactive'
+            ? 'EXPIRED'
+            : member.status === 'grace_period'
+            ? 'GRACE_PERIOD'
+            : 'ACTIVE',
         can_view_revenue: false,
         requires_login: true,
       }
@@ -291,10 +310,36 @@ export function getServerSession(req: NextRequest): { session: ServerSessionData
   let sessionData = activeSessions.get(payload.sessionId)
   if (!sessionData) {
     // Reconstitute session if user exists
-    const user = findUserById(payload.userId)
+    let user = findUserById(payload.userId, payload.email)
+
+    // If not found in static lists, rehydrate from cryptographically verified HMAC signed token
+    if (!user && payload.name && payload.role) {
+      const roleDef =
+        SEEDED_ROLE_DEFINITIONS.find(
+          (r) => r.slug.toLowerCase() === String(payload.role).toLowerCase()
+        ) || SEEDED_ROLE_DEFINITIONS[0]
+
+      user = {
+        id: payload.userId,
+        clubId: CLUB_ID_POWAI,
+        type: payload.type || 'STAFF',
+        name: payload.name,
+        email: payload.email || `${payload.userId}@dna360.in`,
+        phone: payload.phone || '+919820000000',
+        role: roleDef,
+        branchId: payload.branchId || 'pow',
+        branches: [POWAI_BRANCH],
+        status: 'active',
+        membershipStatus: payload.membershipStatus || 'ACTIVE',
+        can_view_revenue: Boolean(payload.can_view_revenue),
+        requires_login: true,
+      }
+    }
+
     if (!user) {
       return { session: null, error: 'User not found' }
     }
+
     sessionData = {
       sessionId: payload.sessionId,
       userId: payload.userId,

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { User, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import Button from '@/components/app/ui/button'
@@ -11,6 +11,7 @@ import { toast } from '@/components/app/ui/toast'
 
 export default function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { loginWithPassword } = useAuth()
 
   const [identifier, setIdentifier] = useState('')
@@ -36,9 +37,12 @@ export default function LoginForm() {
     const res = await loginWithPassword(identifier.trim(), password)
     setLoading(false)
 
-    if (res.success && res.redirectUrl) {
+    if (res.success) {
       toast.success('Signed in successfully')
-      router.push(res.redirectUrl)
+      const redirectParam = searchParams.get('redirect')
+      const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
+      const destination = isSafe ? redirectParam : res.redirectUrl || '/overview'
+      router.push(destination)
     } else {
       setError(res.error || 'Invalid credentials. Check your name/email and password.')
     }
