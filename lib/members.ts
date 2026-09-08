@@ -346,8 +346,10 @@ export function normalizeMember(m: any): Member {
 
 // ─── Storage Helpers ───
 
+let memoryMembers: Member[] = [...SEEDED_MEMBERS]
+
 export function getStoredMembers(): Member[] {
-  let list = SEEDED_MEMBERS
+  let list = memoryMembers
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) {
@@ -356,10 +358,9 @@ export function getStoredMembers(): Member[] {
     } else {
       try {
         const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed) && parsed.length >= 600) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           list = parsed.map(normalizeMember)
         } else {
-          // If stored is outdated prototype data, reset to full 679 verified members
           localStorage.setItem(STORAGE_KEY, JSON.stringify(SEEDED_MEMBERS))
           list = SEEDED_MEMBERS
         }
@@ -372,6 +373,7 @@ export function getStoredMembers(): Member[] {
 }
 
 export function saveMembers(members: Member[]) {
+  memoryMembers = members
   if (typeof window === 'undefined') return
   localStorage.setItem(STORAGE_KEY, JSON.stringify(members))
   window.dispatchEvent(new Event('dna360_members_updated'))
@@ -591,4 +593,25 @@ export function addFitnessMetric(memberId: string, metric: Omit<FitnessMetric, '
   return updateMember(memberId, {
     fitness_metrics: [...(member.fitness_metrics || []), newMetric],
   })
+}
+
+export function deleteMember(memberId: string): boolean {
+  const members = getStoredMembers()
+  const member = members.find(m => m.id === memberId)
+  if (!member) return false
+
+  const updated = members.filter(m => m.id !== memberId)
+  saveMembers(updated)
+
+  logAuditEvent({
+    actor: { id: 'system', name: 'Admin', email: '', role: 'Owner' },
+    action: 'DELETE',
+    entity: 'Member',
+    entityId: memberId,
+    branchId: 'pow',
+    description: `Deleted member ${member.name} (${member.member_code})`,
+    beforeState: member,
+  })
+
+  return true
 }

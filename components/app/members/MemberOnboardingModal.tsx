@@ -11,7 +11,7 @@ import { Input } from '@/components/app/ui/input'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
 import { formatINR, backCalculateGst } from '@/lib/gst'
 import { createMember } from '@/lib/members'
-import { getNextInvoiceNumber } from '@/lib/billing'
+import { getNextInvoiceNumber, recordMembershipInvoice } from '@/lib/billing'
 import { openRazorpayCheckout } from '@/lib/razorpay'
 import type { Member, IdDocumentType } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
@@ -169,6 +169,24 @@ export default function MemberOnboardingModal({
       assigned_trainer_id: null,
       assigned_trainer_name: null,
     })
+
+    // Issue legal GST Tax Invoice & ledger entry
+    try {
+      const validPaymentMethod = (chosenMode as any) || (paymentRef ? 'UPI' : paymentMode)
+      recordMembershipInvoice({
+        memberId: member.id,
+        memberName: member.name,
+        memberPhone: member.phone,
+        memberEmail: member.email || undefined,
+        productName: selectedPlan.name,
+        totalInclusiveMinor: netInclusiveMinor,
+        paymentMethod: validPaymentMethod,
+        invoiceNumber,
+        paymentReference: paymentRef,
+      })
+    } catch (invErr) {
+      console.error('Failed to issue billing tax invoice for new onboarding:', invErr)
+    }
 
     setCreatedMember(member)
     if (onMemberCreated) onMemberCreated(member)

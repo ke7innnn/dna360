@@ -7,7 +7,7 @@ import { Button } from '@/components/app/ui/button'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
 import { formatINR, backCalculateGst } from '@/lib/gst'
 import { updateMember } from '@/lib/members'
-import { getNextInvoiceNumber } from '@/lib/billing'
+import { getNextInvoiceNumber, recordMembershipInvoice } from '@/lib/billing'
 import type { Member, MembershipRecord } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
 
@@ -107,6 +107,32 @@ export default function RenewMemberModal({
         ...member.staff_notes,
       ],
     })
+
+    // Issue legal GST Tax Invoice & ledger entry
+    try {
+      const actualPaymentMethod: 'UPI' | 'Card' | 'Cash' | 'NetBanking' =
+        chosenMode?.toLowerCase().includes('card')
+          ? 'Card'
+          : chosenMode?.toLowerCase().includes('cash')
+          ? 'Cash'
+          : chosenMode?.toLowerCase().includes('netbanking')
+          ? 'NetBanking'
+          : paymentMode
+
+      recordMembershipInvoice({
+        memberId: member.id,
+        memberName: member.name,
+        memberPhone: member.phone,
+        memberEmail: member.email || undefined,
+        productName: selectedPlan.name,
+        totalInclusiveMinor: netInclusiveMinor,
+        paymentMethod: actualPaymentMethod,
+        invoiceNumber,
+        paymentReference: paymentRef,
+      })
+    } catch (invErr) {
+      console.error('Failed to issue billing tax invoice for renewal:', invErr)
+    }
 
     setLoading(false)
     toast.success(`Membership renewed for ${member.name}!`, {

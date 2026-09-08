@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -21,6 +21,7 @@ import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
 import MemberQrModal from '@/components/app/member/MemberQrModal'
 import { getInitials, cn } from '@/lib/utils'
+import { getMemberPortalState, MemberPortalState } from '@/lib/memberportal'
 
 export default function MemberAppHomePage() {
   const router = useRouter()
@@ -30,8 +31,22 @@ export default function MemberAppHomePage() {
   const userFullName = user?.name || 'Aditi Deshpande'
   const initials = getInitials(userFullName) || 'AD'
 
+  const [portalState, setPortalState] = useState<MemberPortalState | null>(null)
+
+  useEffect(() => {
+    setPortalState(getMemberPortalState(user?.id || user?.name))
+  }, [user?.id, user?.name])
+
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState('Tue 1')
+
+  const planName = portalState?.planName || 'Annual All-Access Membership'
+  const memberCode = portalState?.memberCode || (user as any)?.member_code || 'DNA-0412'
+  const daysLeft = portalState?.daysRemaining ?? 47
+  const ptRemaining = portalState?.ptSessionsRemaining ?? 6
+  const ptTotal = portalState?.ptSessionsTotal ?? 12
+  const streak = portalState?.attendanceStreak ?? 12
+  const barPercent = Math.min(100, Math.max(8, Math.round((daysLeft / 365) * 100)))
 
   const weekDays = [
     { day: 'Sat', num: '29', hasDot: true },
@@ -176,22 +191,22 @@ export default function MemberAppHomePage() {
             {/* Membership Card */}
             <div className="member-card">
               <div className="member-mem-top">
-                <b>Premium Annual</b>
+                <b>{planName}</b>
                 <span className="member-pill member-p-ok">ACTIVE</span>
               </div>
               <div className="member-bar">
-                <i style={{ width: '71%' }} />
+                <i style={{ width: `${barPercent}%` }} />
               </div>
               <div className="member-meta2">
-                <span>47 days left</span>
-                <span>6 of 12 PT sessions</span>
+                <span>{daysLeft} days left</span>
+                <span>{ptRemaining} of {ptTotal} PT sessions</span>
               </div>
             </div>
 
             {/* Streak */}
             <div className="member-sec">
               <h3>Streak</h3>
-              <a href="#">12 days</a>
+              <a href="#">{streak} days</a>
             </div>
             <div className="member-streak-bar">
               <i className="on" />
@@ -240,7 +255,7 @@ export default function MemberAppHomePage() {
             </div>
 
             <p className="font-display font-semibold text-base text-white mt-1">{userFullName}</p>
-            <p className="font-data text-[10px] text-[var(--ink-3)]">DNA-0412 · PREMIUM ANNUAL</p>
+            <p className="font-data text-[10px] text-[var(--ink-3)]">{memberCode} · {planName.toUpperCase()}</p>
             <div className="member-qrtimer mt-3 text-xs">
               <i />
               <span>Rotates every 30s</span>
@@ -250,15 +265,15 @@ export default function MemberAppHomePage() {
           {/* Membership Plan Card */}
           <div className="member-card">
             <div className="member-mem-top">
-              <b>Premium Annual</b>
+              <b>{planName}</b>
               <span className="member-pill member-p-ok">ACTIVE</span>
             </div>
             <div className="member-bar">
-              <i style={{ width: '71%' }} />
+              <i style={{ width: `${barPercent}%` }} />
             </div>
             <div className="member-meta2">
-              <span>47 days left</span>
-              <span>6 of 12 PT sessions</span>
+              <span>{daysLeft} days left</span>
+              <span>{ptRemaining} of {ptTotal} PT sessions</span>
             </div>
           </div>
 
@@ -266,7 +281,7 @@ export default function MemberAppHomePage() {
           <div className="member-card">
             <div className="member-sec mb-2">
               <h3>Workout streak</h3>
-              <span className="text-xs text-[#38BDF8] font-bold">12 days</span>
+              <span className="text-xs text-[#38BDF8] font-bold">{streak} days</span>
             </div>
             <div className="member-streak-bar">
               <i className="on" />
@@ -285,6 +300,9 @@ export default function MemberAppHomePage() {
       <MemberQrModal
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
+        memberCode={memberCode}
+        memberName={userFullName}
+        planName={planName}
       />
     </div>
   )

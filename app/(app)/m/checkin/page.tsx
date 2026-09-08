@@ -6,11 +6,14 @@ import { ArrowLeft, UserPlus, ShieldCheck, Clock } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
 import { QRCodeSVG } from 'qrcode.react'
+import { getMemberPortalState } from '@/lib/memberportal'
 
 export default function MemberCheckinPage() {
   const { user } = useAuth()
-  const userName = user?.name || 'Aditi Deshpande'
-  const memberCode = (user as any)?.member_code || 'DNA-0412'
+  const portalState = getMemberPortalState(user?.id || user?.name)
+  const userName = user?.name || portalState.memberName || 'Aditi Deshpande'
+  const memberCode = (user as any)?.member_code || portalState.memberCode || 'DNA-0412'
+  const planName = portalState.planName || 'PREMIUM ANNUAL'
 
   const [secondsRemaining, setSecondsRemaining] = useState(18)
   const [tokenSeed, setTokenSeed] = useState(Date.now())
@@ -57,7 +60,7 @@ export default function MemberCheckinPage() {
         </div>
 
         <p className="member-qrname">{userName}</p>
-        <p className="member-qrid">{memberCode} · PREMIUM ANNUAL</p>
+        <p className="member-qrid">{memberCode} · {planName.toUpperCase()}</p>
 
         <div className="member-qrtimer">
           <i />

@@ -26,6 +26,7 @@ export default function MemberUpgradeModal({
   const [loading, setLoading] = useState(false)
 
   const handleConfirm = async () => {
+    if (loading) return
     setLoading(true)
 
     const isRenew = selectedPlan === 'renew'
@@ -80,8 +81,8 @@ export default function MemberUpgradeModal({
             console.warn('Signature verification call:', e)
           }
 
-          // 4. Update member plan
-          renewOrUpgradePlan(planName, tier, amountMinor)
+          // 4. Update member plan with strict account isolation & legal invoice
+          renewOrUpgradePlan(planName, tier, amountMinor, user?.id, rzpRes.razorpay_payment_id)
           toast.success(isRenew ? 'Membership Renewed for 1 Year!' : 'VIP Platinum Upgraded!', {
             description: `Payment confirmed via Razorpay (Ref: ${rzpRes.razorpay_payment_id})`,
           })

@@ -16,6 +16,7 @@ import type {
 } from '@/types/frontdesk'
 import { logAuditEvent } from '@/lib/audit'
 import { backCalculateGst } from '@/lib/gst'
+import { issueInvoice, buildLineItem } from '@/lib/billing'
 
 const LEADS_STORAGE_KEY = 'dna360_walkin_leads'
 const POS_PRODUCTS_KEY = 'dna360_pos_products'
@@ -228,6 +229,33 @@ export function recordPosSale(data: Omit<PosSale, 'id' | 'receiptNumber' | 'time
     }
   }
   savePosProducts(prods)
+
+  // Link POS retail sale into the central billing ledger
+  try {
+    const lineItems = data.items.map((it) =>
+      buildLineItem({
+        description: it.productName,
+        hsnSac: '21069099',
+        quantity: it.quantity,
+        unitRateMinor: it.priceMinor,
+        discountMinor: 0,
+        taxRate: 0.05,
+      })
+    )
+
+    issueInvoice({
+      memberId: data.customerId || `guest_${Date.now()}`,
+      memberName: data.customerName,
+      memberPhone: data.customerPhone,
+      lineItems,
+      paymentMethod: (data.paymentMode as any) || 'UPI',
+      invoiceNumber: newSale.receiptNumber,
+      issuedBy: data.recordedBy || 'Front Desk POS',
+      branchId: 'pow',
+    })
+  } catch (err) {
+    console.error('Failed to link POS sale into billing ledger:', err)
+  }
 
   logAuditEvent({
     actor: { id: 'usr_fc', name: data.recordedBy, email: '', role: 'Fitness Consultant' },

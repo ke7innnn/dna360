@@ -356,8 +356,10 @@ export function getNextInvoiceNumber(): string {
 
 // ─── Storage Helpers ───
 
+let memoryInvoices: TaxInvoice[] = [...SEEDED_INVOICES]
+
 export function getStoredInvoices(): TaxInvoice[] {
-  if (typeof window === 'undefined') return SEEDED_INVOICES
+  if (typeof window === 'undefined') return memoryInvoices
   const stored = localStorage.getItem(INVOICE_STORAGE_KEY)
   if (!stored) {
     localStorage.setItem(INVOICE_STORAGE_KEY, JSON.stringify(SEEDED_INVOICES))
@@ -367,6 +369,7 @@ export function getStoredInvoices(): TaxInvoice[] {
 }
 
 export function saveInvoices(invoices: TaxInvoice[]) {
+  memoryInvoices = invoices
   if (typeof window === 'undefined') return
   localStorage.setItem(INVOICE_STORAGE_KEY, JSON.stringify(invoices))
   window.dispatchEvent(new Event('dna360_invoices_updated'))
@@ -494,25 +497,34 @@ export function issueInvoice(params: {
   salesRepId: string
   salesRepName: string
   createdBy: { id: string; name: string; role: string }
+  invoiceNumber?: string
   discountReason?: string
   discountApprovedBy?: string
   notes?: string
 }): TaxInvoice {
-  const invoiceNumber = getNextInvoiceNumber()
+  const invoiceNumber = params.invoiceNumber || getNextInvoiceNumber()
   const todayStr = new Date().toISOString().slice(0, 10)
+  const rawItems = params.items || (params as any).lineItems || []
+  const subtotalMinor = rawItems.reduce((s: number, it: any) => s + (it.unitPriceInclusiveMinor * it.quantity), 0)
+  const totalDiscountMinor = rawItems.reduce((s: number, it: any) => s + (it.discountMinor || 0), 0)
+  const grandTotalMinor = rawItems.reduce((s: number, it: any) => s + (it.totalMinor || 0), 0)
+  const taxableMinor = rawItems.reduce((s: number, it: any) => s + (it.taxableMinor || 0), 0)
+  const cgstMinor = rawItems.reduce((s: number, it: any) => s + (it.cgstMinor || 0), 0)
+  const sgstMinor = rawItems.reduce((s: number, it: any) => s + (it.sgstMinor || 0), 0)
 
-  const subtotalMinor = params.items.reduce((s, it) => s + (it.unitPriceInclusiveMinor * it.quantity), 0)
-  const totalDiscountMinor = params.items.reduce((s, it) => s + it.discountMinor, 0)
-  const grandTotalMinor = params.items.reduce((s, it) => s + it.totalMinor, 0)
-  const taxableMinor = params.items.reduce((s, it) => s + it.taxableMinor, 0)
-  const cgstMinor = params.items.reduce((s, it) => s + it.cgstMinor, 0)
-  const sgstMinor = params.items.reduce((s, it) => s + it.sgstMinor, 0)
-
-  const paidAmountMinor = params.payments.reduce((s, p) => s + p.amountMinor, 0)
+  const rawPayments = params.payments || [
+    {
+      id: `pay_${Date.now()}`,
+      mode: ((params as any).paymentMethod || (params as any).paymentMode || 'UPI') as PaymentMode,
+      amountMinor: grandTotalMinor,
+      recordedAt: new Date().toISOString(),
+    }
+  ]
+  const paidAmountMinor = rawPayments.reduce((s: number, p: any) => s + (p.amountMinor || 0), 0)
   const dueAmountMinor = Math.max(0, grandTotalMinor - paidAmountMinor)
 
   let status: InvoiceStatus = 'pending'
-  if (paidAmountMinor >= grandTotalMinor) {
+  if (paidAmountMinor >= grandTotalMinor && grandTotalMinor > 0) {
     status = 'paid'
   } else if (paidAmountMinor > 0) {
     status = 'partially_paid'
@@ -523,13 +535,13 @@ export function issueInvoice(params: {
     invoiceNumber,
     memberId: params.memberId,
     memberName: params.memberName,
-    memberPhone: params.memberPhone,
-    memberEmail: params.memberEmail || null,
+    memberPhone: params.memberPhone || '+91 98200 00000',
+    memberEmail: params.memberEmail ?? null,
     memberAddress: params.memberAddress,
     issueDate: todayStr,
     dueDate: todayStr,
     status,
-    items: params.items,
+    items: rawItems,
     subtotalMinor,
     totalDiscountMinor,
     taxableMinor,
@@ -538,10 +550,10 @@ export function issueInvoice(params: {
     grandTotalMinor,
     paidAmountMinor,
     dueAmountMinor,
-    payments: params.payments,
-    createdBy: params.createdBy,
-    salesRepId: params.salesRepId,
-    salesRepName: params.salesRepName,
+    payments: rawPayments,
+    salesRepId: params.salesRepId || 'usr_fc_01',
+    salesRepName: params.salesRepName || (params as any).issuedBy || 'Front Desk',
+    createdBy: params.createdBy || { id: 'system', name: (params as any).issuedBy || 'System', role: 'Staff' },
     discountReason: params.discountReason,
     discountApprovedBy: params.discountApprovedBy,
     notes: params.notes,
@@ -552,7 +564,7 @@ export function issueInvoice(params: {
   saveInvoices(invoices)
 
   logAuditEvent({
-    actor: { id: params.createdBy.id, name: params.createdBy.name, email: '', role: params.createdBy.role },
+    actor: { id: invoice.createdBy.id, name: invoice.createdBy.name, email: '', role: invoice.createdBy.role },
     action: 'CREATE',
     entity: 'Invoice',
     entityId: invoice.id,
@@ -762,3 +774,81 @@ export function issueCreditNote(
   })
   return res.creditNote || null
 }
+
+/**
+ * Automatically records a Tax Invoice for membership onboardings, renewals, and self-service upgrades.
+ * Ensures billing ledger and revenue KPIs stay 100% in sync with real payments.
+ */
+export function recordMembershipInvoice(params: {
+  memberId: string
+  memberName: string
+  memberPhone?: string | null
+  memberEmail?: string | null
+  memberAddress?: string
+  planName?: string
+  productName?: string
+  amountInclusiveMinor?: number
+  totalInclusiveMinor?: number
+  paymentMode?: PaymentMode | string
+  paymentMethod?: PaymentMode | string
+  paymentReference?: string | null
+  invoiceNumber?: string
+  salesRepId?: string
+  salesRepName?: string
+  createdBy?: { id: string; name: string; role: string }
+  discountMinor?: number
+  discountReason?: string
+  notes?: string
+}): TaxInvoice {
+  const planTitle = params.planName || params.productName || 'Annual Gym Membership'
+  const inclusiveAmount = params.amountInclusiveMinor ?? params.totalInclusiveMinor ?? 0
+  const chosenMode = params.paymentMode || params.paymentMethod || 'UPI'
+  const memberPhone = params.memberPhone || '+91 98200 00000'
+
+  const lineItem = buildLineItem({
+    productId: 'prod_membership_plan',
+    description: planTitle,
+    sacCode: '999723', // Fitness services SAC code
+    unitPriceInclusiveMinor: inclusiveAmount,
+    quantity: 1,
+    discountMinor: params.discountMinor || 0,
+    taxRate: 0.05, // 5% GST
+  })
+
+  const mode = (chosenMode.toLowerCase().includes('upi')
+    ? 'UPI'
+    : chosenMode.toLowerCase().includes('card')
+    ? 'Card'
+    : chosenMode.toLowerCase().includes('cash')
+    ? 'Cash'
+    : chosenMode.toLowerCase().includes('netbanking')
+    ? 'Net Banking'
+    : chosenMode.toLowerCase().includes('razorpay')
+    ? 'Razorpay Live'
+    : chosenMode || 'UPI') as PaymentMode
+
+  const payment: PaymentSplit = {
+    id: `pay_${Date.now()}`,
+    mode: mode as any,
+    amountMinor: inclusiveAmount,
+    transactionRef: params.paymentReference || undefined,
+    recordedAt: new Date().toISOString(),
+  }
+
+  return issueInvoice({
+    invoiceNumber: params.invoiceNumber,
+    memberId: params.memberId,
+    memberName: params.memberName,
+    memberPhone: memberPhone,
+    memberEmail: params.memberEmail,
+    memberAddress: params.memberAddress,
+    items: [lineItem],
+    payments: [payment],
+    salesRepId: params.salesRepId || 'usr_fc_01',
+    salesRepName: params.salesRepName || 'Front Desk Operations',
+    createdBy: params.createdBy || { id: 'system', name: 'DNA 360 System', role: 'System' },
+    discountReason: params.discountReason,
+    notes: params.notes || `Membership subscription: ${planTitle}`,
+  })
+}
+

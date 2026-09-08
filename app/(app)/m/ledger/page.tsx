@@ -16,6 +16,7 @@ import { Card } from '@/components/app/ui/glass-card'
 import Button from '@/components/app/ui/button'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
+import { getMemberPortalState } from '@/lib/memberportal'
 
 export default function MemberPTLedgerPage() {
   const { user } = useAuth()
@@ -23,6 +24,19 @@ export default function MemberPTLedgerPage() {
   const [totalSessions, setTotalSessions] = useState(12)
   const [ptTier, setPtTier] = useState('Premium PT (₹1,699 / Session)')
   const [trainerName, setTrainerName] = useState('Rajesh Poojary')
+
+  useEffect(() => {
+    const ps = getMemberPortalState(user?.id || user?.name)
+    if (ps.ptSessionsRemaining !== undefined && ps.ptSessionsRemaining !== null) {
+      setRemainingSessions(ps.ptSessionsRemaining)
+    }
+    if (ps.ptSessionsTotal !== undefined && ps.ptSessionsTotal !== null) {
+      setTotalSessions(ps.ptSessionsTotal)
+    }
+    if (ps.assignedTrainer) {
+      setTrainerName(ps.assignedTrainer)
+    }
+  }, [user?.id, user?.name])
 
   // Sample Immutable Deduction History (§8.7)
   const deductionHistory = [
