@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     if (!auth.ok) return auth.response!
 
     const user = auth.user!
-    const roleSlug = user.role?.slug.toUpperCase()
+    const roleSlug = (user.role?.slug || '').toUpperCase()
     if (roleSlug !== 'TRAINER' && roleSlug !== 'HEAD_TRAINER' && roleSlug !== 'OWNER' && roleSlug !== 'OWNER_ADMIN') {
       return NextResponse.json({ error: 'Trainer role required to sign off PT sessions.' }, { status: 403 })
     }

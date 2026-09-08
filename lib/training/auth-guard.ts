@@ -47,7 +47,8 @@ export function canAccessMemberTraining(
   targetMemberId: string
 ): { allowed: boolean; reason?: string } {
   // 1. Member accessing own data
-  if (user.type === 'MEMBER' || user.role?.slug.toUpperCase() === 'MEMBER') {
+  const userRoleSlug = (user.role?.slug || '').toUpperCase()
+  if (user.type === 'MEMBER' || userRoleSlug === 'MEMBER') {
     if (user.id === targetMemberId) {
       return { allowed: true }
     }
@@ -55,7 +56,7 @@ export function canAccessMemberTraining(
   }
 
   // 2. Owner / Admin has club-wide management oversight
-  const roleSlug = user.role?.slug.toUpperCase()
+  const roleSlug = userRoleSlug
   if (roleSlug === 'OWNER' || roleSlug === 'OWNER_ADMIN') {
     return { allowed: true }
   }
@@ -90,7 +91,7 @@ export function resolveAuthorizedMemberId(
   requestedMemberId?: string | null
 ): { memberId: string | null; errorResponse?: NextResponse } {
   // If user is a member, strictly force target to their own session user ID
-  if (user.type === 'MEMBER' || user.role?.slug.toUpperCase() === 'MEMBER') {
+  if (user.type === 'MEMBER' || (user.role?.slug || '').toUpperCase() === 'MEMBER') {
     return { memberId: user.id }
   }
 

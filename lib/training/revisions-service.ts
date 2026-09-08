@@ -246,7 +246,7 @@ export function reviseMemberProgram(
     version: nextVersion,
     snapshot: updatedSnapshot,
     changedById: author.id,
-    changedByRole: author.role?.slug.toUpperCase() === 'MEMBER' ? 'MEMBER' : 'TRAINER',
+    changedByRole: (author.role?.slug || '').toUpperCase() === 'MEMBER' ? 'MEMBER' : 'TRAINER',
     changeNote: changeNote || `Updated program revision to v${nextVersion}`,
     createdAt: new Date().toISOString(),
   }

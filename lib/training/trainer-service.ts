@@ -197,7 +197,7 @@ export function endPTAssignment(
     version: activeProgram.currentVersion + 1,
     snapshot: activeProgram.snapshot,
     changedById: actor.id,
-    changedByRole: actor.role?.slug.toUpperCase() === 'MEMBER' ? 'MEMBER' : 'MANAGER',
+    changedByRole: (actor.role?.slug || '').toUpperCase() === 'MEMBER' ? 'MEMBER' : 'MANAGER',
     changeNote: 'PT package ended — converted to member-owned self-coached program',
     createdAt: new Date().toISOString(),
   })

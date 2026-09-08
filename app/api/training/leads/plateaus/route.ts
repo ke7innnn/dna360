@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     if (!auth.ok) return auth.response!
 
     const user = auth.user!
-    const roleSlug = user.role?.slug.toUpperCase()
+    const roleSlug = (user.role?.slug || '').toUpperCase()
 
     // §7: Opt-in aggregate list generated strictly for managers/owners
     const isManager = roleSlug === 'OWNER' || roleSlug === 'HR_HEAD' || roleSlug === 'SALES_HEAD' || roleSlug === 'HEAD_TRAINER'
