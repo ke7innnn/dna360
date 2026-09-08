@@ -37,11 +37,11 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!identifier.trim()) {
-      setError('Please enter your Username (e.g. Keith Shah) or Email/Phone')
+      setError('Please enter your Username, Email, or Phone')
       return
     }
     if (!password) {
-      setError('Please enter your password (e.g. Keith@123)')
+      setError('Please enter your password')
       return
     }
 
@@ -71,8 +71,8 @@ export default function LoginForm() {
       )}
 
       <Input
-        label="Username (Name & Surname), Email, or Phone"
-        placeholder="e.g. Keith Shah or Keith.mktg@dna360.in"
+        label="Username, Email, or Phone"
+        placeholder="Enter your username, email, or phone"
         value={identifier}
         onChange={(e) => {
           setIdentifier(e.target.value)
@@ -98,7 +98,7 @@ export default function LoginForm() {
         <div className="relative">
           <Input
             type={showPassword ? 'text' : 'password'}
-            placeholder="e.g. Keith@123"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value)
@@ -117,10 +117,6 @@ export default function LoginForm() {
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-      </div>
-
-      <div className="p-2.5 rounded-[var(--r-sm)] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-[11px] text-[var(--muted)] leading-relaxed">
-        <span className="text-[var(--accent)] font-semibold">Tip:</span> Login using your registered Name & Surname as Username (e.g. <span className="text-white font-mono">Keith Shah</span>) and password (<span className="text-white font-mono">Keith@123</span>).
       </div>
 
       <div className="pt-1">
