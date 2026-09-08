@@ -54,13 +54,13 @@ export default function ClassesPage() {
 
   // Week Days configuration
   const weekDays = [
-    { dayIndex: 1, name: 'Mon', fullName: 'Monday', dateTag: '25 Aug', group: 'Group A (MWF)', desc: 'Reformer Core & Athletic Flow' },
-    { dayIndex: 2, name: 'Tue', fullName: 'Tuesday', dateTag: '26 Aug', group: 'Group B (TThS)', desc: 'Reformer Sculpt & Jumpboard' },
-    { dayIndex: 3, name: 'Wed', fullName: 'Wednesday', dateTag: '27 Aug', group: 'Group A (MWF)', desc: 'Reformer Posture & Balance' },
-    { dayIndex: 4, name: 'Thu', fullName: 'Thursday', dateTag: '28 Aug', group: 'Group B (TThS)', desc: 'Reformer Athletic Conditioning' },
-    { dayIndex: 5, name: 'Fri', fullName: 'Friday', dateTag: '29 Aug', group: 'Group A (MWF)', desc: 'Reformer Dynamic Strength' },
-    { dayIndex: 6, name: 'Sat', fullName: 'Saturday', dateTag: '30 Aug', group: 'Group B (TThS)', desc: 'Weekend Intensity & Trials' },
-    { dayIndex: 0, name: 'Sun', fullName: 'Sunday', dateTag: '31 Aug', group: 'Weekend All-Access', desc: 'Restorative & Workshops' },
+    { dayIndex: 1, name: 'Mon', fullName: 'Monday', dateTag: '7 Sep', group: 'Group A (MWF)', desc: 'Reformer Core & Athletic Flow' },
+    { dayIndex: 2, name: 'Tue', fullName: 'Tuesday', dateTag: '8 Sep', group: 'Group B (TThS)', desc: 'Reformer Sculpt & Jumpboard' },
+    { dayIndex: 3, name: 'Wed', fullName: 'Wednesday', dateTag: '9 Sep', group: 'Group A (MWF)', desc: 'Reformer Posture & Balance' },
+    { dayIndex: 4, name: 'Thu', fullName: 'Thursday', dateTag: '10 Sep', group: 'Group B (TThS)', desc: 'Reformer Athletic Conditioning' },
+    { dayIndex: 5, name: 'Fri', fullName: 'Friday', dateTag: '11 Sep', group: 'Group A (MWF)', desc: 'Reformer Dynamic Strength' },
+    { dayIndex: 6, name: 'Sat', fullName: 'Saturday', dateTag: '12 Sep', group: 'Group B (TThS)', desc: 'Weekend Intensity & Trials' },
+    { dayIndex: 0, name: 'Sun', fullName: 'Sunday', dateTag: '13 Sep', group: 'Weekend All-Access', desc: 'Restorative & Workshops' },
   ]
 
   // Filter sessions based on all criteria

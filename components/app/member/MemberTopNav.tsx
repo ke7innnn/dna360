@@ -10,7 +10,13 @@ import { cn } from '@/lib/utils'
 
 import Image from 'next/image'
 
-export default function MemberTopNav({ onOpenQr }: { onOpenQr?: () => void }) {
+export default function MemberTopNav({
+  onOpenQr,
+  onOpenProfile,
+}: {
+  onOpenQr?: () => void
+  onOpenProfile?: () => void
+}) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
 
@@ -86,19 +92,26 @@ export default function MemberTopNav({ onOpenQr }: { onOpenQr?: () => void }) {
           <span>My Check-in Code</span>
         </button>
 
-        {/* User Info & Sign Out */}
+        {/* User Info & Profile Trigger */}
         <div className="flex items-center gap-2.5 pl-2 border-l border-[rgba(255,255,255,0.08)]">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#1E40AF] to-[#38BDF8] flex items-center justify-center text-white text-xs font-bold shadow-[0_0_12px_rgba(59,130,246,0.4)]">
-            {getInitials(userName)}
-          </div>
-          <div className="hidden lg:block text-left">
-            <span className="font-ui text-xs font-semibold text-white block leading-none">
-              {userName}
-            </span>
-            <span className="font-data text-[9px] uppercase tracking-wider text-[var(--ink-3)] block mt-0.5">
-              Premium Annual
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            className="flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity text-left focus:outline-none"
+            title="View member profile and settings"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#1E40AF] to-[#38BDF8] flex items-center justify-center text-white text-xs font-bold shadow-[0_0_12px_rgba(59,130,246,0.4)]">
+              {getInitials(userName)}
+            </div>
+            <div className="hidden lg:block text-left">
+              <span className="font-ui text-xs font-semibold text-white block leading-none">
+                {userName}
+              </span>
+              <span className="font-data text-[9px] uppercase tracking-wider text-[var(--ink-3)] block mt-0.5">
+                Premium Annual
+              </span>
+            </div>
+          </button>
           <button
             onClick={logout}
             title="Sign out"

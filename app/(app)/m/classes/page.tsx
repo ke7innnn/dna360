@@ -70,13 +70,13 @@ export default function MemberClassesPage() {
   ])
 
   const days = [
-    { name: 'Tue', num: '1', hasDot: false },
-    { name: 'Wed', num: '2', hasDot: true },
-    { name: 'Thu', num: '3', hasDot: true },
-    { name: 'Fri', num: '4', hasDot: false },
-    { name: 'Sat', num: '5', hasDot: true },
-    { name: 'Sun', num: '6', hasDot: false },
-    { name: 'Mon', num: '7', hasDot: false },
+    { name: 'Tue', num: '8', hasDot: false },
+    { name: 'Wed', num: '9', hasDot: true },
+    { name: 'Thu', num: '10', hasDot: true },
+    { name: 'Fri', num: '11', hasDot: false },
+    { name: 'Sat', num: '12', hasDot: true },
+    { name: 'Sun', num: '13', hasDot: false },
+    { name: 'Mon', num: '14', hasDot: false },
   ]
 
   const handleToggleBook = (cls: MemberClassItem) => {

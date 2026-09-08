@@ -12,13 +12,27 @@ import { toast } from '@/components/app/ui/toast'
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { loginWithPassword } = useAuth()
+  const { loginWithPassword, isAuthenticated, user, isLoading } = useAuth()
 
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Auto-redirect if already signed in
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      const redirectParam = searchParams.get('redirect')
+      const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
+      if (isSafe) {
+        router.replace(redirectParam)
+      } else {
+        const dest = user.role?.slug === 'member' ? '/m' : '/overview'
+        router.replace(dest)
+      }
+    }
+  }, [isLoading, isAuthenticated, user, router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

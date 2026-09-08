@@ -565,7 +565,7 @@ export default function MemberProgressPage() {
                   </div>
                   <div className="member-lt">
                     <b>Gym Floor Check-in · 7:15 PM</b>
-                    <span>Tuesday, 1 Sep · Turnstile 01</span>
+                    <span>Tuesday, 8 Sep · Turnstile 01</span>
                   </div>
                 </div>
 

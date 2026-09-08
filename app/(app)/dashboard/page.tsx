@@ -32,7 +32,7 @@ export default function MemberDashboardPage() {
   const [freezeModalOpen, setFreezeModalOpen] = useState(false)
   const [renewModalOpen, setRenewModalOpen] = useState(false)
   const [greetingTime, setGreetingTime] = useState('Good evening')
-  const [selectedDay, setSelectedDay] = useState('Tue 1')
+  const [selectedDay, setSelectedDay] = useState('Tue 8')
 
   useEffect(() => {
     const hour = new Date().getHours()
@@ -50,15 +50,15 @@ export default function MemberDashboardPage() {
     .slice(0, 2)
     .toUpperCase()
 
-  // 7-day strip matching mockup
+  // 7-day strip matching current week (Tue Sep 8)
   const weekDays = [
-    { day: 'Sat', num: '29', dateKey: 'Sat 29' },
-    { day: 'Sun', num: '30', dateKey: 'Sun 30' },
-    { day: 'Mon', num: '31', dateKey: 'Mon 31' },
-    { day: 'Tue', num: '1', dateKey: 'Tue 1', isCurrent: true },
-    { day: 'Wed', num: '2', dateKey: 'Wed 2' },
-    { day: 'Thu', num: '3', dateKey: 'Thu 3' },
-    { day: 'Fri', num: '4', dateKey: 'Fri 4' },
+    { day: 'Sat', num: '5', dateKey: 'Sat 5' },
+    { day: 'Sun', num: '6', dateKey: 'Sun 6' },
+    { day: 'Mon', num: '7', dateKey: 'Mon 7' },
+    { day: 'Tue', num: '8', dateKey: 'Tue 8', isCurrent: true },
+    { day: 'Wed', num: '9', dateKey: 'Wed 9' },
+    { day: 'Thu', num: '10', dateKey: 'Thu 10' },
+    { day: 'Fri', num: '11', dateKey: 'Fri 11' },
   ]
 
   return (

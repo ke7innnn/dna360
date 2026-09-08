@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import MemberBottomTabs from '@/components/app/member/MemberBottomTabs'
 import MemberTopNav from '@/components/app/member/MemberTopNav'
 import MemberQrModal from '@/components/app/member/MemberQrModal'
+import MemberProfileModal from '@/components/app/member/MemberProfileModal'
 
 export default function MemberTrainingLayout({
   children,
@@ -11,6 +12,13 @@ export default function MemberTrainingLayout({
   children: React.ReactNode
 }) {
   const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
+
+  useEffect(() => {
+    const handleOpen = () => setProfileModalOpen(true)
+    window.addEventListener('dna:open-profile', handleOpen)
+    return () => window.removeEventListener('dna:open-profile', handleOpen)
+  }, [])
 
   return (
     <div className="member-app-root min-h-screen bg-[#05070E] text-[#ECF1FA] relative overflow-x-hidden flex flex-col">
@@ -29,7 +37,10 @@ export default function MemberTrainingLayout({
       />
 
       {/* Desktop PC Top Navigation Header */}
-      <MemberTopNav onOpenQr={() => setQrModalOpen(true)} />
+      <MemberTopNav
+        onOpenQr={() => setQrModalOpen(true)}
+        onOpenProfile={() => setProfileModalOpen(true)}
+      />
 
       {/* Main Screen Content */}
       <main className="flex-1 relative z-10 w-full">
@@ -43,6 +54,12 @@ export default function MemberTrainingLayout({
       <MemberQrModal
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
+      />
+
+      {/* Member Profile & Settings Modal (Apple Guideline 5.1.1 compliant) */}
+      <MemberProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
       />
     </div>
   )

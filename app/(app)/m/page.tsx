@@ -38,7 +38,7 @@ export default function MemberAppHomePage() {
   }, [user?.id, user?.name])
 
   const [qrModalOpen, setQrModalOpen] = useState(false)
-  const [selectedDay, setSelectedDay] = useState('Tue 1')
+  const [selectedDay, setSelectedDay] = useState('Tue 8')
 
   const planName = portalState?.planName || 'Annual All-Access Membership'
   const memberCode = portalState?.memberCode || (user as any)?.member_code || 'DNA-0412'
@@ -49,26 +49,38 @@ export default function MemberAppHomePage() {
   const barPercent = Math.min(100, Math.max(8, Math.round((daysLeft / 365) * 100)))
 
   const weekDays = [
-    { day: 'Sat', num: '29', hasDot: true },
-    { day: 'Sun', num: '30', hasDot: false },
-    { day: 'Mon', num: '31', hasDot: true },
-    { day: 'Tue', num: '1', hasDot: false, isSelected: true },
-    { day: 'Wed', num: '2', hasDot: false },
-    { day: 'Thu', num: '3', hasDot: false },
-    { day: 'Fri', num: '4', hasDot: false },
+    { day: 'Sat', num: '5', hasDot: true },
+    { day: 'Sun', num: '6', hasDot: false },
+    { day: 'Mon', num: '7', hasDot: true },
+    { day: 'Tue', num: '8', hasDot: false, isSelected: true },
+    { day: 'Wed', num: '9', hasDot: false },
+    { day: 'Thu', num: '10', hasDot: false },
+    { day: 'Fri', num: '11', hasDot: false },
   ]
 
   return (
     <div className="w-full max-w-6xl mx-auto pt-1 pb-24 px-4 select-none">
       {/* ─── Mobile Header (Avatar, Greeting, Notification Bell) ─── */}
       <div className="member-hdr md:hidden">
-        <div className="member-who">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('dna:open-profile'))
+            }
+          }}
+          className="member-who text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/50 rounded-xl p-0.5 transition-opacity active:opacity-75"
+          aria-label="View member profile and settings"
+        >
           <div className="member-pfp">{initials}</div>
           <div>
             <p className="hi">Good evening</p>
-            <p className="nm">{userName}</p>
+            <p className="nm flex items-center gap-1.5">
+              {userName}
+              <span className="text-[10px] text-[#38BDF8] font-data font-normal bg-[#38BDF8]/10 px-1.5 py-0.5 rounded border border-[#38BDF8]/20">Profile</span>
+            </p>
           </div>
-        </div>
+        </button>
 
         <button
           onClick={() => {

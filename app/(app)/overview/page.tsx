@@ -25,7 +25,7 @@ export default function FloorOverviewPage() {
 
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState('This month')
-  const [currentTime, setCurrentTime] = useState('POWAI · TUESDAY 1 SEPTEMBER · 6:42 PM')
+  const [currentTime, setCurrentTime] = useState('POWAI · TUESDAY 8 SEPTEMBER · 6:42 PM')
 
   // Live timestamp formatting
   useEffect(() => {

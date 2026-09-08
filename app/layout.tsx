@@ -1,12 +1,26 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#08080A',
+}
 
 export const metadata: Metadata = {
   title: {
     template: '%s | DNA 360',
     default: 'DNA 360 — Precision Operations',
   },
-  description: 'DNA 360 — Gym Management Platform by Pinnacle Studios',
+  description: 'DNA 360 — Gym Management Platform by Base Fitness',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'DNA 360',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -28,7 +42,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#08080A" />
         {/* Typography: Gambetta, Instrument Serif, Clash Display, Syne, Satoshi, Martian Mono */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
