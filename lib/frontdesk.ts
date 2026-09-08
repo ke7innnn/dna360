@@ -234,24 +234,35 @@ export function recordPosSale(data: Omit<PosSale, 'id' | 'receiptNumber' | 'time
   try {
     const lineItems = data.items.map((it) =>
       buildLineItem({
+        productId: it.productId || 'prod_retail',
         description: it.productName,
-        hsnSac: '21069099',
+        sacCode: '21069099',
         quantity: it.quantity,
-        unitRateMinor: it.priceMinor,
+        unitPriceInclusiveMinor: it.priceMinor,
         discountMinor: 0,
         taxRate: 0.05,
       })
     )
 
+    const grandTotalMinor = lineItems.reduce((s, it) => s + (it.totalMinor || 0), 0)
+
     issueInvoice({
       memberId: data.customerId || `guest_${Date.now()}`,
       memberName: data.customerName,
-      memberPhone: data.customerPhone,
-      lineItems,
-      paymentMethod: (data.paymentMode as any) || 'UPI',
+      memberPhone: data.customerPhone || '+919820000000',
+      items: lineItems,
+      payments: [
+        {
+          id: `pay_${Date.now()}`,
+          mode: (data.paymentMode as any) || 'UPI',
+          amountMinor: grandTotalMinor,
+          recordedAt: new Date().toISOString(),
+        },
+      ],
+      salesRepId: 'usr_frontdesk',
+      salesRepName: data.recordedBy || 'Front Desk Staff',
+      createdBy: { id: 'usr_frontdesk', name: data.recordedBy || 'Front Desk Staff', role: 'FrontDesk' },
       invoiceNumber: newSale.receiptNumber,
-      issuedBy: data.recordedBy || 'Front Desk POS',
-      branchId: 'pow',
     })
   } catch (err) {
     console.error('Failed to link POS sale into billing ledger:', err)

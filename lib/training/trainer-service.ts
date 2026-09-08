@@ -255,6 +255,7 @@ export function signOffPTSession(
     member.active_memberships.push({
       id: `ms_pt_${Date.now()}`,
       product_id: 'prod_pt_tier1',
+      product_category: 'personal_training',
       category: 'personal_training',
       product_name: 'Tier 1 PT — 12 Sessions (1 Month)',
       enrolment_date: new Date().toISOString().slice(0, 10),

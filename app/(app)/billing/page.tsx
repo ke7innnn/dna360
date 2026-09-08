@@ -300,8 +300,8 @@ export default function BillingPage() {
           defaultTemplateCategory="BILLING"
           recipient={{
             memberId: whatsAppTargetInvoice.memberId || 'mem_billing',
-            memberName: whatsAppTargetInvoice.customerName || 'Customer',
-            phone: whatsAppTargetInvoice.customerPhone || '+919820011111',
+            memberName: whatsAppTargetInvoice.memberName || 'Customer',
+            phone: whatsAppTargetInvoice.memberPhone || '+919820011111',
             dueAmount: formatINR(whatsAppTargetInvoice.grandTotalMinor || 0),
             memberCode: whatsAppTargetInvoice.invoiceNumber,
           }}

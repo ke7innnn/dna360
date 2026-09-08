@@ -35,6 +35,8 @@ export interface MemberPortalState {
   specialInclusions?: string | null
   /** Pilates adjustment credits */
   adjustmentCreditsRemaining?: number
+  /** Assigned personal trainer name */
+  assignedTrainer?: string
   /** QR check-in pass */
   qrToken: string
   qrExpiresInSeconds: number

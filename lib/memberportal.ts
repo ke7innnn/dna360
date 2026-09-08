@@ -3,6 +3,8 @@ import type {
   MemberClassBooking,
   MemberFreezeRequest,
 } from '@/types/memberportal'
+
+export type { MemberPortalState, MemberClassBooking, MemberFreezeRequest }
 import { getStoredMembers, updateMember } from '@/lib/members'
 import { recordMembershipInvoice } from '@/lib/billing'
 import { logAuditEvent } from '@/lib/audit'
@@ -133,18 +135,17 @@ export function getMemberPortalState(memberId?: string): MemberPortalState {
       daysRemaining: daysLeft,
       activePlans: found.active_memberships?.map((ms) => ({
         productName: ms.product_name,
-        category: ms.category,
+        category: ms.category || ms.product_category || 'gym_membership',
         expiryDate: ms.expiry_date,
-        daysRemaining: Math.max(
-          0,
-          Math.ceil((new Date(ms.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        ),
+        daysRemaining: ms.expiry_date
+          ? Math.max(0, Math.ceil((new Date(ms.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+          : null,
         sessionsRemaining: ms.sessions_remaining,
         sessionsTotal: ms.sessions_total,
-        accessWindow: ms.access_window ? `${ms.access_window.start} - ${ms.access_window.end}` : null,
+        accessWindow: ms.access_window || null,
       })) || [],
       attendanceStreak: found.attendance_streak || 12,
-      totalVisits: found.total_check_ins || found.total_visits || 48,
+      totalVisits: found.total_check_ins || 48,
       ptSessionsRemaining,
       ptSessionsTotal,
       waterIntakeMl: 2250,
@@ -334,15 +335,14 @@ export function renewOrUpgradePlan(
       active_memberships: [
         {
           id: `ms_upg_${Date.now()}`,
-          category: 'gym_membership',
+          product_id: 'prod_membership_upgrade',
           product_name: planName,
+          product_category: 'gym_membership',
+          category: 'gym_membership',
           enrolment_date: new Date().toISOString().slice(0, 10),
           activation_date: new Date().toISOString().slice(0, 10),
           expiry_date: newExpiry,
           amount_paid: priceMinor,
-          base_price: Math.round(priceMinor / 1.05),
-          cgst_amount: Math.round(((priceMinor / 1.05) * 0.025)),
-          sgst_amount: Math.round(((priceMinor / 1.05) * 0.025)),
           discount_amount: 0,
           discount_reason: null,
           discount_approved_by: null,

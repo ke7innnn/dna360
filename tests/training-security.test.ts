@@ -103,7 +103,7 @@ async function runTests() {
   // ─── 1. Middleware Session Protection on /m and /api/training ───
   console.log('--- 1. Server-Side Session Enforcement ---')
   const unauthMReq = new NextRequest('http://localhost:3000/m')
-  const unauthMRes = middleware(unauthMReq)
+  const unauthMRes = await middleware(unauthMReq)
   assert(
     unauthMRes.status === 307 &&
     Boolean(unauthMRes.headers.get('location')?.includes('/login?redirect=%2Fm')),
@@ -111,7 +111,7 @@ async function runTests() {
   )
 
   const unauthSessionReq = new NextRequest('http://localhost:3000/m/session')
-  const unauthSessionRes = middleware(unauthSessionReq)
+  const unauthSessionRes = await middleware(unauthSessionReq)
   assert(
     unauthSessionRes.status === 307 &&
     Boolean(unauthSessionRes.headers.get('location')?.includes('/login?redirect=%2Fm%2Fsession')),
@@ -119,7 +119,7 @@ async function runTests() {
   )
 
   const unauthApiReq = new NextRequest('http://localhost:3000/api/training/sessions')
-  const unauthApiRes = middleware(unauthApiReq)
+  const unauthApiRes = await middleware(unauthApiReq)
   assert(
     unauthApiRes.status === 401,
     'Unauthenticated API request to /api/training/sessions returns HTTP 401 Unauthorized'

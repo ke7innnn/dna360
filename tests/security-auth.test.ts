@@ -64,14 +64,14 @@ async function runTests() {
   // ─── Test 1: Middleware redirects unauthenticated page request to /login ───
   console.log('--- 1. Server-Side Session Enforcement ---')
   const unauthOverviewReq = new NextRequest('http://localhost:3000/overview')
-  const unauthOverviewRes = middleware(unauthOverviewReq)
+  const unauthOverviewRes = await middleware(unauthOverviewReq)
   assert(
     Boolean(unauthOverviewRes.status === 307 && unauthOverviewRes.headers.get('location')?.includes('/login?redirect=%2Foverview')),
     'Unauthenticated page request to /overview returns HTTP 307 Redirect to /login'
   )
 
   const unauthMembersReq = new NextRequest('http://localhost:3000/members')
-  const unauthMembersRes = middleware(unauthMembersReq)
+  const unauthMembersRes = await middleware(unauthMembersReq)
   assert(
     unauthMembersRes.status === 307,
     'Unauthenticated page request to /members returns HTTP 307 Redirect to /login'
@@ -79,7 +79,7 @@ async function runTests() {
 
   // ─── Test 2: Middleware returns 401 Unauthorized for unauthenticated API requests ───
   const unauthApiReq = new NextRequest('http://localhost:3000/api/members')
-  const unauthApiRes = middleware(unauthApiReq)
+  const unauthApiRes = await middleware(unauthApiReq)
   assert(
     unauthApiRes.status === 401,
     'Unauthenticated request to /api/members returns HTTP 401 Unauthorized'
@@ -88,14 +88,14 @@ async function runTests() {
   // ─── Test 3: Public routes are accessible without session ───
   console.log('\n--- 2. Public Route Whitelisting ---')
   const publicContactReq = new NextRequest('http://localhost:3000/contact')
-  const publicContactRes = middleware(publicContactReq)
+  const publicContactRes = await middleware(publicContactReq)
   assert(
     publicContactRes.status === 200,
     'Public route /contact is accessible without authentication'
   )
 
   const publicServicesReq = new NextRequest('http://localhost:3000/services/personal-training')
-  const publicServicesRes = middleware(publicServicesReq)
+  const publicServicesRes = await middleware(publicServicesReq)
   assert(
     publicServicesRes.status === 200,
     'Public route /services/* is accessible without authentication'

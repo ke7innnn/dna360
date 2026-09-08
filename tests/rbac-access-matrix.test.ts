@@ -330,7 +330,7 @@ async function runTests() {
 
   // Middleware redirects to /change-password when navigating to /overview
   const reqOverview = createAuthRequest('http://localhost:3000/overview', userMustChange)
-  const resOverview = middleware(reqOverview)
+  const resOverview = await middleware(reqOverview)
   assert(
     Boolean(resOverview.status === 307 && resOverview.headers.get('location')?.includes('/change-password')),
     'Middleware intercepts protected route request and redirects to /change-password'
@@ -338,7 +338,7 @@ async function runTests() {
 
   // Middleware allows reaching /change-password
   const reqChangePwPage = createAuthRequest('http://localhost:3000/change-password', userMustChange)
-  const resChangePwPage = middleware(reqChangePwPage)
+  const resChangePwPage = await middleware(reqChangePwPage)
   assert(
     resChangePwPage.status === 200,
     'Middleware allows user with must_change_password to access /change-password'

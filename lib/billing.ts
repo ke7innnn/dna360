@@ -15,6 +15,7 @@ import type {
   InvoiceStatus,
   InvoiceLineItem,
   PaymentSplit,
+  PaymentMode,
   CreditNote,
   GymPlan,
   BillingFilterOptions,

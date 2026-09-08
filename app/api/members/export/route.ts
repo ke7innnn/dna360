@@ -3,6 +3,15 @@ import { getServerSession, checkExportRateLimit } from '@/lib/server-auth'
 import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 
+function sanitizeCsvField(value: any): string {
+  if (value === null || value === undefined) return '""'
+  let str = String(value).trim()
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'` + str
+  }
+  return `"${str.replace(/"/g, '""')}"`
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { session, error } = getServerSession(req)
@@ -51,15 +60,6 @@ export async function GET(req: NextRequest) {
       branchId: user.branchId,
       description: `${user.name} (${user.role.name}) exported complete member directory (${members.length} records).`,
     })
-
-function sanitizeCsvField(value: any): string {
-  if (value === null || value === undefined) return '""'
-  let str = String(value).trim()
-  if (/^[=+\-@\t\r]/.test(str)) {
-    str = `'` + str
-  }
-  return `"${str.replace(/"/g, '""')}"`
-}
 
     // Generate CSV
     const headers = ['Member ID', 'Member Code', 'Name', 'Phone', 'Email', 'Gender', 'Status', 'Joined Date', 'Package', 'Expiry Date', 'Total Visits']

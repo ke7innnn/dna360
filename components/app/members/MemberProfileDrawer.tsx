@@ -498,10 +498,10 @@ export default function MemberProfileDrawer({
           memberId: member.id,
           memberName: member.name,
           phone: member.phone,
-          planName: primaryMembership?.product_name,
-          expiryDate: primaryMembership?.expiry_date,
+          planName: activeMemberships[0]?.product_name,
+          expiryDate: activeMemberships[0]?.expiry_date || undefined,
           memberCode: member.member_code,
-          trainerName: member.assigned_trainer_name,
+          trainerName: member.assigned_trainer_name || undefined,
         }}
       />
     </>
