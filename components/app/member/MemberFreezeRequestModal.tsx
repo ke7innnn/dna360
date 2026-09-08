@@ -10,6 +10,8 @@ import { submitFreezeRequest } from '@/lib/memberportal'
 import type { MemberFreezeRequest } from '@/types/memberportal'
 import { toast } from '@/components/app/ui/toast'
 
+import { useAuth } from '@/context/AuthContext'
+
 export default function MemberFreezeRequestModal({
   open,
   onOpenChange,
@@ -19,6 +21,7 @@ export default function MemberFreezeRequestModal({
   onOpenChange: (open: boolean) => void
   onRequestSubmitted?: () => void
 }) {
+  const { user } = useAuth()
   const [startDate, setStartDate] = useState('2026-09-01')
   const [endDate, setEndDate] = useState('2026-09-21')
   const [daysCount, setDaysCount] = useState(21)
@@ -36,7 +39,7 @@ export default function MemberFreezeRequestModal({
       daysCount,
       reason,
       notes: notes.trim() || undefined,
-    })
+    }, user?.id)
 
     setLoading(false)
     toast.success(`Freeze Request Submitted`, {

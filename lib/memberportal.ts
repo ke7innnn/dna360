@@ -237,6 +237,35 @@ export function cancelMemberBooking(bookingId: string, memberId?: string): boole
   return true
 }
 
+let memoryFreezeRequests: Record<string, MemberFreezeRequest[]> = {}
+
+export function getMemberFreezeRequests(memberId?: string): MemberFreezeRequest[] {
+  const targetId = memberId || 'mem_001'
+  const key = `${PORTAL_FREEZE_KEY}_${targetId}`
+
+  if (typeof window === 'undefined') {
+    return memoryFreezeRequests[targetId] || []
+  }
+
+  const stored = localStorage.getItem(key)
+  if (!stored) return []
+  try {
+    return JSON.parse(stored)
+  } catch {
+    return []
+  }
+}
+
+export function saveMemberFreezeRequests(requests: MemberFreezeRequest[], memberId?: string) {
+  const targetId = memberId || 'mem_001'
+  const key = `${PORTAL_FREEZE_KEY}_${targetId}`
+  memoryFreezeRequests[targetId] = requests
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(key, JSON.stringify(requests))
+    window.dispatchEvent(new Event('dna360_memberportal_updated'))
+  }
+}
+
 export function submitFreezeRequest(
   data: {
     startDate: string
@@ -260,6 +289,9 @@ export function submitFreezeRequest(
     status: 'pending',
     submittedAt: new Date().toISOString(),
   }
+
+  const existing = getMemberFreezeRequests(current.memberId)
+  saveMemberFreezeRequests([newRequest, ...existing], current.memberId)
 
   logAuditEvent({
     actor: { id: current.memberId, name: current.memberName, email: current.email || '', role: 'Member' },
