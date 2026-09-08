@@ -120,43 +120,49 @@ export function generate659Members(): Member[] {
       streak = 4
       totalVisits = 112
       lastVisitDaysAgo = 0
-    } else if (i >= 655) {
-      // Suspended / Blacklisted
+      status = i === 5 ? 'grace_period' : 'active'
+    } else if (i >= 645) {
+      // Suspended / Blacklisted (15 members: 645-659)
       status = 'blacklisted'
       isBlacklisted = true
       expiryDate = '2026-04-10'
       streak = 0
       totalVisits = 14 + (i % 8)
-      lastVisitDaysAgo = 120 + i
-    } else if (i <= 30) {
+      lastVisitDaysAgo = 120 + (i % 30)
+    } else if (i <= 22) {
+      // Grace period (17 members: 6-22 + flagship 5 = 18 members)
       status = 'grace_period'
-      const dayOffset = (i - 6) % 6 + 1
+      const dayOffset = ((i - 6) % 6) + 1
       expiryDate = `2026-08-${String(31 - dayOffset).padStart(2, '0')}`
       streak = i % 3 === 0 ? 1 : 0
       totalVisits = 45 + (i * 3) % 40
       lastVisitDaysAgo = dayOffset + 1
-    } else if (i <= 60) {
+    } else if (i <= 54) {
+      // Expired / Inactive (32 members: 23-54)
       status = 'inactive'
       expiryDate = `2026-0${(i % 4) + 3}-15`
       streak = 0
       totalVisits = 25 + (i * 2) % 30
       lastVisitDaysAgo = 45 + (i % 30)
-    } else if (i <= 150) {
+    } else if (i <= 136) {
+      // Expiring in next 30 days (82 members: 55-136)
       status = 'expiring_soon'
-      const expDay = ((i - 61) % 28) + 2
+      const expDay = ((i - 55) % 28) + 2
       expiryDate = `2026-09-${String(expDay).padStart(2, '0')}`
       streak = (i % 5) + 1
       totalVisits = 65 + (i * 4) % 80
       lastVisitDaysAgo = (i % 3)
     } else {
+      // Active (508 members: 137-644 + flagship 1-4 = 512 members)
       status = 'active'
       const expMonth = ((i % 10) + 10)
       const yr = expMonth > 12 ? '2027' : '2026'
       const mth = expMonth > 12 ? String(expMonth - 12).padStart(2, '0') : String(expMonth).padStart(2, '0')
-      expiryDate = `${yr}-${mth}-15`
-      streak = (i % 7) + 1
-      totalVisits = 40 + (i * 3) % 150
-      lastVisitDaysAgo = (i % 2)
+      const expDay = ((i * 7) % 27) + 1
+      expiryDate = `${yr}-${mth}-${String(expDay).padStart(2, '0')}`
+      streak = (i % 12) + 1
+      totalVisits = 40 + (i * 7) % 70
+      lastVisitDaysAgo = (i % 4)
     }
 
     if (pkg.totalSessions) {
