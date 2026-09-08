@@ -72,16 +72,25 @@ export function verifyRazorpaySignature(params: RazorpayPaymentVerification): bo
     throw new Error('Razorpay key secret missing in server environment.')
   }
 
+  if (!params.signature || typeof params.signature !== 'string') {
+    return false
+  }
+
   const generatedSignature = crypto
     .createHmac('sha256', keySecret)
     .update(`${params.orderId}|${params.paymentId}`)
     .digest('hex')
 
-  return crypto.timingSafeEqual(
-    Buffer.from(generatedSignature),
-    Buffer.from(params.signature)
-  )
+  const genBuf = Buffer.from(generatedSignature, 'utf-8')
+  const sigBuf = Buffer.from(params.signature, 'utf-8')
+
+  if (genBuf.length !== sigBuf.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(genBuf, sigBuf)
 }
+
 
 /**
  * Client-side: Dynamically load the Razorpay checkout script
