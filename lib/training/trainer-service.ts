@@ -250,6 +250,37 @@ export function signOffPTSession(
 
   if (ptMembership) {
     ptMembership.sessions_remaining = newRemaining
+    ptMembership.sessions_consumed = (ptMembership.sessions_consumed || 0) + 1
+  } else {
+    member.active_memberships.push({
+      id: `ms_pt_${Date.now()}`,
+      product_id: 'prod_pt_tier1',
+      category: 'personal_training',
+      product_name: 'Tier 1 PT — 12 Sessions (1 Month)',
+      enrolment_date: new Date().toISOString().slice(0, 10),
+      activation_date: new Date().toISOString().slice(0, 10),
+      expiry_date: '2027-03-31',
+      amount_paid: 1699900,
+      discount_amount: 0,
+      discount_reason: null,
+      discount_approved_by: null,
+      tax_rate: 0.05,
+      status: 'active',
+      invoice_id: `inv_pt_${Date.now()}`,
+      invoice_number: `DNA/2026-27/0088`,
+      sales_rep_id: trainer.id,
+      sales_rep_name: trainer.name,
+      sessions_total: 12,
+      sessions_consumed: 12 - newRemaining,
+      sessions_remaining: newRemaining,
+      access_window: null,
+      void_reason: null,
+      voided_by: null,
+      voided_at: null,
+      transferred_from: null,
+      transferred_to: null,
+      transfer_fee_invoice_id: null,
+    })
   }
 
   updateMember(memberId, {

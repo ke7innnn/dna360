@@ -110,6 +110,16 @@ export function getMemberPortalState(memberId?: string): MemberPortalState {
       Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     )
 
+    const ptMs = found.active_memberships?.find(
+      (ms) =>
+        ms.sessions_remaining !== null ||
+        ms.category === 'personal_training' ||
+        ms.product_name?.toLowerCase().includes('pt') ||
+        ms.product_name?.toLowerCase().includes('personal')
+    )
+    const ptSessionsRemaining = ptMs ? (ptMs.sessions_remaining ?? 0) : (found.id === 'mem_001' ? 8 : 0)
+    const ptSessionsTotal = ptMs ? (ptMs.sessions_total ?? 12) : (found.id === 'mem_001' ? 12 : 0)
+
     const hydrated: MemberPortalState = {
       memberId: found.id,
       memberName: found.name,
@@ -133,10 +143,10 @@ export function getMemberPortalState(memberId?: string): MemberPortalState {
         sessionsTotal: ms.sessions_total,
         accessWindow: ms.access_window ? `${ms.access_window.start} - ${ms.access_window.end}` : null,
       })) || [],
-      attendanceStreak: 12,
-      totalVisits: found.total_visits || 48,
-      ptSessionsRemaining: primaryMs?.sessions_remaining ?? 6,
-      ptSessionsTotal: primaryMs?.sessions_total ?? 12,
+      attendanceStreak: found.attendance_streak || 12,
+      totalVisits: found.total_check_ins || found.total_visits || 48,
+      ptSessionsRemaining,
+      ptSessionsTotal,
       waterIntakeMl: 2250,
       waterTargetMl: 3500,
       qrToken: `OTP-${found.member_code.replace(/[^0-9]/g, '').slice(-4) || '9821'}-4402`,

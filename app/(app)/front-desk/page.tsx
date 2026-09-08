@@ -18,7 +18,7 @@ import ShiftHandoverModal from '@/components/app/frontdesk/ShiftHandoverModal'
 import LockerModal from '@/components/app/frontdesk/LockerModal'
 import CameraQrScannerModal from '@/components/app/attendance/CameraQrScannerModal'
 import MemberQrModal from '@/components/app/member/MemberQrModal'
-import { getStoredMembers } from '@/lib/members'
+import { getStoredMembers, updateMember } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 import {
   validateAndConsumeQrToken,
@@ -185,6 +185,17 @@ export default function FrontDeskPage() {
   }
 
   const logCheckIn = (member: Member, accessStatus: string) => {
+    // Increment member check-in count, visit streak, and set last visit timestamp
+    try {
+      updateMember(member.id, {
+        total_check_ins: (member.total_check_ins || 0) + 1,
+        last_visit_at: new Date().toISOString(),
+        attendance_streak: (member.attendance_streak || 0) + 1,
+      })
+    } catch (e) {
+      console.error('Failed to update member attendance statistics:', e)
+    }
+
     if (!isOnline) {
       const existing = JSON.parse(localStorage.getItem(OFFLINE_CHECKIN_KEY) || '[]')
       existing.push({ memberId: member.id, timestamp: new Date().toISOString(), accessStatus })

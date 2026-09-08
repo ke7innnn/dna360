@@ -514,6 +514,14 @@ export function updateMember(id: string, updates: Partial<Member>): Member | nul
   members[index] = updated
   saveMembers(members)
 
+  // Invalidate any cached portal state for this member so portal updates instantly
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(`dna360_member_portal_state_${id}`)
+      localStorage.removeItem(`dna360_member_portal_state_${updated.member_code}`)
+    } catch {}
+  }
+
   logAuditEvent({
     actor: { id: 'system', name: 'Staff', email: '', role: 'Staff' },
     action: 'UPDATE',
@@ -602,6 +610,15 @@ export function deleteMember(memberId: string): boolean {
 
   const updated = members.filter(m => m.id !== memberId)
   saveMembers(updated)
+
+  // Clean up any member portal cache upon deletion
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(`dna360_member_portal_state_${memberId}`)
+      localStorage.removeItem(`dna360_member_portal_state_${member.member_code}`)
+      localStorage.removeItem(`dna360_member_portal_bookings_${memberId}`)
+    } catch {}
+  }
 
   logAuditEvent({
     actor: { id: 'system', name: 'Admin', email: '', role: 'Owner' },
