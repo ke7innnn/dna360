@@ -69,7 +69,7 @@ export default function MemberProgramsPage() {
   ]
 
   return (
-    <div className="max-w-4xl mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none">
+    <div className="max-w-4xl mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none pb-28">
       {/* ─── Top Header with Actions ─── */}
       <div className="flex items-center justify-between pb-1">
         <button
@@ -166,17 +166,17 @@ export default function MemberProgramsPage() {
             return (
               <div
                 key={idx}
-                className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between group"
+                className="p-3.5 sm:p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between gap-3 group min-w-0"
               >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform shrink-0">
                     <Icon className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h4 className="font-ui text-sm font-bold text-white group-hover:text-[#60A5FA] transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-ui text-sm font-bold text-white group-hover:text-[#60A5FA] transition-colors truncate">
                       {ex.name}
                     </h4>
-                    <p className="font-data text-xs text-[var(--ink-3)] mt-0.5">
+                    <p className="font-data text-xs text-[var(--ink-3)] mt-0.5 truncate">
                       {ex.setsReps} · {ex.weight}
                     </p>
                   </div>
@@ -184,7 +184,7 @@ export default function MemberProgramsPage() {
 
                 <button
                   onClick={() => router.push('/m/session')}
-                  className="p-2 rounded-full text-[var(--ink-3)] group-hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition-all cursor-pointer"
+                  className="p-2 rounded-full text-[var(--ink-3)] group-hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition-all cursor-pointer shrink-0"
                   title="View Exercise Telemetry"
                 >
                   <ArrowUpRight className="w-4 h-4" />

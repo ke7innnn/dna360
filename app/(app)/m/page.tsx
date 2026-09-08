@@ -59,9 +59,9 @@ export default function MemberAppHomePage() {
   ]
 
   return (
-    <div className="w-full max-w-6xl mx-auto pt-1 pb-24 px-4 select-none">
+    <div className="w-full max-w-6xl mx-auto pt-1 pb-28 px-4 select-none">
       {/* ─── Mobile Header (Avatar, Greeting, Notification Bell) ─── */}
-      <div className="member-hdr md:hidden">
+      <div className="member-hdr md:hidden flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => {
@@ -69,15 +69,15 @@ export default function MemberAppHomePage() {
               window.dispatchEvent(new CustomEvent('dna:open-profile'))
             }
           }}
-          className="member-who text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/50 rounded-xl p-0.5 transition-opacity active:opacity-75"
+          className="member-who text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/50 rounded-xl p-0.5 transition-opacity active:opacity-75 flex-1 min-w-0"
           aria-label="View member profile and settings"
         >
-          <div className="member-pfp">{initials}</div>
-          <div>
-            <p className="hi">Good evening</p>
-            <p className="nm flex items-center gap-1.5">
-              {userName}
-              <span className="text-[10px] text-[#38BDF8] font-data font-normal bg-[#38BDF8]/10 px-1.5 py-0.5 rounded border border-[#38BDF8]/20">Profile</span>
+          <div className="member-pfp shrink-0">{initials}</div>
+          <div className="min-w-0 flex-1">
+            <p className="hi truncate">Good evening</p>
+            <p className="nm flex items-center gap-1.5 min-w-0">
+              <span className="truncate">{userName}</span>
+              <span className="shrink-0 text-[10px] text-[#38BDF8] font-data font-normal bg-[#38BDF8]/10 px-1.5 py-0.5 rounded border border-[#38BDF8]/20">Profile</span>
             </p>
           </div>
         </button>
@@ -88,7 +88,7 @@ export default function MemberAppHomePage() {
               description: 'Next PT session confirmed for tomorrow at 7:00 AM.',
             })
           }}
-          className="member-icbtn"
+          className="member-icbtn shrink-0"
           aria-label="Notifications"
         >
           <svg viewBox="0 0 24 24">
@@ -178,23 +178,21 @@ export default function MemberAppHomePage() {
             <Link href="/m/classes">See all</Link>
           </div>
 
-          <Link href="/m/classes" className="member-lrow block">
-            <div className="flex items-center gap-3">
-              <div className="member-lic" style={{ background: 'var(--t2)' }}>
-                <svg viewBox="0 0 24 24" style={{ stroke: '#6FD4F5' }}>
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5l3 2" />
-                </svg>
-              </div>
-              <div className="member-lt">
-                <b>Spin · Thu 7:00 pm</b>
-                <span>Booked · Tanvi · 2 spots left</span>
-              </div>
-              <div className="member-go2">
-                <svg viewBox="0 0 24 24">
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
-              </div>
+          <Link href="/m/classes" className="member-lrow flex items-center gap-3">
+            <div className="member-lic shrink-0" style={{ background: 'var(--t2)' }}>
+              <svg viewBox="0 0 24 24" style={{ stroke: '#6FD4F5' }}>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </div>
+            <div className="member-lt flex-1 min-w-0">
+              <b className="truncate block">Spin · Thu 7:00 pm</b>
+              <span className="truncate block">Booked · Tanvi · 2 spots left</span>
+            </div>
+            <div className="member-go2 shrink-0">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
             </div>
           </Link>
 

@@ -108,7 +108,7 @@ export default function ActiveWorkoutSessionPage() {
   }
 
   return (
-    <div className="w-full max-w-xl mx-auto pt-1 pb-24 px-4 select-none">
+    <div className="w-full max-w-xl mx-auto pt-1 pb-32 px-4 select-none">
       {/* Nav Header */}
       <div className="flex items-center justify-between py-2 mb-2">
         <Link href="/m" className="member-icbtn" style={{ width: '36px', height: '36px' }}>

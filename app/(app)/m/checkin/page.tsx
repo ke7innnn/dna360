@@ -32,7 +32,7 @@ export default function MemberCheckinPage() {
   }, [])
 
   return (
-    <div className="w-full max-w-md mx-auto pt-2 pb-24 px-4 select-none">
+    <div className="w-full max-w-md mx-auto pt-2 pb-28 px-4 select-none">
       {/* Top Bar */}
       <div className="flex items-center justify-between py-2 mb-2">
         <Link href="/m" className="member-icbtn" style={{ width: '36px', height: '36px' }}>
@@ -59,8 +59,8 @@ export default function MemberCheckinPage() {
           />
         </div>
 
-        <p className="member-qrname">{userName}</p>
-        <p className="member-qrid">{memberCode} · {planName.toUpperCase()}</p>
+        <p className="member-qrname max-w-[280px] truncate">{userName}</p>
+        <p className="member-qrid max-w-[280px] truncate">{memberCode} · {planName.toUpperCase()}</p>
 
         <div className="member-qrtimer">
           <i />

@@ -83,7 +83,7 @@ export default function MemberPTLedgerPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-5xl mx-auto pt-1 pb-28 px-4 space-y-6 select-none">
       {/* Header */}
       <div className="border-b border-[var(--line)] pb-4">
         <div className="flex items-center gap-2">

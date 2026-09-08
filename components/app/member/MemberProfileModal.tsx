@@ -159,37 +159,37 @@ export default function MemberProfileModal({
           <Link
             href="/privacy-policy"
             onClick={onClose}
-            className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all text-xs text-[var(--ink-2)] hover:text-white"
+            className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all text-xs text-[var(--ink-2)] hover:text-white min-w-0"
           >
-            <div className="flex items-center gap-2.5">
-              <Shield className="w-4 h-4 text-[#38BDF8]" />
-              <span>Privacy Policy</span>
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <Shield className="w-4 h-4 text-[#38BDF8] shrink-0" />
+              <span className="truncate">Privacy Policy</span>
             </div>
-            <span className="text-[10px] text-[var(--ink-3)] font-data">dna360.in/privacy</span>
+            <span className="text-[10px] text-[var(--ink-3)] font-data shrink-0">dna360.in/privacy</span>
           </Link>
 
           <Link
             href="/terms-and-conditions"
             onClick={onClose}
-            className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all text-xs text-[var(--ink-2)] hover:text-white"
+            className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all text-xs text-[var(--ink-2)] hover:text-white min-w-0"
           >
-            <div className="flex items-center gap-2.5">
-              <FileText className="w-4 h-4 text-[#38BDF8]" />
-              <span>Terms and Conditions</span>
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <FileText className="w-4 h-4 text-[#38BDF8] shrink-0" />
+              <span className="truncate">Terms and Conditions</span>
             </div>
-            <span className="text-[10px] text-[var(--ink-3)] font-data">Terms of Service</span>
+            <span className="text-[10px] text-[var(--ink-3)] font-data shrink-0">Terms of Service</span>
           </Link>
 
           <Link
             href="/contact"
             onClick={onClose}
-            className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all text-xs text-[var(--ink-2)] hover:text-white"
+            className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all text-xs text-[var(--ink-2)] hover:text-white min-w-0"
           >
-            <div className="flex items-center gap-2.5">
-              <HelpCircle className="w-4 h-4 text-[#38BDF8]" />
-              <span>Member Concierge & Support</span>
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <HelpCircle className="w-4 h-4 text-[#38BDF8] shrink-0" />
+              <span className="truncate">Member Concierge & Support</span>
             </div>
-            <span className="text-[10px] text-[var(--ink-3)] font-data">Club Desk</span>
+            <span className="text-[10px] text-[var(--ink-3)] font-data shrink-0">Club Desk</span>
           </Link>
         </div>
 

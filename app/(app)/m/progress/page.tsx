@@ -104,17 +104,17 @@ export default function MemberProgressPage() {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto pt-1 pb-24 px-4 select-none">
+    <div className="w-full max-w-5xl mx-auto pt-1 pb-28 px-4 select-none">
       {/* Header */}
-      <div className="member-hdr">
+      <div className="member-hdr flex items-center justify-between gap-3">
         <div>
           <p className="hi">Your</p>
           <h1 className="nm text-2xl sm:text-3xl text-white">Progress</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setMetricModalOpen(true)}
-            className="member-icbtn"
+            className="member-icbtn shrink-0"
             title="Add Metric"
           >
             <Plus className="w-4 h-4 text-white" />
@@ -361,17 +361,17 @@ export default function MemberProgressPage() {
                 <span className="text-xs text-[var(--ink-3)]">Tape tracking</span>
               </div>
 
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
                   { label: 'Waist', val: '78', delta: '-4.0' },
                   { label: 'Chest', val: '98', delta: '-1.5' },
                   { label: 'Hips', val: '94', delta: '-2.0' },
                   { label: 'Arms', val: '34.5', delta: '+0.8' },
                 ].map((item) => (
-                  <div key={item.label} className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--line)] text-center">
-                    <p className="text-[10.5px] text-[var(--ink-3)]">{item.label}</p>
+                  <div key={item.label} className="p-2.5 sm:p-3 rounded-xl bg-[var(--surface)] border border-[var(--line)] text-center min-w-0">
+                    <p className="text-[11px] text-[var(--ink-3)] font-medium truncate">{item.label}</p>
                     <p className="font-display font-semibold text-white text-base mt-0.5">{item.val}</p>
-                    <p className="text-[9px] font-mono text-[#38BDF8]">{item.delta} cm</p>
+                    <p className="text-[9px] font-mono text-[#38BDF8] truncate">{item.delta} cm</p>
                   </div>
                 ))}
               </div>
@@ -635,14 +635,14 @@ export default function MemberProgressPage() {
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--line)] text-[11px] text-[var(--ink-3)]">
-                  <span className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-[var(--line)] text-[10.5px] text-[var(--ink-3)]">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
                     <i className="w-2 h-2 rounded-full bg-[#38BDF8]" /> Gym Floor
                   </span>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
                     <i className="w-2 h-2 rounded-full bg-[#A78BFA]" /> Class
                   </span>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
                     <i className="w-2 h-2 rounded-full bg-[#3B82F6]" /> PT Session
                   </span>
                 </div>
