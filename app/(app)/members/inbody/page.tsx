@@ -23,6 +23,7 @@ export default function InBodyAnalyticsPage() {
   const selectedMember = members.find((m) => m.id === selectedMemberId) || members[0]
 
   const scanHistory = [
+    { date: '2026-09-04', weight: 77.8, smm: 37.6, bfm: 11.2, pbf: 14.4, bmi: 23.2, vfl: 4, score: 86 },
     { date: '2026-08-20', weight: 78.5, smm: 37.2, bfm: 11.6, pbf: 14.8, bmi: 23.4, vfl: 4, score: 84 },
     { date: '2026-07-15', weight: 80.2, smm: 36.5, bfm: 13.0, pbf: 16.2, bmi: 23.9, vfl: 5, score: 80 },
     { date: '2026-06-10', weight: 82.0, smm: 35.8, bfm: 15.1, pbf: 18.4, bmi: 24.5, vfl: 6, score: 76 },

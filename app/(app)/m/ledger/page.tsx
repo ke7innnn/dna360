@@ -41,8 +41,18 @@ export default function MemberPTLedgerPage() {
   // Sample Immutable Deduction History (§8.7)
   const deductionHistory = [
     {
+      id: 'pt_deduct_005',
+      date: '7 Sep 2026',
+      time: '08:00 AM',
+      trainer: 'Rajesh Poojary',
+      workoutFocus: 'Posterior Chain & Reformer Jumpboard Drills',
+      sessionsDeducted: 1,
+      balanceAfter: 7,
+      status: 'VERIFIED',
+    },
+    {
       id: 'pt_deduct_004',
-      date: '28 Aug 2026',
+      date: '5 Sep 2026',
       time: '08:30 AM',
       trainer: 'Rajesh Poojary',
       workoutFocus: 'Upper Body Hypertrophy & Rotator Stability',
@@ -52,7 +62,7 @@ export default function MemberPTLedgerPage() {
     },
     {
       id: 'pt_deduct_003',
-      date: '25 Aug 2026',
+      date: '2 Sep 2026',
       time: '08:00 AM',
       trainer: 'Rajesh Poojary',
       workoutFocus: 'Quad Hypertrophy & Allegro Reformer Jumpboard',
@@ -62,22 +72,12 @@ export default function MemberPTLedgerPage() {
     },
     {
       id: 'pt_deduct_002',
-      date: '22 Aug 2026',
+      date: '28 Aug 2026',
       time: '08:15 AM',
       trainer: 'Rajesh Poojary',
       workoutFocus: 'Deadlift Form Calibration & Core Bracing',
       sessionsDeducted: 1,
       balanceAfter: 10,
-      status: 'VERIFIED',
-    },
-    {
-      id: 'pt_deduct_001',
-      date: '18 Aug 2026',
-      time: '08:00 AM',
-      trainer: 'Rajesh Poojary',
-      workoutFocus: 'Initial Postural Assessment & Movement Screen',
-      sessionsDeducted: 1,
-      balanceAfter: 11,
       status: 'VERIFIED',
     },
   ]
