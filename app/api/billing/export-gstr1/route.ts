@@ -68,6 +68,15 @@ export async function GET(req: NextRequest) {
       'Status',
     ]
 
+function sanitizeCsvField(value: any): string {
+  if (value === null || value === undefined) return '""'
+  let str = String(value).trim()
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'` + str
+  }
+  return `"${str.replace(/"/g, '""')}"`
+}
+
     const rows = invoices.map((inv) => {
       const totalRupees = (inv.grandTotalMinor / 100).toFixed(2)
       const taxableRupees = (inv.taxableMinor / 100).toFixed(2)
@@ -75,18 +84,18 @@ export async function GET(req: NextRequest) {
       const sgstRupees = (inv.sgstMinor / 100).toFixed(2)
 
       return [
-        inv.invoiceNumber,
-        inv.issueDate,
-        `"${(inv.memberName || 'Cash Customer').replace(/"/g, '""')}"`,
-        'URP', // Unregistered Person
-        '27-Maharashtra',
-        '999723',
-        '5.0%',
-        totalRupees,
-        taxableRupees,
-        cgstRupees,
-        sgstRupees,
-        inv.status.toUpperCase(),
+        sanitizeCsvField(inv.invoiceNumber),
+        sanitizeCsvField(inv.issueDate),
+        sanitizeCsvField(inv.memberName || 'Cash Customer'),
+        sanitizeCsvField('URP'), // Unregistered Person
+        sanitizeCsvField('27-Maharashtra'),
+        sanitizeCsvField('999723'),
+        sanitizeCsvField('5.0%'),
+        sanitizeCsvField(totalRupees),
+        sanitizeCsvField(taxableRupees),
+        sanitizeCsvField(cgstRupees),
+        sanitizeCsvField(sgstRupees),
+        sanitizeCsvField(inv.status.toUpperCase()),
       ]
     })
 

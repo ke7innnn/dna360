@@ -5,9 +5,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { name, phone, service, message } = body
 
-    if (!name || !phone) {
+    const cleanName = typeof name === 'string' ? name.trim() : ''
+    const cleanPhone = typeof phone === 'string' ? phone.trim() : ''
+
+    if (!cleanName || !cleanPhone || cleanName.length < 2 || cleanPhone.length < 7) {
       return NextResponse.json(
-        { error: 'Name and phone number are required.' },
+        { error: 'Valid name (min 2 characters) and phone number are required.' },
         { status: 400 }
       )
     }

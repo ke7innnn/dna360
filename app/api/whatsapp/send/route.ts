@@ -35,6 +35,12 @@ export async function POST(req: NextRequest) {
 
     // Normalize phone number (E.164 without '+', e.g. 919820011111)
     const cleanPhone = phone.replace(/[^0-9]/g, '')
+    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+      return NextResponse.json(
+        { error: 'Valid recipient phone number (10 to 15 digits) is required' },
+        { status: 400 }
+      )
+    }
     const formattedRecipient = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone
 
     // If Meta credentials exist, call Meta Graph API

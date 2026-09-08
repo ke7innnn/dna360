@@ -52,20 +52,29 @@ export async function GET(req: NextRequest) {
       description: `${user.name} (${user.role.name}) exported complete member directory (${members.length} records).`,
     })
 
+function sanitizeCsvField(value: any): string {
+  if (value === null || value === undefined) return '""'
+  let str = String(value).trim()
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'` + str
+  }
+  return `"${str.replace(/"/g, '""')}"`
+}
+
     // Generate CSV
     const headers = ['Member ID', 'Member Code', 'Name', 'Phone', 'Email', 'Gender', 'Status', 'Joined Date', 'Package', 'Expiry Date', 'Total Visits']
     const rows = members.map(m => [
-      m.id,
-      m.member_code,
-      `"${m.name.replace(/"/g, '""')}"`,
-      m.phone,
-      m.email || '',
-      m.gender || '',
-      m.status,
-      m.joined_date,
-      `"${(m.active_memberships[0]?.product_name || 'None').replace(/"/g, '""')}"`,
-      m.active_memberships[0]?.expiry_date || '',
-      m.total_check_ins || 0,
+      sanitizeCsvField(m.id),
+      sanitizeCsvField(m.member_code),
+      sanitizeCsvField(m.name),
+      sanitizeCsvField(m.phone),
+      sanitizeCsvField(m.email || ''),
+      sanitizeCsvField(m.gender || ''),
+      sanitizeCsvField(m.status),
+      sanitizeCsvField(m.joined_date),
+      sanitizeCsvField(m.active_memberships[0]?.product_name || 'None'),
+      sanitizeCsvField(m.active_memberships[0]?.expiry_date || ''),
+      sanitizeCsvField(m.total_check_ins || 0),
     ])
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')

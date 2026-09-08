@@ -6,9 +6,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { amountMinor, receipt, notes } = body
 
-    if (!amountMinor || typeof amountMinor !== 'number' || amountMinor <= 0) {
+    if (
+      typeof amountMinor !== 'number' ||
+      !Number.isFinite(amountMinor) ||
+      !Number.isInteger(amountMinor) ||
+      amountMinor < 100 ||
+      amountMinor > 100000000
+    ) {
       return NextResponse.json(
-        { error: 'Valid amountMinor (in paise) is required' },
+        { error: 'Valid integer amountMinor (in paise) between 100 (₹1) and 100,000,000 (₹10,00,000) is required' },
         { status: 400 }
       )
     }
