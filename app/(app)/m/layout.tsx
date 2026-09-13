@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 import MemberBottomTabs from '@/components/app/member/MemberBottomTabs'
-import MemberTopNav from '@/components/app/member/MemberTopNav'
 import MemberQrModal from '@/components/app/member/MemberQrModal'
 import MemberProfileModal from '@/components/app/member/MemberProfileModal'
 
@@ -36,18 +35,12 @@ export default function MemberTrainingLayout({
         }}
       />
 
-      {/* Desktop PC Top Navigation Header */}
-      <MemberTopNav
-        onOpenQr={() => setQrModalOpen(true)}
-        onOpenProfile={() => setProfileModalOpen(true)}
-      />
-
-      {/* Main Screen Content */}
-      <main className="flex-1 relative z-10 w-full">
+      {/* Main Screen Content - Centered Mobile App Container */}
+      <main className="flex-1 relative z-10 w-full max-w-lg mx-auto">
         {children}
       </main>
 
-      {/* Mobile Floating Bottom Tab Bar */}
+      {/* Floating Bottom Tab Bar - Always Present on App */}
       <MemberBottomTabs />
 
       {/* Globally Accessible Check-in QR Modal */}

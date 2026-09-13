@@ -135,7 +135,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       saveUserSession(data.user)
-      return { success: true, redirectUrl: data.redirectUrl || '/overview' }
+      const isMember = data.user?.type === 'MEMBER' || data.user?.role?.slug === 'member'
+      return { success: true, redirectUrl: data.redirectUrl || (isMember ? '/m' : '/overview') }
     } catch (err: any) {
       return { success: false, error: err.message || 'Login request failed' }
     }
@@ -169,7 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       saveUserSession(data.user)
-      return { success: true, redirectUrl: data.redirectUrl || '/overview' }
+      const isMember = data.user?.type === 'MEMBER' || data.user?.role?.slug === 'member'
+      return { success: true, redirectUrl: data.redirectUrl || (isMember ? '/m' : '/overview') }
     } catch (err: any) {
       return { success: false, error: err.message || 'OTP verification error' }
     }
@@ -192,7 +194,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsTwoFactorPending(false)
       setPending2FAUser(null)
       toast.success('Two-factor authentication verified')
-      router.push(data.redirectUrl || '/overview')
+      const isMember = (data.user || pending2FAUser)?.type === 'MEMBER' || (data.user || pending2FAUser)?.role?.slug === 'member'
+      router.push(data.redirectUrl || (isMember ? '/m' : '/overview'))
       return { success: true }
     }
 
@@ -228,7 +231,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.success(`Switched persona to ${target.name}`, {
           description: `Role: ${target.role.name} · Revenue Wall: ${canAccessRevenue(target.role.slug) ? 'UNLOCKED' : 'LOCKED'}`,
         })
-        router.push(data.redirectUrl || '/overview')
+        const isMember = target.type === 'MEMBER' || target.role.slug === 'member'
+        router.push(data.redirectUrl || (isMember ? '/m' : '/overview'))
       }
     } catch (e) {
       console.error('Persona switch error:', e)

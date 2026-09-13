@@ -151,7 +151,7 @@ export default function Sidebar({ role }: { role?: RoleName }) {
         {
           label: '',
           items: [
-            { id: 'dashboard', label: 'Home', icon: 'LayoutDashboard', href: '/dashboard' },
+            { id: 'dashboard', label: 'Home', icon: 'LayoutDashboard', href: '/m' },
             { id: 'workouts', label: 'Workouts', icon: 'Dumbbell', href: '/m/programs' },
             { id: 'progress', label: 'Progress', icon: 'TrendingUp', href: '/m/progress' },
             { id: 'classes', label: 'Classes', icon: 'Calendar', href: '/classes' },
@@ -200,7 +200,7 @@ export default function Sidebar({ role }: { role?: RoleName }) {
       >
         {/* Brand Header */}
         <div className="flex items-center h-16 px-4 border-b border-[rgba(255,255,255,0.06)] justify-between shrink-0">
-          <Link href={isMember ? '/dashboard' : '/overview'} className="flex items-center gap-3">
+          <Link href={isMember ? '/m' : '/overview'} className="flex items-center gap-3">
             <DnaLogoMark />
             {(!collapsed || mobileOpen) && (
               <div className="flex flex-col">

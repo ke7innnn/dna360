@@ -73,7 +73,7 @@ export default function MemberBottomTabs() {
   return (
     <nav
       aria-label="Member Navigation"
-      className="md:hidden fixed left-3 right-3 bottom-[calc(10px+env(safe-area-inset-bottom,0px))] max-w-md mx-auto h-[62px] px-1.5 py-1 rounded-[26px] bg-[#0A0F1E]/95 backdrop-blur-2xl border border-[rgba(56,189,248,0.22)] shadow-[0_16px_40px_rgba(0,0,0,0.85)] z-40 select-none grid grid-cols-5 items-center gap-1"
+      className="fixed left-3 right-3 bottom-[calc(10px+env(safe-area-inset-bottom,0px))] max-w-md mx-auto h-[62px] px-1.5 py-1 rounded-[26px] bg-[#0A0F1E]/95 backdrop-blur-2xl border border-[rgba(56,189,248,0.22)] shadow-[0_16px_40px_rgba(0,0,0,0.85)] z-50 select-none grid grid-cols-5 items-center gap-1"
     >
       {tabs.map((tab) => {
         const isActive =

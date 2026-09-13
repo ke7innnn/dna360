@@ -34,9 +34,9 @@ export default function MemberProfileMembershipPage() {
       {/* ─── Top Nav Header ─── */}
       <div className="flex items-center justify-between pb-2">
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/m')}
           className="w-10 h-10 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:border-[#3B82F6] transition-colors cursor-pointer"
-          aria-label="Back to Dashboard"
+          aria-label="Back to Home"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>

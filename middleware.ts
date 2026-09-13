@@ -199,19 +199,19 @@ export async function middleware(req: NextRequest) {
     const isMember = roleSlug === 'member' || payload?.type === 'MEMBER'
 
     if (isMember) {
-      // Members cannot access staff management and operations routes
+      // Members cannot access staff management and operations routes, or desktop dashboard
       const isStaffRoute = STAFF_ONLY_PREFIXES.some((prefix) => pathname.startsWith(prefix))
-      if (isStaffRoute) {
-        const memberHome = new URL('/dashboard', req.url)
+      if (isStaffRoute || pathname === '/dashboard' || pathname === '/overview') {
+        const memberHome = new URL('/m', req.url)
         const redirectResponse = NextResponse.redirect(memberHome, 307)
         addSecurityHeaders(redirectResponse)
         return redirectResponse
       }
     }
 
-    // 6. Authenticated user visiting /login -> redirect to their role's dashboard
+    // 6. Authenticated user visiting /login -> redirect to their role's dashboard (/m for members)
     if (pathname === '/login') {
-      let targetPath = isMember ? '/dashboard' : getStaffRedirect(payload?.role)
+      let targetPath = isMember ? '/m' : getStaffRedirect(payload?.role)
       if (payload?.must_change_password) {
         targetPath = '/change-password'
       }
@@ -255,11 +255,11 @@ function addSecurityHeaders(response: NextResponse) {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.googletagmanager.com https://*.googletagmanager.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: https: blob:",
-      "connect-src 'self' https:",
+      "img-src 'self' data: https: blob: https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com https://www.googletagmanager.com https://*.google.com https://*.doubleclick.net",
+      "connect-src 'self' https: https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.doubleclick.net",
       "media-src 'self' data: https: blob:",
       "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
       "frame-ancestors 'none'",

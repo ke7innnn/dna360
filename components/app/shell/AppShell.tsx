@@ -21,8 +21,14 @@ function AppShellInner({
 
   const isAuthRoute = pathname === '/login' || pathname === '/forgot-password'
   const isMemberRoute = pathname.startsWith('/m')
+  const isMemberUser =
+    user?.type === 'MEMBER' ||
+    user?.role?.slug === 'member' ||
+    user?.role?.slug === 'MEMBER' ||
+    role === 'member'
 
-  if (isAuthRoute || isMemberRoute) {
+  // Never render staff desktop sidebar/topbar on member routes or for member users
+  if (isAuthRoute || isMemberRoute || (isMemberUser && (pathname === '/dashboard' || pathname === '/overview'))) {
     return <div className="min-h-screen relative z-10" data-surface={isMemberRoute ? 'member' : 'app'}>{children}</div>
   }
 

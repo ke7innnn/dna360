@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import '../styles/globals.css'
 
 export const viewport: Viewport = {
@@ -31,6 +32,9 @@ export const metadata: Metadata = {
   },
 }
 
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-E0H8TNW22H'
+const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID
+
 export default function RootLayout({
   children,
 }: {
@@ -58,6 +62,26 @@ export default function RootLayout({
         />
       </head>
       <body className="overflow-x-hidden bg-[#08080A] text-[#F5F2F4] antialiased">
+        {/* Google tag (gtag.js) for GA4 and Google Ads */}
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-tag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}', {
+                  page_path: window.location.pathname,
+                });
+                ${GOOGLE_ADS_ID ? `gtag('config', '${GOOGLE_ADS_ID}');` : ''}
+              `}
+            </Script>
+          </>
+        )}
         {children}
       </body>
     </html>

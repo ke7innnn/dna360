@@ -786,7 +786,7 @@ export function getRoleDefaultRedirect(userOrSlug: AuthUser | string, maybeUser?
     return '/change-password'
   }
   if (user?.type === 'MEMBER' || slug === 'member') {
-    return '/dashboard'
+    return '/m'
   }
   // Staff routing
   if (slug === 'owner_admin' || slug === 'owner' || slug === 'sales_head' || slug === 'marketing_head') {
