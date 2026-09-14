@@ -100,14 +100,64 @@ export const SEEDED_POS_SALES: PosSale[] = [
   },
 ]
 
-export const SEEDED_LOCKERS: Locker[] = [
-  { id: 'lck_m_01', number: 101, zone: 'Male', status: 'dedicated_rental', assignedMemberId: 'mem_001', assignedMemberName: 'Arjun Mehta', assignedMemberPhone: '+919820011111', assignedAt: '2025-01-15T00:00:00Z', rentalExpiryDate: '2027-01-15' },
-  { id: 'lck_m_02', number: 102, zone: 'Male', status: 'available' },
-  { id: 'lck_m_03', number: 103, zone: 'Male', status: 'occupied', assignedMemberName: 'Day Visitor (Walk-in)', assignedAt: new Date().toISOString() },
-  { id: 'lck_f_01', number: 201, zone: 'Female', status: 'dedicated_rental', assignedMemberId: 'mem_002', assignedMemberName: 'Priya Sharma', assignedMemberPhone: '+919820022222', assignedAt: '2025-03-01T00:00:00Z', rentalExpiryDate: '2026-07-06' },
-  { id: 'lck_f_02', number: 202, zone: 'Female', status: 'available' },
-  { id: 'lck_f_03', number: 203, zone: 'Female', status: 'available' },
-]
+function buildInitialLockers(): Locker[] {
+  const list: Locker[] = []
+
+  // Male Floor: 101-120 (20 lockers)
+  for (let i = 1; i <= 20; i++) {
+    const num = 100 + i
+    const id = `lck_m_${String(i).padStart(2, '0')}`
+    if (num === 101) {
+      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_001', assignedMemberName: 'Arjun Mehta', assignedMemberPhone: '+919820011111', assignedAt: '2025-01-15T00:00:00Z', rentalExpiryDate: '2027-01-15', keyTag: 'KEY-M-01' })
+    } else if (num === 103) {
+      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_003', assignedMemberName: 'Siddharth Rao', assignedMemberPhone: '+919820099444', assignedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), keyTag: 'KEY-M-03' })
+    } else if (num === 105) {
+      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_004', assignedMemberName: 'Kabir Mehra', assignedMemberPhone: '+919820033333', assignedAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(), keyTag: 'KEY-M-05' })
+    } else if (num === 107) {
+      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_005', assignedMemberName: 'Rohan Varma', assignedMemberPhone: '+919820044444', assignedAt: '2026-01-01T00:00:00Z', rentalExpiryDate: '2026-12-31', keyTag: 'KEY-M-07' })
+    } else if (num === 109) {
+      list.push({ id, number: num, zone: 'Male', status: 'maintenance', notes: 'Digital keypad battery replacement scheduled' })
+    } else {
+      list.push({ id, number: num, zone: 'Male', status: 'available' })
+    }
+  }
+
+  // Female Floor: 201-220 (20 lockers)
+  for (let i = 1; i <= 20; i++) {
+    const num = 200 + i
+    const id = `lck_f_${String(i).padStart(2, '0')}`
+    if (num === 201) {
+      list.push({ id, number: num, zone: 'Female', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_002', assignedMemberName: 'Priya Sharma', assignedMemberPhone: '+919820022222', assignedAt: '2025-03-01T00:00:00Z', rentalExpiryDate: '2026-07-06', keyTag: 'KEY-F-01' })
+    } else if (num === 203) {
+      list.push({ id, number: num, zone: 'Female', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_006', assignedMemberName: 'Meera Nambiar', assignedMemberPhone: '+919820099555', assignedAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(), keyTag: 'KEY-F-03' })
+    } else if (num === 205) {
+      list.push({ id, number: num, zone: 'Female', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_007', assignedMemberName: 'Ananya Desai', assignedMemberPhone: '+919820055555', assignedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), keyTag: 'KEY-F-05' })
+    } else if (num === 206) {
+      list.push({ id, number: num, zone: 'Female', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_008', assignedMemberName: 'Dr. Sunita Rao', assignedMemberPhone: '+919820066666', assignedAt: '2025-11-15T00:00:00Z', rentalExpiryDate: '2026-11-15', keyTag: 'KEY-F-06' })
+    } else {
+      list.push({ id, number: num, zone: 'Female', status: 'available' })
+    }
+  }
+
+  // Executive VIP: 301-308 (8 lockers)
+  for (let i = 1; i <= 8; i++) {
+    const num = 300 + i
+    const id = `lck_vip_${String(i).padStart(2, '0')}`
+    if (num === 301) {
+      list.push({ id, number: num, zone: 'VIP', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_009', assignedMemberName: 'Vikram Singhania', assignedMemberPhone: '+919820077777', assignedAt: '2026-04-01T00:00:00Z', rentalExpiryDate: '2027-04-30', keyTag: 'VIP-GOLD-01' })
+    } else if (num === 303) {
+      list.push({ id, number: num, zone: 'VIP', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_010', assignedMemberName: 'Natasha Oberoi', assignedMemberPhone: '+919820088888', assignedAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(), keyTag: 'VIP-GOLD-03' })
+    } else if (num === 304) {
+      list.push({ id, number: num, zone: 'VIP', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_011', assignedMemberName: 'Devang Modi', assignedMemberPhone: '+919820099999', assignedAt: '2025-10-31T00:00:00Z', rentalExpiryDate: '2026-10-31', keyTag: 'VIP-GOLD-04' })
+    } else {
+      list.push({ id, number: num, zone: 'VIP', status: 'available' })
+    }
+  }
+
+  return list
+}
+
+export const SEEDED_LOCKERS: Locker[] = buildInitialLockers()
 
 export const SEEDED_SHIFTS: CashShiftHandover[] = [
   {
@@ -182,12 +232,23 @@ export function getStoredLockers(): Locker[] {
     localStorage.setItem(LOCKERS_KEY, JSON.stringify(SEEDED_LOCKERS))
     return SEEDED_LOCKERS
   }
-  try { return JSON.parse(stored) } catch { return SEEDED_LOCKERS }
+  try {
+    const parsed = JSON.parse(stored)
+    // Reseed if older version stored fewer than the 48 flagship studio lockers
+    if (Array.isArray(parsed) && parsed.length < 48) {
+      localStorage.setItem(LOCKERS_KEY, JSON.stringify(SEEDED_LOCKERS))
+      return SEEDED_LOCKERS
+    }
+    return parsed
+  } catch {
+    return SEEDED_LOCKERS
+  }
 }
 
 export function saveLockers(lockers: Locker[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(LOCKERS_KEY, JSON.stringify(lockers))
+  window.dispatchEvent(new CustomEvent('dna360_frontdesk_updated'))
 }
 
 export function getStoredShifts(): CashShiftHandover[] {
@@ -309,32 +370,89 @@ export function createWalkInLead(data: Partial<WalkInLead> & Pick<WalkInLead, 'n
   return newLead
 }
 
-export function assignLocker(lockerId: string, memberId: string, memberName: string, memberPhone: string, durationMonths = 1): Locker | null {
+export interface AssignLockerOptions {
+  lockerId: string
+  memberId?: string
+  memberName: string
+  memberPhone?: string
+  assignmentType?: 'daily' | 'rental'
+  durationMonths?: number
+  keyTag?: string
+  notes?: string
+}
+
+export function assignLocker(
+  lockerIdOrOptions: string | AssignLockerOptions,
+  memberId?: string,
+  memberName?: string,
+  memberPhone?: string,
+  durationMonths = 0,
+  assignmentType: 'daily' | 'rental' = 'daily',
+  keyTag?: string
+): Locker | null {
   const lockers = getStoredLockers()
-  const index = lockers.findIndex(l => l.id === lockerId)
+  let opts: AssignLockerOptions
+
+  if (typeof lockerIdOrOptions === 'object') {
+    opts = lockerIdOrOptions
+  } else {
+    opts = {
+      lockerId: lockerIdOrOptions,
+      memberId,
+      memberName: memberName || 'Guest Member',
+      memberPhone,
+      durationMonths,
+      assignmentType: assignmentType || (durationMonths > 0 ? 'rental' : 'daily'),
+      keyTag,
+    }
+  }
+
+  const index = lockers.findIndex((l) => l.id === opts.lockerId)
   if (index === -1) return null
 
-  const expiry = new Date()
-  expiry.setMonth(expiry.getMonth() + durationMonths)
+  const isRental = opts.assignmentType === 'rental' || (opts.durationMonths && opts.durationMonths > 0)
+  let expiryStr: string | undefined = undefined
+
+  if (isRental) {
+    const months = opts.durationMonths && opts.durationMonths > 0 ? opts.durationMonths : 1
+    const expiry = new Date()
+    expiry.setMonth(expiry.getMonth() + months)
+    expiryStr = expiry.toISOString().slice(0, 10)
+  }
 
   lockers[index] = {
     ...lockers[index],
-    status: durationMonths >= 1 ? 'dedicated_rental' : 'occupied',
-    assignedMemberId: memberId,
-    assignedMemberName: memberName,
-    assignedMemberPhone: memberPhone,
+    status: isRental ? 'dedicated_rental' : 'occupied',
+    assignmentType: isRental ? 'rental' : 'daily',
+    assignedMemberId: opts.memberId,
+    assignedMemberName: opts.memberName,
+    assignedMemberPhone: opts.memberPhone,
     assignedAt: new Date().toISOString(),
-    rentalExpiryDate: expiry.toISOString().slice(0, 10),
+    rentalExpiryDate: expiryStr,
+    keyTag: opts.keyTag,
+    notes: opts.notes,
   }
+
   saveLockers(lockers)
+
+  logAuditEvent({
+    actor: { id: 'usr_frontdesk', name: 'Front Desk', email: '', role: 'Reception' },
+    action: 'UPDATE',
+    entity: 'Locker',
+    entityId: lockers[index].id,
+    branchId: 'pow',
+    description: `Assigned Locker #${lockers[index].number} (${lockers[index].zone}) to ${opts.memberName} · Mode: ${isRental ? 'Dedicated Rental' : 'Daily Floor Key'}`,
+  })
+
   return lockers[index]
 }
 
 export function releaseLocker(lockerId: string): Locker | null {
   const lockers = getStoredLockers()
-  const index = lockers.findIndex(l => l.id === lockerId)
+  const index = lockers.findIndex((l) => l.id === lockerId)
   if (index === -1) return null
 
+  const prev = lockers[index]
   lockers[index] = {
     ...lockers[index],
     status: 'available',
@@ -343,9 +461,76 @@ export function releaseLocker(lockerId: string): Locker | null {
     assignedMemberPhone: undefined,
     assignedAt: undefined,
     rentalExpiryDate: undefined,
+    assignmentType: undefined,
+    keyTag: undefined,
+    notes: undefined,
   }
+
   saveLockers(lockers)
+
+  logAuditEvent({
+    actor: { id: 'usr_frontdesk', name: 'Front Desk', email: '', role: 'Reception' },
+    action: 'UPDATE',
+    entity: 'Locker',
+    entityId: prev.id,
+    branchId: 'pow',
+    description: `Released Locker #${prev.number} (${prev.zone}) from ${prev.assignedMemberName || 'Guest'} · Key Checked In`,
+  })
+
   return lockers[index]
+}
+
+export function toggleLockerMaintenance(lockerId: string, reason?: string): Locker | null {
+  const lockers = getStoredLockers()
+  const index = lockers.findIndex((l) => l.id === lockerId)
+  if (index === -1) return null
+
+  const current = lockers[index]
+  const isNowMaintenance = current.status !== 'maintenance'
+
+  lockers[index] = {
+    ...current,
+    status: isNowMaintenance ? 'maintenance' : 'available',
+    notes: isNowMaintenance ? (reason || 'Lock maintenance / repair needed') : undefined,
+    assignedMemberId: undefined,
+    assignedMemberName: undefined,
+    assignedMemberPhone: undefined,
+    assignedAt: undefined,
+    rentalExpiryDate: undefined,
+    assignmentType: undefined,
+    keyTag: undefined,
+  }
+
+  saveLockers(lockers)
+
+  logAuditEvent({
+    actor: { id: 'usr_frontdesk', name: 'Front Desk', email: '', role: 'Reception' },
+    action: 'UPDATE',
+    entity: 'Locker',
+    entityId: current.id,
+    branchId: 'pow',
+    description: isNowMaintenance
+      ? `Marked Locker #${current.number} (${current.zone}) for Maintenance: ${reason || 'Out of order'}`
+      : `Restored Locker #${current.number} (${current.zone}) to Available`,
+  })
+
+  return lockers[index]
+}
+
+export function autoAssignNextLocker(
+  zone: string,
+  options: Omit<AssignLockerOptions, 'lockerId'>
+): Locker | null {
+  const lockers = getStoredLockers()
+  const available = lockers.find(
+    (l) => (zone === 'all' || l.zone.toLowerCase() === zone.toLowerCase()) && l.status === 'available'
+  )
+  if (!available) return null
+
+  return assignLocker({
+    ...options,
+    lockerId: available.id,
+  })
 }
 
 export function closeShiftHandover(

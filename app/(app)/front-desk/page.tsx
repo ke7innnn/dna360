@@ -33,7 +33,7 @@ import {
 } from '@/lib/frontdesk'
 import { formatINR } from '@/lib/gst'
 import { getInitials } from '@/lib/utils'
-import type { WalkInLead, PosSale } from '@/types/frontdesk'
+import type { WalkInLead, PosSale, Locker } from '@/types/frontdesk'
 import type { Member } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
 
@@ -42,6 +42,7 @@ const OFFLINE_CHECKIN_KEY = 'dna360_offline_checkins'
 export default function FrontDeskPage() {
   const [leads, setLeads] = useState<WalkInLead[]>([])
   const [sales, setSales] = useState<PosSale[]>([])
+  const [lockers, setLockers] = useState<Locker[]>([])
   const [scanInput, setScanInput] = useState('')
   const [lastCheckInResult, setLastCheckInResult] = useState<{
     status: 'GRANTED' | 'GRACE' | 'DENIED'
@@ -93,6 +94,7 @@ export default function FrontDeskPage() {
   const refreshData = () => {
     setLeads(getStoredLeads())
     setSales(getStoredPosSales())
+    setLockers(getStoredLockers())
   }
 
   useEffect(() => {
@@ -215,8 +217,9 @@ export default function FrontDeskPage() {
     })
   }
 
-  const lockers = getStoredLockers()
   const occupiedLockers = lockers.filter((l) => l.status === 'occupied').length
+  const rentalLockers = lockers.filter((l) => l.status === 'dedicated_rental').length
+  const availableLockers = lockers.filter((l) => l.status === 'available').length
   const totalRetailSalesMinor = sales.reduce((acc, s) => acc + s.totalMinor, 0)
   const activeTrialPasses = leads.filter((l) => l.trialPassIssued && l.status === 'trial_active').length
 
@@ -404,12 +407,27 @@ export default function FrontDeskPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 flex items-center justify-between">
           <div>
-            <span className="font-ui text-xs text-[var(--muted)] block">Occupied Lockers</span>
-            <span className="font-display font-bold text-2xl text-[var(--ink)]">
-              {occupiedLockers} / {lockers.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-ui text-xs text-[var(--muted)] block">Studio Lockers</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                {availableLockers} Free
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="font-display font-bold text-2xl text-[var(--ink)]">
+                {occupiedLockers} Active
+              </span>
+              <span className="font-ui text-xs text-[var(--muted)]">
+                / {lockers.length} Total ({rentalLockers} Rentals)
+              </span>
+            </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => setLockerModalOpen(true)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setLockerModalOpen(true)}
+            icon={<KeyRound className="w-3.5 h-3.5 text-[#38BDF8]" />}
+          >
             Manage Lockers
           </Button>
         </Card>
@@ -459,7 +477,11 @@ export default function FrontDeskPage() {
       <WalkInLeadModal open={leadModalOpen} onOpenChange={setLeadModalOpen} onLeadCreated={refreshData} />
       <PosRetailModal open={posModalOpen} onOpenChange={setPosModalOpen} onSaleCompleted={refreshData} />
       <ShiftHandoverModal open={shiftModalOpen} onOpenChange={setShiftModalOpen} />
-      <LockerModal open={lockerModalOpen} onOpenChange={setLockerModalOpen} />
+      <LockerModal
+        open={lockerModalOpen}
+        onOpenChange={setLockerModalOpen}
+        onLockersUpdated={refreshData}
+      />
       <CameraQrScannerModal
         isOpen={cameraModalOpen}
         onClose={() => setCameraModalOpen(false)}

@@ -49,16 +49,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="theme-color" content="#08080A" />
-        {/* Typography: Gambetta, Instrument Serif, Clash Display, Syne, Satoshi, Martian Mono */}
+        {/* Minimal Sans Typography: Inter */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Martian+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-        />
-        <link
-          rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=gambetta@400,401,500,501,600,601,700,701&f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&f[]=cabinet-grotesk@500,700,800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         />
       </head>
       <body className="overflow-x-hidden bg-[#08080A] text-[#F5F2F4] antialiased">

@@ -51,12 +51,12 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['var(--font-display)', 'Inter', 'sans-serif'],
-        ui: ['var(--font-ui)', 'Inter', 'sans-serif'],
-        sans: ['var(--font-ui)', 'Inter', 'sans-serif'],
-        body: ['var(--font-ui)', 'Inter', 'sans-serif'],
-        data: ['var(--font-data)', 'JetBrains Mono', 'monospace'],
-        mono: ['var(--font-data)', 'JetBrains Mono', 'monospace'],
+        display: ['var(--font-display)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        ui: ['var(--font-ui)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['var(--font-ui)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        body: ['var(--font-ui)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        data: ['var(--font-data)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['var(--font-data)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       borderRadius: {
         'sm': 'var(--r-sm)',

@@ -76,13 +76,16 @@ export interface PosSale {
 export interface Locker {
   id: string
   number: number
-  zone: 'Male' | 'Female'
+  zone: 'Male' | 'Female' | 'VIP' | string
   status: 'available' | 'occupied' | 'dedicated_rental' | 'maintenance'
   assignedMemberId?: string
   assignedMemberName?: string
   assignedMemberPhone?: string
   assignedAt?: string
   rentalExpiryDate?: string
+  assignmentType?: 'daily' | 'rental'
+  keyTag?: string
+  notes?: string
 }
 
 /**
