@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     // Allows native shell to navigate to the live platform with instant over-the-air updates
     // In local development, change this or use environment variable
-    url: process.env.CAPACITOR_LIVE_URL || 'https://dna360.in/login',
+    url: process.env.CAPACITOR_LIVE_URL || 'https://dna360.in/m',
     cleartext: false,
     androidScheme: 'https',
   },

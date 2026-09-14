@@ -199,10 +199,18 @@ export async function middleware(req: NextRequest) {
     const isMember = roleSlug === 'member' || payload?.type === 'MEMBER'
 
     if (isMember) {
-      // Members cannot access staff management and operations routes, or desktop dashboard
+      // Members cannot access staff management, operations routes, or desktop dashboard/classes
       const isStaffRoute = STAFF_ONLY_PREFIXES.some((prefix) => pathname.startsWith(prefix))
-      if (isStaffRoute || pathname === '/dashboard' || pathname === '/overview') {
-        const memberHome = new URL('/m', req.url)
+      const isStaffOrDesktop =
+        isStaffRoute ||
+        pathname === '/dashboard' ||
+        pathname === '/overview' ||
+        pathname === '/classes' ||
+        pathname === '/classes/'
+
+      if (isStaffOrDesktop) {
+        const dest = pathname.startsWith('/classes') ? '/m/classes' : '/m'
+        const memberHome = new URL(dest, req.url)
         const redirectResponse = NextResponse.redirect(memberHome, 307)
         addSecurityHeaders(redirectResponse)
         return redirectResponse

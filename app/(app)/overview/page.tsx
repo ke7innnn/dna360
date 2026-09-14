@@ -23,9 +23,26 @@ export default function FloorOverviewPage() {
   const { user, canRevenue } = useAuth()
   const metrics = getSystemMetrics()
 
+  const isMember = user?.type === 'MEMBER' || String(user?.role?.slug).toLowerCase() === 'member'
+
+  // Guard: Members belong exclusively to the mobile member app (/m)
+  useEffect(() => {
+    if (isMember) {
+      router.replace('/m')
+    }
+  }, [isMember, router])
+
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState('This month')
   const [currentTime, setCurrentTime] = useState('POWAI · TUESDAY 8 SEPTEMBER · 6:42 PM')
+
+  if (isMember) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#05070E]">
+        <div className="w-7 h-7 border-2 border-[#38BDF8] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   // Live timestamp formatting
   useEffect(() => {

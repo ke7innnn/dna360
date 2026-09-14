@@ -154,8 +154,8 @@ export default function Sidebar({ role }: { role?: RoleName }) {
             { id: 'dashboard', label: 'Home', icon: 'LayoutDashboard', href: '/m' },
             { id: 'workouts', label: 'Workouts', icon: 'Dumbbell', href: '/m/programs' },
             { id: 'progress', label: 'Progress', icon: 'TrendingUp', href: '/m/progress' },
-            { id: 'classes', label: 'Classes', icon: 'Calendar', href: '/classes' },
-            { id: 'membership', label: 'Membership', icon: 'CreditCard', href: '/profile' },
+            { id: 'classes', label: 'Classes', icon: 'Calendar', href: '/m/classes' },
+            { id: 'membership', label: 'Membership', icon: 'CreditCard', href: '/m/ledger' },
           ],
         },
       ]

@@ -23,12 +23,16 @@ export default function LoginForm() {
   // Auto-redirect if already signed in
   React.useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
+      const isMember = user.type === 'MEMBER' || String(user.role?.slug).toLowerCase() === 'member'
       const redirectParam = searchParams.get('redirect')
       const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
-      if (isSafe) {
-        router.replace(redirectParam)
+
+      if (isMember) {
+        // Members must strictly route to /m (never staff consoles)
+        const dest = isSafe && redirectParam.startsWith('/m') ? redirectParam : '/m'
+        router.replace(dest)
       } else {
-        const dest = user.role?.slug === 'member' ? '/m' : '/overview'
+        const dest = isSafe && redirectParam !== '/m' && !redirectParam.startsWith('/m/') ? redirectParam : '/overview'
         router.replace(dest)
       }
     }
@@ -55,7 +59,15 @@ export default function LoginForm() {
       toast.success('Signed in successfully')
       const redirectParam = searchParams.get('redirect')
       const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
-      const destination = isSafe ? redirectParam : res.redirectUrl || '/overview'
+
+      let destination = res.redirectUrl || '/m'
+      if (res.redirectUrl && res.redirectUrl.startsWith('/m')) {
+        destination = res.redirectUrl
+      } else if (isSafe && redirectParam.startsWith('/m')) {
+        destination = redirectParam
+      } else if (isSafe) {
+        destination = redirectParam
+      }
       router.push(destination)
     } else {
       setError(res.error || 'Invalid credentials. Check your name/email and password.')
