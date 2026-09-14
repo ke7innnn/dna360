@@ -60,12 +60,28 @@ export const SEEDED_GATES: GateDevice[] = [
 
 export const SEEDED_ACCESS_LOGS: AccessLogEntry[] = [
   {
+    id: 'acc_000',
+    timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
+    memberId: 'mem_462',
+    memberName: 'Tara Rane',
+    memberCode: 'DNA-2025-0462',
+    memberPhone: '+919819092394',
+    scanType: 'QR',
+    gateId: 'gate_pow_01',
+    gateName: 'Gate 1 - Main Turnstile',
+    decision: 'GRANTED',
+    reason: 'Turnstile Gate 1 Unlocked · Welcome to DNA 360 Powai',
+  },
+  {
     id: 'acc_001',
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
     memberId: 'mem_001',
     memberName: 'Arjun Mehta',
+    memberCode: 'DNA-2025-0001',
     memberPhone: '+919820011111',
     scanType: 'QR',
+    gateId: 'gate_pow_01',
+    gateName: 'Gate 1 - Main Turnstile',
     decision: 'GRANTED',
     reason: 'Access granted via Annual Gym Membership Package 1',
     specialInclusions: 'Complimentary locker access & valet parking on weekends',
@@ -101,7 +117,21 @@ export function getStoredAccessLogs(): AccessLogEntry[] {
     localStorage.setItem(ACCESS_LOGS_STORAGE_KEY, JSON.stringify(SEEDED_ACCESS_LOGS))
     return SEEDED_ACCESS_LOGS
   }
-  try { return JSON.parse(stored) } catch { return SEEDED_ACCESS_LOGS }
+  try {
+    const parsed = JSON.parse(stored)
+    if (Array.isArray(parsed)) {
+      const hasTara = parsed.some(l => l.memberName === 'Tara Rane' || l.memberCode === 'DNA-2025-0462')
+      if (!hasTara && SEEDED_ACCESS_LOGS[0]) {
+        const merged = [SEEDED_ACCESS_LOGS[0], ...parsed]
+        localStorage.setItem(ACCESS_LOGS_STORAGE_KEY, JSON.stringify(merged))
+        return merged
+      }
+      return parsed
+    }
+    return SEEDED_ACCESS_LOGS
+  } catch {
+    return SEEDED_ACCESS_LOGS
+  }
 }
 
 export function saveAccessLogs(logs: AccessLogEntry[]) {
