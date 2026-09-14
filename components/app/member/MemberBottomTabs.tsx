@@ -15,6 +15,11 @@ interface TabItem {
 export default function MemberBottomTabs() {
   const pathname = usePathname()
 
+  // Hide the global navigation bar during an active focused workout session
+  if (pathname === '/m/session' || pathname.startsWith('/m/session')) {
+    return null
+  }
+
   const tabs: TabItem[] = [
     {
       id: 'home',
