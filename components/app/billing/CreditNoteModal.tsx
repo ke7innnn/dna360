@@ -77,7 +77,7 @@ export default function CreditNoteModal({
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl glass-input space-y-1 text-xs font-mono">
+        <div className="p-3.5 rounded-xl glass-input space-y-1 text-xs font-sans tabular-nums">
           <div className="flex justify-between text-[var(--app-text-secondary)]">
             <span>Original Total Paid:</span>
             <span className="font-bold text-[var(--app-text-primary)]">{formatINR(invoice.paidAmountMinor)}</span>

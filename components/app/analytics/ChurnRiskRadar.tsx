@@ -39,7 +39,7 @@ export default function ChurnRiskRadar({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-semibold text-xs text-[var(--app-text-primary)]">{row.memberName}</span>
-            <span className="text-[0.625rem] font-mono text-[var(--app-text-muted)]">{row.memberCode}</span>
+            <span className="text-[0.625rem] font-sans tabular-nums text-[var(--app-text-muted)]">{row.memberCode}</span>
           </div>
           <span className="text-[0.6875rem] text-[var(--app-text-muted)]">{row.planName}</span>
         </div>
@@ -60,7 +60,7 @@ export default function ChurnRiskRadar({
               style={{ width: `${row.riskScore}%` }}
             />
           </div>
-          <span className="font-mono text-xs font-bold">{row.riskScore}%</span>
+          <span className="font-sans tabular-nums text-xs font-bold">{row.riskScore}%</span>
           <StatusPill status={row.riskLevel === 'High' ? 'danger' : 'warning'}>
             {row.riskLevel}
           </StatusPill>

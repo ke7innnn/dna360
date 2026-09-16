@@ -161,7 +161,7 @@ export default function PosRetailModal({
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-[var(--app-glass-border)]">
-                  <span className="font-mono font-bold text-xs text-[var(--app-text-primary)]">
+                  <span className="font-sans tabular-nums font-bold text-xs text-[var(--app-text-primary)]">
                     {formatINR(prod.priceMinor)}
                   </span>
                   <span className="text-[0.6875rem] text-[var(--app-text-muted)]">
@@ -192,14 +192,14 @@ export default function PosRetailModal({
                   <div key={item.product.id} className="flex items-center justify-between text-xs py-1 border-b border-[var(--app-glass-border)]">
                     <div className="flex-1 pr-2 truncate">
                       <p className="font-medium text-[var(--app-text-primary)] truncate">{item.product.name}</p>
-                      <span className="font-mono text-[0.6875rem] text-[var(--app-text-muted)]">{formatINR(item.product.priceMinor)} ea</span>
+                      <span className="font-sans tabular-nums text-[0.6875rem] text-[var(--app-text-muted)]">{formatINR(item.product.priceMinor)} ea</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button type="button" onClick={() => handleUpdateQuantity(item.product.id, -1)} className="p-1 rounded bg-[var(--app-glass-bg)] hover:bg-[var(--app-glass-border)]">
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="font-mono font-bold w-4 text-center">{item.quantity}</span>
+                      <span className="font-sans tabular-nums font-bold w-4 text-center">{item.quantity}</span>
                       <button type="button" onClick={() => handleUpdateQuantity(item.product.id, 1)} className="p-1 rounded bg-[var(--app-glass-bg)] hover:bg-[var(--app-glass-border)]">
                         <Plus className="w-3 h-3" />
                       </button>
@@ -275,7 +275,7 @@ export default function PosRetailModal({
 
           {/* Grand Total & Checkout Button */}
           <div className="space-y-3 pt-3 border-t border-[var(--app-glass-border)]">
-            <div className="space-y-1 font-mono text-xs">
+            <div className="space-y-1 font-sans tabular-nums text-xs">
               <div className="flex justify-between text-[var(--app-text-muted)]">
                 <span>Subtotal:</span>
                 <span>{formatINR(subtotalMinor)}</span>

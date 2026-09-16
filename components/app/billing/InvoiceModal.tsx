@@ -70,7 +70,7 @@ export default function InvoiceModal({
                 {profile.address}<br />
                 State: Maharashtra · State Code: <strong>{profile.stateCode}</strong>
               </p>
-              <p className="mt-1 font-mono text-[var(--aurora-1)] font-semibold text-[0.6875rem]">
+              <p className="mt-1 font-sans tabular-nums text-[var(--aurora-1)] font-semibold text-[0.6875rem]">
                 GSTIN: {profile.gstin} · PAN: {profile.pan}
               </p>
             </div>
@@ -79,7 +79,7 @@ export default function InvoiceModal({
               <span className="text-[0.6875rem] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[var(--app-glass-bg)] border border-[var(--app-glass-border)] text-[var(--app-text-muted)]">
                 Tax Invoice (Original)
               </span>
-              <p className="font-mono text-sm font-bold text-[var(--app-text-primary)] mt-2">
+              <p className="font-sans tabular-nums text-sm font-bold text-[var(--app-text-primary)] mt-2">
                 {invoice.invoiceNumber}
               </p>
               <p className="text-[var(--app-text-muted)] text-[0.6875rem]">
@@ -133,7 +133,7 @@ export default function InvoiceModal({
               <tbody className="divide-y divide-[var(--app-glass-border)]">
                 {invoice.items.map((it, idx) => (
                   <tr key={it.id || idx}>
-                    <td className="p-3 font-mono">{idx + 1}</td>
+                    <td className="p-3 font-sans tabular-nums">{idx + 1}</td>
                     <td className="p-3">
                       <span className="font-medium text-[var(--app-text-primary)] block">{it.description}</span>
                       {it.discountMinor > 0 && (
@@ -142,11 +142,11 @@ export default function InvoiceModal({
                         </span>
                       )}
                     </td>
-                    <td className="p-3 font-mono">{it.sacCode}</td>
-                    <td className="p-3 text-right font-mono">{formatINR(it.taxableMinor)}</td>
-                    <td className="p-3 text-right font-mono">{formatINR(it.cgstMinor)}</td>
-                    <td className="p-3 text-right font-mono">{formatINR(it.sgstMinor)}</td>
-                    <td className="p-3 text-right font-mono font-bold">{formatINR(it.totalMinor)}</td>
+                    <td className="p-3 font-sans tabular-nums">{it.sacCode}</td>
+                    <td className="p-3 text-right font-sans tabular-nums">{formatINR(it.taxableMinor)}</td>
+                    <td className="p-3 text-right font-sans tabular-nums">{formatINR(it.cgstMinor)}</td>
+                    <td className="p-3 text-right font-sans tabular-nums">{formatINR(it.sgstMinor)}</td>
+                    <td className="p-3 text-right font-sans tabular-nums font-bold">{formatINR(it.totalMinor)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -157,7 +157,7 @@ export default function InvoiceModal({
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pt-2">
             <div className="space-y-2 text-[0.6875rem] text-[var(--app-text-muted)] max-w-sm">
               <p><strong>Bank Details for Remittance:</strong></p>
-              <div className="font-mono text-xs bg-[var(--app-glass-bg)] p-2.5 rounded-lg border border-[var(--app-glass-border)] space-y-0.5">
+              <div className="font-sans tabular-nums text-xs bg-[var(--app-glass-bg)] p-2.5 rounded-lg border border-[var(--app-glass-border)] space-y-0.5">
                 <p>Bank: {bank.bankName || 'Axis Bank'}</p>
                 <p>A/C: {bank.accountNumber || '921020038912345'}</p>
                 <p>IFSC: {bank.ifscCode || 'UTIB0000123'}</p>
@@ -165,7 +165,7 @@ export default function InvoiceModal({
               </div>
             </div>
 
-            <div className="w-full sm:w-64 space-y-1.5 text-xs font-mono text-right">
+            <div className="w-full sm:w-64 space-y-1.5 text-xs font-sans tabular-nums text-right">
               <div className="flex justify-between text-[var(--app-text-muted)]">
                 <span>Taxable Amount:</span>
                 <span>{formatINR(invoice.taxableMinor)}</span>

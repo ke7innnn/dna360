@@ -100,7 +100,7 @@ export default function ClassRosterDrawer({
             </div>
             <div>
               <span className="text-[var(--app-text-muted)] block text-[0.6875rem]">Duration</span>
-              <span className="font-mono text-[var(--app-text-primary)]">{session.durationMinutes} mins</span>
+              <span className="font-sans tabular-nums text-[var(--app-text-primary)]">{session.durationMinutes} mins</span>
             </div>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function ClassRosterDrawer({
             <span className="font-semibold text-[var(--app-text-primary)]">
               Studio Capacity & Occupancy
             </span>
-            <span className={cn('font-mono font-bold', isFull ? 'text-[var(--app-danger)]' : 'text-[var(--app-success)]')}>
+            <span className={cn('font-sans tabular-nums font-bold', isFull ? 'text-[var(--app-danger)]' : 'text-[var(--app-success)]')}>
               {session.bookedCount} / {capacity} spots ({occupancyPct}%)
             </span>
           </div>
@@ -176,7 +176,7 @@ export default function ClassRosterDrawer({
                           <p className="font-semibold text-[var(--app-text-primary)]">{booking.memberName}</p>
                           <StatusPill status={s.status}>{s.label}</StatusPill>
                         </div>
-                        <p className="text-[0.6875rem] font-mono text-[var(--app-text-muted)]">
+                        <p className="text-[0.6875rem] font-sans tabular-nums text-[var(--app-text-muted)]">
                           {booking.memberCode} · {booking.memberPhone}
                         </p>
                       </div>
@@ -237,12 +237,12 @@ export default function ClassRosterDrawer({
                   className="p-3 rounded-xl glass-input flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-[var(--app-warning)]/20 text-[var(--app-warning)] font-mono font-bold flex items-center justify-center text-[0.6875rem]">
+                    <span className="w-5 h-5 rounded-full bg-[var(--app-warning)]/20 text-[var(--app-warning)] font-sans tabular-nums font-bold flex items-center justify-center text-[0.6875rem]">
                       #{wb.waitlistPosition}
                     </span>
                     <div>
                       <p className="font-semibold text-[var(--app-text-primary)]">{wb.memberName}</p>
-                      <p className="text-[0.6875rem] font-mono text-[var(--app-text-muted)]">{wb.memberPhone}</p>
+                      <p className="text-[0.6875rem] font-sans tabular-nums text-[var(--app-text-muted)]">{wb.memberPhone}</p>
                     </div>
                   </div>
 

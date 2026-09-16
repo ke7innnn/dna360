@@ -127,7 +127,7 @@ export default function MemberUpgradeModal({
             <h4 className="font-semibold text-xs text-[var(--app-text-primary)]">
               Early 1-Year Renewal (+365 Days)
             </h4>
-            <span className="font-mono font-bold text-xs text-[var(--aurora-1)]">₹56,640 (incl. GST)</span>
+            <span className="font-sans tabular-nums font-bold text-xs text-[var(--aurora-1)]">₹56,640 (incl. GST)</span>
           </div>
           <p className="text-[0.6875rem] text-[var(--app-text-muted)]">
             Lock in your founder's rate and extend your membership by an additional 12 months.
@@ -149,7 +149,7 @@ export default function MemberUpgradeModal({
               <Sparkles className="w-3.5 h-3.5 text-[var(--aurora-1)]" />
               <span>Upgrade to VIP Platinum + 20 PT Bundle</span>
             </h4>
-            <span className="font-mono font-bold text-xs text-[var(--aurora-1)]">₹88,500 (incl. GST)</span>
+            <span className="font-sans tabular-nums font-bold text-xs text-[var(--aurora-1)]">₹88,500 (incl. GST)</span>
           </div>
           <p className="text-[0.6875rem] text-[var(--app-text-muted)]">
             Unrestricted access across Powai & Andheri clubs + 20 dedicated 1-on-1 PT coaching sessions.

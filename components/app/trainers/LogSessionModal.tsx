@@ -142,7 +142,7 @@ export default function LogSessionModal({
         />
 
         {/* Commission & Ledger Notice */}
-        <div className="p-3.5 rounded-xl glass-card text-xs font-mono border border-[var(--app-success)]/20 space-y-1">
+        <div className="p-3.5 rounded-xl glass-card text-xs font-sans tabular-nums border border-[var(--app-success)]/20 space-y-1">
           <div className="flex justify-between text-[var(--app-text-secondary)]">
             <span>Remaining Client Package:</span>
             <span className="font-bold text-[var(--app-text-primary)]">

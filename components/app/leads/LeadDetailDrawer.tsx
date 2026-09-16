@@ -88,7 +88,7 @@ export default function LeadDetailDrawer({
                   {lead.stage.replace('_', ' ').toUpperCase()}
                 </StatusPill>
               </div>
-              <p className="text-xs text-[var(--app-text-muted)] font-mono mt-0.5">
+              <p className="text-xs text-[var(--app-text-muted)] font-sans tabular-nums mt-0.5">
                 {lead.phone} {lead.email ? `· ${lead.email}` : ''}
               </p>
             </div>
@@ -115,7 +115,7 @@ export default function LeadDetailDrawer({
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--app-text-muted)]">
               Pipeline Stage Progression
             </span>
-            <span className="font-mono text-xs font-bold text-[var(--aurora-1)]">
+            <span className="font-sans tabular-nums text-xs font-bold text-[var(--aurora-1)]">
               Deal Value: {formatINR(lead.expectedDealValueMinor)}
             </span>
           </div>
@@ -204,7 +204,7 @@ export default function LeadDetailDrawer({
           <div className="space-y-2">
             {lead.activityLog.map((act) => (
               <div key={act.id} className="p-3 rounded-xl glass-card border border-[var(--app-glass-border)] text-xs space-y-1">
-                <div className="flex items-center justify-between font-mono text-[0.6875rem] text-[var(--app-text-muted)]">
+                <div className="flex items-center justify-between font-sans tabular-nums text-[0.6875rem] text-[var(--app-text-muted)]">
                   <span className="font-bold text-[var(--aurora-1)] uppercase">{act.type}</span>
                   <span>{formatDateTime(act.timestamp)} · by {act.actor}</span>
                 </div>

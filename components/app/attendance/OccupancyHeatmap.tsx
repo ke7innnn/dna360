@@ -73,7 +73,7 @@ export default function OccupancyHeatmap() {
             return (
               <div key={item.hour} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end">
                 {/* Tooltip on hover */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-[0.625rem] text-white px-1.5 py-0.5 rounded font-mono pointer-events-none whitespace-nowrap shadow-lg">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-[0.625rem] text-white px-1.5 py-0.5 rounded font-sans tabular-nums pointer-events-none whitespace-nowrap shadow-lg">
                   {item.count} check-ins
                 </div>
 
@@ -90,7 +90,7 @@ export default function OccupancyHeatmap() {
                   )}
                 />
 
-                <span className="text-[0.625rem] font-mono text-[var(--app-text-muted)] rotate-[-45deg] sm:rotate-0 mt-1">
+                <span className="text-[0.625rem] font-sans tabular-nums text-[var(--app-text-muted)] rotate-[-45deg] sm:rotate-0 mt-1">
                   {item.hour.slice(0, 2)}
                 </span>
               </div>
@@ -114,7 +114,7 @@ export default function OccupancyHeatmap() {
         <div className="space-y-2.5">
           {dayData.map((d) => (
             <div key={d.day} className="space-y-1">
-              <div className="flex justify-between text-xs font-mono">
+              <div className="flex justify-between text-xs font-sans tabular-nums">
                 <span className="text-[var(--app-text-secondary)] font-medium">{d.day}</span>
                 <span className="font-bold text-[var(--app-text-primary)]">{d.count} visits</span>
               </div>
@@ -133,7 +133,7 @@ export default function OccupancyHeatmap() {
             <Clock className="w-3.5 h-3.5" />
             <span>Average Dwell Time:</span>
           </div>
-          <span className="font-mono font-bold text-[var(--aurora-1)]">74 minutes</span>
+          <span className="font-sans tabular-nums font-bold text-[var(--aurora-1)]">74 minutes</span>
         </div>
       </GlassCard>
     </div>

@@ -652,6 +652,44 @@ export function voidInvoice(params: {
 }
 
 /**
+ * Record a payment against an existing invoice (e.g. from Razorpay or external settlement)
+ */
+export function recordPayment(
+  invoiceId: string,
+  payment: { mode: PaymentMode; amountMinor: number; transactionRef?: string }
+): TaxInvoice | null {
+  const invoices = getStoredInvoices()
+  const index = invoices.findIndex((i) => i.id === invoiceId)
+  if (index === -1) return null
+
+  const inv = invoices[index]
+  const newPayment: PaymentSplit = {
+    id: `pay_${Date.now()}`,
+    mode: payment.mode,
+    amountMinor: payment.amountMinor,
+    transactionRef: payment.transactionRef,
+    recordedAt: new Date().toISOString(),
+  }
+
+  const payments = [...(inv.payments || []), newPayment]
+  const paidAmountMinor = payments.reduce((s, p) => s + (p.amountMinor || 0), 0)
+  const dueAmountMinor = Math.max(0, inv.grandTotalMinor - paidAmountMinor)
+  const status: InvoiceStatus = paidAmountMinor >= inv.grandTotalMinor ? 'paid' : 'partially_paid'
+
+  const updated: TaxInvoice = {
+    ...inv,
+    payments,
+    paidAmountMinor,
+    dueAmountMinor,
+    status,
+  }
+
+  invoices[index] = updated
+  saveInvoices(invoices)
+  return updated
+}
+
+/**
  * Updates a cheque payment status (realised or bounced).
  */
 export function updateChequeStatus(params: {

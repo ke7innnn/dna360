@@ -184,7 +184,7 @@ export default function PlanModal({
         </div>
 
         {/* GST Live Calculation Bar */}
-        <div className="p-3.5 rounded-xl glass-card text-xs font-mono border border-[var(--aurora-1)]/20 space-y-1.5">
+        <div className="p-3.5 rounded-xl glass-card text-xs font-sans tabular-nums border border-[var(--aurora-1)]/20 space-y-1.5">
           <div className="flex justify-between text-[var(--app-text-muted)]">
             <span>Base Price:</span>
             <span>{formatINR(basePriceMinor)}</span>

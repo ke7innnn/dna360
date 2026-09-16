@@ -114,7 +114,7 @@ export default function ShiftHandoverModal({
         </div>
 
         {/* Expected vs Actual Count */}
-        <div className="p-4 rounded-xl glass-card border border-[var(--app-glass-border)] space-y-3 font-mono text-xs">
+        <div className="p-4 rounded-xl glass-card border border-[var(--app-glass-border)] space-y-3 font-sans tabular-nums text-xs">
           <div className="flex justify-between text-[var(--app-text-secondary)]">
             <span>Expected Cash in Drawer:</span>
             <span className="font-bold text-[var(--app-text-primary)]">{formatINR(expectedCash * 100)}</span>

@@ -274,7 +274,7 @@ export default function RenewMemberModal({
         </div>
 
         {/* GST Invoice Ledger Summary */}
-        <div className="p-3.5 rounded-xl glass-input space-y-2 text-xs font-mono">
+        <div className="p-3.5 rounded-xl glass-input space-y-2 text-xs font-sans tabular-nums">
           <div className="flex justify-between text-[var(--app-text-secondary)]">
             <span>List Price (GST Inclusive):</span>
             <span>{formatINR(grossInclusiveMinor)}</span>

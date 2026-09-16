@@ -145,7 +145,7 @@ export default function BookClassModal({
                 {isFull ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4 text-[var(--app-success)]" />}
                 {isFull ? 'Class at Max Capacity' : 'Spots Available'}
               </span>
-              <span className="font-mono">
+              <span className="font-sans tabular-nums font-bold">
                 {selectedSession.bookedCount} / {capacity} booked
               </span>
             </div>

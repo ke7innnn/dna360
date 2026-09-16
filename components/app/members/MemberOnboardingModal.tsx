@@ -573,7 +573,7 @@ export default function MemberOnboardingModal({
           </div>
 
           {/* GST Breakdown Box */}
-          <div className="p-3.5 rounded-xl glass-input space-y-2 text-xs font-mono">
+          <div className="p-3.5 rounded-xl glass-input space-y-2 text-xs font-sans tabular-nums">
             <div className="flex justify-between text-[var(--app-text-secondary)]">
               <span>List Price (GST Inclusive):</span>
               <span>{formatINR(grossInclusiveMinor)}</span>
@@ -636,14 +636,14 @@ export default function MemberOnboardingModal({
               {createdMember.name} Registered!
             </h3>
             <p className="text-xs text-[var(--app-text-muted)] mt-1">
-              Member Code: <strong className="font-mono text-emerald-400">{createdMember.member_code}</strong>
+              Member Code: <strong className="font-sans tabular-nums font-bold text-emerald-400">{createdMember.member_code}</strong>
             </p>
           </div>
 
           <div className="p-4 rounded-xl glass-card border border-[var(--aurora-1)]/30 text-xs space-y-2 text-left">
             <p><strong>Package:</strong> {createdMember.active_memberships[0]?.product_name}</p>
             <p><strong>Valid Until:</strong> {createdMember.active_memberships[0]?.expiry_date}</p>
-            <p><strong>Invoice Number:</strong> <span className="font-mono text-[var(--aurora-1)]">{createdMember.active_memberships[0]?.invoice_number}</span></p>
+            <p><strong>Invoice Number:</strong> <span className="font-sans tabular-nums font-bold text-[var(--aurora-1)]">{createdMember.active_memberships[0]?.invoice_number}</span></p>
           </div>
 
           <div className="flex justify-center pt-2">

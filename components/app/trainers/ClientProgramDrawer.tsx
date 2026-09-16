@@ -65,7 +65,7 @@ export default function ClientProgramDrawer({
                   </h3>
                   <StatusPill status="success">{client.primaryGoal}</StatusPill>
                 </div>
-                <p className="text-xs text-[var(--app-text-muted)] mt-0.5 font-mono">
+                <p className="text-xs text-[var(--app-text-muted)] mt-0.5 font-sans tabular-nums">
                   {client.phone} · Weight: {client.currentWeightKg} kg ({client.bodyFatPct}% BF)
                 </p>
               </div>
@@ -95,7 +95,7 @@ export default function ClientProgramDrawer({
               <span className="font-semibold text-[var(--app-text-primary)]">
                 Personal Training Allowance
               </span>
-              <span className="font-mono font-bold text-[var(--aurora-1)]">
+              <span className="font-sans tabular-nums font-bold text-[var(--aurora-1)]">
                 {client.ptSessionsRemaining} of {client.ptSessionsTotal} sessions available
               </span>
             </div>
@@ -161,7 +161,7 @@ export default function ClientProgramDrawer({
                                 <th className="py-2 px-1 text-center">Rest</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-[var(--app-glass-border)] font-mono text-xs">
+                            <tbody className="divide-y divide-[var(--app-glass-border)] font-sans tabular-nums text-xs">
                               {day.exercises.map((ex) => (
                                 <tr key={ex.id}>
                                   <td className="py-2.5 px-1 font-sans font-medium text-[var(--app-text-primary)]">
@@ -225,7 +225,7 @@ export default function ClientProgramDrawer({
                         <div key={meal.id} className="p-3 rounded-xl glass-input text-xs space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-semibold text-[var(--app-text-primary)]">{meal.name}</span>
-                            <span className="font-mono text-[var(--aurora-1)]">{meal.time} IST · {meal.calories} kcal</span>
+                            <span className="font-sans tabular-nums text-[var(--aurora-1)]">{meal.time} IST · {meal.calories} kcal</span>
                           </div>
                           <p className="text-[var(--app-text-secondary)]">{meal.foods}</p>
                         </div>
@@ -273,11 +273,11 @@ export default function ClientProgramDrawer({
                     <div key={log.id} className="p-3.5 rounded-xl glass-card border border-[var(--app-glass-border)] text-xs space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[var(--aurora-1)] font-semibold">{log.date}</span>
+                          <span className="font-sans tabular-nums text-[var(--aurora-1)] font-semibold">{log.date}</span>
                           <span className="text-[var(--app-text-muted)]">·</span>
                           <span className="font-semibold text-[var(--app-text-primary)]">{log.workoutFocus}</span>
                         </div>
-                        <span className="font-mono font-bold text-[var(--app-success)] text-xs">
+                        <span className="font-sans tabular-nums font-bold text-[var(--app-success)] text-xs">
                           {formatINR(log.commissionEarnedMinor)} Comm.
                         </span>
                       </div>
@@ -309,7 +309,7 @@ export default function ClientProgramDrawer({
                       <th className="p-3">BMI</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--app-glass-border)] font-mono">
+                  <tbody className="divide-y divide-[var(--app-glass-border)] font-sans tabular-nums">
                     <tr>
                       <td className="p-3 font-semibold text-[var(--app-text-primary)]">2026-08-20</td>
                       <td className="p-3 font-bold text-[var(--aurora-1)]">78.5 kg</td>

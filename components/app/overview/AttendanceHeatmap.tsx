@@ -104,7 +104,7 @@ export default function AttendanceHeatmap() {
                     } flex items-center justify-center`}
                   >
                     {isHighPeak && (
-                      <span className="text-[9px] font-mono font-bold text-white leading-none">
+                      <span className="text-[9px] font-sans tabular-nums font-bold text-white leading-none">
                         {slot.checkIns}
                       </span>
                     )}
