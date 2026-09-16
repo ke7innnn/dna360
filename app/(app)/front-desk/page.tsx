@@ -31,6 +31,8 @@ import {
   getStoredLockers,
   getStoredShifts,
 } from '@/lib/frontdesk'
+import { getStoredAccessLogs, saveAccessLogs } from '@/lib/attendance'
+import type { AccessLogEntry, AccessDecision } from '@/types/attendance'
 import { formatINR } from '@/lib/gst'
 import { getInitials } from '@/lib/utils'
 import type { WalkInLead, PosSale, Locker } from '@/types/frontdesk'
@@ -39,7 +41,20 @@ import { toast } from '@/components/app/ui/toast'
 
 const OFFLINE_CHECKIN_KEY = 'dna360_offline_checkins'
 
+const decisionBadgeMap: Record<string, { status: 'ok' | 'warning' | 'danger' | 'neutral'; label: string }> = {
+  GRANTED: { status: 'ok', label: 'Access Granted' },
+  GRANTED_GRACE_PERIOD: { status: 'warning', label: 'Grace Access' },
+  DENIED_EXPIRED: { status: 'danger', label: 'Denied (Expired)' },
+  DENIED_BLACKLISTED: { status: 'danger', label: 'Blacklisted' },
+  DENIED_NO_SESSIONS: { status: 'danger', label: 'No Sessions' },
+  DENIED_OUTSIDE_HOURS: { status: 'danger', label: 'Outside Hours' },
+  DENIED_NOT_ACTIVATED: { status: 'danger', label: 'Not Activated' },
+  MANUAL_OVERRIDE: { status: 'neutral', label: 'Manual Override' },
+}
+
 export default function FrontDeskPage() {
+  const [activeTab, setActiveTab] = useState<'checkins' | 'leads'>('checkins')
+  const [accessLogs, setAccessLogs] = useState<AccessLogEntry[]>([])
   const [leads, setLeads] = useState<WalkInLead[]>([])
   const [sales, setSales] = useState<PosSale[]>([])
   const [lockers, setLockers] = useState<Locker[]>([])
@@ -95,13 +110,18 @@ export default function FrontDeskPage() {
     setLeads(getStoredLeads())
     setSales(getStoredPosSales())
     setLockers(getStoredLockers())
+    setAccessLogs(getStoredAccessLogs())
   }
 
   useEffect(() => {
     refreshData()
     const handleUpdate = () => refreshData()
     window.addEventListener('dna360_frontdesk_updated', handleUpdate)
-    return () => window.removeEventListener('dna360_frontdesk_updated', handleUpdate)
+    window.addEventListener('dna360_access_logs_updated', handleUpdate)
+    return () => {
+      window.removeEventListener('dna360_frontdesk_updated', handleUpdate)
+      window.removeEventListener('dna360_access_logs_updated', handleUpdate)
+    }
   }, [])
 
   const executeScanLookup = (rawText: string) => {
@@ -141,6 +161,22 @@ export default function FrontDeskPage() {
         message: `Unknown code '${query}'. No member found on record.`,
         timestamp: now,
       })
+      const unknownLog: AccessLogEntry = {
+        id: `acc_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        memberId: 'unknown',
+        memberName: 'Unregistered Visitor',
+        memberPhone: query,
+        gateId: 'gate_pow_01',
+        gateName: 'Gate 1 - Main Turnstile',
+        scanType: 'QR',
+        decision: 'DENIED_EXPIRED',
+        reason: `Unknown code '${query}'. No member record found.`,
+      }
+      const currentLogs = getStoredAccessLogs()
+      const updated = [unknownLog, ...currentLogs]
+      saveAccessLogs(updated)
+      setAccessLogs(updated)
       setScanInput('')
       return
     }
@@ -153,6 +189,7 @@ export default function FrontDeskPage() {
         message: 'Turnstile Access Blocked · Member is Blacklisted (Misconduct / Dues)',
         timestamp: now,
       })
+      logCheckIn(found, 'DENIED')
     } else if (found.status === 'inactive') {
       setLastCheckInResult({
         status: 'DENIED',
@@ -160,6 +197,7 @@ export default function FrontDeskPage() {
         message: 'Membership Expired · Please renew at front desk',
         timestamp: now,
       })
+      logCheckIn(found, 'DENIED')
     } else if (found.status === 'grace_period') {
       setLastCheckInResult({
         status: 'GRACE',
@@ -186,17 +224,56 @@ export default function FrontDeskPage() {
     executeScanLookup(scanInput)
   }
 
-  const logCheckIn = (member: Member, accessStatus: string) => {
+  const logCheckIn = (member: Member, accessStatus: 'GRANTED' | 'GRACE' | 'DENIED') => {
     // Increment member check-in count, visit streak, and set last visit timestamp
-    try {
-      updateMember(member.id, {
-        total_check_ins: (member.total_check_ins || 0) + 1,
-        last_visit_at: new Date().toISOString(),
-        attendance_streak: (member.attendance_streak || 0) + 1,
-      })
-    } catch (e) {
-      console.error('Failed to update member attendance statistics:', e)
+    if (accessStatus === 'GRANTED' || accessStatus === 'GRACE') {
+      try {
+        updateMember(member.id, {
+          total_check_ins: (member.total_check_ins || 0) + 1,
+          last_visit_at: new Date().toISOString(),
+          attendance_streak: (member.attendance_streak || 0) + 1,
+        })
+      } catch (e) {
+        console.error('Failed to update member attendance statistics:', e)
+      }
     }
+
+    const decision: AccessDecision =
+      accessStatus === 'GRANTED'
+        ? 'GRANTED'
+        : accessStatus === 'GRACE'
+        ? 'GRANTED_GRACE_PERIOD'
+        : member.status === 'blacklisted' || member.blacklisted
+        ? 'DENIED_BLACKLISTED'
+        : 'DENIED_EXPIRED'
+
+    const reason =
+      accessStatus === 'GRANTED'
+        ? 'Turnstile Gate 1 Unlocked · Welcome to DNA 360 Powai'
+        : accessStatus === 'GRACE'
+        ? 'Grace Period Access · Plan expired; 5 days remaining in grace window'
+        : member.status === 'blacklisted' || member.blacklisted
+        ? 'Turnstile Access Blocked · Member is Blacklisted (Misconduct / Dues)'
+        : 'Membership Expired · Please renew at front desk'
+
+    const logEntry: AccessLogEntry = {
+      id: `acc_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      memberId: member.id,
+      memberName: member.name,
+      memberCode: member.member_code,
+      memberPhone: member.phone,
+      gateId: 'gate_pow_01',
+      gateName: 'Gate 1 - Main Turnstile',
+      scanType: 'QR',
+      decision,
+      reason,
+    }
+
+    const currentLogs = getStoredAccessLogs()
+    const updated = [logEntry, ...currentLogs.filter((l) => l.id !== logEntry.id)]
+    saveAccessLogs(updated)
+    setAccessLogs(updated)
 
     if (!isOnline) {
       const existing = JSON.parse(localStorage.getItem(OFFLINE_CHECKIN_KEY) || '[]')
@@ -263,6 +340,71 @@ export default function FrontDeskPage() {
         <StatusPill status={val === 'trial_active' ? 'success' : val === 'converted' ? 'info' : 'neutral'} dot>
           {val === 'trial_active' ? 'Trial Active' : val === 'converted' ? 'Converted' : 'Inquiry'}
         </StatusPill>
+      ),
+    },
+  ]
+
+  const checkinColumns: DataTableColumn<AccessLogEntry>[] = [
+    {
+      id: 'timestamp',
+      header: 'Time',
+      isData: true,
+      width: '110px',
+      cell: (v) => (
+        <span className="font-data text-xs text-[var(--muted)] tabular-nums">
+          {new Date(v as string).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      ),
+    },
+    {
+      id: 'member',
+      header: 'Member / Pass',
+      cell: (_, row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[rgba(59,130,246,0.35)] to-[rgba(99,102,241,0.20)] border border-[rgba(59,130,246,0.4)] flex items-center justify-center font-ui text-xs font-bold text-white shrink-0 shadow-sm">
+            {getInitials(row.memberName || 'MB')}
+          </div>
+          <div>
+            <span className="font-ui font-semibold text-[13.5px] text-[var(--ink)] block">
+              {row.memberName}
+            </span>
+            <span className="font-data text-[10.5px] text-[var(--muted)] tabular-nums">
+              {row.memberCode || row.memberPhone}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'gate',
+      header: 'Device / Gate',
+      cell: (_, row) => (
+        <div>
+          <span className="font-ui text-xs font-medium text-[var(--ink)] block">
+            {row.gateName || 'Gate 1 - Main Turnstile'}
+          </span>
+          <span className="font-data text-[10px] uppercase text-[var(--muted)]">
+            Scan: {row.scanType || 'QR'}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: 'decision',
+      header: 'Gate Access',
+      cell: (v) => {
+        const item = decisionBadgeMap[v as string] || { status: 'neutral', label: String(v) }
+        return <Badge status={item.status as any} size="sm">{item.label}</Badge>
+      },
+    },
+    {
+      id: 'reason',
+      header: 'Verification Note',
+      accessorKey: 'reason',
+      cell: (v) => (
+        <span className="font-ui text-xs text-[var(--muted)] line-clamp-1 max-w-[280px]">
+          {v as string}
+        </span>
       ),
     },
   ]
@@ -457,20 +599,81 @@ export default function FrontDeskPage() {
         </Card>
       </div>
 
-      {/* ─── 3. Walk-in Leads Table ─── */}
+      {/* ─── 3. Live Member Check-ins & Walk-in Leads Dual-Console ─── */}
       <Card className="p-6">
-        <div className="flex items-center justify-between border-b border-[var(--line)] pb-4 mb-4">
-          <div>
-            <h3 className="font-display font-semibold text-base text-[var(--ink)]">
-              Recent Walk-in Prospects &amp; Leads
-            </h3>
-            <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
-              Trials and inquiries captured at front desk
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--line)] pb-4 mb-4">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setActiveTab('checkins')}
+              className={`flex items-center gap-2 pb-2 -mb-4 border-b-2 font-display text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'checkins'
+                  ? 'border-[var(--accent)] text-[var(--ink)]'
+                  : 'border-transparent text-[var(--muted)] hover:text-[var(--ink-2)]'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
+                Live Member Check-ins
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[rgba(56,189,248,0.15)] text-[var(--accent)]">
+                {accessLogs.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('leads')}
+              className={`flex items-center gap-2 pb-2 -mb-4 border-b-2 font-display text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'leads'
+                  ? 'border-[var(--accent)] text-[var(--ink)]'
+                  : 'border-transparent text-[var(--muted)] hover:text-[var(--ink-2)]'
+              }`}
+            >
+              <span>Walk-in Prospects &amp; Leads</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-[var(--muted)]">
+                {leads.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {activeTab === 'checkins' ? (
+              <p className="font-ui text-xs text-[var(--muted)]">
+                Real-time turnstile entry logs &amp; gate status
+              </p>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setLeadModalOpen(true)}
+                icon={<UserPlus className="w-3.5 h-3.5" />}
+              >
+                Capture Walk-in Lead
+              </Button>
+            )}
           </div>
         </div>
 
-        <DataTable columns={leadColumns} data={leads} />
+        {activeTab === 'checkins' ? (
+          <DataTable
+            columns={checkinColumns}
+            data={accessLogs}
+            total={accessLogs.length}
+            pageSize={10}
+            emptyTitle="No recent member check-ins"
+            emptyDescription="Members checking in via QR badge or RFID turnstile will appear here live."
+          />
+        ) : (
+          <DataTable
+            columns={leadColumns}
+            data={leads}
+            total={leads.length}
+            pageSize={10}
+            emptyTitle="No walk-in leads recorded"
+            emptyDescription="Capture new prospective members inquiring or taking a day trial."
+          />
+        )}
       </Card>
 
       {/* Modals */}
