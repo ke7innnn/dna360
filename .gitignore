@@ -33,3 +33,11 @@ next-env.d.ts
 # misc
 .DS_Store
 *.pem
+
+# Credential material — never commit
+*credentials*.json
+*Credentials*.pdf
+*credentials*.pdf
+/public/*Credentials*
+all_credentials.json
+

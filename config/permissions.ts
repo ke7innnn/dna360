@@ -30,6 +30,7 @@ export const ALL_CAPABILITIES = [
   // Leads & marketing
   'leads.manage',
   'campaigns.manage',
+  'whatsapp.send',
 
   // Billing (operational — invoices & payments, NOT the money dashboard)
   'billing.view',
@@ -110,6 +111,8 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
   // 3. SALES HEAD (Asst Sales Head) — Memberships, full sales pipeline, invoicing (NO HR, NO admin)
   sales_head: [
     'leads.manage',
+    'campaigns.manage',
+    'whatsapp.send',
     'members.view.all',
     'members.edit',
     'members.enrol',
@@ -119,6 +122,8 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
   ],
   SALES_HEAD: [
     'leads.manage',
+    'campaigns.manage',
+    'whatsapp.send',
     'members.view.all',
     'members.edit',
     'members.enrol',
@@ -130,6 +135,7 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
   // 4. SALES CONSULTANT — Own leads, enrollments, operational invoices
   sales_consultant: [
     'leads.manage',
+    'whatsapp.send',
     'members.view.all',
     'members.enrol',
     'billing.view',
@@ -140,6 +146,7 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
   ],
   FITNESS_CONSULTANT: [
     'leads.manage',
+    'whatsapp.send',
     'members.view.all',
     'members.enrol',
     'billing.view',
@@ -150,6 +157,7 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
   ],
   fitness_consultant: [
     'leads.manage',
+    'whatsapp.send',
     'members.view.all',
     'members.enrol',
     'billing.view',
@@ -165,6 +173,7 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
     'checkin.view',
     'members.view.all',
     'classes.book_member',
+    'whatsapp.send',
     ...SELF_SERVICE_BASELINE,
   ],
 
@@ -270,6 +279,7 @@ export const ROLE_CAPS: Record<string, Capability[]> = {
   ],
   sales: [
     'leads.manage',
+    'whatsapp.send',
     'members.view.all',
     'members.enrol',
     'billing.view',
@@ -353,6 +363,7 @@ export const CAPABILITY_GROUPS = [
     capabilities: [
       { id: 'leads.manage' as Capability, name: 'Manage Leads Pipeline', description: 'View, update, and convert walk-ins/inquiries' },
       { id: 'campaigns.manage' as Capability, name: 'Manage Campaigns', description: 'Create and track marketing promotions and offers' },
+      { id: 'whatsapp.send' as Capability, name: 'Send Outbound WhatsApp', description: 'Dispatch approved Meta Cloud API template messages' },
     ],
   },
   {

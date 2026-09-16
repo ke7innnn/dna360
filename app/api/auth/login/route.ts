@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 import {
   createServerSession,
-  checkLoginLockout,
-  recordFailedLogin,
-  resetLoginAttempts,
+  destroyServerSession,
   SESSION_COOKIE_NAME,
 } from '@/lib/server-auth'
+import {
+  checkLockout,
+  recordFailedAttempt,
+  clearAttempts,
+} from '@/lib/rate-limit'
 import { SEEDED_USERS, SEEDED_ROLE_DEFINITIONS, normaliseIndianPhone, getRoleDefaultRedirect } from '@/lib/auth'
 import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
@@ -15,11 +19,39 @@ export const dynamic = 'force-dynamic'
 
 const GENERIC_INVALID_MSG = 'Invalid credentials. Check your email or phone and password.'
 
+// Constant-work dummy hash to mitigate user enumeration timing attacks
+const DUMMY_HASH = '$2b$12$e8YQj0kE3vY0NqT9QO7K5u5zWqE6Vq3o5e4Pz8l4K6f1v9Y8X2y8K'
+
+function genericFailure(isLocked: boolean = false, remainingSeconds: number = 0) {
+  if (isLocked) {
+    const res = NextResponse.json(
+      {
+        error: 'Too many failed login attempts. Account temporarily locked for 15 minutes.',
+        code: 'ACCOUNT_LOCKED',
+        locked: true,
+        remainingSeconds,
+      },
+      { status: 429 }
+    )
+    if (remainingSeconds > 0) {
+      res.headers.set('Retry-After', String(remainingSeconds))
+    }
+    return res
+  }
+  return NextResponse.json(
+    {
+      error: GENERIC_INVALID_MSG,
+      code: 'INVALID_CREDENTIALS',
+    },
+    { status: 401 }
+  )
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const rawId = body.identifier || body.email || body.phone
-    const { password, otp } = body
+    const { password } = body
 
     if (!rawId) {
       return NextResponse.json({ error: 'Identifier (email or phone) is required.' }, { status: 400 })
@@ -29,8 +61,14 @@ export async function POST(req: NextRequest) {
     const cleanId = identifier.toLowerCase().replace(/\s+/g, ' ')
     const cleanPhone = normaliseIndianPhone(identifier)
 
-    // 1. Check rate limit lockout (5 consecutive failed attempts -> 15-minute lock)
-    const lockout = checkLoginLockout(cleanId)
+    // Extract client IP (strict gate prevents user lockout denial-of-service)
+    const clientIp =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1'
+
+    // 1. Check rate limit lockout keyed on identifier and IP separately (§5)
+    const lockout = await checkLockout(cleanId, clientIp)
     if (lockout.isLocked) {
       logAuditEvent({
         actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
@@ -38,18 +76,11 @@ export async function POST(req: NextRequest) {
         entity: 'Auth',
         entityId: cleanId,
         branchId: 'pow',
-        description: `Blocked login attempt on locked account ${cleanId}. Lockout remaining: ${lockout.remainingSeconds}s.`,
+        ipAddress: clientIp,
+        description: `Blocked login attempt on locked account/IP ${cleanId} / ${clientIp}. Lockout remaining: ${lockout.remainingSeconds}s.`,
       })
 
-      return NextResponse.json(
-        {
-          error: `Too many failed login attempts. Account temporarily locked for 15 minutes.`,
-          code: 'ACCOUNT_LOCKED',
-          locked: true,
-          remainingSeconds: lockout.remainingSeconds,
-        },
-        { status: 429 }
-      )
+      return genericFailure(true, lockout.remainingSeconds)
     }
 
     // 2. Authentication Flow
@@ -57,8 +88,8 @@ export async function POST(req: NextRequest) {
     let mustChangePassword = false
     let matchedUser: any = null
 
-    // Step A: Attempt Supabase Auth first (for email + password)
-    if (password && cleanId.includes('@')) {
+    // Step A: Attempt Supabase Auth first (for email + password in non-test runtime)
+    if (process.env.NODE_ENV !== 'test' && password && cleanId.includes('@')) {
       try {
         const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
           email: cleanId,
@@ -72,7 +103,7 @@ export async function POST(req: NextRequest) {
             SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toUpperCase() === userRoleSlug.toUpperCase()) ||
             SEEDED_ROLE_DEFINITIONS[0]
 
-          mustChangePassword = false
+          mustChangePassword = Boolean(meta.must_change_password)
 
           matchedUser = {
             id: sbData.user.id,
@@ -89,12 +120,12 @@ export async function POST(req: NextRequest) {
             can_view_revenue: userRoleSlug === 'owner_admin' || userRoleSlug === 'owner',
             requires_login: true,
             twoFactorRequired: false,
-            must_change_password: false,
+            must_change_password: mustChangePassword,
           }
           authenticated = true
         }
       } catch (e) {
-        // Fallback to local authentication check
+        // Fallback to seeded directory
       }
     }
 
@@ -170,85 +201,74 @@ export async function POST(req: NextRequest) {
               can_view_revenue: false,
               requires_login: true,
               passwordHash: (found as any).passwordHash,
-              must_change_password: false,
+              must_change_password: Boolean((found as any).must_change_password),
             }
           }
         } catch (e) {}
       }
 
-      // 3. Password Verification: Support <FirstName>@123 format or stored hash
-      if (matchedUser && password) {
-        const nameParts = (matchedUser.name || '').trim().split(/\s+/)
-        const rawFirst = nameParts[0] || 'User'
-        const cleanFirst = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()
-        const expectedFormatPass = `${cleanFirst}@123`
-        const expectedFormatPassLower = `${cleanFirst.toLowerCase()}@123`
-
-        const secondWord = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1).toLowerCase() : ''
-        const secondWordPass = secondWord ? `${secondWord}@123` : ''
-
-        const matchesFormat =
-          password === expectedFormatPass ||
-          password === expectedFormatPassLower ||
-          password.toLowerCase() === expectedFormatPass.toLowerCase() ||
-          (Boolean(secondWordPass) && (password === secondWordPass || password.toLowerCase() === secondWordPass.toLowerCase()))
-
-        const matchesStored =
-          Boolean(matchedUser.passwordHash && password === matchedUser.passwordHash) ||
-          password === 'password123' ||
-          password === 'Password@123' ||
-          password === 'Dna#Admin92!kP' ||
-          password === 'Dna#Keith84!xM' ||
-          (rawFirst.toLowerCase() === 'executive' && (password === 'Admin@123' || password === 'admin@123'))
-
-        if (matchesFormat || matchesStored) {
-          authenticated = true
-          mustChangePassword = false
-        }
+      // 3. Exactly one password verification check: bcrypt against hashed password
+      if (!matchedUser?.passwordHash) {
+        // Timing mitigation: execute dummy bcrypt work factor
+        await bcrypt.compare(password || '', DUMMY_HASH).catch(() => false)
+        const lock = await recordFailedAttempt(cleanId, clientIp)
+        const lockoutStatus = await checkLockout(cleanId, clientIp)
+        logAuditEvent({
+          actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
+          action: lock.isLocked ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
+          entity: 'Auth',
+          entityId: cleanId,
+          branchId: 'pow',
+          ipAddress: clientIp,
+          description: lock.isLocked
+            ? `Account/IP locked for identifier ${cleanId} from ${clientIp} after 5 consecutive failed attempts.`
+            : `Failed login attempt for identifier ${cleanId} from ${clientIp}.`,
+        })
+        return genericFailure(lock.isLocked, lockoutStatus.remainingSeconds)
       }
+
+      const ok = await bcrypt.compare(password || '', matchedUser.passwordHash)
+      if (!ok) {
+        const lock = await recordFailedAttempt(cleanId, clientIp)
+        const lockoutStatus = await checkLockout(cleanId, clientIp)
+        logAuditEvent({
+          actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
+          action: lock.isLocked ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
+          entity: 'Auth',
+          entityId: cleanId,
+          branchId: 'pow',
+          ipAddress: clientIp,
+          description: lock.isLocked
+            ? `Account/IP locked for identifier ${cleanId} from ${clientIp} after 5 consecutive failed attempts.`
+            : `Failed login attempt for identifier ${cleanId} from ${clientIp}.`,
+        })
+        return genericFailure(lock.isLocked, lockoutStatus.remainingSeconds)
+      }
+
+      authenticated = true
+      mustChangePassword = Boolean(matchedUser.must_change_password)
     }
 
-    // If authentication failed
-    if (!authenticated) {
-      const lockResult = recordFailedLogin(cleanId)
-
-      logAuditEvent({
-        actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
-        action: lockResult.isLocked ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
-        entity: 'Auth',
-        entityId: cleanId,
-        branchId: 'pow',
-        description: lockResult.isLocked
-          ? `Account locked for identifier ${cleanId} after 5 consecutive failed attempts.`
-          : `Failed login attempt for identifier ${cleanId}.`,
-      })
-
-      return NextResponse.json(
-        {
-          error: lockResult.isLocked
-            ? 'Account temporarily locked due to consecutive failed attempts. Please try again in 15 minutes.'
-            : GENERIC_INVALID_MSG,
-          code: lockResult.isLocked ? 'ACCOUNT_LOCKED' : 'INVALID_CREDENTIALS',
-          locked: lockResult.isLocked,
-        },
-        { status: lockResult.isLocked ? 429 : 401 }
-      )
-    }
-
-    if (!matchedUser) {
-      return NextResponse.json({ error: GENERIC_INVALID_MSG }, { status: 401 })
+    if (!authenticated || !matchedUser) {
+      return genericFailure()
     }
 
     if (matchedUser.status !== 'active') {
       return NextResponse.json({ error: 'Your account is deactivated.' }, { status: 403 })
     }
 
-    // Reset failed login tracker on success
-    resetLoginAttempts(cleanId)
+    // Reset failed login tracker on success for both identifier and IP (§5)
+    await clearAttempts(cleanId, clientIp)
+
+    // 2.6 Session Rotation: Revoke any existing session cookie before issuing the new one
+    const existingCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value
+    if (existingCookie) {
+      destroyServerSession(existingCookie)
+    }
 
     // 4. Create Server Session Token
     const token = createServerSession(matchedUser, 'tenant_powai')
-    const redirectUrl = getRoleDefaultRedirect(matchedUser)
+    const redirectUrl = getRoleDefaultRedirect(matchedUser.role.slug, matchedUser)
 
     logAuditEvent({
       actor: {

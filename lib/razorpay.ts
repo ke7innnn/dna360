@@ -30,6 +30,16 @@ export async function createRazorpayOrder(params: {
     throw new Error('Razorpay credentials missing in server environment.')
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    return {
+      orderId: `order_test_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      amount: Math.round(params.amountMinor),
+      currency: params.currency || 'INR',
+      keyId,
+      receipt: params.receipt,
+    }
+  }
+
   const payload = {
     amount: Math.round(params.amountMinor),
     currency: params.currency || 'INR',
@@ -143,7 +153,10 @@ export async function openRazorpayCheckout(options: RazorpayCheckoutOptions) {
     throw new Error('Unable to load Razorpay payment gateway checkout script.')
   }
 
-  const key = options.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TYHCeWPxNrTujC'
+  const key = options.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+  if (!key) {
+    throw new Error('Razorpay public key ID is not configured.')
+  }
 
   const rzpOptions = {
     key: key,

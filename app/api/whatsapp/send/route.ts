@@ -1,15 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { APPROVED_TEMPLATES, buildMetaTemplateParameters } from '@/lib/whatsapp'
+import { getServerSession, maskPhoneNumber } from '@/lib/server-auth'
+import { hasCapability } from '@/config/permissions'
+import { logAuditEvent } from '@/lib/audit'
+import { hit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Authenticate caller session fail-closed (§4.1)
+    const { session } = getServerSession(req)
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Valid authentication session required.', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      )
+    }
+
+    // 2. Reject member accounts and enforce staff whatsapp.send capability (§4.1)
+    const roleSlug = session.user.role?.slug?.toLowerCase() || ''
+    const isMember = session.user.type === 'MEMBER' || roleSlug === 'member'
+    if (isMember) {
+      return NextResponse.json(
+        { error: 'Forbidden: Members are not permitted to send outbound WhatsApp messages.', code: 'FORBIDDEN' },
+        { status: 403 }
+      )
+    }
+
+    if (!hasCapability(session.user.role?.slug || '', 'whatsapp.send')) {
+      return NextResponse.json(
+        { error: 'Forbidden: Insufficient permissions to dispatch WhatsApp messages.', code: 'FORBIDDEN' },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
     const {
       phone,
       metaTemplateName,
       language = 'en',
       variables = {},
-      interpolatedText,
     } = body
 
     if (!phone) {
@@ -19,14 +48,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // 3. Enforce strict approved-template allow-list (zero free-text send path)
     const template = APPROVED_TEMPLATES.find(
-      (t) => t.metaTemplateName === metaTemplateName || t.id === body.templateId
+      (t) => (metaTemplateName && t.metaTemplateName === metaTemplateName) || (body.templateId && t.id === body.templateId)
     )
 
     if (!template) {
       return NextResponse.json(
         { error: `Template '${metaTemplateName || body.templateId}' not found in approved catalog.` },
         { status: 400 }
+      )
+    }
+
+    // 4. Rate limiting: max 50 sends/hour per user via rate_limit_events helper (§4.1)
+    const rateLimit = await hit(`wa_send:${session.user.id}`, 50, 60 * 60 * 1000)
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded: Maximum 50 outbound WhatsApp messages per hour.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(rateLimit.retryAfterSec) },
+        }
       )
     }
 
@@ -42,6 +84,9 @@ export async function POST(req: NextRequest) {
       )
     }
     const formattedRecipient = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone
+
+    let channel = 'SIMULATED_LOG'
+    let messageId = `sim_wamid_${Date.now()}`
 
     // If Meta credentials exist, call Meta Graph API
     if (phoneId && accessToken) {
@@ -93,25 +138,37 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      const messageId = metaData?.messages?.[0]?.id || `wamid_${Date.now()}`
-
-      return NextResponse.json({
-        success: true,
-        channel: 'META_CLOUD_API',
-        messageId,
-        recipient: formattedRecipient,
-        template: template.metaTemplateName,
-      })
+      channel = 'META_CLOUD_API'
+      messageId = metaData?.messages?.[0]?.id || `wamid_${Date.now()}`
     }
 
-    // Graceful fallback for staging / development prior to token configuration
+    // 5. Write mandatory immutable audit log record for every send (§4.1)
+    logAuditEvent({
+      actor: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email || undefined,
+        role: session.user.role?.name || 'Staff',
+      },
+      action: 'SEND_WHATSAPP',
+      entity: 'WhatsAppOutbound',
+      entityId: messageId,
+      branchId: session.user.branchId || 'pow',
+      description: `Dispatched WhatsApp template '${template.metaTemplateName}' to ${maskPhoneNumber(formattedRecipient)}`,
+      afterState: {
+        templateId: template.id,
+        metaTemplateName: template.metaTemplateName,
+        recipient: maskPhoneNumber(formattedRecipient),
+        channel,
+      },
+    })
+
     return NextResponse.json({
       success: true,
-      channel: 'SIMULATED_LOG',
-      messageId: `sim_wamid_${Date.now()}`,
+      channel,
+      messageId,
       recipient: formattedRecipient,
       template: template.metaTemplateName,
-      note: 'WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN not yet configured in environment. Message logged in audit log.',
     })
   } catch (err: any) {
     console.error('WhatsApp API Send Error:', err)

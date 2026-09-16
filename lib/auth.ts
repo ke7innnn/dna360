@@ -166,6 +166,11 @@ export const SEEDED_ROLE_DEFINITIONS: RoleDefinition[] = [
 const findRole = (slug: RoleSlug): RoleDefinition =>
   SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toUpperCase() === slug.toUpperCase()) || SEEDED_ROLE_DEFINITIONS[0]
 
+// Initial cost-12 bcrypt hash for seeded accounts ($2b$12$)
+// Default temporary password: Dna360#InitialPass2026!
+export const SEEDED_DEFAULT_PASSWORD_HASH = '$2b$12$g6fTyfLaXve/ZdqP7TFOoelIDrYtuxyN3o1847uoIuJvXEK/kYoNe'
+export const SEEDED_DEFAULT_TEMP_PASSWORD = 'Dna360#InitialPass2026!'
+
 // ─── The Official 34 Staff + Owner + Members (§9) ───
 export const SEEDED_USERS: AuthUser[] = [
   // ─── Owner / Executive ───
@@ -185,7 +190,8 @@ export const SEEDED_USERS: AuthUser[] = [
     twoFactorEnabled: true,
     twoFactorRequired: true,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
 
   // ─── Revenue Leaders (§9) ───
@@ -205,7 +211,8 @@ export const SEEDED_USERS: AuthUser[] = [
     twoFactorEnabled: true,
     twoFactorRequired: true,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_02',
@@ -223,7 +230,8 @@ export const SEEDED_USERS: AuthUser[] = [
     twoFactorEnabled: true,
     twoFactorRequired: true,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_10',
@@ -241,7 +249,8 @@ export const SEEDED_USERS: AuthUser[] = [
     twoFactorEnabled: true,
     twoFactorRequired: true,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
 
   // ─── Head Trainers (§9) ───
@@ -259,7 +268,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_04',
@@ -275,7 +285,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
 
   // ─── General Trainers (§9) ───
@@ -294,7 +305,8 @@ export const SEEDED_USERS: AuthUser[] = [
     can_view_revenue: false,
     assignedClientIds: ['mem_001', 'mem_002', 'mem_003'],
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_06',
@@ -311,7 +323,8 @@ export const SEEDED_USERS: AuthUser[] = [
     can_view_revenue: false,
     assignedClientIds: ['mem_004', 'mem_005'],
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_07',
@@ -328,7 +341,8 @@ export const SEEDED_USERS: AuthUser[] = [
     can_view_revenue: false,
     assignedClientIds: ['mem_006'],
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_08',
@@ -345,7 +359,8 @@ export const SEEDED_USERS: AuthUser[] = [
     can_view_revenue: false,
     assignedClientIds: ['mem_007', 'mem_008'],
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_09',
@@ -362,7 +377,8 @@ export const SEEDED_USERS: AuthUser[] = [
     can_view_revenue: false,
     assignedClientIds: ['mem_009'],
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
 
   // ─── Fitness Consultants (Sales & Desk Floor) (§9) ───
@@ -380,7 +396,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'Password@123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_11',
@@ -396,7 +413,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_12',
@@ -412,7 +430,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_13',
@@ -428,7 +447,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_14',
@@ -444,7 +464,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
 
   // ─── Masseur & Supervisor (§9) ───
@@ -463,7 +484,8 @@ export const SEEDED_USERS: AuthUser[] = [
     can_view_revenue: false,
     assignedClientIds: ['mem_001', 'mem_010'],
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
   {
     id: 'usr_staff_17',
@@ -479,7 +501,8 @@ export const SEEDED_USERS: AuthUser[] = [
     status: 'active',
     can_view_revenue: false,
     requires_login: true,
-    passwordHash: 'password123',
+    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
+    must_change_password: true,
   },
 
   // ─── Support Staff Baseline (DJ, Housekeeping, Chefs, Valets) (§9) ───

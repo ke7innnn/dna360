@@ -11,6 +11,7 @@
  * 7. Plausible attendance streaks and total visit histories.
  */
 
+import './test-env'
 import { getSystemMetrics } from '../lib/metrics'
 import { getStoredMembers, generate659Members } from '../lib/members'
 import { getExecutiveKpis, getGstTaxReport, getCohortData } from '../lib/analytics'

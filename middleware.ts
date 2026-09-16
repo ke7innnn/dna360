@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { requireEnv } from '@/lib/env'
+import { getSessionFromMemoryByHash, type AuthSessionRecord } from '@/lib/session-store'
 
 const PUBLIC_EXACT_PATHS = new Set([
   '/',
@@ -25,6 +27,7 @@ const PUBLIC_EXACT_PATHS = new Set([
   '/robots.txt',
   '/favicon.ico',
   '/sitemap.xml',
+  '/api/whatsapp/webhook',
 ])
 
 const PUBLIC_PATH_PREFIXES = [
@@ -38,8 +41,6 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/auth/session',
   '/api/webhooks/',
   '/api/health',
-  '/api/razorpay/',
-  '/api/whatsapp/',
 ]
 
 /**
@@ -53,7 +54,8 @@ function isPublicPath(pathname: string): boolean {
   return false
 }
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dna360_secure_session_secret_key_powai_2026'
+const SESSION_SECRET = requireEnv('SESSION_SECRET')
+export const SESSION_COOKIE_NAME = 'dna360_session'
 
 const STAFF_ONLY_PREFIXES = [
   '/overview',
@@ -69,52 +71,83 @@ const STAFF_ONLY_PREFIXES = [
 ]
 
 /**
- * Validates HMAC token signature with Web Crypto API directly in Edge Middleware
+ * Hash raw token with Web Crypto API in Edge Middleware
  */
-async function isTokenValid(token: string | undefined): Promise<boolean> {
-  if (!token || !token.includes('.')) return false
-  const [data, signature] = token.split('.')
-  if (!data || !signature) return false
+async function hashTokenEdge(token: string): Promise<string> {
+  const enc = new TextEncoder()
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(token))
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
 
-  try {
-    const enc = new TextEncoder()
-    const key = await crypto.subtle.importKey(
-      'raw',
-      enc.encode(SESSION_SECRET),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['verify']
-    )
-    let b64 = signature.replace(/-/g, '+').replace(/_/g, '/')
-    while (b64.length % 4) b64 += '='
-    const sigBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
-    const isSigMatch = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(data))
-    if (!isSigMatch) return false
-
-    let dataB64 = data.replace(/-/g, '+').replace(/_/g, '/')
-    while (dataB64.length % 4) dataB64 += '='
-    const json = atob(dataB64)
-    const payload = JSON.parse(json)
-    if (!payload.sessionId || !payload.userId) return false
-    if (payload.expiresAt && Date.now() > payload.expiresAt) return false
-    return true
-  } catch {
-    return false
-  }
+interface ResolvedSession {
+  role_slug: string
+  user_type: string
+  must_change_password: boolean
+  revoked_at: string | null
+  expires_at: string
 }
 
 /**
- * Parses payload without validating signature (already verified by isTokenValid)
+ * Resolve session by calling Supabase REST with service key or memory store fallback.
+ * Cache nothing across requests.
  */
-function parseTokenPayload(token: string | undefined): any | null {
-  if (!token || !token.includes('.')) return null
-  const [data] = token.split('.')
-  if (!data) return null
+async function resolveSession(token: string | undefined): Promise<ResolvedSession | null> {
+  if (!token || typeof token !== 'string') return null
+
   try {
-    let dataB64 = data.replace(/-/g, '+').replace(/_/g, '/')
-    while (dataB64.length % 4) dataB64 += '='
-    const json = atob(dataB64)
-    return JSON.parse(json)
+    const tokenHash = await hashTokenEdge(token)
+
+    // 1. Check Supabase REST API if SUPABASE_SERVICE_ROLE_KEY is configured
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rqmgvwcqfbfnrixxvgza.supabase.co'
+
+    if (serviceKey && supabaseUrl) {
+      try {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/auth_sessions?token_hash=eq.${encodeURIComponent(tokenHash)}&select=role_slug,user_type,must_change_password,revoked_at,expires_at`,
+          {
+            headers: {
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+            },
+            cache: 'no-store',
+          }
+        )
+        if (res.ok) {
+          const rows = await res.json()
+          if (Array.isArray(rows) && rows.length > 0) {
+            const row = rows[0]
+            if (row.revoked_at) return null
+            if (new Date(row.expires_at).getTime() < Date.now()) return null
+            return {
+              role_slug: row.role_slug,
+              user_type: row.user_type,
+              must_change_password: Boolean(row.must_change_password),
+              revoked_at: row.revoked_at,
+              expires_at: row.expires_at,
+            }
+          }
+        }
+      } catch {
+        // Fall back to memory store
+      }
+    }
+
+    // 2. Check in-memory session store (Edge/Node synchronization)
+    const mem = getSessionFromMemoryByHash(tokenHash)
+    if (!mem) return null
+    if (mem.revoked_at) return null
+    if (new Date(mem.expires_at).getTime() < Date.now()) return null
+
+    return {
+      role_slug: mem.role_slug,
+      user_type: mem.user_type,
+      must_change_password: mem.must_change_password,
+      revoked_at: mem.revoked_at,
+      expires_at: mem.expires_at,
+    }
   } catch {
     return null
   }
@@ -137,11 +170,11 @@ export async function middleware(req: NextRequest) {
   const isPublic = isPublicPath(pathname)
 
   // 2. Extract session token
-  const token = req.cookies.get('dna360_session')?.value || req.headers.get('authorization')?.replace('Bearer ', '')
-  const hasValidSession = await isTokenValid(token)
+  const token = req.cookies.get(SESSION_COOKIE_NAME)?.value || req.headers.get('authorization')?.replace('Bearer ', '')
+  const session = await resolveSession(token)
 
   // 3. Unauthenticated access handling for private routes
-  if (!isPublic && !hasValidSession) {
+  if (!isPublic && !session) {
     if (pathname.startsWith('/api/')) {
       const unauthorizedResponse = NextResponse.json(
         {
@@ -164,9 +197,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // 4. Mandatory first-login password change enforcement (§1)
-  if (hasValidSession) {
-    const payload = parseTokenPayload(token)
-    if (payload?.must_change_password === true) {
+  if (session) {
+    if (session.must_change_password === true) {
       const isAllowedPwdPath =
         pathname === '/change-password' ||
         pathname === '/api/auth/change-password' ||
@@ -194,9 +226,9 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    // 5. Role-Based Route Barrier (Prevent Member Privilege Escalation)
-    const roleSlug = (payload?.role || '').toLowerCase()
-    const isMember = roleSlug === 'member' || payload?.type === 'MEMBER'
+    // 5. Role-Based Route Barrier (Role strictly from DB/session, never from token payload)
+    const roleSlug = (session.role_slug || '').toLowerCase()
+    const isMember = roleSlug === 'member' || session.user_type === 'MEMBER'
 
     if (isMember) {
       // Members cannot access staff management, operations routes, or desktop dashboard/classes
@@ -219,8 +251,8 @@ export async function middleware(req: NextRequest) {
 
     // 6. Authenticated user visiting /login -> redirect to their role's dashboard (/m for members)
     if (pathname === '/login') {
-      let targetPath = isMember ? '/m' : getStaffRedirect(payload?.role)
-      if (payload?.must_change_password) {
+      let targetPath = isMember ? '/m' : getStaffRedirect(session.role_slug)
+      if (session.must_change_password) {
         targetPath = '/change-password'
       }
       const targetUrl = new URL(targetPath, req.url)
@@ -259,17 +291,25 @@ function addSecurityHeaders(response: NextResponse) {
   response.headers.set('X-XSS-Protection', '1; mode=block')
 
   // Content Security Policy
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rqmgvwcqfbfnrixxvgza.supabase.co'
+  let supabaseHost = 'rqmgvwcqfbfnrixxvgza.supabase.co'
+  try {
+    supabaseHost = new URL(supabaseUrl).host
+  } catch {
+    // fallback
+  }
+
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.googletagmanager.com https://*.googletagmanager.com",
+      "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://www.googletagmanager.com https://*.googletagmanager.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: https: blob: https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com https://www.googletagmanager.com https://*.google.com https://*.doubleclick.net",
-      "connect-src 'self' https: https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.doubleclick.net",
-      "media-src 'self' data: https: blob:",
-      "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
+      "font-src 'self' https://fonts.gstatic.com https://checkout.razorpay.com data:",
+      "img-src 'self' data: blob: https://www.dna360.in http://www.dna360.in https://checkout.razorpay.com https://cdn.razorpay.com https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.googletagmanager.com https://www.googletagmanager.com https://*.google.com https://*.doubleclick.net",
+      `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.doubleclick.net`,
+      "media-src 'self' data: blob:",
+      "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://www.youtube.com https://www.google.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

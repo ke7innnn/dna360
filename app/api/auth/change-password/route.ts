@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 import {
   getServerSession,
   createServerSession,
+  destroyServerSession,
   validatePasswordComplexity,
   SESSION_COOKIE_NAME,
 } from '@/lib/server-auth'
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { newPassword, confirmPassword } = body
+    const { currentPassword, newPassword, confirmPassword } = body
 
     if (!newPassword || !confirmPassword) {
       return NextResponse.json(
@@ -38,13 +40,41 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Enforce password complexity rules (§1)
+    // Enforce password complexity rules (§1, §3)
     const complexity = validatePasswordComplexity(newPassword)
     if (!complexity.valid) {
       return NextResponse.json({ error: complexity.error }, { status: 400 })
     }
 
     const user = session.user
+
+    // Verify current password if provided and user has a recorded hash
+    if (user.passwordHash && currentPassword) {
+      const isCurrentValid = user.passwordHash.startsWith('$2')
+        ? await bcrypt.compare(currentPassword, user.passwordHash)
+        : currentPassword === user.passwordHash
+
+      if (!isCurrentValid) {
+        return NextResponse.json({ error: 'Current password is incorrect.' }, { status: 400 })
+      }
+    }
+
+    // Reject reuse of current password (§3.2)
+    if (user.passwordHash) {
+      const isReused = user.passwordHash.startsWith('$2')
+        ? await bcrypt.compare(newPassword, user.passwordHash)
+        : newPassword === user.passwordHash
+
+      if (isReused) {
+        return NextResponse.json(
+          { error: 'New password cannot be the same as your current password.' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Hash password with cost factor 12 before storing (§3.2)
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
 
     // 1. Update in Supabase Auth if admin client is available
     const supabaseAdmin = getSupabaseAdmin()
@@ -64,17 +94,21 @@ export async function POST(req: NextRequest) {
     // 2. Update user in local seeded / in-memory store
     const localUser = SEEDED_USERS.find((u) => u.id === user.id)
     if (localUser) {
-      localUser.passwordHash = newPassword
+      localUser.passwordHash = hashedPassword
       localUser.must_change_password = false
     }
 
-    // 3. Clear flag on user session object
+    // 3. Clear flag and update hash on user session object
     user.must_change_password = false
-    user.passwordHash = newPassword
+    user.passwordHash = hashedPassword
 
-    // 4. Create new clean session token
+    // 4. Session rotation: Revoke old session and issue new clean session token
+    const oldToken = req.cookies.get(SESSION_COOKIE_NAME)?.value
+    if (oldToken) {
+      destroyServerSession(oldToken)
+    }
     const newToken = createServerSession(user, session.tenantId)
-    const redirectUrl = getRoleDefaultRedirect(user)
+    const redirectUrl = getRoleDefaultRedirect(user.role.slug, user)
 
     // 5. Audit Log
     logAuditEvent({

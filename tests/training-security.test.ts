@@ -10,6 +10,7 @@
  * 6. Audit logging on PT session deductions and programme assignments.
  */
 
+import './test-env'
 import { NextRequest } from 'next/server'
 import { middleware } from '../middleware'
 import { createServerSession } from '../lib/server-auth'

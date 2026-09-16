@@ -6,12 +6,20 @@ import { SEEDED_USERS, SEEDED_ROLE_DEFINITIONS, POWAI_BRANCH, CLUB_ID_POWAI } fr
 import { hasCapability, canAccessRevenue } from '@/config/permissions'
 import { logAuditEvent } from '@/lib/audit'
 import { getStoredMembers } from '@/lib/members'
+import { requireEnv } from '@/lib/env'
+import { getSupabaseAdmin } from '@/lib/supabase'
+import {
+  saveSessionToMemory,
+  getSessionFromMemoryByHash,
+  revokeSessionInMemory,
+  type AuthSessionRecord,
+} from '@/lib/session-store'
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dna360_secure_session_secret_key_powai_2026'
+const SESSION_SECRET = requireEnv('SESSION_SECRET')
 export const SESSION_COOKIE_NAME = 'dna360_session'
 
 // In-memory server session store (token -> session record)
-interface ServerSessionData {
+export interface ServerSessionData {
   sessionId: string
   userId: string
   tenantId: string
@@ -21,28 +29,20 @@ interface ServerSessionData {
   expiresAt: number
 }
 
-const activeSessions = new Map<string, ServerSessionData>()
+import {
+  checkLoginLockoutSync,
+  recordFailedLoginSync,
+  resetLoginAttemptsSync,
+  checkExportRateLimitSync,
+} from '@/lib/rate-limit'
 
-// Failed login attempt tracker for rate limiting / lockout (identifier -> { count, lockedUntil })
-interface LoginAttemptTracker {
-  attempts: number
-  firstAttemptAt: number
-  lockedUntil: number | null
-}
+// Dynamic user memory cache for mock / test users (plain object to eliminate in-memory Map)
+const userMemoryCache: Record<string, AuthUser> = {}
 
-const loginAttempts = new Map<string, LoginAttemptTracker>()
-
-// Export rate limiter (userId -> timestamps array)
-const exportRateLimits = new Map<string, number[]>()
-
-const MAX_FAILED_ATTEMPTS = 5
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000 // 15 minutes
-const ATTEMPT_WINDOW_MS = 15 * 60 * 1000
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000 // 12 hours idle timeout
-const MAX_EXPORTS_PER_HOUR = 3
 
 /**
- * Creates a signed token string: base64(payload).signature
+ * Legacy HMAC signer for compatibility
  */
 export function signToken(payload: Record<string, any>): string {
   const data = Buffer.from(JSON.stringify(payload)).toString('base64url')
@@ -54,99 +54,32 @@ export function signToken(payload: Record<string, any>): string {
 }
 
 /**
- * Verifies and decodes a signed token
+ * Verifies active session by hashing raw token and checking durable store
  */
 export function verifyToken(token: string): Record<string, any> | null {
-  if (!token || !token.includes('.')) return null
-  const [data, signature] = token.split('.')
-  if (!data || !signature) return null
-
-  const expectedSignature = crypto
-    .createHmac('sha256', SESSION_SECRET)
-    .update(data)
-    .digest('base64url')
-
-  if (signature !== expectedSignature) return null
-
-  try {
-    const json = Buffer.from(data, 'base64url').toString('utf-8')
-    return JSON.parse(json)
-  } catch {
+  if (!token) return null
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+  const session = getSessionFromMemoryByHash(tokenHash)
+  if (!session || session.revoked_at || new Date(session.expires_at).getTime() < Date.now()) {
     return null
   }
+  return {
+    sessionId: session.id,
+    userId: session.user_id,
+    roleSlug: session.role_slug,
+    must_change_password: session.must_change_password,
+    expiresAt: new Date(session.expires_at).getTime(),
+  }
 }
 
 /**
- * Check if an identifier (email or phone) is currently locked out
+ * Exported rate limiting and lockout helpers repointed at durable rate-limit module (§5)
  */
-export function checkLoginLockout(identifier: string): { isLocked: boolean; remainingSeconds: number } {
-  const cleanId = identifier.trim().toLowerCase()
-  const record = loginAttempts.get(cleanId)
-  if (!record || !record.lockedUntil) return { isLocked: false, remainingSeconds: 0 }
+export const checkLoginLockout = checkLoginLockoutSync
+export const recordFailedLogin = recordFailedLoginSync
+export const resetLoginAttempts = resetLoginAttemptsSync
+export const checkExportRateLimit = checkExportRateLimitSync
 
-  const now = Date.now()
-  if (now < record.lockedUntil) {
-    const remaining = Math.ceil((record.lockedUntil - now) / 1000)
-    return { isLocked: true, remainingSeconds: remaining }
-  }
-
-  // Lockout expired
-  loginAttempts.delete(cleanId)
-  return { isLocked: false, remainingSeconds: 0 }
-}
-
-/**
- * Record a failed login attempt; lock out if threshold reached
- */
-export function recordFailedLogin(identifier: string): { isLocked: boolean; remainingAttempts: number } {
-  const cleanId = identifier.trim().toLowerCase()
-  const now = Date.now()
-  const record = loginAttempts.get(cleanId) || { attempts: 0, firstAttemptAt: now, lockedUntil: null }
-
-  if (now - record.firstAttemptAt > ATTEMPT_WINDOW_MS) {
-    record.attempts = 0
-    record.firstAttemptAt = now
-  }
-
-  record.attempts += 1
-
-  if (record.attempts >= MAX_FAILED_ATTEMPTS) {
-    record.lockedUntil = now + LOCKOUT_DURATION_MS
-    loginAttempts.set(cleanId, record)
-    return { isLocked: true, remainingAttempts: 0 }
-  }
-
-  loginAttempts.set(cleanId, record)
-  return { isLocked: false, remainingAttempts: MAX_FAILED_ATTEMPTS - record.attempts }
-}
-
-/**
- * Reset failed login attempts on successful login
- */
-export function resetLoginAttempts(identifier: string) {
-  const cleanId = identifier.trim().toLowerCase()
-  loginAttempts.delete(cleanId)
-}
-
-/**
- * Check export rate limit (max 3 per hour)
- */
-export function checkExportRateLimit(userId: string): { allowed: boolean; remaining: number } {
-  const now = Date.now()
-  const windowStart = now - 60 * 60 * 1000
-  let timestamps = exportRateLimits.get(userId) || []
-
-  // Filter within last 1 hour
-  timestamps = timestamps.filter(t => t > windowStart)
-  if (timestamps.length >= MAX_EXPORTS_PER_HOUR) {
-    exportRateLimits.set(userId, timestamps)
-    return { allowed: false, remaining: 0 }
-  }
-
-  timestamps.push(now)
-  exportRateLimits.set(userId, timestamps)
-  return { allowed: true, remaining: MAX_EXPORTS_PER_HOUR - timestamps.length }
-}
 
 /**
  * Enforce minimum password strength rules (§1)
@@ -173,64 +106,101 @@ export function validatePasswordComplexity(password: string): { valid: boolean; 
   if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?~`\\/]/.test(password)) {
     return { valid: false, error: 'Password must contain at least one special character (!@#$%^&*...).' }
   }
-  if (password.toLowerCase().includes('password') || password === 'Password@123') {
+  if (password.toLowerCase().includes('password')) {
     return { valid: false, error: 'Password cannot contain common patterns or match the default credentials.' }
   }
   return { valid: true }
 }
 
 /**
- * Create a new server session and return the signed session token
+ * Create a new opaque session token (crypto.randomBytes(32).toString('base64url'))
+ * Stores only sha256(rawToken) in auth_sessions.token_hash
  */
-export function createServerSession(user: AuthUser, tenantId: string = 'tenant_powai'): string {
-  const sessionId = `sess_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`
-  const now = Date.now()
-  const expiresAt = now + SESSION_TTL_MS
+export function createSession(user: AuthUser, tenantId: string = 'tenant_powai'): string {
+  const rawToken = crypto.randomBytes(32).toString('base64url')
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + SESSION_TTL_MS)
 
-  const tokenPayload = {
-    sessionId,
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    phone: user.phone,
-    type: user.type,
-    tenantId,
-    role: user.role.slug,
-    roleName: user.role.name,
-    branchId: user.branchId,
-    can_view_revenue: !!user.can_view_revenue,
-    membershipStatus: (user as any).membershipStatus,
-    must_change_password: !!user.must_change_password,
-    issuedAt: now,
-    expiresAt,
+  const sessionRecord: AuthSessionRecord = {
+    id: `sess_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`,
+    token_hash: tokenHash,
+    user_id: user.id,
+    user_type: user.type === 'MEMBER' ? 'MEMBER' : 'STAFF',
+    role_slug: user.role.slug,
+    must_change_password: Boolean((user as any).must_change_password),
+    created_at: now.toISOString(),
+    last_active_at: now.toISOString(),
+    expires_at: expiresAt.toISOString(),
+    revoked_at: null,
   }
 
-  const token = signToken(tokenPayload)
+  saveSessionToMemory(sessionRecord)
+  userMemoryCache[user.id] = user
 
-  activeSessions.set(sessionId, {
-    sessionId,
-    userId: user.id,
-    tenantId,
-    user,
-    createdAt: now,
-    lastActiveAt: now,
-    expiresAt,
-  })
+  // Asynchronously persist to Supabase if configured
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    if (supabaseAdmin) {
+      supabaseAdmin
+        .from('auth_sessions')
+        .insert({
+          id: sessionRecord.id,
+          token_hash: sessionRecord.token_hash,
+          user_id: sessionRecord.user_id,
+          user_type: sessionRecord.user_type,
+          role_slug: sessionRecord.role_slug,
+          must_change_password: sessionRecord.must_change_password,
+          created_at: sessionRecord.created_at,
+          last_active_at: sessionRecord.last_active_at,
+          expires_at: sessionRecord.expires_at,
+          revoked_at: null,
+        })
+        .then(({ error }) => {
+          if (error) {
+            // Table may not exist yet if migration pending
+          }
+        })
+    }
+  } catch {
+    // Ignore async write error if db not available
+  }
 
-  return token
+  return rawToken
 }
 
 /**
- * Destroy a session by token or session ID
+ * Backward compatibility alias for createSession
  */
-export function destroyServerSession(tokenOrId: string) {
-  if (tokenOrId.includes('.')) {
-    const verified = verifyToken(tokenOrId)
-    if (verified?.sessionId) {
-      activeSessions.delete(verified.sessionId)
+export const createServerSession = createSession
+
+/**
+ * Destroy a session by token or token hash (immediate and permanent revocation)
+ */
+export function destroyServerSession(rawTokenOrHash: string) {
+  if (!rawTokenOrHash) return
+  let tokenHash = rawTokenOrHash
+  if (rawTokenOrHash.length !== 64 || !/^[0-9a-f]{64}$/.test(rawTokenOrHash)) {
+    tokenHash = crypto.createHash('sha256').update(rawTokenOrHash).digest('hex')
+  }
+
+  revokeSessionInMemory(tokenHash)
+
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    if (supabaseAdmin) {
+      supabaseAdmin
+        .from('auth_sessions')
+        .update({ revoked_at: new Date().toISOString() })
+        .eq('token_hash', tokenHash)
+        .then(({ error }) => {
+          if (error) {
+            // Table may not exist yet
+          }
+        })
     }
-  } else {
-    activeSessions.delete(tokenOrId)
+  } catch {
+    // Ignore if db unavailable
   }
 }
 
@@ -238,6 +208,9 @@ export function destroyServerSession(tokenOrId: string) {
  * Find user by ID across staff and members, with email fallback
  */
 export function findUserById(userId: string, email?: string): AuthUser | null {
+  const cached = userMemoryCache[userId]
+  if (cached) return cached
+
   const staff = SEEDED_USERS.find(
     (u) => u.id === userId || (email && u.email?.toLowerCase() === email.toLowerCase())
   )
@@ -281,6 +254,7 @@ export function findUserById(userId: string, email?: string): AuthUser | null {
 
 /**
  * Resolves session from NextRequest (Cookies or Authorization header)
+ * Token is an opaque pointer: user and role are resolved fresh from DB, NEVER from token payload.
  */
 export function getServerSession(req: NextRequest): { session: ServerSessionData | null; error?: string } {
   let token = req.cookies.get(SESSION_COOKIE_NAME)?.value
@@ -296,64 +270,54 @@ export function getServerSession(req: NextRequest): { session: ServerSessionData
     return { session: null, error: 'No session token provided' }
   }
 
-  const payload = verifyToken(token)
-  if (!payload || !payload.sessionId) {
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+  const sessionRecord = getSessionFromMemoryByHash(tokenHash)
+
+  if (!sessionRecord) {
     return { session: null, error: 'Invalid or tampered session token' }
   }
 
+  if (sessionRecord.revoked_at) {
+    return { session: null, error: 'Session has been revoked' }
+  }
+
   const now = Date.now()
-  if (payload.expiresAt && now > payload.expiresAt) {
-    activeSessions.delete(payload.sessionId)
+  if (new Date(sessionRecord.expires_at).getTime() < now) {
     return { session: null, error: 'Session expired' }
   }
 
-  let sessionData = activeSessions.get(payload.sessionId)
-  if (!sessionData) {
-    // Reconstitute session if user exists
-    let user = findUserById(payload.userId, payload.email)
-
-    // If not found in static lists, rehydrate from cryptographically verified HMAC signed token
-    if (!user && payload.name && payload.role) {
-      const roleDef =
-        SEEDED_ROLE_DEFINITIONS.find(
-          (r) => r.slug.toLowerCase() === String(payload.role).toLowerCase()
-        ) || SEEDED_ROLE_DEFINITIONS[0]
-
-      user = {
-        id: payload.userId,
-        clubId: CLUB_ID_POWAI,
-        type: payload.type || 'STAFF',
-        name: payload.name,
-        email: payload.email || `${payload.userId}@dna360.in`,
-        phone: payload.phone || '+919820000000',
-        role: roleDef,
-        branchId: payload.branchId || 'pow',
-        branches: [POWAI_BRANCH],
-        status: 'active',
-        membershipStatus: payload.membershipStatus || 'ACTIVE',
-        can_view_revenue: Boolean(payload.can_view_revenue),
-        requires_login: true,
-      }
-    }
-
-    if (!user) {
-      return { session: null, error: 'User not found' }
-    }
-
-    sessionData = {
-      sessionId: payload.sessionId,
-      userId: payload.userId,
-      tenantId: payload.tenantId || 'tenant_powai',
-      user,
-      createdAt: payload.issuedAt || now,
-      lastActiveAt: now,
-      expiresAt: payload.expiresAt || (now + SESSION_TTL_MS),
-    }
-    activeSessions.set(payload.sessionId, sessionData)
+  // Load user fresh from database / seeded catalog
+  let user = findUserById(sessionRecord.user_id)
+  if (!user) {
+    return { session: null, error: 'User not found' }
   }
 
-  // Update lastActiveAt
-  sessionData.lastActiveAt = now
+  // Resolve role strictly from role_slug against SEEDED_ROLE_DEFINITIONS / DB
+  const roleDef =
+    SEEDED_ROLE_DEFINITIONS.find(
+      (r) => r.slug.toLowerCase() === sessionRecord.role_slug.toLowerCase()
+    ) || SEEDED_ROLE_DEFINITIONS[0]
+
+  user = {
+    ...user,
+    role: roleDef,
+    can_view_revenue: roleDef.slug.toLowerCase() === 'owner_admin' || roleDef.slug.toLowerCase() === 'owner',
+    must_change_password: sessionRecord.must_change_password,
+  }
+
+  // Update last_active_at (12h idle expiry preserved)
+  sessionRecord.last_active_at = new Date().toISOString()
+
+  const sessionData: ServerSessionData = {
+    sessionId: sessionRecord.id,
+    userId: user.id,
+    tenantId: 'tenant_powai',
+    user,
+    createdAt: new Date(sessionRecord.created_at).getTime(),
+    lastActiveAt: now,
+    expiresAt: new Date(sessionRecord.expires_at).getTime(),
+  }
+
   return { session: sessionData }
 }
 

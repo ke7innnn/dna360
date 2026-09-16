@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession, checkExportRateLimit } from '@/lib/server-auth'
+import { getServerSession } from '@/lib/server-auth'
+import { hit } from '@/lib/rate-limit'
 import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 
@@ -37,28 +38,38 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Rate limiting: Max 3 exports per hour
-    const rateLimit = checkExportRateLimit(user.id)
+    const clientIp =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1'
+
+    // Rate limiting: Max 3 exports per hour per user (§5.4)
+    const rateLimit = await hit(`export:${user.id}`, 3, 60 * 60 * 1000)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
           error: 'Rate limit exceeded: Maximum 3 member exports per hour.',
           code: 'RATE_LIMIT_EXCEEDED',
         },
-        { status: 429 }
+        {
+          status: 429,
+          headers: { 'Retry-After': String(rateLimit.retryAfterSec) },
+        }
       )
     }
 
     const members = getStoredMembers()
 
-    // Write mandatory audit log
+    // Write mandatory audit log with actor, role, IP, row count (§5.4)
     logAuditEvent({
-      actor: { id: user.id, name: user.name, email: user.email || user.phone, role: user.role.name },
+      actor: { id: user.id, name: user.name, email: user.email || undefined, role: user.role.name },
       action: 'EXPORT',
       entity: 'MemberDirectory',
       entityId: `exp_mem_${Date.now()}`,
-      branchId: user.branchId,
-      description: `${user.name} (${user.role.name}) exported complete member directory (${members.length} records).`,
+      branchId: user.branchId || 'pow',
+      ipAddress: clientIp,
+      description: `${user.name} (${user.role.name}) exported complete member directory (${members.length} records) from ${clientIp}.`,
+      afterState: { rowCount: members.length, ip: clientIp, role: user.role.name },
     })
 
     // Generate CSV

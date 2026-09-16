@@ -11,6 +11,7 @@
  * 7. Optical Turnstile Dynamic QR Security (90s expiry, replay detection, scanner cooldown)
  */
 
+import './test-env'
 import { NextRequest } from 'next/server'
 import { middleware } from '../middleware'
 import {

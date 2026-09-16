@@ -8,6 +8,7 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
+    "test": "npm run test:all",
     "test:training": "npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts",
     "test:rbac": "npx tsx tests/rbac-access-matrix.test.ts",
     "test:all": "npx tsx tests/rbac-access-matrix.test.ts && npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts && npx tsx tests/security-auth.test.ts && npx tsx tests/data-integrity.test.ts",
@@ -37,6 +38,7 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "autoprefixer": "^10.4.14",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
@@ -57,6 +59,7 @@
     "typescript": "^5.0.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "vercel": "^59.9.1"
   }
 }

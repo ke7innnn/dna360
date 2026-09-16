@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
-// Parse .env.local
+// Parse .env.local if present
 const envPath = path.join(__dirname, '..', '.env.local');
 const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
 const env = {};
@@ -18,42 +19,57 @@ envContent.split('\n').forEach(line => {
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase URL or Service Key. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-// Production accounts with cryptographically distinct temporary passwords (>=10 chars, uppercase, lowercase, digit, symbol)
+function generateSecureTempPassword() {
+  const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*';
+  const randomBytes = crypto.randomBytes(12);
+  let pwd = 'Dna#';
+  for (let i = 0; i < 12; i++) {
+    pwd += chars[randomBytes[i] % chars.length];
+  }
+  return pwd + '!9';
+}
+
+// Canonical roster without static passwords
 const allAccounts = [
   // ─── Executive & Admin ───
-  { email: 'admin@dna360.in', name: 'Executive Admin', role: 'owner_admin', roleName: 'Owner / Executive', tempPassword: 'Dna#Admin92!kP' },
-  { email: 'keith.mktg@dna360.in', name: 'Keith Shah', role: 'owner_admin', roleName: 'Administrator', tempPassword: 'Dna#Keith84!xM' },
-  { email: 'swapnil.hr@dna360.in', name: 'Swapnil Borhade', role: 'hr_head', roleName: 'HR Head', tempPassword: 'Dna#Swap71@hR' },
-  { email: 'monica.sales@dna360.in', name: 'Monica Picholla', role: 'sales_head', roleName: 'Asst Sales Head', tempPassword: 'Dna#Moni55$sL' },
+  { email: 'admin@dna360.in', name: 'Executive Admin', role: 'owner_admin', roleName: 'Owner / Executive' },
+  { email: 'keith.mktg@dna360.in', name: 'Keith Shah', role: 'owner_admin', roleName: 'Administrator' },
+  { email: 'swapnil.hr@dna360.in', name: 'Swapnil Borhade', role: 'hr_head', roleName: 'HR Head' },
+  { email: 'monica.sales@dna360.in', name: 'Monica Picholla', role: 'sales_head', roleName: 'Asst Sales Head' },
 
   // ─── Front Desk & Operations ───
-  { email: 'frontdesk@dna360.in', name: 'Front Desk Operations', role: 'front_desk', roleName: 'Front Desk Supervisor', tempPassword: 'Dna#Desk42!fD' },
-  { email: 'surendra.fc@dna360.in', name: 'Surendra Chaudhary', role: 'sales_consultant', roleName: 'Fitness Consultant', tempPassword: 'Dna#Sure63^fC' },
-  { email: 'krish.fc@dna360.in', name: 'Krish Rawat', role: 'sales_consultant', roleName: 'Fitness Consultant', tempPassword: 'Dna#Kris89*fC' },
-  { email: 'pallavi.fc@dna360.in', name: 'Pallavi More', role: 'sales_consultant', roleName: 'Fitness Consultant', tempPassword: 'Dna#Pall37%fC' },
-  { email: 'nisha.fc@dna360.in', name: 'Nisha Jadhav', role: 'sales_consultant', roleName: 'Fitness Consultant', tempPassword: 'Dna#Nish76#fC' },
-  { email: 'suresh.sup@dna360.in', name: 'Suresh Patil', role: 'supervisor', roleName: 'Supervisor', tempPassword: 'Dna#Sure28&sU' },
+  { email: 'frontdesk@dna360.in', name: 'Front Desk Operations', role: 'front_desk', roleName: 'Front Desk Supervisor' },
+  { email: 'surendra.fc@dna360.in', name: 'Surendra Chaudhary', role: 'sales_consultant', roleName: 'Fitness Consultant' },
+  { email: 'krish.fc@dna360.in', name: 'Krish Rawat', role: 'sales_consultant', roleName: 'Fitness Consultant' },
+  { email: 'pallavi.fc@dna360.in', name: 'Pallavi More', role: 'sales_consultant', roleName: 'Fitness Consultant' },
+  { email: 'nisha.fc@dna360.in', name: 'Nisha Jadhav', role: 'sales_consultant', roleName: 'Fitness Consultant' },
+  { email: 'suresh.sup@dna360.in', name: 'Suresh Patil', role: 'supervisor', roleName: 'Supervisor' },
 
   // ─── Coaches & Trainers ───
-  { email: 'rajesh.coach@dna360.in', name: 'Rajesh Poojary', role: 'head_trainer', roleName: 'Head Trainer', tempPassword: 'Dna#Raje91!hT' },
-  { email: 'aftab.coach@dna360.in', name: 'Aftab Memon', role: 'head_trainer', roleName: 'Head Trainer', tempPassword: 'Dna#Afta47@hT' },
-  { email: 'pramod.trainer@dna360.in', name: 'Pramod Sawant', role: 'general_trainer', roleName: 'General Trainer', tempPassword: 'Dna#Pram62$gT' },
-  { email: 'jateen.trainer@dna360.in', name: 'Jateen Kadam', role: 'general_trainer', roleName: 'General Trainer', tempPassword: 'Dna#Jate83%gT' },
-  { email: 'aditya.trainer@dna360.in', name: 'Aditya Shinde', role: 'general_trainer', roleName: 'General Trainer', tempPassword: 'Dna#Adit51^gT' },
-  { email: 'vaibhav.trainer@dna360.in', name: 'Vaibhav Pawar', role: 'general_trainer', roleName: 'General Trainer', tempPassword: 'Dna#Vaib94*gT' },
-  { email: 'hussain.trainer@dna360.in', name: 'Hussain Shaikh', role: 'general_trainer', roleName: 'General Trainer', tempPassword: 'Dna#Huss36#gT' },
-  { email: 'liladhar.masseur@dna360.in', name: 'Liladhar Gaikwad', role: 'masseur', roleName: 'Masseur', tempPassword: 'Dna#Lila75!mS' },
+  { email: 'rajesh.coach@dna360.in', name: 'Rajesh Poojary', role: 'head_trainer', roleName: 'Head Trainer' },
+  { email: 'aftab.coach@dna360.in', name: 'Aftab Memon', role: 'head_trainer', roleName: 'Head Trainer' },
+  { email: 'pramod.trainer@dna360.in', name: 'Pramod Sawant', role: 'general_trainer', roleName: 'General Trainer' },
+  { email: 'jateen.trainer@dna360.in', name: 'Jateen Kadam', role: 'general_trainer', roleName: 'General Trainer' },
+  { email: 'aditya.trainer@dna360.in', name: 'Aditya Shinde', role: 'general_trainer', roleName: 'General Trainer' },
+  { email: 'vaibhav.trainer@dna360.in', name: 'Vaibhav Pawar', role: 'general_trainer', roleName: 'General Trainer' },
+  { email: 'hussain.trainer@dna360.in', name: 'Hussain Shaikh', role: 'general_trainer', roleName: 'General Trainer' },
+  { email: 'liladhar.masseur@dna360.in', name: 'Liladhar Gaikwad', role: 'masseur', roleName: 'Masseur' },
 
   // ─── Clients & Members ───
-  { email: 'member@dna360.in', name: 'Aarav Mehta', role: 'member', roleName: 'Platinum Member', member_code: 'DNA-0412', tempPassword: 'Dna#Aara19@mM' },
-  { email: 'priya.sharma@dna360.in', name: 'Priya Sharma', role: 'member', roleName: 'Annual Member', member_code: 'DNA-0413', tempPassword: 'Dna#Priy82#mM' },
-  { email: 'vikram.singh@dna360.in', name: 'Vikram Singh', role: 'member', roleName: 'Pilates Member', member_code: 'DNA-0414', tempPassword: 'Dna#Vikr63$mM' },
-  { email: 'ananya.patel@dna360.in', name: 'Ananya Patel', role: 'member', roleName: 'PT Member', member_code: 'DNA-0415', tempPassword: 'Dna#Anan41%mM' },
-  { email: 'rohan.verma@gmail.com', name: 'Rohan Verma', role: 'member', roleName: 'Expired Member', member_code: 'DNA-0416', tempPassword: 'Dna#Roha95^mM' },
+  { email: 'member@dna360.in', name: 'Aarav Mehta', role: 'member', roleName: 'Platinum Member', member_code: 'DNA-0412' },
+  { email: 'priya.sharma@dna360.in', name: 'Priya Sharma', role: 'member', roleName: 'Annual Member', member_code: 'DNA-0413' },
+  { email: 'vikram.singh@dna360.in', name: 'Vikram Singh', role: 'member', roleName: 'Pilates Member', member_code: 'DNA-0414' },
+  { email: 'ananya.patel@dna360.in', name: 'Ananya Patel', role: 'member', roleName: 'PT Member', member_code: 'DNA-0415' },
+  { email: 'rohan.verma@gmail.com', name: 'Rohan Verma', role: 'member', roleName: 'Expired Member', member_code: 'DNA-0416' },
 ];
 
 async function seedAll() {
@@ -66,11 +82,18 @@ async function seedAll() {
 
   const existingMap = new Map((listData.users || []).map(u => [u.email.toLowerCase(), u]));
 
-  console.log(`Found ${existingMap.size} existing users. Provisioning full hardened roster (${allAccounts.length} accounts)...\n`);
+  console.log(`Found ${existingMap.size} existing users. Provisioning roster (${allAccounts.length} accounts)...\n`);
+  console.log('=== ONE-TIME PROVISIONED CREDENTIALS (OUTPUT TO STDOUT ONLY — NEVER WRITTEN TO FILE) ===');
 
   for (const acc of allAccounts) {
     const emailKey = acc.email.toLowerCase();
     const existing = existingMap.get(emailKey);
+    const envKey = 'SEED_PASSWORD_' + acc.email.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
+    const tempPassword = process.env[envKey] || process.env.SEED_DEFAULT_PASSWORD || generateSecureTempPassword();
+
+    // Print once to stdout
+    console.log(`[CREDENTIAL] Account: ${acc.email} | Temporary Password: ${tempPassword} | must_change_password: true`);
+
     const meta = {
       role: acc.role,
       name: acc.name,
@@ -80,25 +103,23 @@ async function seedAll() {
     };
 
     if (existing) {
-      console.log(`[UPDATE] ${acc.email} (${acc.role}) with unique temporary credential`);
       await supabase.auth.admin.updateUserById(existing.id, {
-        password: acc.tempPassword,
+        password: tempPassword,
         user_metadata: meta,
         email_confirm: true,
       });
     } else {
-      console.log(`[CREATE] ${acc.email} (${acc.role}) with unique temporary credential`);
       const { error } = await supabase.auth.admin.createUser({
         email: acc.email,
-        password: acc.tempPassword,
+        password: tempPassword,
         email_confirm: true,
         user_metadata: meta,
       });
-      if (error) console.error(`  Error:`, error.message);
+      if (error) console.error(`  Error creating ${acc.email}:`, error.message);
     }
   }
 
-  console.log('\nSUCCESS: All accounts hardened with unique credentials and mandatory password change flag!');
+  console.log('\nSUCCESS: All accounts hardened with secure temporary credentials and mandatory password change flag.');
 }
 
 seedAll();

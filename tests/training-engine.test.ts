@@ -14,6 +14,7 @@
  * 10. PT session sign-off ledger decrement.
  */
 
+import './test-env'
 import { getExercises, getExerciseById, getMemberSessions, getActiveMemberProgram } from '../lib/training/db'
 import {
   startFreestyleSession,

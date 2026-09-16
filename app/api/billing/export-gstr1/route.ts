@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession, checkExportRateLimit } from '@/lib/server-auth'
+import { getServerSession } from '@/lib/server-auth'
+import { hit } from '@/lib/rate-limit'
 import { getStoredInvoices } from '@/lib/billing'
 import { logAuditEvent } from '@/lib/audit'
 
@@ -38,27 +39,38 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Rate limit check
-    const rateLimit = checkExportRateLimit(user.id)
+    const clientIp =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1'
+
+    // Rate limit check: Max 3 GSTR-1 exports per hour per user (§5.4)
+    const rateLimit = await hit(`export:${user.id}`, 3, 60 * 60 * 1000)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
           error: 'Rate limit exceeded: Maximum 3 GSTR-1 exports per hour.',
           code: 'RATE_LIMIT_EXCEEDED',
         },
-        { status: 429 }
+        {
+          status: 429,
+          headers: { 'Retry-After': String(rateLimit.retryAfterSec) },
+        }
       )
     }
 
     const invoices = getStoredInvoices()
 
+    // Write mandatory audit log with actor, role, IP, row count (§5.4)
     logAuditEvent({
-      actor: { id: user.id, name: user.name, email: user.email || user.phone, role: user.role.name },
+      actor: { id: user.id, name: user.name, email: user.email || undefined, role: user.role.name },
       action: 'EXPORT',
       entity: 'GSTR1',
       entityId: `exp_gstr1_${Date.now()}`,
-      branchId: user.branchId,
-      description: `${user.name} (${user.role.name}) exported official GSTR-1 return data (${invoices.length} invoices).`,
+      branchId: user.branchId || 'pow',
+      ipAddress: clientIp,
+      description: `${user.name} (${user.role.name}) exported official GSTR-1 return data (${invoices.length} invoices) from ${clientIp}.`,
+      afterState: { rowCount: invoices.length, ip: clientIp, role: user.role.name },
     })
 
     // GSTR-1 B2C / B2B Export Format
