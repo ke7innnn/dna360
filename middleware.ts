@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { requireEnv } from '@/lib/env'
 import { getSessionFromMemoryByHash, type AuthSessionRecord } from '@/lib/session-store'
 
 const PUBLIC_EXACT_PATHS = new Set([
@@ -54,7 +53,6 @@ function isPublicPath(pathname: string): boolean {
   return false
 }
 
-const SESSION_SECRET = requireEnv('SESSION_SECRET')
 export const SESSION_COOKIE_NAME = 'dna360_session'
 
 const STAFF_ONLY_PREFIXES = [

@@ -15,7 +15,7 @@ import {
   type AuthSessionRecord,
 } from '@/lib/session-store'
 
-const SESSION_SECRET = requireEnv('SESSION_SECRET')
+export const getSessionSecret = () => requireEnv('SESSION_SECRET')
 export const SESSION_COOKIE_NAME = 'dna360_session'
 
 // In-memory server session store (token -> session record)
@@ -47,7 +47,7 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000 // 12 hours idle timeout
 export function signToken(payload: Record<string, any>): string {
   const data = Buffer.from(JSON.stringify(payload)).toString('base64url')
   const signature = crypto
-    .createHmac('sha256', SESSION_SECRET)
+    .createHmac('sha256', getSessionSecret())
     .update(data)
     .digest('base64url')
   return `${data}.${signature}`
