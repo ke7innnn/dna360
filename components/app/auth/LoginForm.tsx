@@ -60,15 +60,15 @@ export default function LoginForm() {
       const redirectParam = searchParams.get('redirect')
       const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
 
-      let destination = res.redirectUrl || '/m'
-      if (res.redirectUrl && res.redirectUrl.startsWith('/m')) {
-        destination = res.redirectUrl
-      } else if (isSafe && redirectParam.startsWith('/m')) {
-        destination = redirectParam
-      } else if (isSafe) {
-        destination = redirectParam
+      // Use server-provided redirectUrl (role-based) as primary destination
+      // Only override if there's a safe ?redirect= param that makes sense for this user type
+      let destination = res.redirectUrl || '/overview'
+      if (isSafe) {
+        destination = redirectParam!
       }
-      router.push(destination)
+
+      // Use replace on mobile to avoid back-button going to login
+      router.replace(destination)
     } else {
       setError(res.error || 'Invalid credentials. Check your name/email and password.')
     }
