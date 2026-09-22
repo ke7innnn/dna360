@@ -14,24 +14,29 @@ export default function MemberTrainingLayout({
   const [profileModalOpen, setProfileModalOpen] = useState(false)
 
   useEffect(() => {
-    const handleOpen = () => setProfileModalOpen(true)
-    window.addEventListener('dna:open-profile', handleOpen)
-    return () => window.removeEventListener('dna:open-profile', handleOpen)
+    const handleOpenProfile = () => setProfileModalOpen(true)
+    const handleOpenQr = () => setQrModalOpen(true)
+    window.addEventListener('dna:open-profile', handleOpenProfile)
+    window.addEventListener('dna:open-qr', handleOpenQr)
+    return () => {
+      window.removeEventListener('dna:open-profile', handleOpenProfile)
+      window.removeEventListener('dna:open-qr', handleOpenQr)
+    }
   }, [])
 
   return (
-    <div className="member-app-root min-h-screen bg-[#05070E] text-[#ECF1FA] relative overflow-x-hidden flex flex-col">
+    <div className="member-app-root min-h-screen bg-[#070415] text-[#ECF1FA] relative overflow-x-hidden flex flex-col selection:bg-purple-500 selection:text-white">
       {/* Background Ambient Radial Glows (matching mockup spec) */}
       <div
-        className="absolute top-0 left-0 w-[500px] h-[350px] pointer-events-none opacity-40 z-0"
+        className="absolute top-0 inset-x-0 h-[480px] pointer-events-none opacity-50 z-0"
         style={{
-          background: 'radial-gradient(ellipse at 30% 30%, rgba(59,130,246,0.25), rgba(30,64,175,0.08) 50%, transparent 75%)',
+          background: 'radial-gradient(ellipse at 50% -10%, rgba(168,85,247,0.22), rgba(236,72,153,0.12) 40%, transparent 70%)',
         }}
       />
       <div
-        className="absolute bottom-0 right-0 w-[500px] h-[350px] pointer-events-none opacity-30 z-0"
+        className="absolute bottom-0 right-0 w-[400px] h-[350px] pointer-events-none opacity-25 z-0"
         style={{
-          background: 'radial-gradient(ellipse at 70% 70%, rgba(56,189,248,0.2), transparent 70%)',
+          background: 'radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.2), transparent 70%)',
         }}
       />
 

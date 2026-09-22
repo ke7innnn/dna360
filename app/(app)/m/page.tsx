@@ -1,319 +1,398 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Bell,
-  QrCode,
-  Calendar,
-  Clock,
-  Dumbbell,
-  Play,
-  TrendingUp,
   Sparkles,
-  ChevronRight,
+  Zap,
+  CloudRain,
+  Waves,
+  SunMedium,
   Flame,
-  Award,
-  CheckCircle2,
+  Activity,
+  QrCode,
+  Bell,
+  ChevronRight,
+  ShieldCheck,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
-import MemberQrModal from '@/components/app/member/MemberQrModal'
 import { getInitials, cn } from '@/lib/utils'
 import { getMemberPortalState, MemberPortalState } from '@/lib/memberportal'
+
+type MoodType = 'heavy' | 'calm' | 'fresh' | 'wired'
+
+interface MoodOption {
+  id: MoodType
+  label: string
+  desc: string
+  icon: React.ReactNode
+  coachingCue: string
+}
 
 export default function MemberAppHomePage() {
   const router = useRouter()
   const { user } = useAuth()
 
-  const userName = user?.name ? user.name.split(' ')[0] : 'Aditi'
-  const userFullName = user?.name || 'Aditi Deshpande'
-  const initials = getInitials(userFullName) || 'AD'
+  const userName = user?.name ? user.name.split(' ')[0] : 'Alex'
+  const userFullName = user?.name || 'Alex Morgan'
+  const initials = getInitials(userFullName) || 'AM'
 
   const [portalState, setPortalState] = useState<MemberPortalState | null>(null)
+  const [selectedMood, setSelectedMood] = useState<MoodType>('calm')
+  const [isOrbPressed, setIsOrbPressed] = useState(false)
 
   useEffect(() => {
     setPortalState(getMemberPortalState(user?.id || user?.name))
   }, [user?.id, user?.name])
 
-  const [qrModalOpen, setQrModalOpen] = useState(false)
-  const [selectedDay, setSelectedDay] = useState('Tue 8')
-
   const planName = portalState?.planName || 'Annual All-Access Membership'
   const memberCode = portalState?.memberCode || (user as any)?.member_code || 'DNA-0412'
-  const daysLeft = portalState?.daysRemaining ?? 47
   const ptRemaining = portalState?.ptSessionsRemaining ?? 6
   const ptTotal = portalState?.ptSessionsTotal ?? 12
   const streak = portalState?.attendanceStreak ?? 12
-  const barPercent = Math.min(100, Math.max(8, Math.round((daysLeft / 365) * 100)))
 
-  const weekDays = [
-    { day: 'Sat', num: '5', hasDot: true },
-    { day: 'Sun', num: '6', hasDot: false },
-    { day: 'Mon', num: '7', hasDot: true },
-    { day: 'Tue', num: '8', hasDot: false, isSelected: true },
-    { day: 'Wed', num: '9', hasDot: false },
-    { day: 'Thu', num: '10', hasDot: false },
-    { day: 'Fri', num: '11', hasDot: false },
+  // Dynamic time-based greeting prefix (e.g. Gm, Alex)
+  const greetingPrefix = useMemo(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Gm'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }, [])
+
+  const moodOptions: MoodOption[] = [
+    {
+      id: 'heavy',
+      label: 'Heavy',
+      desc: 'Sluggish, foggy',
+      icon: <CloudRain className="w-5 h-5 text-[#94A3B8]" />,
+      coachingCue: 'Sluggish today? Coach Rohan added 10m extra dynamic warm-up. Prioritize form over load.',
+    },
+    {
+      id: 'calm',
+      label: 'Calm',
+      desc: 'Settled, easy',
+      icon: <Waves className="w-5 h-5 text-[#38BDF8]" />,
+      coachingCue: 'Settled and locked in. Optimal for mind-muscle connection and controlled tempo sets.',
+    },
+    {
+      id: 'fresh',
+      label: 'Fresh',
+      desc: 'Bright, ready',
+      icon: <SunMedium className="w-5 h-5 text-[#FBBF24]" />,
+      coachingCue: 'CNS fully primed! Push for progressive overload and personal records on heavy sets today.',
+    },
+    {
+      id: 'wired',
+      label: 'Wired',
+      desc: 'Buzzy, restless',
+      icon: <Zap className="w-5 h-5 text-[#EC4899]" />,
+      coachingCue: 'High adrenaline surge. Channel that raw drive into explosive compound lifts and high-energy sets.',
+    },
   ]
 
+  const activeMood = moodOptions.find((m) => m.id === selectedMood) || moodOptions[1]
+
+  // Radial tick marks for the circular gauge around the orb (matching Screenshot 1)
+  const tickCount = 72
+  const ticks = useMemo(() => {
+    const arr = []
+    const cx = 140
+    const cy = 140
+    const r1 = 112
+    const r2 = 126
+    for (let i = 0; i < tickCount; i++) {
+      // Leave a small gap at bottom-right just like the screenshot
+      const isGap = i > 48 && i < 54
+      const angle = (i * 360) / tickCount - 90
+      const rad = (angle * Math.PI) / 180
+      const x1 = cx + r1 * Math.cos(rad)
+      const y1 = cy + r1 * Math.sin(rad)
+      const x2 = cx + r2 * Math.cos(rad)
+      const y2 = cy + r2 * Math.sin(rad)
+      const isActive = i <= 48
+      arr.push({ id: i, x1, y1, x2, y2, isActive, isGap })
+    }
+    return arr
+  }, [])
+
+  const handleLaunchWorkout = () => {
+    setIsOrbPressed(true)
+    setTimeout(() => {
+      router.push('/m/session')
+    }, 180)
+  }
+
+  const handleOpenQrModal = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('dna:open-qr'))
+    }
+  }
+
+  const handleOpenProfile = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('dna:open-profile'))
+    }
+  }
+
   return (
-    <div className="w-full max-w-6xl mx-auto pt-1 pb-28 px-4 select-none">
-      {/* ─── Mobile Header (Avatar, Greeting, Notification Bell) ─── */}
-      <div className="member-hdr md:hidden flex items-center justify-between gap-3">
+    <div className="w-full max-w-md mx-auto pt-3 pb-28 px-4 flex flex-col items-center select-none">
+      {/* ─── Top Utility Navigation Bar ─── */}
+      <div className="w-full flex items-center justify-between py-2 mb-2">
+        {/* Profile Avatar Trigger */}
         <button
           type="button"
-          onClick={() => {
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('dna:open-profile'))
-            }
-          }}
-          className="member-who text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/50 rounded-xl p-0.5 transition-opacity active:opacity-75 flex-1 min-w-0"
-          aria-label="View member profile and settings"
+          onClick={handleOpenProfile}
+          className="flex items-center gap-2.5 p-1 rounded-full hover:bg-white/5 active:scale-95 transition-all text-left group"
+          aria-label="View member profile"
         >
-          <div className="member-pfp shrink-0">{initials}</div>
-          <div className="min-w-0 flex-1">
-            <p className="hi truncate">Good evening</p>
-            <p className="nm flex items-center gap-1.5 min-w-0">
-              <span className="truncate">{userName}</span>
-              <span className="shrink-0 text-[10px] text-[#38BDF8] font-data font-normal bg-[#38BDF8]/10 px-1.5 py-0.5 rounded border border-[#38BDF8]/20">Profile</span>
-            </p>
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF6B6B] via-[#EC4899] to-[#8B5CF6] flex items-center justify-center text-white text-xs font-bold tracking-tight shadow-[0_0_12px_rgba(236,72,153,0.3)]">
+            {initials}
+          </div>
+          <div className="hidden sm:block">
+            <span className="text-[10px] text-[#A78BFA] block font-medium uppercase tracking-wider leading-none">
+              DNA 360
+            </span>
+            <span className="text-xs text-white font-medium block leading-tight mt-0.5 group-hover:text-[#EC4899] transition-colors">
+              {userName}
+            </span>
           </div>
         </button>
 
-        <button
-          onClick={() => {
-            toast.info('No new notifications', {
-              description: 'Next PT session confirmed for tomorrow at 7:00 AM.',
-            })
-          }}
-          className="member-icbtn shrink-0"
-          aria-label="Notifications"
-        >
-          <svg viewBox="0 0 24 24">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.7 21a2 2 0 01-3.4 0" />
-          </svg>
-          <span className="member-dotb" />
-        </button>
+        {/* Quick QR & Notification Icons */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleOpenQrModal}
+            className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] active:scale-90 border border-white/10 flex items-center justify-center text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+            aria-label="Turnstile QR Pass"
+            title="Digital Check-in Pass"
+          >
+            <QrCode className="w-4 h-4 text-[#C084FC]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              toast.info('Studio Updates', {
+                description: 'Next Push & Core session scheduled with Rohan.',
+              })
+            }}
+            className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] active:scale-90 border border-white/10 flex items-center justify-center text-white transition-all relative shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+            aria-label="Notifications"
+          >
+            <Bell className="w-4 h-4 text-[#94A3B8]" />
+            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#EC4899] ring-2 ring-[#070415]" />
+          </button>
+        </div>
       </div>
 
-      {/* ─── Responsive Grid: 1 col on Mobile, 12 cols on Desktop PC ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left / Main Column (7 cols on PC) */}
-        <div className="lg:col-span-7 space-y-4">
-          {/* QR Bar Shortcut */}
-          <div
-            onClick={() => setQrModalOpen(true)}
-            className="member-qrbar"
-          >
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-              <path d="M14 14h3v3M20 20h1M17 21h1" />
-            </svg>
-            <b>Your check-in code</b>
-            <div className="go">
-              <svg viewBox="0 0 24 24">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </div>
-          </div>
+      {/* ─── Hero Heading (Matching Screenshot 1 & Level 4) ─── */}
+      <div className="text-center my-3">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
+          {greetingPrefix}, {userName}
+        </h1>
+        <p className="text-sm text-[#94A3B8] font-normal mt-1 tracking-tight">
+          Don&apos;t fight it. Time to crush today bro.
+        </p>
+      </div>
 
-          {/* Week Day Pill Selector */}
-          <div className="member-week">
-            {weekDays.map((w) => {
-              const id = `${w.day} ${w.num}`
-              const isSel = selectedDay === id || (!selectedDay && w.isSelected)
+      {/* ─── Central Luminous Neon Orb (Matching Screenshot 1 & Level 4) ─── */}
+      <div className="relative my-4 flex items-center justify-center">
+        {/* Deep Violet / Magenta Ambient Halo Blur */}
+        <div
+          className="absolute w-[290px] h-[290px] rounded-full pointer-events-none -z-10 animate-pulse duration-1000"
+          style={{
+            background:
+              'radial-gradient(circle, rgba(236,72,153,0.48) 0%, rgba(139,92,246,0.36) 45%, rgba(15,9,36,0) 72%)',
+            filter: 'blur(42px)',
+          }}
+        />
+
+        {/* Concentric Radial Tick Marks Ring SVG */}
+        <div className="absolute w-[280px] h-[280px] pointer-events-none select-none flex items-center justify-center">
+          <svg
+            viewBox="0 0 280 280"
+            className="w-full h-full transform transition-transform duration-700"
+          >
+            {ticks.map((t) => {
+              if (t.isGap) return null
               return (
-                <div
-                  key={id}
-                  onClick={() => setSelectedDay(id)}
-                  className={cn(
-                    'member-day',
-                    w.hasDot && 'dot',
-                    isSel && 'sel'
-                  )}
-                >
-                  <p className="dn">{w.day}</p>
-                  <p className="dd">{w.num}</p>
-                </div>
+                <line
+                  key={t.id}
+                  x1={t.x1}
+                  y1={t.y1}
+                  x2={t.x2}
+                  y2={t.y2}
+                  stroke={t.isActive ? '#FFFFFF' : 'rgba(255,255,255,0.25)'}
+                  strokeWidth={t.isActive ? '1.8' : '1.2'}
+                  strokeLinecap="round"
+                  opacity={t.isActive ? 0.95 : 0.4}
+                />
               )
             })}
+          </svg>
+        </div>
+
+        {/* 3D Luminous Spherical Core Orb */}
+        <button
+          type="button"
+          onClick={handleLaunchWorkout}
+          className={cn(
+            'w-[204px] h-[204px] rounded-full relative flex flex-col items-center justify-center transition-all duration-300 cursor-pointer group active:scale-95 focus:outline-none',
+            isOrbPressed ? 'scale-95' : 'hover:scale-[1.03]'
+          )}
+          style={{
+            background:
+              'radial-gradient(circle at 36% 30%, #FFA07A 0%, #FF5376 32%, #EC4899 62%, #7C3AED 95%)',
+            boxShadow:
+              'inset 0 -12px 28px rgba(0,0,0,0.38), inset 0 8px 18px rgba(255,255,255,0.45), 0 0 45px rgba(236,72,153,0.55)',
+          }}
+          aria-label="Tap to start today's workout"
+        >
+          {/* Subtle inner gloss highlight */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 via-transparent to-white/20 pointer-events-none" />
+
+          {/* Time & Title Inside Orb (Matching Screenshot "14s shake to turn off") */}
+          <div className="relative z-10 flex flex-col items-center text-center text-white px-2">
+            <span className="font-sans font-black text-[52px] sm:text-[56px] tracking-tight leading-none tabular-nums drop-shadow-md">
+              52m
+            </span>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+              <span className="text-[12px] font-medium tracking-wide text-white/95 lowercase drop-shadow-sm">
+                tap to start workout
+              </span>
+            </div>
           </div>
+        </button>
+      </div>
 
-          {/* Section: Today */}
-          <div className="member-sec">
-            <h3>Today</h3>
-            <Link href="/m/programs">History</Link>
-          </div>
-
-          {/* Hero Workout Card (wcard) */}
-          <div className="member-wcard">
-            <div>
-              <span className="member-tag">FROM ROHAN · WEEK 3</span>
-              <h2>Push Day</h2>
-              <p>Chest, shoulders and triceps</p>
-              <p className="meta">6 exercises · 52 min</p>
-            </div>
-
-            <button
-              onClick={() => router.push('/m/session')}
-              className="member-cta"
-            >
-              Start now
-            </button>
-
-            {/* Silhouette Figure */}
-            <div className="member-figure">
-              <span>DNA 360</span>
-            </div>
-          </div>
-
-          {/* Next Class Row */}
-          <div className="member-sec pt-2">
-            <h3>Next class</h3>
-            <Link href="/m/classes">See all</Link>
-          </div>
-
-          <Link href="/m/classes" className="member-lrow flex items-center gap-3">
-            <div className="member-lic shrink-0" style={{ background: 'var(--t2)' }}>
-              <svg viewBox="0 0 24 24" style={{ stroke: '#6FD4F5' }}>
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            </div>
-            <div className="member-lt flex-1 min-w-0">
-              <b className="truncate block">Spin · Thu 7:00 pm</b>
-              <span className="truncate block">Booked · Tanvi · 2 spots left</span>
-            </div>
-            <div className="member-go2 shrink-0">
-              <svg viewBox="0 0 24 24">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </div>
-          </Link>
-
-          {/* Mobile Membership & Streak (visible only on mobile) */}
-          <div className="space-y-4 lg:hidden pt-2">
-            {/* Membership Card */}
-            <div className="member-card">
-              <div className="member-mem-top">
-                <b>{planName}</b>
-                <span className="member-pill member-p-ok">ACTIVE</span>
-              </div>
-              <div className="member-bar">
-                <i style={{ width: `${barPercent}%` }} />
-              </div>
-              <div className="member-meta2">
-                <span>{daysLeft} days left</span>
-                <span>{ptRemaining} of {ptTotal} PT sessions</span>
-              </div>
-            </div>
-
-            {/* Streak */}
-            <div className="member-sec">
-              <h3>Streak</h3>
-              <a href="#">{streak} days</a>
-            </div>
-            <div className="member-streak-bar">
-              <i className="on" />
-              <i className="on" />
-              <i />
-              <i className="on" />
-              <i className="on" />
-              <i className="on" />
-              <i className="now" />
-            </div>
+      {/* ─── Bottom 3 Micro-Metrics Strip (Matching Screenshot 1 & Level 4) ─── */}
+      <div className="w-full max-w-[340px] grid grid-cols-3 text-center py-3 my-2 border-t border-b border-white/[0.08] backdrop-blur-sm">
+        {/* Column 1: Stage / Protocol */}
+        <div className="flex flex-col items-center px-1">
+          <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block">
+            Stage
+          </span>
+          <div className="flex items-center gap-1 text-white font-bold text-xs sm:text-[13px] mt-1">
+            <Activity className="w-3.5 h-3.5 text-[#38BDF8]" />
+            <span className="truncate">Push &amp; Core</span>
           </div>
         </div>
 
-        {/* Right / Desktop PC Column (5 cols on PC) */}
-        <div className="hidden lg:block lg:col-span-5 space-y-4">
-          {/* Live Rolling QR Check-in Box on PC */}
-          <div className="member-card p-5 text-center flex flex-col items-center">
-            <div className="flex items-center justify-between w-full mb-2">
-              <span className="font-ui text-xs font-bold text-white">Digital Access Pass</span>
-              <span className="font-data text-[10px] text-[#38BDF8]">Live Rolling OTP</span>
-            </div>
-
-            <div
-              onClick={() => setQrModalOpen(true)}
-              className="w-44 h-44 bg-white rounded-2xl p-3 my-2 shadow-[0_0_35px_rgba(59,130,246,0.4)] cursor-pointer hover:scale-105 transition-transform"
-              title="Click to enlarge"
-            >
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <rect x="4" y="4" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
-                <rect x="12" y="12" width="8" height="8" fill="#000" rx="1.5" />
-                <rect x="72" y="4" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
-                <rect x="80" y="12" width="8" height="8" fill="#000" rx="1.5" />
-                <rect x="4" y="72" width="24" height="24" fill="none" stroke="#000" strokeWidth="6.5" rx="3" />
-                <rect x="12" y="80" width="8" height="8" fill="#000" rx="1.5" />
-                <g fill="#000">
-                  <rect x="36" y="6" width="5" height="5" /><rect x="46" y="6" width="5" height="5" />
-                  <rect x="36" y="16" width="5" height="5" /><rect x="51" y="16" width="5" height="5" />
-                  <rect x="41" y="21" width="5" height="5" /><rect x="56" y="21" width="5" height="5" />
-                  <rect x="6" y="36" width="5" height="5" /><rect x="16" y="36" width="5" height="5" />
-                  <rect x="36" y="36" width="5" height="5" /><rect x="46" y="41" width="5" height="5" />
-                  <rect x="71" y="36" width="5" height="5" /><rect x="81" y="41" width="5" height="5" />
-                  <rect x="36" y="56" width="5" height="5" /><rect x="46" y="61" width="5" height="5" />
-                  <rect x="36" y="71" width="5" height="5" /><rect x="46" y="76" width="5" height="5" />
-                </g>
-              </svg>
-            </div>
-
-            <p className="font-display font-semibold text-base text-white mt-1">{userFullName}</p>
-            <p className="font-data text-[10px] text-[var(--ink-3)]">{memberCode} · {planName.toUpperCase()}</p>
-            <div className="member-qrtimer mt-3 text-xs">
-              <i />
-              <span>Rotates every 30s</span>
-            </div>
+        {/* Column 2: Slept / Streak */}
+        <div className="flex flex-col items-center px-1 border-x border-white/[0.08]">
+          <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block">
+            Streak
+          </span>
+          <div className="flex items-center gap-1 text-white font-bold text-xs sm:text-[13px] mt-1 tabular-nums">
+            <Flame className="w-3.5 h-3.5 text-[#FF6B6B]" />
+            <span>{streak} Days</span>
           </div>
+        </div>
 
-          {/* Membership Plan Card */}
-          <div className="member-card">
-            <div className="member-mem-top">
-              <b>{planName}</b>
-              <span className="member-pill member-p-ok">ACTIVE</span>
-            </div>
-            <div className="member-bar">
-              <i style={{ width: `${barPercent}%` }} />
-            </div>
-            <div className="member-meta2">
-              <span>{daysLeft} days left</span>
-              <span>{ptRemaining} of {ptTotal} PT sessions</span>
-            </div>
+        {/* Column 3: Quality / PT Sessions */}
+        <div className="flex flex-col items-center px-1">
+          <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block">
+            PT Left
+          </span>
+          <span className="text-white font-bold text-xs sm:text-[13px] mt-1 tabular-nums">
+            {ptRemaining} of {ptTotal}
+          </span>
+        </div>
+      </div>
+
+      {/* ─── Mood & Energy Check-In (Screenshot 2 Levels 2 & 3) ─── */}
+      <div className="w-full mt-4">
+        <div className="mb-2.5 text-center">
+          <h2 className="text-base font-bold text-white tracking-tight">
+            What&apos;s your mood right now?
+          </h2>
+          <p className="text-xs text-[#94A3B8] tracking-tight mt-0.5">
+            Pick the one that fits closest.
+          </p>
+        </div>
+
+        {/* 2x2 Glass Tile Selector */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {moodOptions.map((mood) => {
+            const isSelected = selectedMood === mood.id
+            return (
+              <button
+                key={mood.id}
+                type="button"
+                onClick={() => setSelectedMood(mood.id)}
+                className={cn(
+                  'p-3.5 rounded-2xl flex flex-col items-center text-center transition-all duration-200 cursor-pointer active:scale-95 min-h-[96px] justify-center relative overflow-hidden',
+                  isSelected
+                    ? 'bg-[#1D143D]/90 border-2 border-[#8B5CF6] shadow-[0_0_20px_rgba(139,92,246,0.35)]'
+                    : 'bg-[#110B26]/70 hover:bg-[#181136]/70 border border-white/10'
+                )}
+              >
+                <div
+                  className={cn(
+                    'w-9 h-9 rounded-xl flex items-center justify-center mb-1.5 transition-transform',
+                    isSelected
+                      ? 'bg-[#8B5CF6]/25 scale-110 shadow-[0_0_10px_rgba(139,92,246,0.4)]'
+                      : 'bg-white/5'
+                  )}
+                >
+                  {mood.icon}
+                </div>
+                <span
+                  className={cn(
+                    'text-xs font-bold leading-tight block',
+                    isSelected ? 'text-white' : 'text-[#E2E8F0]'
+                  )}
+                >
+                  {mood.label}
+                </span>
+                <span className="text-[10.5px] text-[#94A3B8] tracking-tight block mt-0.5">
+                  {mood.desc}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Dynamic Coaching Recommendation Pill */}
+        <div className="mt-3 p-3 rounded-2xl bg-[#160E33]/85 border border-[#8B5CF6]/30 flex items-start gap-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.4)] animate-in fade-in duration-200">
+          <div className="p-1 rounded-lg bg-[#8B5CF6]/20 text-[#C084FC] shrink-0 mt-0.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#EC4899]" />
           </div>
-
-          {/* Streak Card */}
-          <div className="member-card">
-            <div className="member-sec mb-2">
-              <h3>Workout streak</h3>
-              <span className="text-xs text-[#38BDF8] font-bold">{streak} days</span>
-            </div>
-            <div className="member-streak-bar">
-              <i className="on" />
-              <i className="on" />
-              <i />
-              <i className="on" />
-              <i className="on" />
-              <i className="on" />
-              <i className="now" />
-            </div>
+          <div className="flex-1 text-left min-w-0">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#A78BFA] block">
+              Daily Readiness Guidance
+            </span>
+            <p className="text-xs text-white/90 leading-relaxed mt-0.5">
+              {activeMood.coachingCue}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Check-in QR Modal */}
-      <MemberQrModal
-        isOpen={qrModalOpen}
-        onClose={() => setQrModalOpen(false)}
-        memberCode={memberCode}
-        memberName={userFullName}
-        planName={planName}
-      />
+      {/* ─── Minimal Access Pass Trigger (Screenshot Level 1/2 clean trigger) ─── */}
+      <div className="w-full mt-4">
+        <button
+          type="button"
+          onClick={handleOpenQrModal}
+          className="w-full py-2.5 px-4 rounded-full bg-white/[0.04] hover:bg-white/[0.08] active:scale-98 border border-white/[0.08] flex items-center justify-between text-left transition-all"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <ShieldCheck className="w-4 h-4 text-[#38BDF8] shrink-0" />
+            <span className="text-xs font-medium text-white truncate">
+              {planName} · Active Pass
+            </span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0 text-[#94A3B8]">
+            <span className="text-[10px] font-sans tabular-nums text-[#38BDF8]">
+              {memberCode}
+            </span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </div>
+        </button>
+      </div>
     </div>
   )
 }
