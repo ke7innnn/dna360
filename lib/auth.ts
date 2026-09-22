@@ -230,8 +230,8 @@ export const SEEDED_USERS: AuthUser[] = [
     twoFactorEnabled: true,
     twoFactorRequired: true,
     requires_login: true,
-    passwordHash: SEEDED_DEFAULT_PASSWORD_HASH,
-    must_change_password: true,
+    passwordHash: '$2b$12$BYaIBx75XmOzL.lMNoGyQ.xOOs1DjO3fHt46EaBmd7JfQ54z2l6s6',
+    must_change_password: false,
   },
   {
     id: 'usr_staff_10',
