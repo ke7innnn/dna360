@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { session, error } = getServerSession(req)
+    const { session, error } = await getServerSession(req)
     if (!session || !session.user) {
       return NextResponse.json(
         { error: error || 'Unauthorized: Authentication required.' },

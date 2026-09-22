@@ -15,7 +15,7 @@ function sanitizeCsvField(value: any): string {
 
 export async function GET(req: NextRequest) {
   try {
-    const { session, error } = getServerSession(req)
+    const { session, error } = await getServerSession(req)
     if (!session || !session.user) {
       return NextResponse.json(
         { error: error || 'Unauthorized: Authentication required.' },

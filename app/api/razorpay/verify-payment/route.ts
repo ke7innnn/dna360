@@ -12,7 +12,7 @@ import { logAuditEvent } from '@/lib/audit'
 export async function POST(req: NextRequest) {
   try {
     // 1. Session verification fail-closed
-    const { session } = getServerSession(req)
+    const { session } = await getServerSession(req)
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized: Valid authentication session required.', code: 'AUTH_REQUIRED' },

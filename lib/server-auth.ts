@@ -251,7 +251,7 @@ export function findUserById(userId: string, email?: string): AuthUser | null {
  * Resolves session from NextRequest (Cookies or Authorization header)
  * Token is an opaque pointer: user and role are resolved fresh from DB, NEVER from token payload.
  */
-export function getServerSession(req: NextRequest): { session: ServerSessionData | null; error?: string } {
+export async function getServerSession(req: NextRequest): Promise<{ session: ServerSessionData | null; error?: string }> {
   let token = req.cookies.get(SESSION_COOKIE_NAME)?.value
 
   if (!token) {
@@ -266,7 +266,43 @@ export function getServerSession(req: NextRequest): { session: ServerSessionData
   }
 
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
-  const sessionRecord = getSessionFromMemoryByHash(tokenHash)
+  let sessionRecord = getSessionFromMemoryByHash(tokenHash)
+
+  // Fallback: check Supabase if memory store misses (different serverless container)
+  if (!sessionRecord) {
+    try {
+      const supabaseAdmin = getSupabaseAdmin()
+      if (supabaseAdmin) {
+        const { data: rows } = await supabaseAdmin
+          .from('auth_sessions')
+          .select('*')
+          .eq('token_hash', tokenHash)
+          .is('revoked_at', null)
+          .limit(1)
+
+        if (rows && rows.length > 0) {
+          const row = rows[0]
+          // Re-hydrate into memory for future requests on this container
+          sessionRecord = {
+            id: row.id,
+            token_hash: row.token_hash,
+            user_id: row.user_id,
+            user_type: row.user_type,
+            role_slug: row.role_slug,
+            must_change_password: Boolean(row.must_change_password),
+            created_at: row.created_at,
+            last_active_at: row.last_active_at,
+            expires_at: row.expires_at,
+            revoked_at: row.revoked_at,
+          }
+          // Save back to memory so subsequent requests on same container are fast
+          saveSessionToMemory(sessionRecord)
+        }
+      }
+    } catch {
+      // Supabase unavailable, session not found
+    }
+  }
 
   if (!sessionRecord) {
     return { session: null, error: 'Invalid or tampered session token' }
@@ -290,7 +326,7 @@ export function getServerSession(req: NextRequest): { session: ServerSessionData
   // Resolve role strictly from role_slug against SEEDED_ROLE_DEFINITIONS / DB
   const roleDef =
     SEEDED_ROLE_DEFINITIONS.find(
-      (r) => r.slug.toLowerCase() === sessionRecord.role_slug.toLowerCase()
+      (r) => r.slug.toLowerCase() === sessionRecord!.role_slug.toLowerCase()
     ) || SEEDED_ROLE_DEFINITIONS[0]
 
   user = {
@@ -334,11 +370,11 @@ export function maskPhoneNumber(phone: string): string {
  * Helper to require a capability on an API route.
  * Returns { user, tenantId } or a Next response (401 or 403).
  */
-export function requireCapabilityApi(
+export async function requireCapabilityApi(
   req: NextRequest,
   capability: Capability
-): { user: AuthUser; tenantId: string } | NextResponse {
-  const { session, error } = getServerSession(req)
+): Promise<{ user: AuthUser; tenantId: string } | NextResponse> {
+  const { session, error } = await getServerSession(req)
   if (!session || !session.user) {
     return NextResponse.json(
       { error: error || 'Unauthorized: Authentication required.' },

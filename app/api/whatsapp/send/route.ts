@@ -8,7 +8,7 @@ import { hit } from '@/lib/rate-limit'
 export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate caller session fail-closed (§4.1)
-    const { session } = getServerSession(req)
+    const { session } = await getServerSession(req)
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized: Valid authentication session required.', code: 'AUTH_REQUIRED' },

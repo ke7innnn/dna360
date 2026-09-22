@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    const { session } = getServerSession(req)
+    const { session } = await getServerSession(req)
     const token = req.cookies.get(SESSION_COOKIE_NAME)?.value || req.headers.get('authorization')?.replace('Bearer ', '')
 
     // Real logout: immediate and permanent revocation of session row

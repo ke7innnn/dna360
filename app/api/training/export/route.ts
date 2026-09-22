@@ -11,7 +11,7 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = validateTrainingSession(req)
+    const auth = await validateTrainingSession(req)
     if (!auth.ok) return auth.response!
 
     const clientIp =

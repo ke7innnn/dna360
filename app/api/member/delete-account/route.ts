@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(req: NextRequest) {
   try {
-    const { session } = getServerSession(req)
+    const { session } = await getServerSession(req)
     let body: any = {}
     try {
       body = await req.json()

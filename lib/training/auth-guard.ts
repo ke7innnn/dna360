@@ -17,12 +17,12 @@ const SIGNED_MEDIA_SECRET = process.env.MEDIA_SECRET || 'dna360_secure_media_vau
  * Validates session identity from request cookies or bearer header.
  * Rejects unauthenticated requests with HTTP 401.
  */
-export function validateTrainingSession(req: NextRequest): {
+export async function validateTrainingSession(req: NextRequest): Promise<{
   ok: boolean
   user?: AuthUser
   response?: NextResponse
-} {
-  const { session, error } = getServerSession(req)
+}> {
+  const { session, error } = await getServerSession(req)
   if (!session || !session.user) {
     return {
       ok: false,

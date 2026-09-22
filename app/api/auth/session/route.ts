@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const { session, error } = getServerSession(req)
+    const { session, error } = await getServerSession(req)
 
     if (!session || !session.user) {
       return NextResponse.json(

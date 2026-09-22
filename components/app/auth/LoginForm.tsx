@@ -25,18 +25,24 @@ export default function LoginForm() {
     if (!isLoading && isAuthenticated && user) {
       const isMember = user.type === 'MEMBER' || String(user.role?.slug).toLowerCase() === 'member'
       const redirectParam = searchParams.get('redirect')
-      const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
+      const isSafe =
+        redirectParam &&
+        redirectParam.startsWith('/') &&
+        !redirectParam.startsWith('//') &&
+        !redirectParam.includes('://') &&
+        redirectParam !== '/login' &&
+        redirectParam !== '/'
 
       if (isMember) {
         // Members must strictly route to /m (never staff consoles)
         const dest = isSafe && redirectParam.startsWith('/m') ? redirectParam : '/m'
-        router.replace(dest)
+        window.location.replace(dest)
       } else {
         const dest = isSafe && redirectParam !== '/m' && !redirectParam.startsWith('/m/') ? redirectParam : '/overview'
-        router.replace(dest)
+        window.location.replace(dest)
       }
     }
-  }, [isLoading, isAuthenticated, user, router, searchParams])
+  }, [isLoading, isAuthenticated, user, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,17 +64,28 @@ export default function LoginForm() {
     if (res.success) {
       toast.success('Signed in successfully')
       const redirectParam = searchParams.get('redirect')
-      const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
+      const isSafe =
+        redirectParam &&
+        redirectParam.startsWith('/') &&
+        !redirectParam.startsWith('//') &&
+        !redirectParam.includes('://') &&
+        redirectParam !== '/login' &&
+        redirectParam !== '/'
 
-      // Use server-provided redirectUrl (role-based) as primary destination
-      // Only override if there's a safe ?redirect= param that makes sense for this user type
       let destination = res.redirectUrl || '/overview'
       if (isSafe) {
-        destination = redirectParam!
+        const isMember = res.redirectUrl?.startsWith('/m')
+        if (isMember) {
+          if (redirectParam.startsWith('/m')) {
+            destination = redirectParam
+          }
+        } else {
+          destination = redirectParam
+        }
       }
 
-      // Use replace on mobile to avoid back-button going to login
-      router.replace(destination)
+      // Hard redirect to ensure mobile browsers and PWAs immediately navigate with fresh cookies
+      window.location.replace(destination)
     } else {
       setError(res.error || 'Invalid credentials. Check your name/email and password.')
     }

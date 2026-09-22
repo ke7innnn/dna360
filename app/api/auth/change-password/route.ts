@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    const { session, error: sessionErr } = getServerSession(req)
+    const { session, error: sessionErr } = await getServerSession(req)
     if (!session || !session.user) {
       return NextResponse.json(
         { error: sessionErr || 'Unauthorized: Active session required to change password.' },
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     if (oldToken) {
       destroyServerSession(oldToken)
     }
-    const newToken = createServerSession(user, session.tenantId)
+    const newToken = await createServerSession(user, session.tenantId)
     const redirectUrl = getRoleDefaultRedirect(user.role.slug, user)
 
     // 5. Audit Log

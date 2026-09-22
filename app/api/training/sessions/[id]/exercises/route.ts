@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = validateTrainingSession(req)
+    const auth = await validateTrainingSession(req)
     if (!auth.ok) return auth.response!
 
     const url = new URL(req.url)
@@ -34,7 +34,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = validateTrainingSession(req)
+    const auth = await validateTrainingSession(req)
     if (!auth.ok) return auth.response!
 
     const session = getSessionById(params.id)
@@ -58,7 +58,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = validateTrainingSession(req)
+    const auth = await validateTrainingSession(req)
     if (!auth.ok) return auth.response!
 
     const session = getSessionById(params.id)

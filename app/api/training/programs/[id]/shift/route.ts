@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = validateTrainingSession(req)
+    const auth = await validateTrainingSession(req)
     if (!auth.ok) return auth.response!
 
     const body = await req.json()

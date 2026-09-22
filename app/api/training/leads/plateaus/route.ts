@@ -4,7 +4,7 @@ import { getManagerPTLeadSignals } from '@/lib/training/trainer-service'
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = validateTrainingSession(req)
+    const auth = await validateTrainingSession(req)
     if (!auth.ok) return auth.response!
 
     const user = auth.user!

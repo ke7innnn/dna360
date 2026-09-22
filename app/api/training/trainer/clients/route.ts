@@ -4,7 +4,7 @@ import { getTrainerClientRoster, getAdherenceAlerts } from '@/lib/training/train
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = validateTrainingSession(req)
+    const auth = await validateTrainingSession(req)
     if (!auth.ok) return auth.response!
 
     const user = auth.user!
