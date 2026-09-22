@@ -69,9 +69,9 @@ async function runTests() {
   const trainerUser = SEEDED_USERS.find(u => u.role.slug === 'TRAINER')!
   const fcUser = SEEDED_USERS.find(u => u.role.slug === 'FITNESS_CONSULTANT')!
 
-  const ownerToken = createServerSession(ownerUser)
-  const trainerToken = createServerSession(trainerUser)
-  const fcToken = createServerSession(fcUser)
+  const ownerToken = await createServerSession(ownerUser)
+  const trainerToken = await createServerSession(trainerUser)
+  const fcToken = await createServerSession(fcUser)
 
   // ─── Test 1: Middleware redirects unauthenticated page request to /login ───
   console.log('--- 1. Server-Side Session Enforcement ---')
@@ -253,7 +253,7 @@ async function runTests() {
 
   // 12b: Real logout — session revocation causes immediate 401 on reuse
   const logoutUser = { ...SEEDED_USERS[0], must_change_password: false }
-  const sessionToRevoke = createServerSession(logoutUser)
+  const sessionToRevoke = await createServerSession(logoutUser)
   const preLogoutReq = new NextRequest('http://localhost:3000/api/members', {
     headers: { cookie: `${SESSION_COOKIE_NAME}=${sessionToRevoke}` },
   })
@@ -294,7 +294,7 @@ async function runTests() {
     requires_login: false,
     must_change_password: false,
   }
-  const memberTokenForRoleCheck = createServerSession(memberUserForRoleCheck as any)
+  const memberTokenForRoleCheck = await createServerSession(memberUserForRoleCheck as any)
   const forgedRoleReq = new NextRequest('http://localhost:3000/overview', {
     headers: {
       cookie: `${SESSION_COOKIE_NAME}=${memberTokenForRoleCheck}`,
@@ -394,7 +394,7 @@ async function runTests() {
 
   // 14c: Member session calling WhatsApp send returns 403 Forbidden
   const memberUser = findUserById('mem_001')!
-  const memberToken = createServerSession(memberUser)
+  const memberToken = await createServerSession(memberUser)
   const memberWaReq = new NextRequest('http://localhost:3000/api/whatsapp/send', {
     method: 'POST',
     headers: {
@@ -652,7 +652,7 @@ async function runTests() {
 
   // 15b: Export rate limiting (4th export in an hour -> 429) on /api/members/export
   const exportTestOwner = SEEDED_USERS.find((u) => u.role.slug === 'OWNER')!
-  const exportOwnerToken = createServerSession(exportTestOwner)
+  const exportOwnerToken = await createServerSession(exportTestOwner)
 
   const memExp1 = await exportMembersApi(new NextRequest('http://localhost:3000/api/members/export', {
     headers: { cookie: `${SESSION_COOKIE_NAME}=${exportOwnerToken}`, 'x-forwarded-for': '103.21.126.44' },
@@ -689,7 +689,7 @@ async function runTests() {
 
   // 15d: Export rate limiting (4th export in an hour -> 429) on /api/training/export
   const trainingMember = findUserById('mem_001')!
-  const trainingMemberToken = createServerSession(trainingMember)
+  const trainingMemberToken = await createServerSession(trainingMember)
 
   const trnExp1 = await trainingExportApi(new NextRequest('http://localhost:3000/api/training/export', {
     headers: { cookie: `${SESSION_COOKIE_NAME}=${trainingMemberToken}`, 'x-forwarded-for': '103.21.126.55' },

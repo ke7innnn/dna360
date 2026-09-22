@@ -41,3 +41,4 @@ next-env.d.ts
 /public/*Credentials*
 all_credentials.json
 
+*.aab

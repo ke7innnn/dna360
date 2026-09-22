@@ -116,10 +116,10 @@ export function validatePasswordComplexity(password: string): { valid: boolean; 
  * Create a new opaque session token (crypto.randomBytes(32).toString('base64url'))
  * Stores only sha256(rawToken) in auth_sessions.token_hash
  */
-export function createSession(user: AuthUser, tenantId: string = 'tenant_powai'): string {
+export async function createSession(user: AuthUser, tenantId: string = 'tenant_powai'): Promise<string> {
   const rawToken = crypto.randomBytes(32).toString('base64url')
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
-  const now = new Date()
+    const now = new Date()
   const expiresAt = new Date(now.getTime() + SESSION_TTL_MS)
 
   const sessionRecord: AuthSessionRecord = {
@@ -138,11 +138,11 @@ export function createSession(user: AuthUser, tenantId: string = 'tenant_powai')
   saveSessionToMemory(sessionRecord)
   userMemoryCache[user.id] = user
 
-  // Asynchronously persist to Supabase if configured
+  // AWAIT Supabase insert so session is persisted before redirect hits middleware
   try {
     const supabaseAdmin = getSupabaseAdmin()
     if (supabaseAdmin) {
-      supabaseAdmin
+      await supabaseAdmin
         .from('auth_sessions')
         .insert({
           id: sessionRecord.id,
@@ -156,14 +156,9 @@ export function createSession(user: AuthUser, tenantId: string = 'tenant_powai')
           expires_at: sessionRecord.expires_at,
           revoked_at: null,
         })
-        .then(({ error }) => {
-          if (error) {
-            // Table may not exist yet if migration pending
-          }
-        })
     }
   } catch {
-    // Ignore async write error if db not available
+    // Non-fatal: memory store still works if Supabase is temporarily unavailable
   }
 
   return rawToken

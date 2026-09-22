@@ -88,8 +88,8 @@ function createMockUser(slug: RoleSlug, overrides: Partial<AuthUser> = {}): Auth
 }
 
 // Helper to make authenticated NextRequest
-function createAuthRequest(url: string, user: AuthUser, method = 'GET', body?: any): NextRequest {
-  const token = createServerSession(user)
+async function createAuthRequest(url: string, user: AuthUser, method = 'GET', body?: any): Promise<NextRequest> {
+  const token = await createServerSession(user)
   const req = new NextRequest(url, {
     method,
     headers: {
@@ -158,7 +158,7 @@ async function runTests() {
   console.log('\n--- 2. Revenue API Route Isolation (/api/revenue) ---')
   // Owner Admin access
   const ownerUser = createMockUser('owner_admin')
-  const ownerReq = createAuthRequest('http://localhost:3000/api/revenue', ownerUser)
+  const ownerReq = await createAuthRequest('http://localhost:3000/api/revenue', ownerUser)
   const ownerRes = await getRevenueApi(ownerReq)
   assert(
     ownerRes.status === 200,
@@ -168,7 +168,7 @@ async function runTests() {
   // Non-owner roles MUST receive 403 Forbidden
   for (const role of nonRevenueRoles) {
     const user = createMockUser(role)
-    const req = createAuthRequest('http://localhost:3000/api/revenue', user)
+    const req = await createAuthRequest('http://localhost:3000/api/revenue', user)
     const res = await getRevenueApi(req)
     const body = await res.json()
     assert(
@@ -182,21 +182,21 @@ async function runTests() {
   // ──────────────────────────────────────────────────────────────────────────
   console.log('\n--- 3. Export Controls Isolation ---')
   // Members Export
-  const ownerExpReq = createAuthRequest('http://localhost:3000/api/members/export', ownerUser)
+  const ownerExpReq = await createAuthRequest('http://localhost:3000/api/members/export', ownerUser)
   const ownerExpRes = await exportMembersApi(ownerExpReq)
   assert(
     Boolean(ownerExpRes.status === 200 && ownerExpRes.headers.get('content-type')?.includes('text/csv')),
     'owner_admin successfully exports members directory (HTTP 200 CSV)'
   )
 
-  const hrExpReq = createAuthRequest('http://localhost:3000/api/members/export', createMockUser('hr_head'))
+  const hrExpReq = await createAuthRequest('http://localhost:3000/api/members/export', createMockUser('hr_head'))
   const hrExpRes = await exportMembersApi(hrExpReq)
   assert(
     hrExpRes.status === 403,
     'hr_head is forbidden from exporting members directory (HTTP 403)'
   )
 
-  const trainerExpReq = createAuthRequest('http://localhost:3000/api/members/export', createMockUser('general_trainer'))
+  const trainerExpReq = await createAuthRequest('http://localhost:3000/api/members/export', createMockUser('general_trainer'))
   const trainerExpRes = await exportMembersApi(trainerExpReq)
   assert(
     trainerExpRes.status === 403,
@@ -204,14 +204,14 @@ async function runTests() {
   )
 
   // GSTR-1 Billing Export
-  const ownerGstrReq = createAuthRequest('http://localhost:3000/api/billing/export-gstr1', ownerUser)
+  const ownerGstrReq = await createAuthRequest('http://localhost:3000/api/billing/export-gstr1', ownerUser)
   const ownerGstrRes = await exportGstr1Api(ownerGstrReq)
   assert(
     ownerGstrRes.status === 200,
     'owner_admin successfully exports GSTR-1 data (HTTP 200)'
   )
 
-  const fcGstrReq = createAuthRequest('http://localhost:3000/api/billing/export-gstr1', createMockUser('sales_consultant'))
+  const fcGstrReq = await createAuthRequest('http://localhost:3000/api/billing/export-gstr1', createMockUser('sales_consultant'))
   const fcGstrRes = await exportGstr1Api(fcGstrReq)
   assert(
     fcGstrRes.status === 403,
@@ -233,7 +233,7 @@ async function runTests() {
   })
 
   // Trainer A requesting assigned client mem_001 -> 200 OK
-  const trAReq1 = createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_001', trainerA)
+  const trAReq1 = await createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_001', trainerA)
   const trARes1 = await getTrainerClientApi(trAReq1, { params: { id: 'mem_001' } })
   assert(
     trARes1.status === 200,
@@ -241,7 +241,7 @@ async function runTests() {
   )
 
   // Trainer A requesting UNASSIGNED client mem_002 -> 403 Forbidden (IDOR BLOCKED)
-  const trAReq2 = createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_002', trainerA)
+  const trAReq2 = await createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_002', trainerA)
   const trARes2 = await getTrainerClientApi(trAReq2, { params: { id: 'mem_002' } })
   const idorBody = await trARes2.json()
   assert(
@@ -251,7 +251,7 @@ async function runTests() {
 
   // Head Trainer requesting mem_002 -> 200 OK (Department Oversight)
   const headTrainer = createMockUser('head_trainer', { id: 'usr_ht_01' })
-  const htReq = createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_002', headTrainer)
+  const htReq = await createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_002', headTrainer)
   const htRes = await getTrainerClientApi(htReq, { params: { id: 'mem_002' } })
   assert(
     htRes.status === 200,
@@ -259,7 +259,7 @@ async function runTests() {
   )
 
   // Owner requesting mem_002 -> 200 OK (Executive Oversight)
-  const ownerClReq = createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_002', ownerUser)
+  const ownerClReq = await createAuthRequest('http://localhost:3000/api/training/trainer/clients/mem_002', ownerUser)
   const ownerClRes = await getTrainerClientApi(ownerClReq, { params: { id: 'mem_002' } })
   assert(
     ownerClRes.status === 200,
@@ -330,7 +330,7 @@ async function runTests() {
   )
 
   // Middleware redirects to /change-password when navigating to /overview
-  const reqOverview = createAuthRequest('http://localhost:3000/overview', userMustChange)
+  const reqOverview = await createAuthRequest('http://localhost:3000/overview', userMustChange)
   const resOverview = await middleware(reqOverview)
   assert(
     Boolean(resOverview.status === 307 && resOverview.headers.get('location')?.includes('/change-password')),
@@ -338,7 +338,7 @@ async function runTests() {
   )
 
   // Middleware allows reaching /change-password
-  const reqChangePwPage = createAuthRequest('http://localhost:3000/change-password', userMustChange)
+  const reqChangePwPage = await createAuthRequest('http://localhost:3000/change-password', userMustChange)
   const resChangePwPage = await middleware(reqChangePwPage)
   assert(
     resChangePwPage.status === 200,
@@ -346,7 +346,7 @@ async function runTests() {
   )
 
   // Change password endpoint rejects non-compliant new password
-  const weakPwReq = createAuthRequest('http://localhost:3000/api/auth/change-password', userMustChange, 'POST', {
+  const weakPwReq = await createAuthRequest('http://localhost:3000/api/auth/change-password', userMustChange, 'POST', {
     currentPassword: 'OldPassword123',
     newPassword: 'weak',
     confirmPassword: 'weak',
@@ -358,7 +358,7 @@ async function runTests() {
   )
 
   // Change password endpoint rejects mismatch
-  const mismatchReq = createAuthRequest('http://localhost:3000/api/auth/change-password', userMustChange, 'POST', {
+  const mismatchReq = await createAuthRequest('http://localhost:3000/api/auth/change-password', userMustChange, 'POST', {
     currentPassword: 'OldPassword123',
     newPassword: 'StrongPassword!2026',
     confirmPassword: 'DifferentPassword!2026',
