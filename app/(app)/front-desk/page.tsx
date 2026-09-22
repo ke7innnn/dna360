@@ -132,14 +132,15 @@ export default function FrontDeskPage() {
     // 1. QR Security Validation (90s expiration, anti-replay, invalid-scan cooldown)
     const qrValidation = validateAndConsumeQrToken(rawText)
     if (!qrValidation.valid) {
-      setLastCheckInResult({
-        status: 'DENIED',
+      const payload = {
+        status: 'DENIED' as const,
         message: qrValidation.message || 'QR Verification Failed',
         timestamp: now,
-      })
+      }
+      setLastCheckInResult(payload)
       toast.error(qrValidation.message || 'QR Verification Failed')
       setScanInput('')
-      return
+      return payload
     }
 
     const query = qrValidation.memberCode || rawText.trim()
@@ -156,11 +157,14 @@ export default function FrontDeskPage() {
 
     if (!found) {
       recordInvalidScan()
-      setLastCheckInResult({
-        status: 'DENIED',
+      const payload = {
+        status: 'DENIED' as const,
+        memberName: 'Unregistered Visitor',
+        memberCode: query,
         message: `Unknown code '${query}'. No member found on record.`,
         timestamp: now,
-      })
+      }
+      setLastCheckInResult(payload)
       const unknownLog: AccessLogEntry = {
         id: `acc_${Date.now()}`,
         timestamp: new Date().toISOString(),
@@ -178,45 +182,82 @@ export default function FrontDeskPage() {
       saveAccessLogs(updated)
       setAccessLogs(updated)
       setScanInput('')
-      return
+      return payload
     }
 
     // Evaluate Access Rules
+    let resultPayload: {
+      status: 'GRANTED' | 'GRACE' | 'DENIED'
+      memberName: string
+      memberCode: string
+      message: string
+      timestamp: string
+    }
+
     if (found.status === 'blacklisted' || found.blacklisted) {
+      resultPayload = {
+        status: 'DENIED',
+        memberName: found.name,
+        memberCode: found.member_code,
+        message: 'Turnstile Access Blocked · Member is Blacklisted (Misconduct / Dues)',
+        timestamp: now,
+      }
       setLastCheckInResult({
         status: 'DENIED',
         member: found,
-        message: 'Turnstile Access Blocked · Member is Blacklisted (Misconduct / Dues)',
+        message: resultPayload.message,
         timestamp: now,
       })
       logCheckIn(found, 'DENIED')
     } else if (found.status === 'inactive') {
+      resultPayload = {
+        status: 'DENIED',
+        memberName: found.name,
+        memberCode: found.member_code,
+        message: 'Membership Expired · Please renew at front desk',
+        timestamp: now,
+      }
       setLastCheckInResult({
         status: 'DENIED',
         member: found,
-        message: 'Membership Expired · Please renew at front desk',
+        message: resultPayload.message,
         timestamp: now,
       })
       logCheckIn(found, 'DENIED')
     } else if (found.status === 'grace_period') {
+      resultPayload = {
+        status: 'GRACE',
+        memberName: found.name,
+        memberCode: found.member_code,
+        message: 'Grace Period Access · Plan expired; 5 days remaining in grace window',
+        timestamp: now,
+      }
       setLastCheckInResult({
         status: 'GRACE',
         member: found,
-        message: 'Grace Period Access · Plan expired; 5 days remaining in grace window',
+        message: resultPayload.message,
         timestamp: now,
       })
       logCheckIn(found, 'GRACE')
     } else {
+      resultPayload = {
+        status: 'GRANTED',
+        memberName: found.name,
+        memberCode: found.member_code,
+        message: 'Turnstile Gate 1 Unlocked · Welcome to DNA 360 Powai',
+        timestamp: now,
+      }
       setLastCheckInResult({
         status: 'GRANTED',
         member: found,
-        message: 'Turnstile Gate 1 Unlocked · Welcome to DNA 360 Powai',
+        message: resultPayload.message,
         timestamp: now,
       })
       logCheckIn(found, 'GRANTED')
     }
 
     setScanInput('')
+    return resultPayload
   }
 
   const handleProcessScan = (e: React.FormEvent) => {
@@ -481,13 +522,14 @@ export default function FrontDeskPage() {
                 </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="primary"
                   size="lg"
                   onClick={() => setCameraModalOpen(true)}
-                  className="flex items-center gap-2 border-[#38BDF8]/40 hover:border-[#38BDF8] hover:bg-[#38BDF8]/10 text-[#38BDF8]"
+                  className="flex items-center gap-2 bg-gradient-to-r from-[#0284C7] to-[#2563EB] hover:from-[#0369A1] hover:to-[#1D4ED8] text-white shadow-[0_0_20px_rgba(37,99,235,0.35)] border border-[#38BDF8]/50"
                 >
-                  <Camera className="w-4 h-4" />
-                  <span>Scan Camera</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <Camera className="w-4 h-4 text-[#38BDF8]" />
+                  <span>Live Kiosk Scanner</span>
                 </Button>
                 <Button type="submit" variant="primary" size="lg">
                   Process Gate
@@ -689,8 +731,9 @@ export default function FrontDeskPage() {
         isOpen={cameraModalOpen}
         onClose={() => setCameraModalOpen(false)}
         onScanSuccess={executeScanLookup}
-        title="Gate 1 Optical Camera Scanner"
-        description="Hold member dynamic QR badge or token in front of camera"
+        continuous={true}
+        title="Gate 1 Optical Scanner · Cult Kiosk Mode"
+        description="Continuous kiosk feed — members scan their dynamic QR badge one by one to check in."
       />
       <MemberQrModal
         isOpen={qrModalOpen}

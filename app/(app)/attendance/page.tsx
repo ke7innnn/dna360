@@ -88,6 +88,16 @@ export default function AttendancePage() {
         description: result.entry.reason,
       })
     }
+
+    const isGranted = result.entry.decision === 'GRANTED'
+    const isGrace = result.entry.decision === 'GRANTED_GRACE_PERIOD'
+    return {
+      status: (isGranted ? 'GRANTED' : isGrace ? 'GRACE' : 'DENIED') as 'GRANTED' | 'GRACE' | 'DENIED',
+      memberName: result.entry.memberName,
+      memberCode: result.entry.memberCode,
+      message: result.entry.reason,
+      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    }
   }
 
   const decisionBadgeMap: Record<AccessDecision, { status: string; label: string }> = {
@@ -336,8 +346,9 @@ export default function AttendancePage() {
         isOpen={cameraModalOpen}
         onClose={() => setCameraModalOpen(false)}
         onScanSuccess={(scannedText) => handleSimulateScan(scannedText)}
-        title="Optical Turnstile Scanner"
-        description="Align member QR pass or rolling OTP code within the frame"
+        continuous={true}
+        title="Turnstile Gate Simulator · Cult Kiosk Mode"
+        description="Continuous optical scan feed — aligns member QR code to verify gate entry"
       />
       <MemberQrModal
         isOpen={qrModalOpen}
