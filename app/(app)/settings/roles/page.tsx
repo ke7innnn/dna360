@@ -84,9 +84,7 @@ export default function RolesSettingsPage() {
                 <span className="font-display font-semibold text-sm text-[var(--ink)]">
                   {role.name}
                 </span>
-                {role.isSystem ? (
-                  <Badge status="info" size="sm">System</Badge>
-                ) : isOwner ? (
+                {!role.isSystem && isOwner ? (
                   <button
                     onClick={() => setRoleToDelete(role)}
                     className="text-[var(--accent)] hover:opacity-80 p-1 transition-opacity cursor-pointer"

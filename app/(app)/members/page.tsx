@@ -215,28 +215,28 @@ export default function MembersPage() {
           <table className="w-full border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-[var(--line)]">
-                <th className="py-3 px-4 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal w-[26%]">
+                <th className="py-3 px-4 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left w-[26%]">
                   MEMBER
                 </th>
-                <th className="py-3 px-3 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal">
+                <th className="py-3 px-3 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left">
                   PLAN
                 </th>
-                <th className="py-3 px-3 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal">
+                <th className="py-3 px-3 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left">
                   STATUS
                 </th>
-                <th className="py-3 px-3 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal">
-                  LAST CHECK-IN
+                <th className="py-3 px-3 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left">
+                  LAST ATTENDED
                 </th>
-                <th className="py-3 px-3 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal">
-                  PT LEFT
+                <th className="py-3 px-3 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left">
+                  PT SESSIONS
                 </th>
-                <th className="py-3 px-3 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal">
+                <th className="py-3 px-3 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left">
                   TRAINER
                 </th>
-                <th className="py-3 px-3 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal">
+                <th className="py-3 px-3 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left">
                   DUES
                 </th>
-                <th className="py-3 px-4 font-data text-[9px] text-[var(--ink-3)] tracking-wider uppercase font-normal">
+                <th className="py-3 px-4 font-ui text-[10.5px] text-[var(--muted)] tracking-[0.1em] uppercase font-semibold text-left">
                   EXPIRES
                 </th>
               </tr>
@@ -284,14 +284,14 @@ export default function MembersPage() {
                     {/* Member */}
                     <td className="py-2.5 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-[9px] bg-[var(--surface-2)] flex items-center justify-center font-data text-[9.5px] text-[var(--ink-2)] shrink-0">
+                        <div className="w-7 h-7 rounded-[9px] bg-[var(--surface-2)] flex items-center justify-center font-ui font-semibold text-[10px] text-[var(--ink-2)] shrink-0">
                           {initials}
                         </div>
                         <div>
-                          <b className="text-white font-medium block tracking-tight">
+                          <b className="text-white font-medium block tracking-tight font-ui text-[13px]">
                             {member.name}
                           </b>
-                          <span className="text-[10.5px] text-[var(--ink-3)] block mt-0.5">
+                          <span className="text-[11px] text-[var(--muted)] font-sans tabular-nums block mt-0.5">
                             {member.member_code}
                           </span>
                         </div>
@@ -299,7 +299,7 @@ export default function MembersPage() {
                     </td>
 
                     {/* Plan */}
-                    <td className="py-2.5 px-3 text-[var(--ink)]">
+                    <td className="py-2.5 px-3 text-[var(--ink)] font-ui text-[13px]">
                       {planName}
                     </td>
 
@@ -317,21 +317,21 @@ export default function MembersPage() {
                     </td>
 
                     {/* Last Check-in */}
-                    <td className="py-2.5 px-3 font-data text-[11.5px] text-[var(--ink-2)]">
+                    <td className="py-2.5 px-3 font-sans tabular-nums text-[12px] text-[var(--ink-2)]">
                       {lastCheckinText}
                     </td>
 
                     {/* PT Left */}
-                    <td className="py-2.5 px-3 font-data text-[11.5px]">
+                    <td className="py-2.5 px-3 font-sans tabular-nums text-[12px]">
                       {ptSessionsText === '—' ? (
                         <span className="text-[var(--ink-3)]">—</span>
                       ) : (
-                        <span className="text-[var(--ink-2)]">{ptSessionsText}</span>
+                        <span className="text-[var(--ink-2)] font-medium">{ptSessionsText}</span>
                       )}
                     </td>
 
                     {/* Trainer */}
-                    <td className="py-2.5 px-3 text-[var(--ink)]">
+                    <td className="py-2.5 px-3 font-ui text-[13px] text-[var(--ink)]">
                       {trainerName === 'Self' ? (
                         <span className="text-[var(--ink-3)]">Self</span>
                       ) : (
@@ -340,7 +340,7 @@ export default function MembersPage() {
                     </td>
 
                     {/* Dues */}
-                    <td className="py-2.5 px-3 font-data text-[11.5px]">
+                    <td className="py-2.5 px-3 font-sans tabular-nums text-[12px]">
                       {duesAmount ? (
                         <span className="text-[#38BDF8] font-semibold">{duesAmount}</span>
                       ) : (
@@ -349,7 +349,7 @@ export default function MembersPage() {
                     </td>
 
                     {/* Expires */}
-                    <td className="py-2.5 px-4 font-data text-[11.5px] text-[var(--ink-2)]">
+                    <td className="py-2.5 px-4 font-sans tabular-nums text-[12px] text-[var(--ink-2)]">
                       {expiryDateStr}
                     </td>
                   </tr>
@@ -361,19 +361,19 @@ export default function MembersPage() {
 
         {/* Pagination Bar */}
         <div className="p-3 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--ink-3)]">
-          <span className="font-data text-[11px]">
+          <span className="font-sans tabular-nums text-[11.5px] text-[var(--muted)]">
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, members.length)} of {members.length} members
           </span>
 
           <div className="flex items-center gap-2">
             <button
-              disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-2.5 py-1 rounded-lg bg-[var(--surface-2)] text-white text-xs disabled:opacity-30 disabled:cursor-not-allowed"
+              disabled={page === 1}
+              className="px-2.5 py-1 rounded bg-[var(--surface-2)] text-xs text-[var(--ink-2)] disabled:opacity-30 cursor-pointer"
             >
-              Previous
+              Prev
             </button>
-            <span className="font-data text-white text-xs px-2">
+            <span className="font-sans tabular-nums text-white text-xs px-2">
               Page {page} of {Math.max(1, totalPages)}
             </span>
             <button

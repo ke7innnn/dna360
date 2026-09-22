@@ -51,19 +51,10 @@ export default function PermissionMatrix() {
                   key={role.id}
                   className="px-3 py-4 text-center min-w-[110px]"
                 >
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center justify-center">
                     <span className="font-ui text-xs font-semibold text-[var(--ink)] truncate max-w-[120px]">
                       {role.name}
                     </span>
-                    {role.isSystem ? (
-                      <span className="font-ui text-[9px] px-1.5 py-0.2 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(59,130,246,0.30)] font-semibold">
-                        SYSTEM
-                      </span>
-                    ) : (
-                      <span className="font-ui text-[9px] px-1.5 py-0.2 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(59,130,246,0.30)] font-semibold">
-                        CUSTOM
-                      </span>
-                    )}
                   </div>
                 </th>
               ))}

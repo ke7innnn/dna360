@@ -30,7 +30,6 @@ export const ALL_NAV_GROUPS: AppNavGroup[] = [
     label: 'Overview',
     items: [
       { id: 'overview', label: 'Overview', icon: 'BarChart3', href: '/overview', staffOnly: true },
-      { id: 'dashboard', label: 'Member Portal', icon: 'LayoutDashboard', href: '/dashboard', requiredCapability: 'portal.access' },
       { id: 'training', label: 'Workout & Training', icon: 'Dumbbell', href: '/m' },
     ],
   },

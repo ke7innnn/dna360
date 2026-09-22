@@ -222,66 +222,79 @@ export default function LeadsPage() {
 
       {/* 4. Kanban Pipeline View */}
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3.5 overflow-x-auto pb-4">
+        <div className="flex items-start gap-4 overflow-x-auto pb-6 pt-1 scrollbar-thin">
           {pipelineColumns.map(({ stage, label, borderAccent }) => {
             const stageLeads = leads.filter((l) => l.stage === stage)
             const stageTotalMinor = stageLeads.reduce((acc, l) => acc + (l.expectedDealValueMinor || l.potentialValueMinor || 0), 0)
 
             return (
-              <div key={stage} className={cn("flex flex-col rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)] p-3 min-w-[210px] space-y-3", borderAccent)}>
-                <div className="flex items-center justify-between border-b border-[var(--line)] pb-2">
-                  <div className="flex items-center gap-1.5">
+              <div
+                key={stage}
+                className={cn(
+                  "w-[270px] shrink-0 flex flex-col rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)] p-3.5 space-y-3 shadow-sm",
+                  borderAccent
+                )}
+              >
+                <div className="flex items-center justify-between border-b border-[var(--line)] pb-2.5">
+                  <div className="flex items-center gap-2">
                     <span className="font-ui text-xs font-semibold text-[var(--ink)] capitalize">
                       {label}
                     </span>
-                    <span className="px-1.5 py-0.2 rounded-full font-mono text-[10px] bg-[var(--surface-2)] text-[var(--muted)] border border-[var(--line-soft)]">
+                    <span className="px-2 py-0.5 rounded-full font-sans tabular-nums text-[10.5px] font-semibold bg-[var(--surface-2)] text-[var(--muted)] border border-[var(--line-soft)]">
                       {stageLeads.length}
                     </span>
                   </div>
-                  <span className="font-data text-[10px] text-[var(--muted)] font-bold">
+                  <span className="font-sans tabular-nums text-[11px] text-[var(--ink-2)] font-bold">
                     {formatINR(stageTotalMinor)}
                   </span>
                 </div>
 
-                <div className="space-y-2 flex-1 min-h-[120px]">
-                  {stageLeads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      onClick={() => {
-                        setSelectedLead(lead)
-                        setDrawerOpen(true)
-                      }}
-                      className="p-3 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] cursor-pointer hover:border-[rgba(59,130,246,0.35)] transition-all duration-140 space-y-2 group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-ui text-xs font-semibold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-1">
-                          {lead.name}
-                        </span>
-                        <span className="font-data text-[11px] font-bold text-[var(--ink)] tabular-nums">
-                          {formatINR(lead.expectedDealValueMinor || lead.potentialValueMinor || 0)}
-                        </span>
-                      </div>
-
-                      <p className="font-ui text-[11px] text-[var(--muted)] line-clamp-1">
-                        {lead.goal}
-                      </p>
-
-                      <div className="pt-1.5 border-t border-[var(--line-soft)] flex items-center justify-between text-[10px] font-data text-[var(--muted-2)]">
-                        <span>{lead.source}</span>
-                        {stage !== 'converted' && stage !== 'lost' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleAdvanceStage(lead.id, lead.stage)
-                            }}
-                            className="font-ui text-[10.5px] text-[var(--accent)] hover:underline font-semibold cursor-pointer"
-                          >
-                            Advance →
-                          </button>
-                        )}
-                      </div>
+                <div className="space-y-2.5 flex-1 min-h-[140px]">
+                  {stageLeads.length === 0 ? (
+                    <div className="h-full min-h-[120px] flex items-center justify-center p-4 rounded-[var(--r-md)] border border-dashed border-[var(--line-soft)] text-center text-[11px] text-[var(--muted-2)] font-ui">
+                      No prospects in stage
                     </div>
-                  ))}
+                  ) : (
+                    stageLeads.map((lead) => (
+                      <div
+                        key={lead.id}
+                        onClick={() => {
+                          setSelectedLead(lead)
+                          setDrawerOpen(true)
+                        }}
+                        className="p-3 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] cursor-pointer hover:border-[rgba(59,130,246,0.35)] hover:shadow-glow-sm transition-all duration-140 space-y-2 group"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-ui text-xs font-semibold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-1">
+                            {lead.name}
+                          </span>
+                          <span className="font-sans tabular-nums text-xs font-bold text-[var(--ink)] shrink-0">
+                            {formatINR(lead.expectedDealValueMinor || lead.potentialValueMinor || 0)}
+                          </span>
+                        </div>
+
+                        <p className="font-ui text-[11px] text-[var(--muted)] line-clamp-1">
+                          {lead.goal}
+                        </p>
+
+                        <div className="pt-2 border-t border-[var(--line-soft)] flex items-center justify-between text-[10.5px] font-ui text-[var(--muted-2)]">
+                          <span className="uppercase text-[10px] tracking-wider">{lead.source}</span>
+                          {stage !== 'converted' && stage !== 'lost' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAdvanceStage(lead.id, lead.stage)
+                              }}
+                              className="font-ui text-[11px] text-[var(--accent)] hover:underline font-semibold cursor-pointer transition-colors"
+                            >
+                              Advance →
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )

@@ -399,7 +399,7 @@ export default function ProductsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-4 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)] backdrop-blur-sm flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="font-data text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
               Total SKUs
             </span>
             <div className="font-sans font-bold tabular-nums text-xl text-[var(--ink)]">
@@ -414,7 +414,7 @@ export default function ProductsPage() {
 
         <div className="p-4 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)] backdrop-blur-sm flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="font-data text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
               Memberships
             </span>
             <div className="font-sans font-bold tabular-nums text-xl text-[var(--ink)]">
@@ -429,7 +429,7 @@ export default function ProductsPage() {
 
         <div className="p-4 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)] backdrop-blur-sm flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="font-data text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
               Personal Training
             </span>
             <div className="font-sans font-bold tabular-nums text-xl text-[var(--ink)]">
@@ -444,7 +444,7 @@ export default function ProductsPage() {
 
         <div className="p-4 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)] backdrop-blur-sm flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="font-data text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
               GST SAC Invariant
             </span>
             <div className="font-sans font-bold tabular-nums text-xl text-emerald-400 flex items-center gap-1.5">
@@ -499,7 +499,7 @@ export default function ProductsPage() {
         {/* Secondary Contextual Subcategory Row */}
         {availableSubcategories.length > 0 && (
           <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 border-t border-[var(--line-soft)]">
-            <span className="font-data text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted-2)] shrink-0 mr-1 flex items-center gap-1">
+            <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted-2)] shrink-0 mr-1 flex items-center gap-1">
               <SlidersHorizontal className="w-3 h-3" />
               Subcategory:
             </span>
@@ -578,7 +578,7 @@ export default function ProductsPage() {
           {/* Minimal Sort Dropdown */}
           <div className="flex items-center gap-2 bg-[var(--bg-elev)] border border-[var(--line)] rounded-[var(--r-md)] px-3 h-[38px]">
             <ArrowUpDown className="w-3.5 h-3.5 text-[var(--muted)] shrink-0" />
-            <span className="font-data text-[10.5px] uppercase tracking-[0.12em] text-[var(--muted)] shrink-0">
+            <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.12em] text-[var(--muted)] shrink-0">
               Sort:
             </span>
             <select
@@ -624,7 +624,7 @@ export default function ProductsPage() {
 
         {/* Quick price range preview */}
         {filteredAndSortedProducts.length > 0 && (
-          <div className="font-data text-[11px] text-[var(--muted-2)]">
+          <div className="font-sans tabular-nums text-[11px] text-[var(--muted-2)]">
             Range:{' '}
             <span className="font-sans tabular-nums text-[var(--ink)]">
               {formatINR(Math.min(...filteredAndSortedProducts.map((p) => p.list_price)))}
@@ -675,12 +675,12 @@ export default function ProductsPage() {
               >
                 {/* Header Row: Category & Tax Pill */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="font-data text-[10px] uppercase tracking-[0.14em] font-semibold text-[var(--accent)] px-2.5 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--line)] truncate">
+                  <span className="font-sans tabular-nums text-[10px] uppercase tracking-[0.14em] font-semibold text-[var(--accent)] px-2.5 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--line)] truncate">
                     {CATEGORY_LABELS[prod.category] || prod.category}
                   </span>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="font-data text-[10px] text-[var(--muted)] px-2 py-0.5 rounded bg-[var(--bg-elev)] border border-[var(--line-soft)]">
+                    <span className="font-sans tabular-nums text-[10px] text-[var(--muted)] px-2 py-0.5 rounded bg-[var(--bg-elev)] border border-[var(--line-soft)]">
                       {(prod.tax_rate * 100).toFixed(0)}% SAC {prod.sac_code}
                     </span>
                   </div>
@@ -695,7 +695,7 @@ export default function ProductsPage() {
                   </div>
 
                   {isPending && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-data font-semibold bg-[var(--amber-dim)] text-[var(--amber)] border border-[rgba(245,158,11,0.3)]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-sans tabular-nums font-semibold bg-[var(--amber-dim)] text-[var(--amber)] border border-[rgba(245,158,11,0.3)]">
                       <AlertTriangle className="w-2.5 h-2.5" />
                       PENDING NAMING
                     </span>
@@ -714,11 +714,11 @@ export default function ProductsPage() {
                     <span className="font-sans font-bold tabular-nums text-2xl text-[var(--ink)] tracking-tight">
                       {formatINR(prod.list_price)}
                     </span>
-                    <span className="font-data text-[10.5px] text-[var(--muted)]">
+                    <span className="font-sans tabular-nums text-[10.5px] text-[var(--muted)]">
                       Incl. {(prod.tax_rate * 100).toFixed(0)}% GST
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-[10.5px] font-data text-[var(--muted-2)] pt-1 border-t border-[var(--line-soft)]">
+                  <div className="flex justify-between items-center text-[10.5px] font-sans tabular-nums text-[var(--muted-2)] pt-1 border-t border-[var(--line-soft)]">
                     <span>Taxable: {formatINR(gst.taxable)}</span>
                     <span className="text-[var(--accent)]">GST: {formatINR(gst.totalTax)}</span>
                   </div>
@@ -743,7 +743,7 @@ export default function ProductsPage() {
 
                 {/* Hover Footer Action */}
                 <div className="mt-3.5 pt-2.5 flex items-center justify-between text-[11px] font-ui text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors">
-                  <span className="font-data text-[10px] text-[var(--muted-2)]">
+                  <span className="font-sans tabular-nums text-[10px] text-[var(--muted-2)]">
                     ID: {prod.id}
                   </span>
                   <div className="flex items-center gap-1 font-medium">
@@ -761,7 +761,7 @@ export default function ProductsPage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-[var(--bg-elev)] border-b border-[var(--line)] sticky top-0 z-10 h-[44px] font-data text-[10.5px] uppercase tracking-[0.14em] font-medium text-[var(--muted)] select-none">
+                <tr className="bg-[var(--bg-elev)] border-b border-[var(--line)] sticky top-0 z-10 h-[44px] font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] font-medium text-[var(--muted)] select-none">
                   <th
                     className="px-5 py-2.5 text-left cursor-pointer hover:text-white transition-colors"
                     onClick={() => setSortOption(sortOption === 'name_asc' ? 'standard' : 'name_asc')}
@@ -826,7 +826,7 @@ export default function ProductsPage() {
                           {prod.name}
                         </span>
                         {prod.pending_name_confirmation && (
-                          <span className="px-2 py-0.5 rounded-full text-[9.5px] font-data font-semibold bg-[var(--amber-dim)] text-[var(--amber)] border border-[rgba(245,158,11,0.3)]">
+                          <span className="px-2 py-0.5 rounded-full text-[9.5px] font-sans tabular-nums font-semibold bg-[var(--amber-dim)] text-[var(--amber)] border border-[rgba(245,158,11,0.3)]">
                             NAME PENDING
                           </span>
                         )}
@@ -845,7 +845,7 @@ export default function ProductsPage() {
                     <td className="px-5 py-3 text-right font-sans font-bold text-[13.5px] text-[var(--ink)] tabular-nums">
                       {formatINR(prod.list_price)}
                     </td>
-                    <td className="px-5 py-3 text-right font-data text-xs text-[var(--muted)] tabular-nums">
+                    <td className="px-5 py-3 text-right font-sans tabular-nums text-xs text-[var(--muted)] tabular-nums">
                       {(prod.tax_rate * 100).toFixed(0)}% (SAC {prod.sac_code})
                     </td>
                     <td className="px-5 py-3 text-center font-sans text-xs text-[var(--ink)] tabular-nums">
@@ -907,7 +907,7 @@ export default function ProductsPage() {
             {/* Price & Tax Box */}
             <div className="p-5 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-data text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
+                <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
                   Total List Price (Incl. GST)
                 </span>
                 <span className="font-sans text-2xl font-bold text-[var(--ink)] tabular-nums">
@@ -916,31 +916,31 @@ export default function ProductsPage() {
               </div>
 
               <div className="pt-3 border-t border-[var(--line)] space-y-2 text-xs">
-                <div className="flex justify-between text-[var(--muted)] font-data">
+                <div className="flex justify-between text-[var(--muted)] font-sans tabular-nums">
                   <span>Taxable Base Value:</span>
                   <span className="text-[var(--ink)] font-semibold font-sans tabular-nums">
                     {formatINR(selectedProductGst.taxable)}
                   </span>
                 </div>
-                <div className="flex justify-between text-[var(--muted)] font-data">
+                <div className="flex justify-between text-[var(--muted)] font-sans tabular-nums">
                   <span>GST Classification:</span>
                   <span className="text-[var(--ink)]">
                     {(selectedProduct.tax_rate * 100).toFixed(0)}% (SAC {selectedProduct.sac_code})
                   </span>
                 </div>
-                <div className="flex justify-between text-[var(--muted)] font-data">
+                <div className="flex justify-between text-[var(--muted)] font-sans tabular-nums">
                   <span>CGST ({(selectedProduct.tax_rate * 50).toFixed(1)}%):</span>
                   <span className="text-[var(--accent)] font-semibold font-sans tabular-nums">
                     {formatINR(selectedProductGst.cgst)}
                   </span>
                 </div>
-                <div className="flex justify-between text-[var(--muted)] font-data">
+                <div className="flex justify-between text-[var(--muted)] font-sans tabular-nums">
                   <span>SGST ({(selectedProduct.tax_rate * 50).toFixed(1)}%):</span>
                   <span className="text-[var(--accent)] font-semibold font-sans tabular-nums">
                     {formatINR(selectedProductGst.sgst)}
                   </span>
                 </div>
-                <div className="flex justify-between text-[var(--muted)] font-data pt-2 border-t border-[var(--line-soft)]">
+                <div className="flex justify-between text-[var(--muted)] font-sans tabular-nums pt-2 border-t border-[var(--line-soft)]">
                   <span className="font-semibold text-[var(--ink)]">Total GST Liability Embedded:</span>
                   <span className="font-bold text-[var(--accent)] font-sans tabular-nums">
                     {formatINR(selectedProductGst.totalTax)}
@@ -951,12 +951,12 @@ export default function ProductsPage() {
 
             {/* Specifications & Entitlements */}
             <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-3 text-xs">
-              <h4 className="font-data text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)]">
+              <h4 className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)]">
                 Entitlement Specifications
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="font-data text-[10.5px] text-[var(--muted)] block">Sessions Entitled:</span>
+                  <span className="font-sans tabular-nums text-[10.5px] text-[var(--muted)] block">Sessions Entitled:</span>
                   <span className="font-semibold text-[var(--ink)] font-sans tabular-nums">
                     {selectedProduct.session_count !== null
                       ? `${selectedProduct.session_count} Sessions`
@@ -964,7 +964,7 @@ export default function ProductsPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="font-data text-[10.5px] text-[var(--muted)] block">Validity Window:</span>
+                  <span className="font-sans tabular-nums text-[10.5px] text-[var(--muted)] block">Validity Window:</span>
                   <span className="font-semibold text-[var(--ink)] font-sans tabular-nums">
                     {selectedProduct.validity_days
                       ? `${selectedProduct.validity_days} Days (~${(selectedProduct.validity_days / 30).toFixed(0)} Mo)`
@@ -974,7 +974,7 @@ export default function ProductsPage() {
 
                 {selectedProduct.access_window && (
                   <div className="col-span-2 pt-2 border-t border-[var(--line-soft)]">
-                    <span className="font-data text-[10.5px] text-[var(--muted)] block">Access Time Restriction:</span>
+                    <span className="font-sans tabular-nums text-[10.5px] text-[var(--muted)] block">Access Time Restriction:</span>
                     <span className="font-semibold text-[var(--amber)]">
                       {selectedProduct.access_window.start} – {selectedProduct.access_window.end} ({selectedProduct.access_window.label})
                     </span>
@@ -986,7 +986,7 @@ export default function ProductsPage() {
             {/* Description */}
             {selectedProduct.description && (
               <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-xs space-y-1">
-                <span className="font-data text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)] block">
+                <span className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)] block">
                   Product Description
                 </span>
                 <p className="text-[var(--ink-2)] leading-relaxed">{selectedProduct.description}</p>
@@ -1046,7 +1046,7 @@ export default function ProductsPage() {
               required
             />
             <div className="flex flex-col gap-1.5">
-              <label className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
+              <label className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
                 Tax Rate (SAC)
               </label>
               <select
@@ -1062,7 +1062,7 @@ export default function ProductsPage() {
 
           {/* Live GST Computation Preview in Form */}
           {liveModalBreakdown && (
-            <div className="p-3 rounded-[var(--r-sm)] bg-[var(--surface-2)] border border-[var(--line)] text-xs space-y-1 font-data">
+            <div className="p-3 rounded-[var(--r-sm)] bg-[var(--surface-2)] border border-[var(--line)] text-xs space-y-1 font-sans tabular-nums">
               <div className="flex justify-between text-[var(--muted)]">
                 <span>Taxable Base:</span>
                 <span className="text-[var(--ink)] font-sans tabular-nums font-semibold">
@@ -1096,7 +1096,7 @@ export default function ProductsPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
+            <label className="font-sans tabular-nums text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)]">
               Category Pillar
             </label>
             <select

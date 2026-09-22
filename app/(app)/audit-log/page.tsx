@@ -4,19 +4,20 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   FileText, Search, Filter, ShieldCheck, Eye, Download,
-  Activity, RefreshCw, KeyRound, Lock, AlertTriangle,
+  Activity, RefreshCw, KeyRound, Lock, AlertTriangle, X
 } from 'lucide-react'
 import Card from '@/components/app/ui/glass-card'
 import StatTile from '@/components/app/ui/StatTile'
 import DataTable, { type DataTableColumn } from '@/components/app/ui/data-table'
 import Button from '@/components/app/ui/button'
-import Badge, { StatusPill } from '@/components/app/ui/badge'
+import Badge from '@/components/app/ui/badge'
 import PageHeader from '@/components/app/ui/PageHeader'
 import AuditDetailModal from '@/components/app/audit/AuditDetailModal'
 import { getAuditLogs } from '@/lib/audit'
 import { formatDateTime } from '@/lib/utils'
 import type { AuditLogEntry, AuditAction } from '@/types/auth'
 import { toast } from '@/components/app/ui/toast'
+import { cn } from '@/lib/utils'
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([])
@@ -61,9 +62,9 @@ export default function AuditLogPage() {
       header: 'Timestamp',
       accessorKey: 'timestamp',
       sortable: true,
-      width: '190px',
+      width: '180px',
       cell: (val) => (
-        <span className="tabular-nums text-xs font-data text-[var(--muted)]">
+        <span className="font-sans tabular-nums text-xs text-[var(--muted)]">
           {formatDateTime(val as string)}
         </span>
       ),
@@ -76,7 +77,7 @@ export default function AuditLogPage() {
       cell: (_, row) => (
         <div>
           <p className="font-ui font-semibold text-xs text-[var(--ink)]">{row.actor.name}</p>
-          <span className="font-data text-[10px] uppercase text-[var(--muted)]">{row.actor.role}</span>
+          <span className="font-ui text-[10.5px] uppercase tracking-wider text-[var(--muted)]">{row.actor.role}</span>
         </div>
       ),
     },
@@ -85,7 +86,7 @@ export default function AuditLogPage() {
       header: 'Action',
       accessorKey: 'action',
       sortable: true,
-      width: '140px',
+      width: '130px',
       cell: (val) => {
         const action = String(val)
         return (
@@ -100,19 +101,23 @@ export default function AuditLogPage() {
       header: 'Entity / Target',
       cell: (_, row) => (
         <div>
-          <span className="font-data text-xs text-[var(--ink)]">{row.entity}</span>
-          <span className="font-data text-[10px] text-[var(--muted)] block">ID: {row.entityId}</span>
+          <span className="font-ui text-xs font-semibold text-[var(--ink)] block">{row.entity}</span>
+          <span className="font-sans tabular-nums text-[10.5px] text-[var(--muted-2)] block truncate max-w-[150px]">
+            {row.entityId}
+          </span>
         </div>
       ),
     },
     {
       id: 'details',
-      header: 'Metadata / IP Address',
+      header: 'Source & Location',
       cell: (_, row) => (
-        <div className="font-data text-[11px] text-[var(--muted)]">
-          <span>IP: {row.ipAddress || '192.168.1.1'}</span>
-          <span className="block truncate max-w-[200px] text-[10px] text-[var(--muted-2)]">
-            UA: {row.userAgent || 'Chrome / macOS'}
+        <div className="flex items-center gap-2 font-ui text-xs">
+          <span className="px-2 py-0.5 rounded bg-[var(--surface-2)] border border-[var(--line-soft)] font-sans tabular-nums text-[11px] text-[var(--ink-2)]">
+            {row.ipAddress || '127.0.0.1'}
+          </span>
+          <span className="text-[11px] text-[var(--muted)]">
+            {row.branchId ? `Branch: ${row.branchId.toUpperCase()}` : 'Powai Studio'}
           </span>
         </div>
       ),
@@ -130,6 +135,7 @@ export default function AuditLogPage() {
             setSelectedEntry(row)
             setModalOpen(true)
           }}
+          className="text-xs h-7 px-2.5 cursor-pointer"
         >
           View Diff
         </Button>
@@ -159,8 +165,17 @@ export default function AuditLogPage() {
     toast.success('Audit Log exported to CSV')
   }
 
+  const quickFilters = [
+    { id: 'all', label: 'All Events' },
+    { id: 'OVERRIDE', label: 'Security Overrides' },
+    { id: 'LOGIN', label: 'Authentication' },
+    { id: 'CREATE', label: 'Creations' },
+    { id: 'UPDATE', label: 'Updates' },
+    { id: 'REVOKE_SESSION', label: 'Session Revocations' },
+  ]
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto select-none">
+    <div className="space-y-6 max-w-7xl mx-auto select-none pb-12">
       {/* 1. Header */}
       <PageHeader
         eyebrow="SECURITY & GOVERNANCE · SYSTEM AUDIT"
@@ -173,7 +188,7 @@ export default function AuditLogPage() {
             onClick={handleExportCsv}
             icon={<Download className="w-3.5 h-3.5" />}
           >
-            Export audit log
+            Export CSV
           </Button>
         }
       />
@@ -208,33 +223,53 @@ export default function AuditLogPage() {
         />
       </div>
 
-      {/* 3. Search and Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--muted)]" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by actor name, action, or entity ID..."
-            className="w-full h-[36px] pl-9 pr-3.5 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none"
-          />
+      {/* 3. Search and Quick Action Filter Chips */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--muted)] pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by actor name, action, or entity ID..."
+              className="w-full h-[38px] pl-9 pr-8 font-ui text-xs rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--muted-2)] focus:border-[var(--accent)] outline-none transition-colors"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-white p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-ui text-xs text-[var(--muted)]">
+              Showing <span className="font-sans font-bold tabular-nums text-[var(--ink)]">{logs.length}</span> audit records
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="h-[36px] px-3 font-ui text-xs rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] outline-none"
-          >
-            <option value="all">All Actions</option>
-            <option value="CREATE">CREATE</option>
-            <option value="UPDATE">UPDATE</option>
-            <option value="DELETE">DELETE</option>
-            <option value="LOGIN">LOGIN</option>
-            <option value="OVERRIDE">OVERRIDE</option>
-            <option value="REVOKE_SESSION">REVOKE_SESSION</option>
-          </select>
+        {/* Quick Filter Pill Buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {quickFilters.map((qf) => (
+            <button
+              key={qf.id}
+              type="button"
+              onClick={() => setActionFilter(qf.id)}
+              className={cn(
+                'h-[30px] px-3 rounded-full font-ui text-xs font-medium cursor-pointer transition-colors whitespace-nowrap',
+                actionFilter === qf.id
+                  ? 'bg-[var(--accent)] text-white shadow-glow-sm'
+                  : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)] hover:text-white hover:bg-[var(--surface-2)]'
+              )}
+            >
+              {qf.label}
+            </button>
+          ))}
         </div>
       </div>
 
