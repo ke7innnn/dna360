@@ -68,6 +68,7 @@ export default function FrontDeskPage() {
 
   const [isOnline, setIsOnline] = useState(true)
   const [offlineQueueCount, setOfflineQueueCount] = useState(0)
+  const [liveClock, setLiveClock] = useState('')
 
   const [leadModalOpen, setLeadModalOpen] = useState(false)
   const [posModalOpen, setPosModalOpen] = useState(false)
@@ -75,6 +76,19 @@ export default function FrontDeskPage() {
   const [lockerModalOpen, setLockerModalOpen] = useState(false)
   const [cameraModalOpen, setCameraModalOpen] = useState(false)
   const [qrModalOpen, setQrModalOpen] = useState(false)
+
+  // Live real-time studio clock (ticking every second)
+  useEffect(() => {
+    const update = () => {
+      const now = new Date()
+      const d = now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+      const t = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+      setLiveClock(`${d} · ${t}`)
+    }
+    update()
+    const timer = setInterval(update, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Network listener
   useEffect(() => {
@@ -459,7 +473,14 @@ export default function FrontDeskPage() {
         italicWord="Turnstile"
         description="Mobile-first gate scanner, turnstile verification, trial pass issuance, and offline-tolerant access queue."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            {liveClock && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.1] text-xs text-[var(--ink)] font-mono tabular-nums shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                <Clock className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <span>{liveClock}</span>
+              </div>
+            )}
             {isOnline ? (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.25)] text-xs text-[#10B981] font-semibold">
                 <Wifi className="w-3.5 h-3.5" />

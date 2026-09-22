@@ -99,17 +99,31 @@ export default function MemberPTLedgerPage() {
 
       {/* Balance Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-5 border-[rgba(52,211,153,0.3)] bg-gradient-to-br from-[var(--surface)] to-[rgba(52,211,153,0.06)]">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-[#34D399] font-medium">
-            Sessions Remaining
-          </span>
-          <div className="text-3xl sm:text-4xl font-extrabold text-white font-martian mt-1">
-            {remainingSessions}{' '}
-            <span className="text-sm font-normal text-[var(--muted)]">/ {totalSessions}</span>
+        <Card className="p-5 border-[rgba(52,211,153,0.3)] bg-gradient-to-br from-[var(--surface)] to-[rgba(52,211,153,0.06)] flex flex-col justify-between">
+          <div>
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[#34D399] font-medium">
+              Sessions Remaining
+            </span>
+            <div className="text-3xl sm:text-4xl font-extrabold text-white font-martian mt-1">
+              {remainingSessions}{' '}
+              <span className="text-sm font-normal text-[var(--muted)]">/ {totalSessions}</span>
+            </div>
+            <p className="text-[11px] text-[var(--muted)] mt-1">
+              {totalSessions - remainingSessions} sessions delivered & signed off
+            </p>
           </div>
-          <p className="text-[11px] text-[var(--muted)] mt-1">
-            {totalSessions - remainingSessions} sessions delivered & signed off
-          </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('dna:open-upgrade'))
+              }
+            }}
+            className="mt-3 w-full py-2 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#FDE047]" />
+            <span>Top-up / Buy PT Sessions</span>
+          </button>
         </Card>
 
         <Card className="p-5 border-[var(--line)]">

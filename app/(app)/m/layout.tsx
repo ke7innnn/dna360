@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import MemberBottomTabs from '@/components/app/member/MemberBottomTabs'
 import MemberQrModal from '@/components/app/member/MemberQrModal'
 import MemberProfileModal from '@/components/app/member/MemberProfileModal'
+import MemberUpgradeModal from '@/components/app/member/MemberUpgradeModal'
 
 export default function MemberTrainingLayout({
   children,
@@ -12,15 +13,19 @@ export default function MemberTrainingLayout({
 }) {
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
 
   useEffect(() => {
     const handleOpenProfile = () => setProfileModalOpen(true)
     const handleOpenQr = () => setQrModalOpen(true)
+    const handleOpenUpgrade = () => setUpgradeModalOpen(true)
     window.addEventListener('dna:open-profile', handleOpenProfile)
     window.addEventListener('dna:open-qr', handleOpenQr)
+    window.addEventListener('dna:open-upgrade', handleOpenUpgrade)
     return () => {
       window.removeEventListener('dna:open-profile', handleOpenProfile)
       window.removeEventListener('dna:open-qr', handleOpenQr)
+      window.removeEventListener('dna:open-upgrade', handleOpenUpgrade)
     }
   }, [])
 
@@ -58,6 +63,17 @@ export default function MemberTrainingLayout({
       <MemberProfileModal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
+      />
+
+      {/* Member Plan Upgrade & PT Buy Modal */}
+      <MemberUpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        onUpgraded={() => {
+          if (typeof window !== 'undefined') {
+            window.location.reload()
+          }
+        }}
       />
     </div>
   )

@@ -149,16 +149,16 @@ export default function ActiveWorkoutSessionPage() {
   const [exercises, setExercises] = useState<PlannedExercise[]>(INITIAL_EXERCISES)
   const [currentExerciseIdx, setCurrentExerciseIdx] = useState(0)
 
-  const activeExercise = exercises[currentExerciseIdx] || exercises[0]
+  const activeExercise = exercises[currentExerciseIdx] || exercises[0] || INITIAL_EXERCISES[0]
 
-  // Session elapsed stopwatch
-  const [elapsedSeconds, setElapsedSeconds] = useState(1485) // started ~24 min ago
+  // Session elapsed stopwatch (starts at 0 on launch)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isSessionPaused, setIsSessionPaused] = useState(false)
 
-  // Rest timer
-  const [restRemaining, setRestRemaining] = useState(48)
+  // Rest timer (idle until set completion)
+  const [restRemaining, setRestRemaining] = useState(0)
   const [restTotal, setRestTotal] = useState(90)
-  const [isRestActive, setIsRestActive] = useState(true)
+  const [isRestActive, setIsRestActive] = useState(false)
 
   // Modals
   const [plateModalOpen, setPlateModalOpen] = useState(false)

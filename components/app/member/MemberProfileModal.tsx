@@ -141,6 +141,23 @@ export default function MemberProfileModal({
           </div>
         </div>
 
+        {/* Upgrade / Buy PT Action Banner */}
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => {
+              onClose()
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('dna:open-upgrade'))
+              }
+            }}
+            className="w-full p-3 rounded-2xl bg-gradient-to-r from-[#2563EB] to-[#7C3AED] hover:from-[#1D4ED8] hover:to-[#6D28D9] text-white text-xs font-bold transition-all shadow-[0_0_16px_rgba(59,130,246,0.35)] flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+          >
+            <Sparkles className="w-4 h-4 text-[#FDE047]" />
+            <span>Upgrade Membership / Buy PT Packs</span>
+          </button>
+        </div>
+
         {/* Club Details */}
         <div className="mt-4 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center gap-3">
           <Building2 className="w-4 h-4 text-[#38BDF8] shrink-0" />

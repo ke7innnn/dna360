@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -18,12 +18,20 @@ import { getSystemMetrics } from '@/lib/metrics'
 import { logAuditEvent } from '@/lib/audit'
 import { toast } from '@/components/app/ui/toast'
 
+interface CalendarDayItem {
+  day: number
+  isMute?: boolean
+  isToday?: boolean
+  hasCheckin?: boolean
+  hasPT?: boolean
+}
+
 export default function FloorOverviewPage() {
   const router = useRouter()
   const { user, canRevenue } = useAuth()
   const metrics = getSystemMetrics()
 
-  const isMember = user?.type === 'MEMBER' || String(user?.role?.slug).toLowerCase() === 'member'
+  const isMember = user?.type === 'MEMBER'
 
   // Guard: Members belong exclusively to the mobile member app (/m)
   useEffect(() => {
@@ -34,7 +42,7 @@ export default function FloorOverviewPage() {
 
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState('This month')
-  const [currentTime, setCurrentTime] = useState('POWAI · TUESDAY 8 SEPTEMBER · 6:42 PM')
+  const [currentTime, setCurrentTime] = useState('')
 
   if (isMember) {
     return (
@@ -44,59 +52,40 @@ export default function FloorOverviewPage() {
     )
   }
 
-  // Live timestamp formatting
+  // Live timestamp formatting (100% real-time ticking every second)
   useEffect(() => {
     const updateTime = () => {
       const now = new Date()
       const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
       const dayNum = now.getDate()
       const monthName = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
-      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })
       setCurrentTime(`POWAI · ${dayName} ${dayNum} ${monthName} · ${timeStr}`)
     }
     updateTime()
-    const timer = setInterval(updateTime, 60000)
+    const timer = setInterval(updateTime, 1000)
     return () => clearInterval(timer)
   }, [])
 
   // Days in current calendar month for the Month Activity calendar
-  const calendarDays = [
+  const currentDay = useMemo(() => new Date().getDate(), [])
+  const currentMonthName = useMemo(() => new Date().toLocaleDateString('en-US', { month: 'long' }).toUpperCase(), [])
+  const calendarDays: CalendarDayItem[] = useMemo(() => [
     { day: 31, isMute: true, hasCheckin: true, hasPT: false },
-    { day: 1, isToday: true, hasCheckin: true, hasPT: true },
-    { day: 2, hasCheckin: false, hasPT: false },
-    { day: 3, hasCheckin: false, hasPT: false },
-    { day: 4, hasCheckin: false, hasPT: false },
-    { day: 5, hasCheckin: false, hasPT: false },
-    { day: 6, hasCheckin: false, hasPT: false },
-    { day: 7, hasCheckin: false, hasPT: false },
-    { day: 8, hasCheckin: false, hasPT: false },
-    { day: 9, hasCheckin: false, hasPT: false },
-    { day: 10, hasCheckin: false, hasPT: false },
-    { day: 11, hasCheckin: false, hasPT: false },
-    { day: 12, hasCheckin: false, hasPT: false },
-    { day: 13, hasCheckin: false, hasPT: false },
-    { day: 14, hasCheckin: false, hasPT: false },
-    { day: 15, hasCheckin: false, hasPT: false },
-    { day: 16, hasCheckin: false, hasPT: false },
-    { day: 17, hasCheckin: false, hasPT: false },
-    { day: 18, hasCheckin: false, hasPT: false },
-    { day: 19, hasCheckin: false, hasPT: false },
-    { day: 20, hasCheckin: false, hasPT: false },
-    { day: 21, hasCheckin: false, hasPT: false },
-    { day: 22, hasCheckin: false, hasPT: false },
-    { day: 23, hasCheckin: false, hasPT: false },
-    { day: 24, hasCheckin: false, hasPT: false },
-    { day: 25, hasCheckin: false, hasPT: false },
-    { day: 26, hasCheckin: false, hasPT: false },
-    { day: 27, hasCheckin: false, hasPT: false },
-    { day: 28, hasCheckin: false, hasPT: false },
-    { day: 29, hasCheckin: false, hasPT: false },
-    { day: 30, hasCheckin: false, hasPT: false },
+    ...Array.from({ length: 30 }, (_, i) => {
+      const d = i + 1
+      return {
+        day: d,
+        isToday: d === currentDay,
+        hasCheckin: d <= currentDay,
+        hasPT: d % 3 === 0 && d <= currentDay,
+      }
+    }),
     { day: 1, isMute: true, hasCheckin: false, hasPT: false },
     { day: 2, isMute: true, hasCheckin: false, hasPT: false },
     { day: 3, isMute: true, hasCheckin: false, hasPT: false },
     { day: 4, isMute: true, hasCheckin: false, hasPT: false },
-  ]
+  ], [currentDay])
 
   // Weekly bar comparison: This week vs Last week
   const weeklyData = [
@@ -159,7 +148,7 @@ export default function FloorOverviewPage() {
 
         <div className="console-stat">
           <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
-            REVENUE · SEPTEMBER
+            REVENUE · {currentMonthName}
           </p>
           <p className="v text-white">₹8.4L</p>
           <p className="d text-[var(--ink-3)] font-data">68% of target</p>
@@ -245,7 +234,7 @@ export default function FloorOverviewPage() {
           {/* Revenue Mix Progress Rows */}
           <div>
             <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase mb-2.5">
-              REVENUE MIX · SEPTEMBER
+              REVENUE MIX · {currentMonthName}
             </p>
 
             <div className="space-y-2">

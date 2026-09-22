@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { QrCode, LogOut, Bell, Flame } from 'lucide-react'
+import { QrCode, LogOut, Bell, Flame, Sparkles } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -90,6 +90,19 @@ export default function MemberTopNav({
         >
           <QrCode className="w-3.5 h-3.5 text-[#38BDF8]" />
           <span>My Check-in Code</span>
+        </button>
+
+        {/* Upgrade / Buy Quick Trigger */}
+        <button
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('dna:open-upgrade'))
+            }
+          }}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#2563EB]/40 via-[#7C3AED]/40 to-[#EC4899]/40 hover:from-[#2563EB]/60 hover:to-[#EC4899]/60 border border-[rgba(168,85,247,0.35)] hover:border-[rgba(168,85,247,0.7)] text-xs font-semibold text-white transition-all cursor-pointer shadow-sm"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#FDE047]" />
+          <span>Buy / Upgrade</span>
         </button>
 
         {/* User Info & Profile Trigger */}

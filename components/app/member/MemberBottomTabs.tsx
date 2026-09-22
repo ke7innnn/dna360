@@ -39,11 +39,6 @@ export default function MemberBottomTabs() {
   const [sideMenuOpen, setSideMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Hide the global navigation bar during an active focused workout session
-  if (pathname === '/m/session' || pathname.startsWith('/m/session')) {
-    return null
-  }
-
   // Close side menu on route change
   useEffect(() => {
     setSideMenuOpen(false)
@@ -65,6 +60,11 @@ export default function MemberBottomTabs() {
     }
   }, [sideMenuOpen])
 
+  // Hide the global navigation bar during an active focused workout session (rendered AFTER all hooks)
+  if (pathname === '/m/session' || pathname.startsWith('/m/session')) {
+    return null
+  }
+
   const sideOptions: SideOption[] = [
     {
       id: 'start-session',
@@ -75,6 +75,19 @@ export default function MemberBottomTabs() {
       action: () => {
         setSideMenuOpen(false)
         router.push('/m/session')
+      },
+    },
+    {
+      id: 'upgrade-plan',
+      label: 'Buy & Upgrade Plan',
+      desc: 'Renewals & PT session packs',
+      icon: <Sparkles className="w-4 h-4 text-white" />,
+      color: 'from-[#8B5CF6] to-[#6366F1] shadow-[0_0_12px_rgba(139,92,246,0.4)]',
+      action: () => {
+        setSideMenuOpen(false)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('dna:open-upgrade'))
+        }
       },
     },
     {

@@ -60,6 +60,21 @@ export default function MemberAppHomePage() {
     return 'Good evening'
   }, [])
 
+  // Live real-time member clock (ticking every second)
+  const [liveDateTime, setLiveDateTime] = useState('')
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date()
+      const d = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      const t = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })
+      setLiveDateTime(`${d} · ${t}`)
+    }
+    update()
+    const timer = setInterval(update, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   const moodOptions: MoodOption[] = [
     {
       id: 'heavy',
@@ -135,6 +150,12 @@ export default function MemberAppHomePage() {
     }
   }
 
+  const handleOpenUpgrade = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('dna:open-upgrade'))
+    }
+  }
+
   return (
     <div className="w-full max-w-md mx-auto pt-3 pb-28 px-4 flex flex-col items-center select-none">
       {/* ─── Top Utility Navigation Bar ─── */}
@@ -188,7 +209,13 @@ export default function MemberAppHomePage() {
       </div>
 
       {/* ─── Hero Heading (Matching Screenshot 1 & Level 4) ─── */}
-      <div className="text-center my-3">
+      <div className="text-center my-3 flex flex-col items-center">
+        {liveDateTime && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] font-mono text-[#38BDF8] tracking-wider mb-2 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
+            <span>{liveDateTime}</span>
+          </div>
+        )}
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
           {greetingPrefix}, {userName}
         </h1>
@@ -301,6 +328,38 @@ export default function MemberAppHomePage() {
             {ptRemaining} of {ptTotal}
           </span>
         </div>
+      </div>
+
+      {/* ─── Plan Status & Quick Buy / Upgrade Banner ─── */}
+      <div className="w-full max-w-md mt-2 px-0.5">
+        <button
+          type="button"
+          onClick={handleOpenUpgrade}
+          className="w-full p-3 rounded-2xl bg-gradient-to-r from-[#17122B]/90 via-[#271038]/90 to-[#17122B]/90 hover:from-[#261D47] hover:to-[#261D47] border border-[rgba(168,85,247,0.35)] hover:border-[rgba(168,85,247,0.6)] shadow-[0_4px_20px_rgba(147,51,234,0.15)] active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#EC4899] flex items-center justify-center text-white shadow-[0_0_12px_rgba(236,72,153,0.4)] shrink-0">
+              <Sparkles className="w-4 h-4 text-[#FDE047]" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white tracking-tight truncate group-hover:text-[#C084FC] transition-colors">
+                  {planName}
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-[9px] font-bold text-emerald-400 uppercase tracking-wider shrink-0">
+                  Active
+                </span>
+              </div>
+              <p className="text-[11px] text-[#A78BFA] mt-0.5 truncate">
+                Tap to upgrade membership or purchase PT sessions
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 group-hover:bg-white/20 text-xs font-bold text-white shrink-0 ml-2">
+            <span>Upgrade</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </div>
+        </button>
       </div>
 
       {/* ─── Mood & Energy Check-In (Screenshot 2 Levels 2 & 3) ─── */}

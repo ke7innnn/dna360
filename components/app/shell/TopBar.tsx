@@ -28,6 +28,32 @@ function LocationBadge() {
   )
 }
 
+// ─── Live Real-time Studio Clock (1s Precision) ───
+function RealtimeClockBadge() {
+  const [clock, setClock] = useState('')
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date()
+      const d = now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+      const t = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+      setClock(`${d} · ${t}`)
+    }
+    update()
+    const timer = setInterval(update, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  if (!clock) return null
+
+  return (
+    <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] select-none text-xs font-mono text-[var(--muted)] tabular-nums shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.9)] animate-pulse" />
+      <span>{clock}</span>
+    </div>
+  )
+}
+
 // ─── User Menu ───
 function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
@@ -305,6 +331,7 @@ export default function TopBar() {
           </button>
 
           <LocationBadge />
+          <RealtimeClockBadge />
 
           {/* ⌘K Command Palette Quick Search Button (Staff Only) */}
           {user?.type !== 'MEMBER' && (
