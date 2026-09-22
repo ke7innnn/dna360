@@ -173,7 +173,7 @@ export default function MemberProgressPage() {
                         {p.unit}
                       </span>
                     </div>
-                    <p className="font-data text-[9px] text-[var(--ok)] font-semibold tracking-wider">
+                    <p className="font-sans tabular-nums text-[9px] text-[var(--ok)] font-semibold tracking-wider">
                       {p.delta}
                     </p>
                   </div>
@@ -311,7 +311,7 @@ export default function MemberProgressPage() {
                     </span>
                     <span className="text-xs text-[var(--ink-3)] font-ui font-medium">kg</span>
                   </div>
-                  <p className="font-data text-[9px] text-[var(--ok)] font-semibold tracking-wider">
+                  <p className="font-sans tabular-nums text-[9px] text-[var(--ok)] font-semibold tracking-wider">
                     ▼ -2.4 KG · STARTED 70.6
                   </p>
                 </div>
@@ -324,7 +324,7 @@ export default function MemberProgressPage() {
                     </span>
                     <span className="text-xs text-[var(--ink-3)] font-ui font-medium">%</span>
                   </div>
-                  <p className="font-data text-[9px] text-[var(--ok)] font-semibold tracking-wider">
+                  <p className="font-sans tabular-nums text-[9px] text-[var(--ok)] font-semibold tracking-wider">
                     ▼ -3.2% · TARGET 15.0%
                   </p>
                 </div>
@@ -337,7 +337,7 @@ export default function MemberProgressPage() {
                     </span>
                     <span className="text-xs text-[var(--ink-3)] font-ui font-medium">kg</span>
                   </div>
-                  <p className="font-data text-[9px] text-[#38BDF8] font-semibold tracking-wider">
+                  <p className="font-sans tabular-nums text-[9px] text-[#38BDF8] font-semibold tracking-wider">
                     ▲ +1.1 KG LEAN MASS
                   </p>
                 </div>
@@ -349,7 +349,7 @@ export default function MemberProgressPage() {
                       Level 4
                     </span>
                   </div>
-                  <p className="font-data text-[9px] text-[var(--ok)] font-semibold tracking-wider">
+                  <p className="font-sans tabular-nums text-[9px] text-[var(--ok)] font-semibold tracking-wider">
                     OPTIMAL (RANGE 1–9)
                   </p>
                 </div>
@@ -508,7 +508,7 @@ export default function MemberProgressPage() {
                     </span>
                     <span className="text-xs text-[var(--ink-3)] font-ui font-medium">days</span>
                   </div>
-                  <p className="font-data text-[9px] text-[#F59E0B] font-semibold tracking-wider flex items-center gap-1">
+                  <p className="font-sans tabular-nums text-[9px] text-[#F59E0B] font-semibold tracking-wider flex items-center gap-1">
                     <Flame className="w-3 h-3 text-[#F59E0B]" /> ALL-TIME BEST: 19 DAYS
                   </p>
                 </div>
@@ -521,7 +521,7 @@ export default function MemberProgressPage() {
                     </span>
                     <span className="text-xs text-[var(--ink-3)] font-ui font-medium">visits</span>
                   </div>
-                  <p className="font-data text-[9px] text-[var(--ok)] font-semibold tracking-wider">
+                  <p className="font-sans tabular-nums text-[9px] text-[var(--ok)] font-semibold tracking-wider">
                     ▲ TOP 10% ATTENDANCE
                   </p>
                 </div>
@@ -534,7 +534,7 @@ export default function MemberProgressPage() {
                     </span>
                     <span className="text-xs text-[var(--ink-3)] font-ui font-medium">/ week</span>
                   </div>
-                  <p className="font-data text-[9px] text-[#38BDF8] font-semibold tracking-wider">
+                  <p className="font-sans tabular-nums text-[9px] text-[#38BDF8] font-semibold tracking-wider">
                     TARGET: 4.0 SESSIONS
                   </p>
                 </div>
@@ -546,7 +546,7 @@ export default function MemberProgressPage() {
                       100%
                     </span>
                   </div>
-                  <p className="font-data text-[9px] text-[var(--ok)] font-semibold tracking-wider flex items-center gap-1">
+                  <p className="font-sans tabular-nums text-[9px] text-[var(--ok)] font-semibold tracking-wider flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-[var(--ok)]" /> ZERO NFC FAILURES
                   </p>
                 </div>
@@ -652,7 +652,7 @@ export default function MemberProgressPage() {
               <div className="member-card p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-white">Your Studio Habits</p>
-                  <span className="text-[10.5px] font-data text-[#38BDF8]">POWAI FLAGSHIP</span>
+                  <span className="text-[10.5px] font-sans tabular-nums text-[#38BDF8]">POWAI FLAGSHIP</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div className="p-3 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--line)]">

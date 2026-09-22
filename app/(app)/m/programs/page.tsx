@@ -73,9 +73,9 @@ export default function MemberProgramsPage() {
       {/* ─── Top Header with Actions ─── */}
       <div className="flex items-center justify-between pb-1">
         <button
-          onClick={() => router.push('/dashboard')}
-          className="w-10 h-10 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:border-[#3B82F6] transition-colors cursor-pointer"
-          aria-label="Back to Dashboard"
+          onClick={() => router.push('/m')}
+          className="w-10 h-10 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:border-[#8B5CF6] transition-colors cursor-pointer"
+          aria-label="Back to Member Home"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -176,7 +176,7 @@ export default function MemberProgramsPage() {
                     <h4 className="font-ui text-sm font-bold text-white group-hover:text-[#60A5FA] transition-colors truncate">
                       {ex.name}
                     </h4>
-                    <p className="font-data text-xs text-[var(--ink-3)] mt-0.5 truncate">
+                    <p className="font-sans tabular-nums text-xs text-[var(--ink-3)] mt-0.5 truncate">
                       {ex.setsReps} · {ex.weight}
                     </p>
                   </div>
