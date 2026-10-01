@@ -77,6 +77,17 @@ export default function CreateInvoiceModal({
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('UPI')
   const [transactionRef, setPrimaryRef] = useState('')
   const [notes, setNotes] = useState('')
+  
+  // Membership Dates & Comments/Benefits
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const [activationDate, setActivationDate] = useState(todayStr)
+  const [expiryDate, setExpiryDate] = useState(() => {
+    const d = new Date()
+    d.setFullYear(d.getFullYear() + 1)
+    return d.toISOString().slice(0, 10)
+  })
+  const [comments, setComments] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -214,6 +225,8 @@ export default function CreateInvoiceModal({
       },
     ]
 
+    const discountPct = listPriceMinor > 0 && discountMinor > 0 ? Math.round((discountMinor / listPriceMinor) * 100) : undefined
+
     const newInvoice = issueInvoice({
       memberId: selectedMember.id,
       memberName: selectedMember.name,
@@ -228,9 +241,13 @@ export default function CreateInvoiceModal({
         name: 'Amit Sharma',
         role: 'Fitness Consultant',
       },
+      activationDate,
+      expiryDate,
+      comments: comments || notes || undefined,
+      discountPercentage: discountPct,
       discountReason: discountMinor > 0 ? discountReason : undefined,
       discountApprovedBy: discountMinor > 0 ? discountApprover : undefined,
-      notes: notes || undefined,
+      notes: comments || notes || undefined,
     })
 
     setLoading(false)
@@ -317,6 +334,8 @@ export default function CreateInvoiceModal({
         taxRate: selectedProduct.tax_rate,
       })
 
+      const discountPct = listPriceMinor > 0 && discountMinor > 0 ? Math.round((discountMinor / listPriceMinor) * 100) : undefined
+
       const pendingInvoice = issueInvoice({
         memberId: selectedMember.id,
         memberName: selectedMember.name,
@@ -331,9 +350,13 @@ export default function CreateInvoiceModal({
           name: 'Amit Sharma',
           role: 'Fitness Consultant',
         },
+        activationDate,
+        expiryDate,
+        comments: comments || notes || undefined,
+        discountPercentage: discountPct,
         discountReason: discountMinor > 0 ? discountReason : undefined,
         discountApprovedBy: discountMinor > 0 ? discountApprover : undefined,
-        notes: notes ? `${notes} · Razorpay Checkout Initiated` : 'Razorpay Checkout Initiated',
+        notes: comments || (notes ? `${notes} · Razorpay Checkout Initiated` : 'Razorpay Checkout Initiated'),
       })
 
       // 2. Call server /api/razorpay/create-order with verified invoiceId
@@ -686,7 +709,7 @@ export default function CreateInvoiceModal({
             </label>
             {discountMinor > 0 && (
               <span className="text-xs font-bold text-emerald-400 tabular-nums">
-                -{formatINR(discountMinor)} discount applied
+                -{formatINR(discountMinor)} ({listPriceMinor > 0 ? Math.round((discountMinor / listPriceMinor) * 100) : 0}% off) applied
               </span>
             )}
           </div>
@@ -772,10 +795,49 @@ export default function CreateInvoiceModal({
           )}
         </div>
 
-        {/* ─── 4. PAYMENT INSTRUMENT ─── */}
+        {/* ─── 4. MEMBERSHIP DATES & COMMENTS / BENEFITS ─── */}
+        <div className="space-y-2.5 p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.08]">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold uppercase tracking-wider text-white/80 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#38BDF8]" />
+              <span>4. Activation, Expiry & Benefits</span>
+            </label>
+            <span className="text-[11px] text-white/50">
+              Printed on Tax Invoice
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              type="date"
+              label="Activation Date *"
+              value={activationDate}
+              onChange={(e) => setActivationDate(e.target.value)}
+              required
+            />
+            <Input
+              type="date"
+              label="Expiry Date *"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Input
+              label="Comments / Additional Benefits Included"
+              placeholder="e.g. 2 Complimentary PT Sessions, Locker #42, 10-day travel freeze allowance..."
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* ─── 5. PAYMENT INSTRUMENT ─── */}
         <div className="space-y-2.5 p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.08]">
           <label className="text-xs font-bold uppercase tracking-wider text-white/80 block">
-            4. Payment Mode & Reference *
+            5. Payment Mode & Reference *
           </label>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -807,7 +869,7 @@ export default function CreateInvoiceModal({
           </div>
         </div>
 
-        {/* ─── 5. GST SAC 999723 TAX BREAKDOWN SUMMARY CARD ─── */}
+        {/* ─── 6. GST SAC 999723 TAX BREAKDOWN SUMMARY CARD ─── */}
         <div className="p-3.5 rounded-2xl bg-[#090D18] border border-white/[0.09] space-y-2 text-xs">
           <div className="flex justify-between text-white/60">
             <span>List Tariff (Inclusive of GST):</span>

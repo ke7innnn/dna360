@@ -36,9 +36,11 @@ export const ALL_NAV_GROUPS: AppNavGroup[] = [
   {
     label: 'Operations',
     items: [
+      { id: 'bookings', label: 'Bookings & Trials', icon: 'Clock', href: '/bookings' },
       { id: 'my-clients', label: 'Trainer Clients & PT', icon: 'Users', href: '/my-clients', requiredCapability: 'workouts.log' },
       { id: 'members', label: 'Member Directory', icon: 'Users', href: '/members', badge: 659, requiredCapability: 'members.view.all' },
       { id: 'front-desk', label: 'Front Desk Terminal', icon: 'Monitor', href: '/front-desk', requiredCapability: 'checkin.operate' },
+      { id: 'plans', label: 'Membership Packages', icon: 'Layers', href: '/plans' },
       { id: 'products', label: 'Product Catalogue', icon: 'CreditCard', href: '/products', requiredCapability: 'products.view' },
       { id: 'billing', label: 'Invoices & Billing', icon: 'Receipt', href: '/billing', requiredCapability: 'billing.view' },
       { id: 'classes', label: 'Classes & Timetable', icon: 'Calendar', href: '/classes', requiredCapability: 'classes.manage.all' },

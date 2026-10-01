@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -8,30 +8,27 @@ import {
   Clock, ShieldAlert, FileSignature, ArrowUpRight,
   ChevronRight, Calendar, Sparkles, Lock, ShieldCheck,
   CreditCard, Dumbbell, ShoppingBag, Zap, Check, ArrowRight,
-  ChevronDown,
+  ChevronDown, Cake,
 } from 'lucide-react'
 import Button from '@/components/app/ui/button'
 import MemberOnboardingModal from '@/components/app/members/MemberOnboardingModal'
 import MembershipStatusReportGraph from '@/components/app/overview/MembershipStatusReportGraph'
+import BirthdayReminderModal from '@/components/app/overview/BirthdayReminderModal'
+import ExpiryExplorerModal, { type ExpiryFilterPeriod } from '@/components/app/overview/ExpiryExplorerModal'
+import TodayPendingFollowups from '@/components/app/overview/TodayPendingFollowups'
+import TargetAchievementChart from '@/components/app/analytics/TargetAchievementChart'
+import CreateInvoiceModal from '@/components/app/billing/CreateInvoiceModal'
 import { useAuth } from '@/context/AuthContext'
 import { getSystemMetrics } from '@/lib/metrics'
 import { logAuditEvent } from '@/lib/audit'
 import { toast } from '@/components/app/ui/toast'
-
-interface CalendarDayItem {
-  day: number
-  isMute?: boolean
-  isToday?: boolean
-  hasCheckin?: boolean
-  hasPT?: boolean
-}
 
 export default function FloorOverviewPage() {
   const router = useRouter()
   const { user, canRevenue } = useAuth()
   const metrics = getSystemMetrics()
 
-  const isMember = user?.type === 'MEMBER'
+  const isMember = user?.type === 'MEMBER' || String(user?.role?.slug).toLowerCase() === 'member'
 
   // Guard: Members belong exclusively to the mobile member app (/m)
   useEffect(() => {
@@ -42,7 +39,14 @@ export default function FloorOverviewPage() {
 
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState('This month')
-  const [currentTime, setCurrentTime] = useState('')
+  const [currentTime, setCurrentTime] = useState('POWAI · TUESDAY 8 SEPTEMBER · 6:42 PM')
+  
+  // Modals for new requirements
+  const [birthdayModalOpen, setBirthdayModalOpen] = useState(false)
+  const [expiryModalOpen, setExpiryModalOpen] = useState(false)
+  const [expiryModalMode, setExpiryModalMode] = useState<ExpiryFilterPeriod>('today')
+  const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false)
+  const [selectedMemberIdForInvoice, setSelectedMemberIdForInvoice] = useState<string | undefined>(undefined)
 
   if (isMember) {
     return (
@@ -52,40 +56,59 @@ export default function FloorOverviewPage() {
     )
   }
 
-  // Live timestamp formatting (100% real-time ticking every second)
+  // Live timestamp formatting
   useEffect(() => {
     const updateTime = () => {
       const now = new Date()
       const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
       const dayNum = now.getDate()
       const monthName = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
-      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })
+      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
       setCurrentTime(`POWAI · ${dayName} ${dayNum} ${monthName} · ${timeStr}`)
     }
     updateTime()
-    const timer = setInterval(updateTime, 1000)
+    const timer = setInterval(updateTime, 60000)
     return () => clearInterval(timer)
   }, [])
 
   // Days in current calendar month for the Month Activity calendar
-  const currentDay = useMemo(() => new Date().getDate(), [])
-  const currentMonthName = useMemo(() => new Date().toLocaleDateString('en-US', { month: 'long' }).toUpperCase(), [])
-  const calendarDays: CalendarDayItem[] = useMemo(() => [
+  const calendarDays = [
     { day: 31, isMute: true, hasCheckin: true, hasPT: false },
-    ...Array.from({ length: 30 }, (_, i) => {
-      const d = i + 1
-      return {
-        day: d,
-        isToday: d === currentDay,
-        hasCheckin: d <= currentDay,
-        hasPT: d % 3 === 0 && d <= currentDay,
-      }
-    }),
+    { day: 1, isToday: true, hasCheckin: true, hasPT: true },
+    { day: 2, hasCheckin: false, hasPT: false },
+    { day: 3, hasCheckin: false, hasPT: false },
+    { day: 4, hasCheckin: false, hasPT: false },
+    { day: 5, hasCheckin: false, hasPT: false },
+    { day: 6, hasCheckin: false, hasPT: false },
+    { day: 7, hasCheckin: false, hasPT: false },
+    { day: 8, hasCheckin: false, hasPT: false },
+    { day: 9, hasCheckin: false, hasPT: false },
+    { day: 10, hasCheckin: false, hasPT: false },
+    { day: 11, hasCheckin: false, hasPT: false },
+    { day: 12, hasCheckin: false, hasPT: false },
+    { day: 13, hasCheckin: false, hasPT: false },
+    { day: 14, hasCheckin: false, hasPT: false },
+    { day: 15, hasCheckin: false, hasPT: false },
+    { day: 16, hasCheckin: false, hasPT: false },
+    { day: 17, hasCheckin: false, hasPT: false },
+    { day: 18, hasCheckin: false, hasPT: false },
+    { day: 19, hasCheckin: false, hasPT: false },
+    { day: 20, hasCheckin: false, hasPT: false },
+    { day: 21, hasCheckin: false, hasPT: false },
+    { day: 22, hasCheckin: false, hasPT: false },
+    { day: 23, hasCheckin: false, hasPT: false },
+    { day: 24, hasCheckin: false, hasPT: false },
+    { day: 25, hasCheckin: false, hasPT: false },
+    { day: 26, hasCheckin: false, hasPT: false },
+    { day: 27, hasCheckin: false, hasPT: false },
+    { day: 28, hasCheckin: false, hasPT: false },
+    { day: 29, hasCheckin: false, hasPT: false },
+    { day: 30, hasCheckin: false, hasPT: false },
     { day: 1, isMute: true, hasCheckin: false, hasPT: false },
     { day: 2, isMute: true, hasCheckin: false, hasPT: false },
     { day: 3, isMute: true, hasCheckin: false, hasPT: false },
     { day: 4, isMute: true, hasCheckin: false, hasPT: false },
-  ], [currentDay])
+  ]
 
   // Weekly bar comparison: This week vs Last week
   const weeklyData = [
@@ -111,7 +134,30 @@ export default function FloorOverviewPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Birthday Reminder Quick Chip */}
+          <button
+            onClick={() => setBirthdayModalOpen(true)}
+            className="console-chip flex items-center gap-1.5 text-rose-300 border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 transition-all cursor-pointer"
+            title="Today's Birthday Reminders"
+          >
+            <Cake className="w-3.5 h-3.5 text-rose-400" />
+            <span className="font-semibold">Birthdays (3)</span>
+          </button>
+
+          {/* Expiry Explorer Quick Chip */}
+          <button
+            onClick={() => {
+              setExpiryModalMode('month')
+              setExpiryModalOpen(true)
+            }}
+            className="console-chip flex items-center gap-1.5 text-[#38BDF8] border-[#38BDF8]/30 bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 transition-all cursor-pointer"
+            title="Expiry & Renewal Explorer"
+          >
+            <Calendar className="w-3.5 h-3.5 text-[#38BDF8]" />
+            <span className="font-semibold">Expiry Explorer</span>
+          </button>
+
           <div className="relative group">
             <button className="console-chip flex items-center gap-1.5">
               <span>{selectedPeriod}</span>
@@ -121,45 +167,86 @@ export default function FloorOverviewPage() {
 
           <button
             onClick={() => setOnboardingOpen(true)}
-            className="console-chip solid flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition-all"
+            className="console-chip solid flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
           >
             Add member
           </button>
         </div>
       </div>
 
-      {/* ─── 4 Stat Strip ─── */}
-      <div className="console-strip">
-        <div className="console-stat">
+      {/* ─── 6 Stat Executive Financial & Operational Strip ─── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {/* Stat 1: Today's Collection */}
+        <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] space-y-1">
+          <p className="eyebrow text-[9px] text-emerald-400 tracking-wider font-data uppercase font-bold">
+            TODAY&apos;S COLLECTION
+          </p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">₹1,24,500</p>
+          <p className="d text-[11px] text-[var(--ink-3)] font-data">₹98.5K UPI · ₹26K POS</p>
+        </div>
+
+        {/* Stat 2: Monthly Upcoming Renewal Collection Amount */}
+        <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] space-y-1">
+          <p className="eyebrow text-[9px] text-[#38BDF8] tracking-wider font-data uppercase font-bold">
+            UPCOMING RENEWALS (SEP)
+          </p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">₹6,85,000</p>
+          <p className="d text-[11px] text-[#38BDF8] font-data">38 renewals in pipeline</p>
+        </div>
+
+        {/* Stat 3: Same-Day Expiries */}
+        <div
+          onClick={() => {
+            setExpiryModalMode('today')
+            setExpiryModalOpen(true)
+          }}
+          className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1 cursor-pointer hover:border-amber-400 transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <p className="eyebrow text-[9px] text-amber-300 tracking-wider font-data uppercase font-bold">
+              EXPIRING TODAY
+            </p>
+            <Clock className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+          </div>
+          <p className="v text-2xl font-bold text-amber-200 font-data tabular-nums">4 Members</p>
+          <p className="d text-[11px] text-amber-300/80 font-data underline decoration-dotted">
+            ₹1.74L at risk · View list &rarr;
+          </p>
+        </div>
+
+        {/* Stat 4: Today's Birthdays */}
+        <div
+          onClick={() => setBirthdayModalOpen(true)}
+          className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 space-y-1 cursor-pointer hover:border-rose-400 transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <p className="eyebrow text-[9px] text-rose-300 tracking-wider font-data uppercase font-bold">
+              BIRTHDAYS TODAY
+            </p>
+            <Cake className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform" />
+          </div>
+          <p className="v text-2xl font-bold text-rose-200 font-data tabular-nums">3 Celebrants</p>
+          <p className="d text-[11px] text-rose-300/80 font-data underline decoration-dotted">
+            Send WhatsApp wishes &rarr;
+          </p>
+        </div>
+
+        {/* Stat 5: Checked In Today */}
+        <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] space-y-1">
           <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
             CHECKED IN TODAY
           </p>
-          <p className="v text-white">184</p>
-          <p className="d text-[#4ADE80] font-data">▲ 12% vs last Tue</p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">184</p>
+          <p className="d text-[#4ADE80] font-data text-[11px]">▲ 12% vs last Tue</p>
         </div>
 
-        <div className="console-stat">
+        {/* Stat 6: Active Members */}
+        <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] space-y-1">
           <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
             ACTIVE MEMBERS
           </p>
-          <p className="v text-white">{metrics.totalMembers || 679}</p>
-          <p className="d text-[#4ADE80] font-data">▲ 9 this week</p>
-        </div>
-
-        <div className="console-stat">
-          <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
-            REVENUE · {currentMonthName}
-          </p>
-          <p className="v text-white">₹8.4L</p>
-          <p className="d text-[var(--ink-3)] font-data">68% of target</p>
-        </div>
-
-        <div className="console-stat">
-          <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
-            EXPIRING IN 30 DAYS
-          </p>
-          <p className="v text-white">47</p>
-          <p className="d text-[#38BDF8] font-data">▼ 11 unreached</p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">{metrics.totalMembers || 512}</p>
+          <p className="d text-[#4ADE80] font-data text-[11px]">▲ 9 this week</p>
         </div>
       </div>
 
@@ -234,7 +321,7 @@ export default function FloorOverviewPage() {
           {/* Revenue Mix Progress Rows */}
           <div>
             <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase mb-2.5">
-              REVENUE MIX · {currentMonthName}
+              REVENUE MIX · SEPTEMBER
             </p>
 
             <div className="space-y-2">
@@ -420,8 +507,46 @@ export default function FloorOverviewPage() {
         </div>
       </div>
 
+      {/* ─── Today's Pending Follow-ups (Renewals, Fresh Enquiries, Trials Booked) ─── */}
+      <TodayPendingFollowups
+        className="mt-5"
+        onOpenRenewInvoice={(id) => {
+          setSelectedMemberIdForInvoice(id)
+          setCreateInvoiceOpen(true)
+        }}
+      />
+
+      {/* ─── Target & Achievement: 12-Month Bar Graph & Current Month Pacing ─── */}
+      <TargetAchievementChart className="mt-5" />
+
       {/* ─── Membership Status Report Graph ─── */}
       <MembershipStatusReportGraph className="mt-5" />
+
+      {/* ─── Modals ─── */}
+      {/* Birthday Reminder Pop-up */}
+      <BirthdayReminderModal
+        open={birthdayModalOpen}
+        onOpenChange={setBirthdayModalOpen}
+      />
+
+      {/* Same-Day & Period Expiry Explorer Modal */}
+      <ExpiryExplorerModal
+        open={expiryModalOpen}
+        onOpenChange={setExpiryModalOpen}
+        initialMode={expiryModalMode}
+        onRenewMember={(id) => {
+          setSelectedMemberIdForInvoice(id)
+          setExpiryModalOpen(false)
+          setCreateInvoiceOpen(true)
+        }}
+      />
+
+      {/* Create / Renewal Invoice Modal */}
+      <CreateInvoiceModal
+        open={createInvoiceOpen}
+        onOpenChange={setCreateInvoiceOpen}
+        initialMemberId={selectedMemberIdForInvoice}
+      />
 
       {/* Member Onboarding Modal */}
       <MemberOnboardingModal

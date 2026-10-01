@@ -2,7 +2,6 @@
 
 import React from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import LoginForm from '@/components/app/auth/LoginForm'
 import Card from '@/components/app/ui/glass-card'
 
@@ -22,12 +21,7 @@ export default function LoginPage() {
       <div className="fixed inset-0 z-0 bg-[radial-gradient(circle_at_50%_35%,rgba(59,130,246,0.15),transparent_70%)] pointer-events-none" />
 
       {/* 3. Main Centered Authentication Container */}
-      <motion.div
-        className="w-full max-w-[440px] z-10 space-y-4 sm:space-y-5 relative my-auto"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.24, ease: 'easeOut' }}
-      >
+      <div className="w-full max-w-[440px] z-10 space-y-4 sm:space-y-5 relative my-auto">
         {/* Brand Header with Official DNA 360 Logo */}
         <div className="text-center space-y-2 flex flex-col items-center">
           <div className="relative p-2.5 sm:p-3 rounded-2xl bg-[rgba(255,255,255,0.03)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
@@ -68,7 +62,7 @@ export default function LoginPage() {
             <LoginForm />
           </React.Suspense>
         </Card>
-      </motion.div>
+      </div>
     </div>
   )
 }

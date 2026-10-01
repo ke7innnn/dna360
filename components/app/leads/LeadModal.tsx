@@ -23,7 +23,7 @@ export default function LeadModal({
   const [phone, setPhone] = useState('+91')
   const [email, setEmail] = useState('')
   const [goal, setGoal] = useState('Muscle Gain / Hypertrophy')
-  const [source, setSource] = useState<LeadSource>('Instagram')
+  const [source, setSource] = useState<LeadSource>('Walk-in')
   const [stage, setStage] = useState<LeadStage>('inquiry')
   const [dealValue, setDealValue] = useState(56640) // ₹56,640
   const [assignedRep, setAssignedRep] = useState('Amit Sharma')
@@ -101,17 +101,17 @@ export default function LeadModal({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--app-text-secondary)]">Lead Source</label>
+            <label className="text-sm font-medium text-[var(--app-text-secondary)]">Lead Source *</label>
             <Select value={source} onValueChange={(val: any) => setSource(val)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Instagram">Instagram / Meta</SelectItem>
-                <SelectItem value="Facebook">Facebook Ads</SelectItem>
-                <SelectItem value="Google">Google Search / Maps</SelectItem>
+                <SelectItem value="Walk-in">Walk-in</SelectItem>
+                <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                <SelectItem value="Telephonic">Telephonic</SelectItem>
+                <SelectItem value="Social Media">Social Media (Instagram / Meta / Google)</SelectItem>
+                <SelectItem value="Reference">Reference</SelectItem>
                 <SelectItem value="Word Of Mouth">Word Of Mouth</SelectItem>
-                <SelectItem value="Referral">Member Referral</SelectItem>
-                <SelectItem value="Passing By">Passing By (Walk-By)</SelectItem>
-                <SelectItem value="Corporate">Corporate Wellness</SelectItem>
+                <SelectItem value="Corporate">Corporate / B2B</SelectItem>
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>

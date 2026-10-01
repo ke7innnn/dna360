@@ -297,18 +297,23 @@ export default function MemberAppHomePage() {
 
       {/* ─── Bottom 3 Micro-Metrics Strip (Matching Screenshot 1 & Level 4) ─── */}
       <div className="w-full max-w-[340px] grid grid-cols-3 text-center py-3 my-2 border-t border-b border-white/[0.08] backdrop-blur-sm">
-        {/* Column 1: Stage / Protocol */}
-        <div className="flex flex-col items-center px-1">
-          <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block">
-            Stage
+        {/* Column 1: Stage / Routine (Links to /m/programs) */}
+        <button
+          type="button"
+          onClick={() => router.push('/m/programs')}
+          className="flex flex-col items-center px-1 hover:opacity-85 active:scale-95 transition-all cursor-pointer group"
+          aria-label="View Push Day Routine"
+        >
+          <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block group-hover:text-[#38BDF8] transition-colors">
+            Routine
           </span>
           <div className="flex items-center gap-1 text-white font-bold text-xs sm:text-[13px] mt-1">
             <Activity className="w-3.5 h-3.5 text-[#38BDF8]" />
-            <span className="truncate">Push &amp; Core</span>
+            <span className="truncate">Push Day</span>
           </div>
-        </div>
+        </button>
 
-        {/* Column 2: Slept / Streak */}
+        {/* Column 2: Streak */}
         <div className="flex flex-col items-center px-1 border-x border-white/[0.08]">
           <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block">
             Streak
@@ -319,15 +324,20 @@ export default function MemberAppHomePage() {
           </div>
         </div>
 
-        {/* Column 3: Quality / PT Sessions */}
-        <div className="flex flex-col items-center px-1">
-          <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block">
-            PT Left
+        {/* Column 3: PT Sessions (Links to /m/ledger) */}
+        <button
+          type="button"
+          onClick={() => router.push('/m/ledger')}
+          className="flex flex-col items-center px-1 hover:opacity-85 active:scale-95 transition-all cursor-pointer group"
+          aria-label="View PT Balance Ledger"
+        >
+          <span className="text-[11px] font-medium text-[#94A3B8] tracking-tight block group-hover:text-[#34D399] transition-colors">
+            PT Ledger
           </span>
-          <span className="text-white font-bold text-xs sm:text-[13px] mt-1 tabular-nums">
+          <span className="text-white font-bold text-xs sm:text-[13px] mt-1 tabular-nums group-hover:text-emerald-400 transition-colors">
             {ptRemaining} of {ptTotal}
           </span>
-        </div>
+        </button>
       </div>
 
       {/* ─── Plan Status & Quick Buy / Upgrade Banner ─── */}

@@ -104,6 +104,10 @@ export interface TaxInvoice {
   memberAddress?: string
   issueDate: string // YYYY-MM-DD
   dueDate: string // YYYY-MM-DD
+  activationDate?: string // YYYY-MM-DD
+  expiryDate?: string // YYYY-MM-DD
+  comments?: string // Notes / Additional benefits included
+  discountPercentage?: number // Discount % if applied
   status: InvoiceStatus
   items: InvoiceLineItem[]
   subtotalMinor: number // sum of inclusive prices before discount

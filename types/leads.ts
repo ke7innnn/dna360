@@ -29,6 +29,11 @@ export type LeadType =
  * From the actual Gymex data taxonomy.
  */
 export type LeadSource =
+  | 'Walk-in'
+  | 'WhatsApp'
+  | 'Telephonic'
+  | 'Social Media'
+  | 'Reference'
   | 'Word Of Mouth'
   | 'Referral'
   | 'Website'

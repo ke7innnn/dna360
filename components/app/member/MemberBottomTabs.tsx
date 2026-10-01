@@ -14,6 +14,7 @@ import {
   MessageCircle,
   X,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -115,11 +116,22 @@ export default function MemberBottomTabs() {
       },
     },
     {
+      id: 'pt-ledger',
+      label: 'PT Balance & Ledger',
+      desc: 'Dual-signed sessions',
+      icon: <ShieldCheck className="w-4 h-4 text-white" />,
+      color: 'from-[#10B981] to-[#059669] shadow-[0_0_12px_rgba(5,150,105,0.4)]',
+      action: () => {
+        setSideMenuOpen(false)
+        router.push('/m/ledger')
+      },
+    },
+    {
       id: 'whatsapp-coach',
       label: 'WhatsApp Coach',
       desc: 'Direct trainer ping',
       icon: <MessageCircle className="w-4 h-4 text-white" />,
-      color: 'from-[#10B981] to-[#059669] shadow-[0_0_12px_rgba(5,150,105,0.4)]',
+      color: 'from-[#06B6D4] to-[#0284C7] shadow-[0_0_12px_rgba(2,132,199,0.4)]',
       action: () => {
         setSideMenuOpen(false)
         window.open('https://wa.me/919820012345?text=Hey%20Coach,%20checking%20in%20from%20DNA%20360', '_blank')

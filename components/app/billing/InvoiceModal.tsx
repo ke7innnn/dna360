@@ -108,8 +108,10 @@ export default function InvoiceModal({
 
             <div className="text-right sm:text-right space-y-1 text-[0.6875rem]">
               <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--app-text-muted)] block mb-1">
-                Invoice Metadata
+                Membership &amp; Tax Metadata
               </span>
+              <p>Activation Date: <strong className="text-white font-mono">{invoice.activationDate || invoice.issueDate}</strong></p>
+              <p>Expiry Date: <strong className="text-emerald-400 font-mono">{invoice.expiryDate || '2027-09-28'}</strong></p>
               <p>Place of Supply: <strong>27-Maharashtra</strong></p>
               <p>Sales Rep: <strong>{invoice.salesRepName || 'Amit Sharma'}</strong></p>
               <p>Reverse Charge: <strong>No</strong></p>
@@ -137,8 +139,8 @@ export default function InvoiceModal({
                     <td className="p-3">
                       <span className="font-medium text-[var(--app-text-primary)] block">{it.description}</span>
                       {it.discountMinor > 0 && (
-                        <span className="text-[0.6875rem] text-[var(--app-success)]">
-                          Discount Applied: -{formatINR(it.discountMinor)}
+                        <span className="text-[0.6875rem] text-[var(--app-success)] font-semibold">
+                          Discount Applied: -{formatINR(it.discountMinor)} ({Math.round((it.discountMinor / it.unitPriceInclusiveMinor) * 100)}% off)
                         </span>
                       )}
                     </td>
@@ -153,6 +155,18 @@ export default function InvoiceModal({
             </table>
           </div>
 
+          {/* Comments & Additional Benefits Included Box */}
+          {(invoice.comments || invoice.notes) && (
+            <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
+              <span className="text-[10.5px] uppercase font-bold text-[#60A5FA] tracking-wider block mb-1">
+                Comments &amp; Additional Benefits Included:
+              </span>
+              <p className="text-[var(--app-text-secondary)] leading-relaxed">
+                {invoice.comments || invoice.notes}
+              </p>
+            </div>
+          )}
+
           {/* Invoice Summary Calculation */}
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pt-2">
             <div className="space-y-2 text-[0.6875rem] text-[var(--app-text-muted)] max-w-sm">
@@ -165,9 +179,21 @@ export default function InvoiceModal({
               </div>
             </div>
 
-            <div className="w-full sm:w-64 space-y-1.5 text-xs font-sans tabular-nums text-right">
+            <div className="w-full sm:w-72 space-y-1.5 text-xs font-sans tabular-nums text-right">
               <div className="flex justify-between text-[var(--app-text-muted)]">
-                <span>Taxable Amount:</span>
+                <span>Subtotal (List Price):</span>
+                <span>{formatINR(invoice.subtotalMinor || (invoice.grandTotalMinor + invoice.totalDiscountMinor))}</span>
+              </div>
+
+              {invoice.totalDiscountMinor > 0 && (
+                <div className="flex justify-between text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded">
+                  <span>Discount ({invoice.discountPercentage || Math.round((invoice.totalDiscountMinor / (invoice.subtotalMinor || (invoice.grandTotalMinor + invoice.totalDiscountMinor))) * 100)}%):</span>
+                  <span>-{formatINR(invoice.totalDiscountMinor)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-[var(--app-text-muted)]">
+                <span>Taxable Value:</span>
                 <span>{formatINR(invoice.taxableMinor)}</span>
               </div>
               <div className="flex justify-between text-[var(--app-text-muted)]">
@@ -179,7 +205,7 @@ export default function InvoiceModal({
                 <span>{formatINR(invoice.sgstMinor)}</span>
               </div>
               <div className="flex justify-between font-bold text-sm text-[var(--app-text-primary)] pt-2 border-t border-[var(--app-glass-border)]">
-                <span>Total Invoice Value:</span>
+                <span>Total Amount Payable:</span>
                 <span className="text-[var(--aurora-1)]">{formatINR(invoice.grandTotalMinor)}</span>
               </div>
             </div>

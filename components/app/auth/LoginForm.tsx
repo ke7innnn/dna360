@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { User, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
 import Button from '@/components/app/ui/button'
 import Input from '@/components/app/ui/input'
 import { useAuth } from '@/context/AuthContext'
@@ -91,6 +91,22 @@ export default function LoginForm() {
     }
   }
 
+  const handleQuickMemberLogin = async () => {
+    setLoading(true)
+    setError(null)
+    const res = await loginWithPassword('Aarav Mehta', 'Dna360#InitialPass2026!')
+    setLoading(false)
+    if (res.success) {
+      toast.success('Signed in as Member (Aarav Mehta)')
+      const redirectParam = searchParams.get('redirect')
+      const isSafe = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') && !redirectParam.includes('://')
+      const dest = isSafe && redirectParam.startsWith('/m') ? redirectParam : '/m'
+      router.push(dest)
+    } else {
+      setError(res.error || 'Quick access failed.')
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -159,6 +175,21 @@ export default function LoginForm() {
         >
           {loading ? 'Authenticating...' : 'Sign In'}
         </Button>
+      </div>
+
+      <div className="pt-3 border-t border-[rgba(255,255,255,0.08)] space-y-2">
+        <p className="text-[11px] text-center text-[var(--muted)] font-medium">
+          Instant Demo Access
+        </p>
+        <button
+          type="button"
+          onClick={handleQuickMemberLogin}
+          disabled={loading}
+          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600/25 to-purple-600/20 hover:from-blue-600/35 hover:to-purple-600/30 border border-blue-500/35 text-white font-ui font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] shadow-[0_0_12px_rgba(59,130,246,0.2)]"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#60A5FA]" />
+          1-Click Member Sign In (Aarav Mehta)
+        </button>
       </div>
     </form>
   )

@@ -14,6 +14,8 @@ import PageHeader from '@/components/app/ui/PageHeader'
 import RenewalForecast from '@/components/app/overview/RenewalForecast'
 import MembershipStatusReportGraph from '@/components/app/overview/MembershipStatusReportGraph'
 import Breadcrumbs from '@/components/app/ui/Breadcrumbs'
+import TargetAchievementChart from '@/components/app/analytics/TargetAchievementChart'
+import ReportsCenter from '@/components/app/reports/ReportsCenter'
 import { useAuth } from '@/context/AuthContext'
 import {
   getRevenueMix,
@@ -300,6 +302,12 @@ export default function AnalyticsPage() {
 
       {/* ─── 5. Forward Renewal Scenario Projection ─── */}
       <RenewalForecast />
+
+      {/* ─── 6. Target & Achievement 12-Month Dual Comparison ─── */}
+      <TargetAchievementChart />
+
+      {/* ─── 7. Operational & Statutory Financial Reports Center ─── */}
+      <ReportsCenter />
     </div>
   )
 }

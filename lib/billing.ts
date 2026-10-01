@@ -502,6 +502,10 @@ export function issueInvoice(params: {
   discountReason?: string
   discountApprovedBy?: string
   notes?: string
+  activationDate?: string
+  expiryDate?: string
+  comments?: string
+  discountPercentage?: number
 }): TaxInvoice {
   const invoiceNumber = params.invoiceNumber || getNextInvoiceNumber()
   const todayStr = new Date().toISOString().slice(0, 10)
@@ -531,6 +535,11 @@ export function issueInvoice(params: {
     status = 'partially_paid'
   }
 
+  // Calculate default 1-year expiry date from activation date
+  const actDate = params.activationDate || todayStr
+  const defaultExpDate = new Date(new Date(actDate).setFullYear(new Date(actDate).getFullYear() + 1)).toISOString().slice(0, 10)
+  const expDate = params.expiryDate || defaultExpDate
+
   const invoice: TaxInvoice = {
     id: `inv_${Date.now()}`,
     invoiceNumber,
@@ -541,6 +550,10 @@ export function issueInvoice(params: {
     memberAddress: params.memberAddress,
     issueDate: todayStr,
     dueDate: todayStr,
+    activationDate: actDate,
+    expiryDate: expDate,
+    comments: params.comments || params.notes,
+    discountPercentage: params.discountPercentage || (subtotalMinor > 0 && totalDiscountMinor > 0 ? Math.round((totalDiscountMinor / subtotalMinor) * 100) : undefined),
     status,
     items: rawItems,
     subtotalMinor,
@@ -557,7 +570,7 @@ export function issueInvoice(params: {
     createdBy: params.createdBy || { id: 'system', name: (params as any).issuedBy || 'System', role: 'Staff' },
     discountReason: params.discountReason,
     discountApprovedBy: params.discountApprovedBy,
-    notes: params.notes,
+    notes: params.notes || params.comments,
   }
 
   const invoices = getStoredInvoices()

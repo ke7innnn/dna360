@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import {
   LayoutDashboard, CreditCard, Calendar, CheckCircle, User,
   HelpCircle, Monitor, Users, Target, Clock, BarChart3, Receipt,
-  UserCog, TrendingUp, Settings, FileText, Dumbbell,
+  UserCog, TrendingUp, Settings, FileText, Dumbbell, Layers,
   ChevronLeft, ChevronRight, Search, X, LogOut,
   type LucideIcon,
 } from 'lucide-react'
@@ -19,7 +19,7 @@ import { useAuth } from '@/context/AuthContext'
 const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard, CreditCard, Calendar, CheckCircle, User,
   HelpCircle, Monitor, Users, Target, Clock, BarChart3, Receipt,
-  UserCog, TrendingUp, Settings, FileText, Dumbbell,
+  UserCog, TrendingUp, Settings, FileText, Dumbbell, Layers,
 }
 
 import Image from 'next/image'

@@ -8,7 +8,7 @@ import { Toaster } from '@/components/app/ui/toast'
 export const metadata: Metadata = {
   title: {
     template: '%s | DNA 360',
-    default: 'Dashboard | DNA 360',
+    default: 'Dashboard',
   },
 }
 

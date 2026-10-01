@@ -10,7 +10,7 @@ import {
   recordFailedAttempt,
   clearAttempts,
 } from '@/lib/rate-limit'
-import { SEEDED_USERS, SEEDED_ROLE_DEFINITIONS, normaliseIndianPhone, getRoleDefaultRedirect } from '@/lib/auth'
+import { SEEDED_USERS, SEEDED_ROLE_DEFINITIONS, SEEDED_DEFAULT_PASSWORD_HASH, normaliseIndianPhone, getRoleDefaultRedirect } from '@/lib/auth'
 import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 import { supabase } from '@/lib/supabase'
@@ -69,94 +69,30 @@ export async function POST(req: NextRequest) {
 
     // 1. Check rate limit lockout keyed on identifier and IP separately (§5)
     const lockout = await checkLockout(cleanId, clientIp)
+    if (lockout.isLocked) {
+      logAuditEvent({
+        actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
+        action: 'ACCOUNT_LOCKED',
+        entity: 'Auth',
+        entityId: cleanId,
+        branchId: 'pow',
+        ipAddress: clientIp,
+        description: `Blocked login attempt on locked account/IP ${cleanId} / ${clientIp}. Lockout remaining: ${lockout.remainingSeconds}s.`,
+      })
+
+      return genericFailure(true, lockout.remainingSeconds)
+    }
 
     // 2. Authentication Flow
     let authenticated = false
     let mustChangePassword = false
     let matchedUser: any = null
 
-    // 1. Check Staff Directory by Full Name, Email, or Phone
-    const STAFF_ALIASES: Record<string, string> = {
-      'jateen kadam': 'jateen gaonkar',
-      'aditya shinde': 'aditya sarmalkar',
-      'vaibhav pawar': 'vaibhav gawade',
-      'hussain shaikh': 'mohd hussain ansari',
-      'nisha jadhav': 'nisha yadav',
-      'liladhar gaikwad': 'liladhar kahiram mestry',
-      'suresh patil': 'suresh jivanvar',
-      'pallavi': 'pallavi more',
-    }
-    const resolvedStaffQuery = STAFF_ALIASES[cleanId] || cleanId
-
-    matchedUser = SEEDED_USERS.find((u) => {
-      const uName = (u.name || '').toLowerCase().replace(/\s+/g, ' ').trim()
-      const uEmail = (u.email || '').toLowerCase().trim()
-      const uPhone = (u.phone || '').trim()
-      return (
-        uName === cleanId ||
-        uName === resolvedStaffQuery ||
-        uEmail === cleanId ||
-        uPhone === cleanPhone ||
-        uPhone === identifier
-      )
-    })
-
-    // 2. Check Member Directory by Full Name, Email, Phone, or Member Code
-    if (!matchedUser) {
-      try {
-        const members = getStoredMembers()
-        const found = members.find((m: any) => {
-          const mName = (m.name || '').toLowerCase().replace(/\s+/g, ' ').trim()
-          const mEmail = (m.email || '').toLowerCase().trim()
-          const mPhone = (m.phone || '').trim()
-          const mCode = (m.member_code || '').toLowerCase().trim()
-          return (
-            mName === cleanId ||
-            mEmail === cleanId ||
-            mPhone === cleanPhone ||
-            mPhone === identifier ||
-            mCode === cleanId
-          )
-        })
-
-        if (found) {
-          const memberRole =
-            SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toLowerCase() === 'member') ||
-            SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1]
-
-          matchedUser = {
-            id: found.id,
-            clubId: 'club_powai_01',
-            type: 'MEMBER',
-            name: found.name,
-            email: found.email || `${found.id}@dna360.in`,
-            phone: found.phone,
-            role: memberRole,
-            designation: 'Member',
-            branchId: 'pow',
-            branches: [SEEDED_USERS[0].branches[0]],
-            status: found.status === 'blacklisted' ? 'inactive' : 'active',
-            membershipStatus:
-              found.status === 'inactive'
-                ? 'EXPIRED'
-                : found.status === 'grace_period'
-                ? 'GRACE_PERIOD'
-                : 'ACTIVE',
-            can_view_revenue: false,
-            requires_login: true,
-            passwordHash: (found as any).passwordHash,
-            must_change_password: false,
-          }
-        }
-      } catch (e) {}
-    }
-
-    // Step A: Attempt Supabase Auth (supports email or resolved user email)
-    const targetEmail = cleanId.includes('@') ? cleanId : matchedUser?.email
-    if (process.env.NODE_ENV !== 'test' && password && targetEmail && targetEmail.includes('@')) {
+    // Step A: Attempt Supabase Auth first (for email + password in non-test runtime)
+    if (process.env.NODE_ENV !== 'test' && password && cleanId.includes('@')) {
       try {
         const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
-          email: targetEmail,
+          email: cleanId,
           password,
         })
         if (!sbError && sbData?.user) {
@@ -165,7 +101,6 @@ export async function POST(req: NextRequest) {
           const roleDef =
             SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toLowerCase() === userRoleSlug) ||
             SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toUpperCase() === userRoleSlug.toUpperCase()) ||
-            matchedUser?.role ||
             SEEDED_ROLE_DEFINITIONS[0]
 
           mustChangePassword = Boolean(meta.must_change_password)
@@ -173,16 +108,16 @@ export async function POST(req: NextRequest) {
           matchedUser = {
             id: sbData.user.id,
             clubId: 'club_powai_01',
-            type: userRoleSlug === 'member' ? 'MEMBER' : (matchedUser?.type || 'STAFF'),
-            name: meta.name || matchedUser?.name || sbData.user.email?.split('@')[0] || 'User',
-            email: sbData.user.email || targetEmail,
-            phone: meta.phone || matchedUser?.phone || '+919999900000',
+            type: userRoleSlug === 'member' ? 'MEMBER' : 'STAFF',
+            name: meta.name || sbData.user.email?.split('@')[0] || 'User',
+            email: sbData.user.email || cleanId,
+            phone: meta.phone || '+919999900000',
             role: roleDef,
-            designation: meta.roleName || matchedUser?.designation || roleDef.name,
+            designation: meta.roleName || roleDef.name,
             branchId: 'pow',
             branches: [SEEDED_USERS[0].branches[0]],
             status: 'active',
-            can_view_revenue: userRoleSlug === 'owner_admin' || userRoleSlug === 'owner' || Boolean(matchedUser?.can_view_revenue),
+            can_view_revenue: userRoleSlug === 'owner_admin' || userRoleSlug === 'owner',
             requires_login: true,
             twoFactorRequired: false,
             must_change_password: mustChangePassword,
@@ -194,71 +129,125 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step B: Direct password verification for all staff, members, and seeded users
-    if (!authenticated && matchedUser && password) {
-      const nameParts = (matchedUser.name || '').trim().split(/\s+/)
-      const rawFirst = nameParts[0] || 'User'
-      const cleanFirst = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()
-      const expectedFormatPass = `${cleanFirst}@123`
-      const expectedFormatPassLower = `${cleanFirst.toLowerCase()}@123`
-      const secondWord = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1).toLowerCase() : ''
-      const secondWordPass = secondWord ? `${secondWord}@123` : ''
-
-      const isSpecialRolePass =
-        (rawFirst.toLowerCase() === 'executive' && (password === 'Admin@123' || password === 'admin@123')) ||
-        (rawFirst.toLowerCase() === 'front' && (password === 'Frontdesk@123' || password === 'frontdesk@123'))
-
-      const matchesStandardPattern =
-        password === expectedFormatPass ||
-        password === expectedFormatPassLower ||
-        password.toLowerCase() === expectedFormatPass.toLowerCase() ||
-        (Boolean(secondWordPass) && (password === secondWordPass || password.toLowerCase() === secondWordPass.toLowerCase())) ||
-        isSpecialRolePass
-
-      // In security test suite, assert that backdoor test assertion specifically passes for test target
-      const isTestSwapnilCheck = process.env.NODE_ENV === 'test' && cleanId.includes('swapnil.hr@dna360.in')
-
-      if (matchesStandardPattern && !isTestSwapnilCheck) {
-        authenticated = true
-        mustChangePassword = false
-      }
-
-      if (!authenticated && matchedUser.passwordHash) {
-        const ok = await bcrypt.compare(password, matchedUser.passwordHash)
-        if (ok) {
-          authenticated = true
-          mustChangePassword = Boolean(matchedUser.must_change_password)
-        }
-      }
-    }
-
-    // If authentication failed
+    // Step B: Check Staff (SEEDED_USERS) and Member Directory
     if (!authenticated) {
-      if (!matchedUser?.passwordHash) {
-        await bcrypt.compare(password || '', DUMMY_HASH).catch(() => false)
+      // 1. Check Staff Directory by Full Name, Email, or Phone
+      const STAFF_ALIASES: Record<string, string> = {
+        'jateen kadam': 'jateen gaonkar',
+        'aditya shinde': 'aditya sarmalkar',
+        'vaibhav pawar': 'vaibhav gawade',
+        'hussain shaikh': 'mohd hussain ansari',
+        'nisha jadhav': 'nisha yadav',
+        'liladhar gaikwad': 'liladhar kahiram mestry',
+        'suresh patil': 'suresh jivanvar',
+        'pallavi': 'pallavi more',
       }
-      const lock = await recordFailedAttempt(cleanId, clientIp)
-      const lockoutStatus = await checkLockout(cleanId, clientIp)
-      const isLocked = lockout.isLocked || lock.isLocked
-      const remainingSec = lockoutStatus.remainingSeconds || lockout.remainingSeconds
+      const resolvedStaffQuery = STAFF_ALIASES[cleanId] || cleanId
 
-      logAuditEvent({
-        actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
-        action: isLocked ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
-        entity: 'Auth',
-        entityId: cleanId,
-        branchId: 'pow',
-        ipAddress: clientIp,
-        description: isLocked
-          ? `Account/IP locked for identifier ${cleanId} from ${clientIp} after 5 consecutive failed attempts.`
-          : `Failed login attempt for identifier ${cleanId} from ${clientIp}.`,
+      matchedUser = SEEDED_USERS.find((u) => {
+        const uName = (u.name || '').toLowerCase().replace(/\s+/g, ' ').trim()
+        const uEmail = (u.email || '').toLowerCase().trim()
+        const uPhone = (u.phone || '').trim()
+        return (
+          uName === cleanId ||
+          uName === resolvedStaffQuery ||
+          uEmail === cleanId ||
+          uPhone === cleanPhone ||
+          uPhone === identifier
+        )
       })
-      return genericFailure(isLocked, remainingSec)
-    }
 
-    // If locked out previously, but valid credentials were submitted:
-    // clear the lock immediately and allow legitimate user in
-    await clearAttempts(cleanId, clientIp)
+      // 2. Check Member Directory by Full Name, Email, Phone, or Member Code
+      if (!matchedUser) {
+        try {
+          const members = getStoredMembers()
+          const found = members.find((m: any) => {
+            const mName = (m.name || '').toLowerCase().replace(/\s+/g, ' ').trim()
+            const mEmail = (m.email || '').toLowerCase().trim()
+            const mPhone = (m.phone || '').trim()
+            const mCode = (m.member_code || '').toLowerCase().trim()
+            return (
+              mName === cleanId ||
+              mEmail === cleanId ||
+              mPhone === cleanPhone ||
+              mPhone === identifier ||
+              mCode === cleanId
+            )
+          })
+
+          if (found) {
+            const memberRole =
+              SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toLowerCase() === 'member') ||
+              SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1]
+
+            matchedUser = {
+              id: found.id,
+              clubId: 'club_powai_01',
+              type: 'MEMBER',
+              name: found.name,
+              email: found.email || `${found.id}@dna360.in`,
+              phone: found.phone,
+              role: memberRole,
+              designation: 'Member',
+              branchId: 'pow',
+              branches: [SEEDED_USERS[0].branches[0]],
+              status: found.status === 'blacklisted' ? 'inactive' : 'active',
+              membershipStatus:
+                found.status === 'inactive'
+                  ? 'EXPIRED'
+                  : found.status === 'grace_period'
+                  ? 'GRACE_PERIOD'
+                  : 'ACTIVE',
+              can_view_revenue: false,
+              requires_login: true,
+              passwordHash: (found as any).passwordHash || SEEDED_DEFAULT_PASSWORD_HASH,
+              must_change_password: Boolean((found as any).must_change_password),
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 3. Exactly one password verification check: bcrypt against hashed password
+      if (!matchedUser?.passwordHash) {
+        // Timing mitigation: execute dummy bcrypt work factor
+        await bcrypt.compare(password || '', DUMMY_HASH).catch(() => false)
+        const lock = await recordFailedAttempt(cleanId, clientIp)
+        const lockoutStatus = await checkLockout(cleanId, clientIp)
+        logAuditEvent({
+          actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
+          action: lock.isLocked ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
+          entity: 'Auth',
+          entityId: cleanId,
+          branchId: 'pow',
+          ipAddress: clientIp,
+          description: lock.isLocked
+            ? `Account/IP locked for identifier ${cleanId} from ${clientIp} after 5 consecutive failed attempts.`
+            : `Failed login attempt for identifier ${cleanId} from ${clientIp}.`,
+        })
+        return genericFailure(lock.isLocked, lockoutStatus.remainingSeconds)
+      }
+
+      const ok = await bcrypt.compare(password || '', matchedUser.passwordHash)
+      if (!ok) {
+        const lock = await recordFailedAttempt(cleanId, clientIp)
+        const lockoutStatus = await checkLockout(cleanId, clientIp)
+        logAuditEvent({
+          actor: { id: cleanId, name: 'Anonymous', email: cleanId, role: 'Unknown' },
+          action: lock.isLocked ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
+          entity: 'Auth',
+          entityId: cleanId,
+          branchId: 'pow',
+          ipAddress: clientIp,
+          description: lock.isLocked
+            ? `Account/IP locked for identifier ${cleanId} from ${clientIp} after 5 consecutive failed attempts.`
+            : `Failed login attempt for identifier ${cleanId} from ${clientIp}.`,
+        })
+        return genericFailure(lock.isLocked, lockoutStatus.remainingSeconds)
+      }
+
+      authenticated = true
+      mustChangePassword = Boolean(matchedUser.must_change_password)
+    }
 
     if (!authenticated || !matchedUser) {
       return genericFailure()
@@ -277,8 +266,8 @@ export async function POST(req: NextRequest) {
       destroyServerSession(existingCookie)
     }
 
-    // 4. Create Server Session Token (awaited so Supabase write completes before cookie is set)
-    const token = await createServerSession(matchedUser, 'tenant_powai')
+    // 4. Create Server Session Token
+    const token = createServerSession(matchedUser, 'tenant_powai')
     const redirectUrl = getRoleDefaultRedirect(matchedUser.role.slug, matchedUser)
 
     logAuditEvent({

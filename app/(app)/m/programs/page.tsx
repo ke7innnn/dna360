@@ -59,22 +59,45 @@ export default function MemberProgramsPage() {
     loadPrograms()
   }, [])
 
-  const exercises = [
-    { name: 'Barbell bench press', setsReps: '4 × 8', weight: '60 KG', icon: Dumbbell },
-    { name: 'Incline dumbbell press', setsReps: '3 × 10', weight: '22.5 KG', icon: Dumbbell },
-    { name: 'Cable fly', setsReps: '3 × 12', weight: 'RPE 8', icon: Activity },
-    { name: 'Overhead shoulder press', setsReps: '3 × 8', weight: '40 KG', icon: Dumbbell },
-    { name: 'Dumbbell lateral raise', setsReps: '4 × 12', weight: '10 KG', icon: Dumbbell },
-    { name: 'Tricep rope pushdown', setsReps: '3 × 12', weight: '25 KG', icon: Activity },
+  interface RoutineExercise {
+    name: string
+    sets: number
+    reps: number
+    load: string
+    unit: 'kg' | 'rpe'
+    icon: React.ComponentType<{ className?: string }>
+  }
+
+  const exercises: RoutineExercise[] = [
+    { name: 'Barbell bench press', sets: 4, reps: 8, load: '60', unit: 'kg', icon: Dumbbell },
+    { name: 'Incline dumbbell press', sets: 3, reps: 10, load: '22.5', unit: 'kg', icon: Dumbbell },
+    { name: 'Cable fly', sets: 3, reps: 12, load: '8', unit: 'rpe', icon: Activity },
+    { name: 'Overhead shoulder press', sets: 3, reps: 8, load: '40', unit: 'kg', icon: Dumbbell },
+    { name: 'Dumbbell lateral raise', sets: 4, reps: 12, load: '10', unit: 'kg', icon: Dumbbell },
+    { name: 'Tricep rope pushdown', sets: 3, reps: 12, load: '25', unit: 'kg', icon: Activity },
   ]
 
   return (
-    <div className="max-w-4xl mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none pb-28">
+    <div className="max-w-4xl mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none pb-28 relative">
+      {/* ─── Ambient Floating Glass Bubbles & Glows ─── */}
+      <div
+        className="pointer-events-none absolute top-12 right-4 w-72 h-72 rounded-full opacity-35 -z-10 blur-3xl"
+        style={{
+          background: 'radial-gradient(circle, rgba(59,130,246,0.35) 0%, rgba(139,92,246,0.2) 50%, transparent 70%)',
+        }}
+      />
+      <div
+        className="pointer-events-none absolute top-80 -left-12 w-64 h-64 rounded-full opacity-25 -z-10 blur-3xl"
+        style={{
+          background: 'radial-gradient(circle, rgba(168,85,247,0.3) 0%, rgba(236,72,153,0.15) 50%, transparent 70%)',
+        }}
+      />
+
       {/* ─── Top Header with Actions ─── */}
       <div className="flex items-center justify-between pb-1">
         <button
           onClick={() => router.push('/m')}
-          className="w-10 h-10 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:border-[#8B5CF6] transition-colors cursor-pointer"
+          className="w-10 h-10 rounded-full bg-[#111726]/90 backdrop-blur-md border border-white/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center text-white hover:border-[#8B5CF6] transition-colors cursor-pointer"
           aria-label="Back to Member Home"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -84,13 +107,13 @@ export default function MemberProgramsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => toast.info('Custom exercise addition available in session')}
-            className="px-3.5 py-1.5 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] text-white text-xs font-semibold hover:border-[#3B82F6] transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-full bg-[#111726]/90 backdrop-blur-md border border-white/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] text-white text-xs font-semibold hover:border-[#3B82F6] transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" /> Add
           </button>
           <button
             onClick={() => setShiftModalOpen(true)}
-            className="w-10 h-10 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:border-[#3B82F6] transition-colors cursor-pointer"
+            className="w-10 h-10 rounded-full bg-[#111726]/90 backdrop-blur-md border border-white/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center text-white hover:border-[#3B82F6] transition-colors cursor-pointer"
             aria-label="Routine Options"
           >
             <MoreVertical className="w-4 h-4" />
@@ -109,9 +132,9 @@ export default function MemberProgramsPage() {
       </div>
 
       {/* ─── Trainer Prescription Card ─── */}
-      <div className="p-5 rounded-[22px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] space-y-4">
+      <div className="p-5 rounded-[24px] bg-[#0E131F]/90 border border-white/[0.09] shadow-[0_12px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] border border-[#60A5FA]/60 flex items-center justify-center text-white font-ui text-xs font-bold shadow-[0_0_12px_rgba(59,130,246,0.3)]">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] border border-[#60A5FA]/60 flex items-center justify-center text-white font-ui text-xs font-bold shadow-[0_0_14px_rgba(59,130,246,0.35)]">
             RK
           </div>
           <div>
@@ -125,26 +148,32 @@ export default function MemberProgramsPage() {
         </div>
 
         {/* 3 Telemetry Metrics */}
-        <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-[rgba(255,255,255,0.06)] text-xs">
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium">
+        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/[0.06] text-xs">
+          <div className="px-3 py-2 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md space-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <span className="text-[10px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium uppercase tracking-wider">
               <Clock className="w-3 h-3 text-[#60A5FA]" /> Duration
             </span>
-            <span className="font-ui font-semibold text-white text-sm">52 mins</span>
+            <div className="flex items-baseline gap-1 font-sans">
+              <span className="font-bold text-white text-sm tabular-nums">52</span>
+              <span className="text-[11px] text-[var(--ink-3)] font-medium">mins</span>
+            </div>
           </div>
 
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium">
+          <div className="px-3 py-2 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md space-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <span className="text-[10px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium uppercase tracking-wider">
               <Dumbbell className="w-3 h-3 text-[#60A5FA]" /> Volume
             </span>
-            <span className="font-ui font-semibold text-white text-sm">~4,200 kg</span>
+            <div className="flex items-baseline gap-1 font-sans">
+              <span className="font-bold text-white text-sm tabular-nums">~4,200</span>
+              <span className="text-[11px] text-[var(--ink-3)] font-medium">kg</span>
+            </div>
           </div>
 
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium">
+          <div className="px-3 py-2 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md space-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <span className="text-[10px] font-ui text-[var(--ink-3)] flex items-center gap-1 font-medium uppercase tracking-wider">
               <Activity className="w-3 h-3 text-[#60A5FA]" /> Level
             </span>
-            <span className="font-ui font-semibold text-white text-sm">Intermediate</span>
+            <span className="font-ui font-bold text-white text-xs block truncate pt-0.5">Intermediate</span>
           </div>
         </div>
       </div>
@@ -152,12 +181,20 @@ export default function MemberProgramsPage() {
       {/* ─── Exercise List Queue ─── */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-ui text-sm font-bold text-white tracking-tight">
-            Exercises (6)
-          </h3>
-          <span className="text-xs text-[var(--ink-3)]">
+          <div className="flex items-center gap-2">
+            <h3 className="font-ui text-sm font-bold text-white tracking-tight">
+              Exercises
+            </h3>
+            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold font-sans tabular-nums bg-white/[0.07] text-white/90 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_10px_rgba(255,255,255,0.05)] backdrop-blur-md">
+              {exercises.length}
+            </span>
+          </div>
+          <button
+            onClick={() => toast.info('Hold and drag to reorder exercises')}
+            className="text-xs text-[var(--ink-3)] hover:text-white transition-colors cursor-pointer"
+          >
             Reorder
-          </span>
+          </button>
         </div>
 
         <div className="space-y-2.5">
@@ -166,26 +203,60 @@ export default function MemberProgramsPage() {
             return (
               <div
                 key={idx}
-                className="p-3.5 sm:p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between gap-3 group min-w-0"
+                className="p-3.5 sm:p-4 rounded-[22px] bg-[#0E131F]/90 backdrop-blur-xl border border-white/[0.08] hover:border-[#3B82F6]/50 hover:bg-[#111728] transition-all duration-200 flex items-center justify-between gap-3 group min-w-0 shadow-[0_8px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]"
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(59,130,246,0.18)] to-[rgba(139,92,246,0.10)] border border-[rgba(59,130,246,0.30)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 group-hover:border-[#60A5FA]/60 shadow-[0_0_14px_rgba(59,130,246,0.2)] transition-all shrink-0">
                     <Icon className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 space-y-1.5">
                     <h4 className="font-ui text-sm font-bold text-white group-hover:text-[#60A5FA] transition-colors truncate">
                       {ex.name}
                     </h4>
-                    <p className="font-sans tabular-nums text-xs text-[var(--ink-3)] mt-0.5 truncate">
-                      {ex.setsReps} · {ex.weight}
-                    </p>
+
+                    {/* Glass Bubble Pills for Numbers & Telemetry */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {/* Sets Glass Bubble */}
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-sans tabular-nums bg-white/[0.05] border border-white/[0.12] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_rgba(0,0,0,0.25)] backdrop-blur-md">
+                        <span className="font-bold text-white text-[12px]">{ex.sets}</span>
+                        <span className="text-[10px] text-[var(--ink-3)] font-semibold uppercase tracking-wider">
+                          sets
+                        </span>
+                      </span>
+
+                      {/* Reps Glass Bubble */}
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-sans tabular-nums bg-white/[0.05] border border-white/[0.12] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_rgba(0,0,0,0.25)] backdrop-blur-md">
+                        <span className="font-bold text-white text-[12px]">{ex.reps}</span>
+                        <span className="text-[10px] text-[var(--ink-3)] font-semibold uppercase tracking-wider">
+                          reps
+                        </span>
+                      </span>
+
+                      {/* Load / Weight or RPE Glass Bubble */}
+                      {ex.unit === 'rpe' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-sans tabular-nums bg-[rgba(168,85,247,0.14)] border border-[rgba(168,85,247,0.32)] text-[#D8B4FE] shadow-[0_0_12px_rgba(168,85,247,0.18),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md">
+                          <span className="text-[10px] text-[#C084FC] font-bold uppercase tracking-wider">
+                            RPE
+                          </span>
+                          <span className="font-bold text-[#F3E8FF] text-[12px]">{ex.load}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-sans tabular-nums bg-[rgba(59,130,246,0.14)] border border-[rgba(59,130,246,0.32)] text-[#93C5FD] shadow-[0_0_12px_rgba(59,130,246,0.18),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md">
+                          <span className="font-bold text-[#DBEAFE] text-[12px]">{ex.load}</span>
+                          <span className="text-[10px] text-[#93C5FD]/80 font-bold uppercase tracking-wider">
+                            kg
+                          </span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <button
                   onClick={() => router.push('/m/session')}
-                  className="p-2 rounded-full text-[var(--ink-3)] group-hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition-all cursor-pointer shrink-0"
+                  className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.08] text-[var(--ink-3)] group-hover:text-white group-hover:border-white/20 group-hover:bg-white/[0.08] flex items-center justify-center transition-all cursor-pointer shrink-0"
                   title="View Exercise Telemetry"
+                  aria-label={`View details for ${ex.name}`}
                 >
                   <ArrowUpRight className="w-4 h-4" />
                 </button>
@@ -199,7 +270,7 @@ export default function MemberProgramsPage() {
       <div className="pt-2">
         <button
           onClick={() => router.push('/m/session')}
-          className="w-full py-4 rounded-full bg-gradient-to-r from-[#2563EB] to-[#3B82F6] hover:from-[#1D4ED8] hover:to-[#2563EB] text-white font-bold font-ui text-sm shadow-[0_0_24px_rgba(37,99,235,0.45)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-full bg-gradient-to-r from-[#2563EB] to-[#3B82F6] hover:from-[#1D4ED8] hover:to-[#2563EB] text-white font-bold font-ui text-sm shadow-[0_0_24px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.25)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2"
         >
           <Play className="w-4 h-4 fill-current text-white" />
           Start workout
