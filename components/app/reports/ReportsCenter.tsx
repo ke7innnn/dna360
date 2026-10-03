@@ -227,7 +227,7 @@ export default function ReportsCenter({
       `"${r.billingDate}"`,
       `"${r.invoiceNumber}"`,
       `"${r.memberName}"`,
-      `"${r.phone}"`,
+      `"${r.memberPhone}"`,
       `"${r.membershipDetails}"`,
       `"${r.activationDate}"`,
       `"${r.expiryDate}"`,

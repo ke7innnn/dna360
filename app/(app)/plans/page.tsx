@@ -79,6 +79,7 @@ export default function MembershipPackagesPage() {
         access_window: isHappyHours ? { start: '12:00', end: '15:30', label: 'Happy Hours' } : null,
         couple: false,
         active: true,
+        sort_order: 99,
         pending_name_confirmation: false,
         description: inclusions.trim() ? `Includes: ${inclusions.trim()}` : undefined,
       })
@@ -298,7 +299,7 @@ export default function MembershipPackagesPage() {
                       </td>
 
                       <td className="p-3.5 text-right font-mono text-[11px] text-[var(--muted)]">
-                        {formatINR(gstCalc.taxableMinor)}
+                        {formatINR(gstCalc.taxable)}
                       </td>
 
                       <td className="p-3.5">

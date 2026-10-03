@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getSessionFromMemoryByHash, type AuthSessionRecord } from '@/lib/session-store'
+import { getSessionFromMemoryByHash, saveSessionToMemory, type AuthSessionRecord } from '@/lib/session-store'
 
 const PUBLIC_EXACT_PATHS = new Set([
   '/',

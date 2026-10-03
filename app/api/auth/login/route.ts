@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Create Server Session Token
-    const token = createServerSession(matchedUser, 'tenant_powai')
+    const token = await createServerSession(matchedUser, 'tenant_powai')
     const redirectUrl = getRoleDefaultRedirect(matchedUser.role.slug, matchedUser)
 
     logAuditEvent({

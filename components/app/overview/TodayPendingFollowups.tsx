@@ -359,7 +359,7 @@ export default function TodayPendingFollowups({
           <div className="divide-y divide-white/[0.04] rounded-xl border border-white/[0.06] bg-[#070A12] overflow-hidden">
             {pendingTrials.length > 0 ? (
               pendingTrials.map((booking) => {
-                const serviceDef = BOOKING_SERVICES.find((s) => s.id === booking.serviceType)
+                const serviceDef = BOOKING_SERVICES[booking.serviceType]
                 return (
                   <div
                     key={booking.id}
@@ -376,8 +376,8 @@ export default function TodayPendingFollowups({
                         </span>
                       </div>
                       <p className="text-[11px] text-[var(--ink-3)] truncate mt-0.5">
-                        <span>{booking.phone}</span> ·{' '}
-                        <span>Specialist: <b>{booking.assignedStaff || 'Floor Coach'}</b></span> ·{' '}
+                        <span>{booking.clientPhone}</span> ·{' '}
+                        <span>Specialist: <b>{booking.assignedStaffName || 'Floor Coach'}</b></span> ·{' '}
                         <span
                           className={cn(
                             'font-semibold capitalize',
