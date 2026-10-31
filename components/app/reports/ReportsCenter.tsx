@@ -166,14 +166,14 @@ export default function ReportsCenter({
       .filter((m) => m.status === 'expiring_soon' || m.status === 'grace_period' || m.status === 'active')
       .map((m) => {
         const activeMem = m.active_memberships?.[0]
-        const expiryDate = activeMem?.expiry_date || '2026-10-15'
-        const activationDate = activeMem?.activation_date || activeMem?.enrolment_date || '2025-10-15'
+        const expiryDate = activeMem?.expiry_date || new Date().toISOString().slice(0, 10)
+        const activationDate = activeMem?.activation_date || activeMem?.enrolment_date || new Date().toISOString().slice(0, 10)
         const productName = activeMem?.product_name || 'Annual Gym Membership Package'
         
         // Expected renewal amount calculation
         const expectedAmountMinor = activeMem?.amount_paid || 4350000
 
-        const today = new Date('2026-09-29').getTime()
+        const today = Date.now()
         const expTime = new Date(expiryDate).getTime()
         const daysLeft = Math.round((expTime - today) / (1000 * 60 * 60 * 24))
 

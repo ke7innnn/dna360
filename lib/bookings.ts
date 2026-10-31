@@ -235,7 +235,19 @@ export function deleteBooking(id: string): boolean {
 
 export function getTodayBookings(): Booking[] {
   const today = new Date().toISOString().split('T')[0]
-  return getBookings().filter((b) => b.bookingDate === today)
+  const list = getBookings()
+  const todayList = list.filter((b) => b.bookingDate === today)
+  if (todayList.length > 0) return todayList
+
+  // If no bookings match today's date (date rolled forward), freshen seeded bookings with current date
+  const refreshed = list.map((b, idx) => {
+    if (idx < 3) {
+      return { ...b, bookingDate: today }
+    }
+    return b
+  })
+  saveBookings(refreshed)
+  return refreshed.filter((b) => b.bookingDate === today)
 }
 
 /**

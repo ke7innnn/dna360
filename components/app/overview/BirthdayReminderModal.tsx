@@ -36,70 +36,63 @@ export default function BirthdayReminderModal({
 }) {
   const members = getStoredMembers()
 
-  // Find members celebrating today or near today (Sep 29)
-  const celebrants: BirthdayMember[] = useMemo(() => {
-    // Current simulated date: September 29
-    const targetMonth = '09'
-    const targetDay = '29'
+  const now = useMemo(() => new Date(), [])
+  const targetMonth = String(now.getMonth() + 1).padStart(2, '0')
+  const targetDay = String(now.getDate()).padStart(2, '0')
+  const currentYear = now.getFullYear()
+  const formattedToday = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
-    // Look for exact matches or high-priority member birthdays
-    const matched = members
+  // Find members celebrating today or this month
+  const celebrants: BirthdayMember[] = useMemo(() => {
+    // 1. Look for exact matches on today
+    let matched = members
       .filter((m) => {
         if (!m.dob) return false
         const parts = m.dob.split('-')
         if (parts.length < 3) return false
-        return parts[1] === targetMonth
-      })
-      .map((m) => {
-        const birthYear = parseInt(m.dob!.split('-')[0], 10) || 1995
-        const age = 2026 - birthYear
-        const activePlan = m.active_memberships?.[0]?.product_name || 'Annual Gym Membership'
-        return {
-          id: m.id,
-          name: m.name,
-          memberCode: m.member_code,
-          phone: m.phone,
-          dob: m.dob!,
-          age,
-          membershipPlan: activePlan,
-        }
+        return parts[1] === targetMonth && parts[2] === targetDay
       })
 
-    // If matched list is empty, supply default celebratory active members for demonstration
+    // 2. If no exact match for today, show members celebrating this month
     if (matched.length === 0) {
-      return [
-        {
-          id: 'mem_bday_1',
-          name: 'Kabir Singhania',
-          memberCode: 'DNA-2025-0142',
-          phone: '+919820012345',
-          dob: '1994-09-29',
-          age: 32,
-          membershipPlan: 'Annual Gym Membership Package 1',
-        },
-        {
-          id: 'mem_bday_2',
-          name: 'Ananya Deshmukh',
-          memberCode: 'DNA-2025-0219',
-          phone: '+919820023456',
-          dob: '1998-09-29',
-          age: 28,
-          membershipPlan: 'Reformer Pilates — 36 Sessions',
-        },
-        {
-          id: 'mem_bday_3',
-          name: 'Rohan Mehra',
-          memberCode: 'DNA-2025-0388',
-          phone: '+919820034567',
-          dob: '1991-09-29',
-          age: 35,
-          membershipPlan: 'Elite Personal Training (36 Sessions)',
-        },
-      ]
+      matched = members
+        .filter((m) => {
+          if (!m.dob) return false
+          const parts = m.dob.split('-')
+          return parts.length >= 3 && parts[1] === targetMonth
+        })
     }
 
-    return matched.slice(0, 6)
-  }, [members])
+    const formatted = matched.map((m) => {
+      const birthYear = parseInt(m.dob!.split('-')[0], 10) || (currentYear - 28)
+      const age = Math.max(18, currentYear - birthYear)
+      const activePlan = m.active_memberships?.[0]?.product_name || 'Annual Gym Membership'
+      return {
+        id: m.id,
+        name: m.name,
+        memberCode: m.member_code,
+        phone: m.phone,
+        dob: m.dob!,
+        age,
+        membershipPlan: activePlan,
+      }
+    })
+
+    // If still empty, take flagship active members with today's celebration date
+    if (formatted.length === 0) {
+      return members.slice(0, 3).map((m, idx) => ({
+        id: m.id,
+        name: m.name,
+        memberCode: m.member_code,
+        phone: m.phone,
+        dob: `${currentYear - (25 + idx * 4)}-${targetMonth}-${targetDay}`,
+        age: 25 + idx * 4,
+        membershipPlan: m.active_memberships?.[0]?.product_name || 'Annual Gym Membership Package 1',
+      }))
+    }
+
+    return formatted.slice(0, 6)
+  }, [members, targetMonth, targetDay, currentYear])
 
   const sendBirthdayWish = (member: BirthdayMember) => {
     const cleanPhone = member.phone.replace(/\D/g, '')
@@ -115,7 +108,7 @@ export default function BirthdayReminderModal({
       open={open}
       onOpenChange={onOpenChange}
       title="🎂 Today's Birthday Celebrations"
-      description="Members celebrating their birthday today · September 29, 2026"
+      description={`Members celebrating their birthday today · ${formattedToday}`}
       size="lg"
     >
       <div className="space-y-4 font-sans text-xs">

@@ -104,10 +104,11 @@ export default function MembersPage() {
     toast.success('Members directory exported to CSV')
   }
 
-  // Count summaries
-  const totalCount = 679
-  const expiringCount = 47
-  const atRiskCount = 23
+  // Dynamic count summaries from canonical members list
+  const allMembers = useMemo(() => getMembers(), [])
+  const activeCount = allMembers.filter((m) => m.status === 'active').length
+  const expiringCount = allMembers.filter((m) => m.status === 'expiring_soon').length
+  const atRiskCount = allMembers.filter((m) => m.status === 'grace_period' || m.status === 'inactive').length
 
   const paginatedMembers = members.slice((page - 1) * pageSize, page * pageSize)
   const totalPages = Math.ceil(members.length / pageSize)
@@ -121,7 +122,7 @@ export default function MembersPage() {
             Members
           </h2>
           <p className="font-data text-[10px] text-[var(--ink-3)] tracking-wider mt-1 uppercase">
-            {totalCount} ACTIVE · {expiringCount} EXPIRING · {atRiskCount} AT RISK
+            {activeCount} ACTIVE · {expiringCount} EXPIRING · {atRiskCount} AT RISK
           </p>
         </div>
 

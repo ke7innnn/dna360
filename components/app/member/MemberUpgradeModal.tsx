@@ -40,7 +40,7 @@ export default function MemberUpgradeModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amountMinor,
+          planType: selectedPlan,
           receipt: `rcpt_upg_${Date.now()}`,
           notes: {
             memberId: user?.id || 'member_curr',

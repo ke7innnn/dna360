@@ -14,7 +14,8 @@
     "test:all": "npx tsx tests/rbac-access-matrix.test.ts && npx tsx tests/training-security.test.ts && npx tsx tests/training-engine.test.ts && npx tsx tests/security-auth.test.ts && npx tsx tests/data-integrity.test.ts",
     "cap:sync": "cap sync",
     "cap:ios": "cap open ios",
-    "cap:android": "cap open android"
+    "cap:android": "cap open android",
+    "build:android": "cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.2",

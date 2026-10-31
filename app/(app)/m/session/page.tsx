@@ -32,6 +32,8 @@ import {
 } from 'lucide-react'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
+import { getMemberPortalState, saveMemberPortalState } from '@/lib/memberportal'
+import { useAuth } from '@/context/AuthContext'
 
 // Types
 type SetType = 'NORMAL' | 'WARMUP' | 'DROP' | 'FAILURE'
@@ -144,6 +146,7 @@ const ALTERNATIVE_EXERCISES = [
 
 export default function ActiveWorkoutSessionPage() {
   const router = useRouter()
+  const { user } = useAuth()
 
   // Exercise plan state
   const [exercises, setExercises] = useState<PlannedExercise[]>(INITIAL_EXERCISES)
@@ -404,6 +407,35 @@ export default function ActiveWorkoutSessionPage() {
   const handleFinishWorkoutConfirmed = () => {
     haptic([30, 60, 90])
     setFinishModalOpen(false)
+
+    try {
+      const userRef = user?.id || user?.name || 'mem_001'
+      const currentPortal = getMemberPortalState(userRef)
+      const updatedPortal = {
+        ...currentPortal,
+        attendanceStreak: (currentPortal.attendanceStreak || 0) + 1,
+        totalVisits: (currentPortal.totalVisits || 0) + 1,
+      }
+      saveMemberPortalState(updatedPortal, userRef)
+
+      if (typeof window !== 'undefined') {
+        const workoutLog = {
+          date: new Date().toISOString(),
+          durationSec: elapsedSeconds,
+          completedSets: completedSetsAcrossWorkout,
+          totalSets: totalSetsAcrossWorkout,
+          volumeKg: totalVolumeAcrossWorkout,
+          exercises: exercises.map(ex => ({
+            name: ex.name,
+            completedSets: ex.sets.filter(s => s.isDone).length,
+          })),
+        }
+        localStorage.setItem('dna360_last_workout_log', JSON.stringify(workoutLog))
+      }
+    } catch (e) {
+      console.warn('Failed to save workout completion state:', e)
+    }
+
     toast.success('Workout Logged & Synchronized! 🏆', {
       description: `Total Volume: ${totalVolumeAcrossWorkout.toLocaleString()} kg · ${completedSetsAcrossWorkout} Sets Completed`,
     })

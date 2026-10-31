@@ -21,21 +21,26 @@ export interface MonthTargetAchievement {
   isCurrent?: boolean
 }
 
-// 12 Months historical + current pacing (Oct 2025 to Sep 2026)
-const TWELVE_MONTH_DATA: MonthTargetAchievement[] = [
-  { month: 'Oct 25', targetLakhs: 10.0, achievedLakhs: 10.4 },
-  { month: 'Nov 25', targetLakhs: 10.5, achievedLakhs: 11.2 },
-  { month: 'Dec 25', targetLakhs: 12.0, achievedLakhs: 13.1 },
-  { month: 'Jan 26', targetLakhs: 11.5, achievedLakhs: 10.8 },
-  { month: 'Feb 26', targetLakhs: 11.0, achievedLakhs: 11.6 },
-  { month: 'Mar 26', targetLakhs: 13.0, achievedLakhs: 14.2 },
-  { month: 'Apr 26', targetLakhs: 12.0, achievedLakhs: 12.8 },
-  { month: 'May 26', targetLakhs: 12.5, achievedLakhs: 13.4 },
-  { month: 'Jun 26', targetLakhs: 13.0, achievedLakhs: 12.9 },
-  { month: 'Jul 26', targetLakhs: 13.5, achievedLakhs: 14.8 },
-  { month: 'Aug 26', targetLakhs: 14.0, achievedLakhs: 15.1 },
-  { month: 'Sep 26', targetLakhs: 12.5, achievedLakhs: 8.4, isCurrent: true },
-]
+function buildTwelveMonthData(): MonthTargetAchievement[] {
+  const data: MonthTargetAchievement[] = []
+  const targets = [10.0, 10.5, 12.0, 11.5, 11.0, 13.0, 12.0, 12.5, 13.0, 13.5, 14.0, 12.5]
+  const achieved = [10.4, 11.2, 13.1, 10.8, 11.6, 14.2, 12.8, 13.4, 12.9, 14.8, 15.1, 8.4]
+
+  const now = new Date()
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthShort = d.toLocaleDateString('en-US', { month: 'short' })
+    const yearShort = String(d.getFullYear()).slice(-2)
+    const isCurrent = i === 0
+    data.push({
+      month: `${monthShort} ${yearShort}`,
+      targetLakhs: targets[11 - i],
+      achievedLakhs: achieved[11 - i],
+      isCurrent,
+    })
+  }
+  return data
+}
 
 export default function TargetAchievementChart({
   className,
@@ -45,20 +50,24 @@ export default function TargetAchievementChart({
   compact?: boolean
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const twelveMonthData = React.useMemo(() => buildTwelveMonthData(), [])
+  const currentMonthLabel = React.useMemo(() => {
+    return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  }, [])
 
-  // Current Month Stats (Sep 2026)
-  const currentMonthData = TWELVE_MONTH_DATA.find((d) => d.isCurrent) || TWELVE_MONTH_DATA[TWELVE_MONTH_DATA.length - 1]
+  // Current Month Stats
+  const currentMonthData = twelveMonthData.find((d) => d.isCurrent) || twelveMonthData[twelveMonthData.length - 1]
   const currentTargetLakhs = currentMonthData.targetLakhs
   const currentAchievedLakhs = currentMonthData.achievedLakhs
   const currentPct = Math.round((currentAchievedLakhs / currentTargetLakhs) * 1000) / 10
   const currentRemainingLakhs = Math.max(0, Math.round((currentTargetLakhs - currentAchievedLakhs) * 10) / 10)
 
   // Max value for scaling
-  const maxLakhs = Math.max(...TWELVE_MONTH_DATA.map((d) => Math.max(d.targetLakhs, d.achievedLakhs)), 16)
+  const maxLakhs = Math.max(...twelveMonthData.map((d) => Math.max(d.targetLakhs, d.achievedLakhs)), 16)
 
   // 12-month aggregated metrics
-  const totalTargetLakhs = TWELVE_MONTH_DATA.reduce((acc, d) => acc + d.targetLakhs, 0)
-  const totalAchievedLakhs = TWELVE_MONTH_DATA.reduce((acc, d) => acc + d.achievedLakhs, 0)
+  const totalTargetLakhs = twelveMonthData.reduce((acc, d) => acc + d.targetLakhs, 0)
+  const totalAchievedLakhs = twelveMonthData.reduce((acc, d) => acc + d.achievedLakhs, 0)
   const overallPct = Math.round((totalAchievedLakhs / totalTargetLakhs) * 1000) / 10
 
   return (
@@ -123,7 +132,7 @@ export default function TargetAchievementChart({
         <div className="flex items-center justify-between text-xs font-ui">
           <span className="text-white/80 font-medium flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-[#38BDF8]" />
-            <span>September 2026 Target Completion</span>
+            <span>{currentMonthLabel} Target Completion</span>
           </span>
           <span className="font-data font-bold text-[#38BDF8] tabular-nums">
             {currentPct}% Achieved · ₹{currentAchievedLakhs}L / ₹{currentTargetLakhs}L
@@ -174,7 +183,7 @@ export default function TargetAchievementChart({
           </div>
 
           <div className="grid grid-cols-12 gap-1.5 sm:gap-3 items-end h-52 relative z-10">
-            {TWELVE_MONTH_DATA.map((item, idx) => {
+            {twelveMonthData.map((item, idx) => {
               const targetHeightPct = (item.targetLakhs / maxLakhs) * 100
               const achievedHeightPct = (item.achievedLakhs / maxLakhs) * 100
               const isOverTarget = item.achievedLakhs >= item.targetLakhs

@@ -201,11 +201,39 @@ export default function MemberOnboardingModal({
     setError(null)
     setLoading(true)
     try {
+      const { issueInvoice, buildLineItem } = await import('@/lib/billing')
+      const lineItem = buildLineItem({
+        productId: selectedPlan.id,
+        description: selectedPlan.name,
+        sacCode: '999723',
+        unitPriceInclusiveMinor: selectedPlan.priceInclusiveMinor,
+        quantity: 1,
+        discountMinor: discountMinor,
+        taxRate: 0.05,
+      })
+      const pendingInvoice = issueInvoice({
+        memberId: `mem_temp_${Date.now()}`,
+        memberName: `${firstName.trim()} ${lastName.trim()}`,
+        memberPhone: phone.trim(),
+        memberEmail: email.trim() || undefined,
+        items: [lineItem],
+        payments: [],
+        salesRepId: 'usr_fc_01',
+        salesRepName: salesRep || 'Amit Sharma',
+        createdBy: {
+          id: 'usr_fc_01',
+          name: salesRep || 'Front Desk',
+          role: 'Fitness Consultant',
+        },
+        notes: `New onboarding membership: ${selectedPlan.name}`,
+      })
+
       const res = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amountMinor: netInclusiveMinor,
+          invoiceId: pendingInvoice.id,
+          invoiceData: pendingInvoice,
           receipt: `rcpt_onb_${Date.now()}`,
           notes: {
             memberName: `${firstName.trim()} ${lastName.trim()}`,

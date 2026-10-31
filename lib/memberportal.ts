@@ -80,29 +80,38 @@ export const SEEDED_PORTAL_BOOKINGS: MemberClassBooking[] = [
 ]
 
 export function getMemberPortalState(memberId?: string): MemberPortalState {
-  const targetId = memberId || 'mem_001'
-  const key = `${PORTAL_STATE_KEY}_${targetId}`
+  const members = getStoredMembers()
+  const rawId = memberId || 'mem_001'
+  const found =
+    members.find(
+      (m) =>
+        m.id === rawId ||
+        m.member_code === rawId ||
+        m.name.toLowerCase() === rawId.toLowerCase() ||
+        m.phone === rawId ||
+        (m.email && m.email.toLowerCase() === rawId.toLowerCase())
+    ) || members[0]
+
+  const canonicalId = found ? found.id : 'mem_001'
+  const canonicalKey = `${PORTAL_STATE_KEY}_${canonicalId}`
 
   if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem(key)
+    const stored =
+      localStorage.getItem(canonicalKey) ||
+      localStorage.getItem(`${PORTAL_STATE_KEY}_${rawId}`) ||
+      localStorage.getItem(`${PORTAL_STATE_KEY}_mem_001`)
+
     if (stored) {
       try {
-        return JSON.parse(stored)
+        const parsed = JSON.parse(stored)
+        if (parsed && typeof parsed.attendanceStreak === 'number') {
+          return parsed
+        }
       } catch {
         // Fall through to rehydration
       }
     }
   }
-
-  // Auto-hydrate dynamically from verified member records in getStoredMembers()
-  const members = getStoredMembers()
-  const found = members.find(
-    (m) =>
-      m.id === targetId ||
-      m.member_code === targetId ||
-      m.name.toLowerCase() === targetId.toLowerCase() ||
-      m.phone === targetId
-  )
 
   if (found) {
     const primaryMs = found.active_memberships?.[0]
@@ -156,7 +165,7 @@ export function getMemberPortalState(memberId?: string): MemberPortalState {
 
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(key, JSON.stringify(hydrated))
+        localStorage.setItem(canonicalKey, JSON.stringify(hydrated))
       } catch {}
     }
     return hydrated
@@ -165,7 +174,7 @@ export function getMemberPortalState(memberId?: string): MemberPortalState {
   // Fallback to seeded state
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem(key, JSON.stringify(SEEDED_PORTAL_STATE))
+      localStorage.setItem(canonicalKey, JSON.stringify(SEEDED_PORTAL_STATE))
     } catch {}
   }
   return SEEDED_PORTAL_STATE
@@ -173,9 +182,37 @@ export function getMemberPortalState(memberId?: string): MemberPortalState {
 
 export function saveMemberPortalState(state: MemberPortalState, memberId?: string) {
   if (typeof window === 'undefined') return
-  const targetId = memberId || state.memberId || 'mem_001'
-  const key = `${PORTAL_STATE_KEY}_${targetId}`
-  localStorage.setItem(key, JSON.stringify(state))
+  const members = getStoredMembers()
+  const rawId = memberId || state.memberId || 'mem_001'
+  const found = members.find(
+    (m) =>
+      m.id === rawId ||
+      m.member_code === rawId ||
+      m.name.toLowerCase() === rawId.toLowerCase() ||
+      m.phone === rawId ||
+      (m.email && m.email.toLowerCase() === rawId.toLowerCase())
+  )
+
+  const canonicalId = found ? found.id : (state.memberId || 'mem_001')
+  const canonicalKey = `${PORTAL_STATE_KEY}_${canonicalId}`
+  const rawKey = `${PORTAL_STATE_KEY}_${rawId}`
+
+  localStorage.setItem(canonicalKey, JSON.stringify(state))
+  if (canonicalKey !== rawKey) {
+    localStorage.setItem(rawKey, JSON.stringify(state))
+  }
+  // Also ensure default mem_001 fallback key is synced
+  localStorage.setItem(`${PORTAL_STATE_KEY}_mem_001`, JSON.stringify(state))
+
+  // Sync with persistent members database
+  if (found && typeof state.attendanceStreak === 'number') {
+    updateMember(found.id, {
+      attendance_streak: state.attendanceStreak,
+      total_check_ins: state.totalVisits ?? found.total_check_ins,
+      last_visit_at: new Date().toISOString(),
+    })
+  }
+
   window.dispatchEvent(new Event('dna360_memberportal_updated'))
 }
 

@@ -22,8 +22,12 @@ export default function MemberFreezeRequestModal({
   onRequestSubmitted?: () => void
 }) {
   const { user } = useAuth()
-  const [startDate, setStartDate] = useState('2026-09-01')
-  const [endDate, setEndDate] = useState('2026-09-21')
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 21)
+    return d.toISOString().slice(0, 10)
+  })
   const [daysCount, setDaysCount] = useState(21)
   const [reason, setReason] = useState<MemberFreezeRequest['reason']>('Travel / Relocation')
   const [notes, setNotes] = useState('')

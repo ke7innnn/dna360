@@ -55,7 +55,7 @@ export default function TodayPendingFollowups({
           memberCode: m.member_code,
           phone: m.phone,
           planName: mem?.product_name || 'Annual Gym Membership',
-          expiryDate: mem?.expiry_date || '2026-09-29',
+          expiryDate: mem?.expiry_date || new Date().toISOString().slice(0, 10),
           amountMinor: mem?.amount_paid || 4350000,
           isContacted: contactedMemberIds.includes(m.id),
         }

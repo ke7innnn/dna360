@@ -39,7 +39,7 @@ export default function FloorOverviewPage() {
 
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState('This month')
-  const [currentTime, setCurrentTime] = useState('POWAI · TUESDAY 8 SEPTEMBER · 6:42 PM')
+  const [currentTime, setCurrentTime] = useState('')
   
   // Modals for new requirements
   const [birthdayModalOpen, setBirthdayModalOpen] = useState(false)
@@ -56,59 +56,72 @@ export default function FloorOverviewPage() {
     )
   }
 
-  // Live timestamp formatting
+  // Live timestamp formatting (1s real-time tick)
   useEffect(() => {
     const updateTime = () => {
       const now = new Date()
       const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
       const dayNum = now.getDate()
       const monthName = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
-      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })
       setCurrentTime(`POWAI · ${dayName} ${dayNum} ${monthName} · ${timeStr}`)
     }
     updateTime()
-    const timer = setInterval(updateTime, 60000)
+    const timer = setInterval(updateTime, 1000)
     return () => clearInterval(timer)
   }, [])
 
   // Days in current calendar month for the Month Activity calendar
-  const calendarDays = [
-    { day: 31, isMute: true, hasCheckin: true, hasPT: false },
-    { day: 1, isToday: true, hasCheckin: true, hasPT: true },
-    { day: 2, hasCheckin: false, hasPT: false },
-    { day: 3, hasCheckin: false, hasPT: false },
-    { day: 4, hasCheckin: false, hasPT: false },
-    { day: 5, hasCheckin: false, hasPT: false },
-    { day: 6, hasCheckin: false, hasPT: false },
-    { day: 7, hasCheckin: false, hasPT: false },
-    { day: 8, hasCheckin: false, hasPT: false },
-    { day: 9, hasCheckin: false, hasPT: false },
-    { day: 10, hasCheckin: false, hasPT: false },
-    { day: 11, hasCheckin: false, hasPT: false },
-    { day: 12, hasCheckin: false, hasPT: false },
-    { day: 13, hasCheckin: false, hasPT: false },
-    { day: 14, hasCheckin: false, hasPT: false },
-    { day: 15, hasCheckin: false, hasPT: false },
-    { day: 16, hasCheckin: false, hasPT: false },
-    { day: 17, hasCheckin: false, hasPT: false },
-    { day: 18, hasCheckin: false, hasPT: false },
-    { day: 19, hasCheckin: false, hasPT: false },
-    { day: 20, hasCheckin: false, hasPT: false },
-    { day: 21, hasCheckin: false, hasPT: false },
-    { day: 22, hasCheckin: false, hasPT: false },
-    { day: 23, hasCheckin: false, hasPT: false },
-    { day: 24, hasCheckin: false, hasPT: false },
-    { day: 25, hasCheckin: false, hasPT: false },
-    { day: 26, hasCheckin: false, hasPT: false },
-    { day: 27, hasCheckin: false, hasPT: false },
-    { day: 28, hasCheckin: false, hasPT: false },
-    { day: 29, hasCheckin: false, hasPT: false },
-    { day: 30, hasCheckin: false, hasPT: false },
-    { day: 1, isMute: true, hasCheckin: false, hasPT: false },
-    { day: 2, isMute: true, hasCheckin: false, hasPT: false },
-    { day: 3, isMute: true, hasCheckin: false, hasPT: false },
-    { day: 4, isMute: true, hasCheckin: false, hasPT: false },
-  ]
+  const calendarDays = React.useMemo(() => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    const todayNum = now.getDate()
+
+    // Monday-indexed day of week: 0=Mon, ..., 6=Sun
+    const firstDay = new Date(year, month, 1).getDay()
+    const startOffset = (firstDay + 6) % 7
+
+    const daysInPrevMonth = new Date(year, month, 0).getDate()
+    const daysInCurrMonth = new Date(year, month + 1, 0).getDate()
+
+    const days: { day: number; isMute?: boolean; isToday?: boolean; hasCheckin?: boolean; hasPT?: boolean }[] = []
+
+    // Previous month trailing days
+    for (let i = startOffset - 1; i >= 0; i--) {
+      days.push({
+        day: daysInPrevMonth - i,
+        isMute: true,
+        hasCheckin: true,
+        hasPT: false,
+      })
+    }
+
+    // Current month days
+    for (let d = 1; d <= daysInCurrMonth; d++) {
+      const isPastOrToday = d <= todayNum
+      const isToday = d === todayNum
+      days.push({
+        day: d,
+        isToday,
+        hasCheckin: isPastOrToday && d % 2 === 1,
+        hasPT: isPastOrToday && (d % 4 === 1 || isToday),
+      })
+    }
+
+    // Trailing days of next month
+    const remaining = (7 - (days.length % 7)) % 7
+    for (let d = 1; d <= remaining; d++) {
+      days.push({
+        day: d,
+        isMute: true,
+        hasCheckin: false,
+        hasPT: false,
+      })
+    }
+
+    return days
+  }, [])
 
   // Weekly bar comparison: This week vs Last week
   const weeklyData = [

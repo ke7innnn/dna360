@@ -186,6 +186,10 @@ export default function Footer() {
             <Link href="/cancellation-refund-policy" className="hover:text-[#00c8c8] transition-colors">
               Cancellation & Refund Policy
             </Link>
+            <span>•</span>
+            <Link href="/delete-account" className="hover:text-[#00c8c8] transition-colors">
+              Delete Account & Data
+            </Link>
           </div>
         </div>
       </div>

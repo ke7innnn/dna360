@@ -111,7 +111,7 @@ export default function SettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amountMinor: 100, // ₹1.00
+          isTest: true,
           receipt: `rcpt_live_test_${Date.now()}`,
           notes: {
             description: 'Live Gateway ₹1 Verification Test',

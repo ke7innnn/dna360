@@ -22,7 +22,7 @@ import { logAuditEvent } from '@/lib/audit'
 import { normalizeIndianPhone } from '@/lib/auth'
 import { getEffectiveStatus } from '@/lib/lifecycle'
 
-const STORAGE_KEY = 'dna360_members_v4'
+const STORAGE_KEY = 'dna360_members_v5'
 
 const FIRST_NAMES = [
   'Arjun', 'Priya', 'Vikram', 'Rohan', 'Neha', 'Siddharth', 'Ananya', 'Rahul',
@@ -71,10 +71,13 @@ const FLAGSHIP_MEMBERS = [
 
 export function generate659Members(): Member[] {
   const list: Member[] = []
+  const usedFullNames = new Set<string>()
+  const now = new Date()
+  const formatDate = (d: Date) => d.toISOString().slice(0, 10)
 
   for (let i = 1; i <= 659; i++) {
-    let fn = FIRST_NAMES[(i * 7 + (i % 13)) % FIRST_NAMES.length]
-    let ln = LAST_NAMES[(i * 11 + (i % 17)) % LAST_NAMES.length]
+    let fn = ''
+    let ln = ''
     let explicitEmail: string | null = null
     let explicitPhone: string | null = null
     let pkg = PACKAGES[i % PACKAGES.length]
@@ -88,25 +91,44 @@ export function generate659Members(): Member[] {
       explicitPhone = flagship.phone
       pkg = PACKAGES[flagship.pkgIdx]
       status = flagship.status
+    } else {
+      // Deterministic collision-avoidance generator ensures 100% unique names (0 duplicates)
+      let attempt = 0
+      while (true) {
+        const fnIdx = (i * 7 + (i % 13) + attempt * 3) % FIRST_NAMES.length
+        const lnIdx = (i * 11 + (i % 17) + attempt * 7) % LAST_NAMES.length
+        const candFn = FIRST_NAMES[fnIdx]
+        const candLn = LAST_NAMES[lnIdx]
+        const candFull = `${candFn} ${candLn}`
+        if (!usedFullNames.has(candFull)) {
+          fn = candFn
+          ln = candLn
+          break
+        }
+        attempt++
+      }
     }
 
     const fullName = `${fn} ${ln}`
+    usedFullNames.add(fullName)
     const memberCode = `DNA-2025-${String(i).padStart(4, '0')}`
     const id = `mem_${String(i).padStart(3, '0')}`
 
-    // Realistic phone generation
+    // Realistic non-sequential phone generation
     const prefix = PHONE_PREFIXES[i % PHONE_PREFIXES.length]
-    const suffix = String((i * 173 + 2468) % 90000 + 10000)
+    const suffix = String(((i * 173 + 2468) % 90000) + 10000)
     const phone = explicitPhone || `+91${prefix}${suffix}`
 
-    // Status distribution across 659 members:
-    // 1-5: Flagship active/grace members
-    // 6-30: grace_period (25)
-    // 31-60: inactive/expired (30)
-    // 61-150: expiring_soon (90)
-    // 151-654: active (504)
-    // 655-659: blacklisted (5 suspended accounts for gym security protocol)
-    let expiryDate = '2027-01-20'
+    // Exact status distribution across 659 members:
+    // 1-4: Flagship active (4)
+    // 5: Flagship grace_period (1)
+    // 6-22: grace_period (17) -> Total 18 grace period members
+    // 23-54: inactive / expired (32 members)
+    // 55-136: expiring_soon (82 members)
+    // 137-644: active (508 members) -> Total 512 active members
+    // 645-659: blacklisted (15 members)
+    // Total sum = 512 + 18 + 82 + 32 + 15 = 659 members
+    let expiryDate = formatDate(new Date(now.getTime() + 180 * 86400000))
     let isBlacklisted = false
     let isComplimentary = i % 85 === 0
     let streak = 0
@@ -116,53 +138,59 @@ export function generate659Members(): Member[] {
 
     if (i <= 5) {
       // Flagship
-      expiryDate = i === 5 ? '2026-08-28' : '2027-03-31'
-      streak = 4
-      totalVisits = 112
-      lastVisitDaysAgo = 0
-      status = i === 5 ? 'grace_period' : 'active'
+      if (i === 5) {
+        status = 'grace_period'
+        expiryDate = formatDate(new Date(now.getTime() - 3 * 86400000)) // 3 days ago within grace
+        streak = 0
+        totalVisits = 88
+        lastVisitDaysAgo = 4
+      } else {
+        status = 'active'
+        expiryDate = formatDate(new Date(now.getTime() + 150 * 86400000))
+        streak = 4
+        totalVisits = 112
+        lastVisitDaysAgo = 0
+      }
     } else if (i >= 645) {
       // Suspended / Blacklisted (15 members: 645-659)
       status = 'blacklisted'
       isBlacklisted = true
-      expiryDate = '2026-04-10'
+      expiryDate = formatDate(new Date(now.getTime() - (90 + (i % 30)) * 86400000))
       streak = 0
       totalVisits = 14 + (i % 8)
       lastVisitDaysAgo = 120 + (i % 30)
     } else if (i <= 22) {
       // Grace period (17 members: 6-22 + flagship 5 = 18 members)
       status = 'grace_period'
-      const dayOffset = ((i - 6) % 6) + 1
-      expiryDate = `2026-08-${String(31 - dayOffset).padStart(2, '0')}`
+      const dayOffset = ((i - 6) % 5) + 1 // 1 to 5 days ago (within 7-day grace window)
+      expiryDate = formatDate(new Date(now.getTime() - dayOffset * 86400000))
       streak = i % 3 === 0 ? 1 : 0
-      totalVisits = 45 + (i * 3) % 40
+      totalVisits = 45 + ((i * 3) % 40)
       lastVisitDaysAgo = dayOffset + 1
     } else if (i <= 54) {
       // Expired / Inactive (32 members: 23-54)
       status = 'inactive'
-      expiryDate = `2026-0${(i % 4) + 3}-15`
+      const expiredOffset = 16 + ((i - 23) % 45) // 16 to 60 days ago
+      expiryDate = formatDate(new Date(now.getTime() - expiredOffset * 86400000))
       streak = 0
-      totalVisits = 25 + (i * 2) % 30
-      lastVisitDaysAgo = 45 + (i % 30)
+      totalVisits = 25 + ((i * 2) % 30)
+      lastVisitDaysAgo = expiredOffset
     } else if (i <= 136) {
       // Expiring in next 30 days (82 members: 55-136)
       status = 'expiring_soon'
-      const expDay = ((i - 55) % 28) + 2
-      expiryDate = `2026-09-${String(expDay).padStart(2, '0')}`
+      const soonOffset = ((i - 55) % 27) + 2 // 2 to 28 days in future
+      expiryDate = formatDate(new Date(now.getTime() + soonOffset * 86400000))
       streak = (i % 5) + 1
-      totalVisits = 65 + (i * 4) % 80
-      lastVisitDaysAgo = (i % 3)
+      totalVisits = 65 + ((i * 4) % 80)
+      lastVisitDaysAgo = i % 3
     } else {
       // Active (508 members: 137-644 + flagship 1-4 = 512 members)
       status = 'active'
-      const expMonth = ((i % 10) + 10)
-      const yr = expMonth > 12 ? '2027' : '2026'
-      const mth = expMonth > 12 ? String(expMonth - 12).padStart(2, '0') : String(expMonth).padStart(2, '0')
-      const expDay = ((i * 7) % 27) + 1
-      expiryDate = `${yr}-${mth}-${String(expDay).padStart(2, '0')}`
+      const futureOffset = 45 + ((i * 7) % 310) // 45 to 355 days in future
+      expiryDate = formatDate(new Date(now.getTime() + futureOffset * 86400000))
       streak = (i % 12) + 1
-      totalVisits = 40 + (i * 7) % 70
-      lastVisitDaysAgo = (i % 4)
+      totalVisits = 40 + ((i * 7) % 70)
+      lastVisitDaysAgo = i % 4
     }
 
     if (pkg.totalSessions) {
@@ -236,7 +264,7 @@ export function generate659Members(): Member[] {
         updated_at: '2025-01-15T09:00:00Z',
       },
       attendance_streak: streak,
-      last_visit_at: lastVisitDaysAgo === 0 ? '2026-08-31T09:30:00Z' : `2026-08-${String(31 - lastVisitDaysAgo).padStart(2, '0')}T10:30:00Z`,
+      last_visit_at: new Date(now.getTime() - lastVisitDaysAgo * 86400000).toISOString(),
       total_check_ins: totalVisits,
       fitness_metrics: [],
       staff_notes: i % 10 === 0 ? [

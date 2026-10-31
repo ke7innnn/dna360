@@ -110,11 +110,11 @@ function buildInitialLockers(): Locker[] {
     if (num === 101) {
       list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_001', assignedMemberName: 'Arjun Mehta', assignedMemberPhone: '+919820011111', assignedAt: '2025-01-15T00:00:00Z', rentalExpiryDate: '2027-01-15', keyTag: 'KEY-M-01' })
     } else if (num === 103) {
-      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_003', assignedMemberName: 'Siddharth Rao', assignedMemberPhone: '+919820099444', assignedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), keyTag: 'KEY-M-03' })
+      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_003', assignedMemberName: 'Vikram Singh', assignedMemberPhone: '+919820034567', assignedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), keyTag: 'KEY-M-03' })
     } else if (num === 105) {
-      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_004', assignedMemberName: 'Kabir Mehra', assignedMemberPhone: '+919820033333', assignedAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(), keyTag: 'KEY-M-05' })
+      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_007', assignedMemberName: 'Siddharth Deshmukh', assignedMemberPhone: '+919820033333', assignedAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(), keyTag: 'KEY-M-05' })
     } else if (num === 107) {
-      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_005', assignedMemberName: 'Rohan Varma', assignedMemberPhone: '+919820044444', assignedAt: '2026-01-01T00:00:00Z', rentalExpiryDate: '2026-12-31', keyTag: 'KEY-M-07' })
+      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_005', assignedMemberName: 'Rohan Verma', assignedMemberPhone: '+919820056789', assignedAt: '2026-01-01T00:00:00Z', rentalExpiryDate: '2027-12-31', keyTag: 'KEY-M-07' })
     } else if (num === 109) {
       list.push({ id, number: num, zone: 'Male', status: 'maintenance', notes: 'Digital keypad battery replacement scheduled' })
     } else {

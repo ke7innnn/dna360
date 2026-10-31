@@ -38,11 +38,18 @@ export default function ExpiryExplorerModal({
 }) {
   const members = getStoredMembers()
 
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const currMonthStr = useMemo(() => new Date().toISOString().slice(0, 7), [])
+
   const [filterMode, setFilterMode] = useState<ExpiryFilterPeriod>(initialMode)
-  const [selectedDate, setSelectedDate] = useState('2026-09-29')
-  const [selectedMonth, setSelectedMonth] = useState('2026-09')
-  const [startDate, setStartDate] = useState('2026-09-01')
-  const [endDate, setEndDate] = useState('2026-09-30')
+  const [selectedDate, setSelectedDate] = useState(todayStr)
+  const [selectedMonth, setSelectedMonth] = useState(currMonthStr)
+  const [startDate, setStartDate] = useState(todayStr)
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 30)
+    return d.toISOString().slice(0, 10)
+  })
   const [searchQuery, setSearchQuery] = useState('')
 
   // Compute expiring records
@@ -51,8 +58,8 @@ export default function ExpiryExplorerModal({
       .filter((m) => m.active_memberships && m.active_memberships.length > 0)
       .map((m) => {
         const mem = m.active_memberships[0]
-        const expiry = mem.expiry_date || '2026-09-29'
-        const activation = mem.activation_date || mem.enrolment_date || '2025-09-29'
+        const expiry = mem.expiry_date || todayStr
+        const activation = mem.activation_date || mem.enrolment_date || todayStr
         const amount = mem.amount_paid || 4350000
 
         return {
@@ -68,15 +75,14 @@ export default function ExpiryExplorerModal({
           assignedTrainer: m.assigned_trainer_name || 'Floor Staff',
         }
       })
-  }, [members])
+  }, [members, todayStr])
 
   // Filter based on selected period
   const filteredList = useMemo(() => {
     return allExpiringList.filter((item) => {
       // 1. Period filter
       if (filterMode === 'today') {
-        // Match today: September 29, 2026
-        const isToday = item.expiryDate === '2026-09-29' || item.expiryDate.endsWith('-09-29')
+        const isToday = item.expiryDate === todayStr || item.expiryDate.endsWith(todayStr.slice(5))
         if (!isToday) {
           // If none match exactly in seed, include a couple of close items for rich UI testability
           const isSameDaySeed = item.memberCode.endsWith('12') || item.memberCode.endsWith('45') || item.memberCode.endsWith('88')
@@ -204,7 +210,7 @@ export default function ExpiryExplorerModal({
             {filterMode === 'today' && (
               <div className="flex items-center gap-2 text-xs text-white/80">
                 <Clock className="w-4 h-4 text-[#38BDF8]" />
-                <span>Showing members expiring today: <b>Tuesday, September 29, 2026</b></span>
+                <span>Showing members expiring today: <b>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</b></span>
               </div>
             )}
 
@@ -228,13 +234,13 @@ export default function ExpiryExplorerModal({
                   onChange={(e) => setSelectedMonth(e.target.value)}
                   className="h-8 px-2.5 rounded-lg bg-[#090D18] border border-white/[0.15] text-xs text-white focus:outline-none focus:border-[#38BDF8]"
                 >
-                  <option value="2026-09">September 2026</option>
-                  <option value="2026-10">October 2026</option>
-                  <option value="2026-11">November 2026</option>
-                  <option value="2026-12">December 2026</option>
-                  <option value="2027-01">January 2027</option>
-                  <option value="2027-02">February 2027</option>
-                  <option value="2027-03">March 2027</option>
+                  {Array.from({ length: 12 }).map((_, idx) => {
+                    const d = new Date()
+                    d.setMonth(d.getMonth() + idx)
+                    const val = d.toISOString().slice(0, 7)
+                    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                    return <option key={val} value={val}>{label}</option>
+                  })}
                 </select>
               </div>
             )}

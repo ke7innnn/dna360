@@ -43,7 +43,16 @@ export default function MemberAppHomePage() {
   const [isOrbPressed, setIsOrbPressed] = useState(false)
 
   useEffect(() => {
-    setPortalState(getMemberPortalState(user?.id || user?.name))
+    const reload = () => {
+      setPortalState(getMemberPortalState(user?.id || user?.name))
+    }
+    reload()
+    window.addEventListener('dna360_memberportal_updated', reload)
+    window.addEventListener('storage', reload)
+    return () => {
+      window.removeEventListener('dna360_memberportal_updated', reload)
+      window.removeEventListener('storage', reload)
+    }
   }, [user?.id, user?.name])
 
   const planName = portalState?.planName || 'Annual All-Access Membership'

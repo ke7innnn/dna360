@@ -18,6 +18,7 @@ const PUBLIC_EXACT_PATHS = new Set([
   '/privacy-policy',
   '/terms-and-conditions',
   '/cancellation-refund-policy',
+  '/delete-account',
   '/privacy',
   '/terms',
   '/refund',
@@ -41,6 +42,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/inquiries',
   '/api/auth/login',
   '/api/auth/session',
+  '/api/member/delete-account',
   '/api/webhooks/',
   '/api/health',
 ]
