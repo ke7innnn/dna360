@@ -64,10 +64,28 @@ export default function MemberClassesPage() {
     }
   }, [])
 
-  const reloadSessions = useCallback(() => {
+  const reloadSessions = useCallback(async () => {
+    // 1. Instant local render
     const daySessions = getSessions({ date: selectedDateStr })
     setSessions(daySessions)
-  }, [selectedDateStr])
+
+    // 2. Fetch authoritative state from central Supabase database
+    if (typeof window !== 'undefined') {
+      try {
+        const res = await fetch(
+          `/api/classes?startDate=${selectedDateStr}&endDate=${selectedDateStr}&memberId=${member?.id || ''}`
+        )
+        if (res.ok) {
+          const data = await res.json()
+          if (data.sessions && Array.isArray(data.sessions)) {
+            setSessions(data.sessions)
+          }
+        }
+      } catch {
+        // Fallback to local state if offline
+      }
+    }
+  }, [selectedDateStr, member?.id])
 
   useEffect(() => {
     reloadSessions()
@@ -99,24 +117,41 @@ export default function MemberClassesPage() {
     return bookedDates
   }, [member, sessions])
 
-  const handleBook = (session: ClassSession) => {
+  const handleBook = async (session: ClassSession) => {
     if (!member) {
       toast.error('Please log in as a member to book a class.')
       return
     }
 
     setLoading(true)
+    // 1. Optimistic local update
     const res = bookClassSession({
       sessionId: session.id,
       memberId: member.id,
       source: 'member',
     })
-    setLoading(false)
 
     if (!res.success) {
+      setLoading(false)
       toast.error('Booking failed', { description: res.error || 'Unable to book session.' })
       return
     }
+
+    // 2. Sync to Supabase central database
+    try {
+      await fetch('/api/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: session.id,
+          memberId: member.id,
+        }),
+      })
+    } catch {
+      // Offline fallback
+    }
+
+    setLoading(false)
 
     if (res.isWaitlisted) {
       toast.info(`Added to waitlist for ${session.title}`, {
@@ -130,7 +165,7 @@ export default function MemberClassesPage() {
     reloadSessions()
   }
 
-  const handleCancel = (session: ClassSession, bookingId: string) => {
+  const handleCancel = async (session: ClassSession, bookingId: string) => {
     if (!member) return
     setLoading(true)
     const res = cancelClassBooking({
@@ -138,13 +173,28 @@ export default function MemberClassesPage() {
       bookingId,
       cancelledBy: { id: member.id, name: member.name, role: 'Member' },
     })
-    setLoading(false)
 
     if (!res.success) {
+      setLoading(false)
       toast.error('Cancellation failed', { description: res.error || 'Cannot cancel booking.' })
       return
     }
 
+    // Central Supabase database cancellation sync
+    try {
+      await fetch('/api/classes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: session.id,
+          memberId: member.id,
+        }),
+      })
+    } catch {
+      // Offline fallback
+    }
+
+    setLoading(false)
     toast.info(`Cancelled booking for ${session.title}`)
     reloadSessions()
   }

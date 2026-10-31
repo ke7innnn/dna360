@@ -28,7 +28,7 @@ export default function MemberPTLedgerPage() {
   const member = useMemo(() => resolveMember(user?.id || user?.name), [user?.id, user?.name])
 
   useEffect(() => {
-    const reload = () => {
+    const reload = async () => {
       const ps = getMemberPortalState(user?.id || user?.name)
       setPortalState(ps)
 
@@ -37,6 +37,47 @@ export default function MemberPTLedgerPage() {
         const allLogs = getStoredPTSessions()
         const myLogs = allLogs.filter((log) => log.clientId === targetId)
         setSessionLogs(myLogs)
+
+        // Sync from central Supabase database
+        if (typeof window !== 'undefined') {
+          try {
+            const res = await fetch(`/api/pt-ledger?memberId=${encodeURIComponent(targetId)}`)
+            if (res.ok) {
+              const data = await res.json()
+              if (data.logs && Array.isArray(data.logs)) {
+                const remoteMapped: PTSessionLog[] = data.logs.map((l: any) => ({
+                  id: l.id,
+                  clientId: l.memberId,
+                  clientName: l.memberName,
+                  trainerId: l.trainerId,
+                  trainerName: l.trainerName,
+                  date: l.date,
+                  durationMinutes: l.durationMinutes,
+                  workoutFocus: l.workoutFocus,
+                  rating: l.rating,
+                  clientFeedback: l.clientFeedback,
+                  commissionEarnedMinor: 0,
+                  status: l.status,
+                  ptTier: 'premium',
+                }))
+                setSessionLogs(remoteMapped)
+              }
+              if (data.ptBalance && typeof data.ptBalance.remaining === 'number') {
+                setPortalState((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        ptSessionsRemaining: data.ptBalance.remaining,
+                        ptSessionsTotal: data.ptBalance.total,
+                      }
+                    : prev
+                )
+              }
+            }
+          } catch {
+            // offline fallback
+          }
+        }
       } else {
         setSessionLogs([])
       }

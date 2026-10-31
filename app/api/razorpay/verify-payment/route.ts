@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyRazorpaySignature, fetchRazorpayOrder } from '@/lib/razorpay'
 import { getServerSession } from '@/lib/server-auth'
-import { getOrderMapping, markOrderVerified, saveOrderMapping } from '@/lib/razorpay-orders'
+import { getOrderMapping, getOrderMappingAsync, markOrderVerified, saveOrderMapping } from '@/lib/razorpay-orders'
 import { getStoredInvoices, saveInvoices } from '@/lib/billing'
 import { logAuditEvent } from '@/lib/audit'
+import { recordPaymentInDb, applyPlanPurchaseInDb } from '@/lib/db/member-repo'
 
 /**
  * Verifies Razorpay payment signature, validates expected amount matches,
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Load server-persisted order record (§4.3)
-    let orderRecord = getOrderMapping(orderId)
+    let orderRecord = await getOrderMappingAsync(orderId)
     if (!orderRecord) {
       // Serverless instances don't share memory: rebuild the mapping from Razorpay's own
       // order record. Only accepted when the order is fully paid and carries our notes.
@@ -157,8 +158,26 @@ export async function POST(req: NextRequest) {
       saveInvoices(invoices)
     }
 
-    // 6. Record verification in order store
+    // 6. Record verification in order store and Supabase database
     markOrderVerified(orderId, paymentId)
+
+    await recordPaymentInDb({
+      invoiceId: orderRecord.invoiceId,
+      memberId: orderRecord.memberId,
+      amountMinor: orderRecord.expectedAmountMinor,
+      transactionRef: paymentId,
+      mode: 'Razorpay Live',
+    })
+
+    if (orderRecord.planId) {
+      await applyPlanPurchaseInDb({
+        memberId: orderRecord.memberId,
+        planId: orderRecord.planId,
+        amountMinor: orderRecord.expectedAmountMinor,
+        paymentRef: paymentId,
+        invoiceId: orderRecord.invoiceId,
+      })
+    }
 
     // 7. Write audit log for successful payment settlement
     logAuditEvent({

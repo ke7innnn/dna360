@@ -415,7 +415,7 @@ function templateWeekdays(t: ClassSession): number[] {
  * next SCHEDULE_HORIZON_DAYS days. Existing sessions (and their bookings) are
  * never touched; generated sessions that are in the past and empty are pruned.
  */
-function withRollingSchedule(existing: ClassSession[]): ClassSession[] {
+export function withRollingSchedule(existing: ClassSession[] = []): ClassSession[] {
   const today = toLocalDateStr()
   const known = new Set(existing.map(s => s.id))
   const out = [...existing]

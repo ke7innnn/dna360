@@ -315,3 +315,234 @@ model GymTrainingSettings {
   mediaRetentionDays      Int     @default(180)
   customExerciseApproval  Boolean @default(true)
 }
+
+// ─── DNA 360 Core Central Database Models ───
+
+model Member {
+  id                         String         @id
+  memberCode                 String         @unique
+  firstName                  String
+  lastName                   String
+  name                       String
+  email                      String?
+  phone                      String
+  gender                     String         @default("other")
+  dob                        String?
+  avatarUrl                  String?
+  joinedDate                 String
+  status                     String         @default("active") // active, expiring_soon, grace_period, inactive, blacklisted
+  attendanceStreak           Int            @default(0)
+  totalCheckIns              Int            @default(0)
+  lastVisitAt                DateTime?
+  blacklisted                Boolean        @default(false)
+  blacklistReason            String?
+  complimentary              Boolean        @default(false)
+  specialInclusions          String?
+  referredBy                 String?
+  referralCode               String?
+  lifetimeValue              BigInt         @default(0) // paise
+  mediaConsent               Boolean?       @default(true)
+  adjustmentCreditsRemaining Int            @default(0)
+  assignedTrainerId          String?
+  assignedTrainerName        String?
+  memberships                Membership[]
+  bookings                   ClassBooking[]
+  ptSessionLogs              PTSessionLog[]
+  invoices                   Invoice[]
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
+
+  @@index([status])
+  @@index([phone])
+  @@index([email])
+  @@index([assignedTrainerId])
+}
+
+model Membership {
+  id                 String    @id
+  memberId           String
+  productId          String
+  productName        String
+  category           String    @default("gym_membership")
+  enrolmentDate      String
+  activationDate     String?
+  expiryDate         String?
+  amountPaid         BigInt    @default(0) // paise
+  discountAmount     BigInt    @default(0)
+  taxRate            Float     @default(0.05)
+  status             String    @default("active") // pending_activation, active, expired, void
+  invoiceId          String?
+  invoiceNumber      String?
+  sessionsTotal      Int?
+  sessionsConsumed   Int?      @default(0)
+  sessionsRemaining  Int?
+  member             Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([memberId, status])
+  @@index([expiryDate])
+}
+
+model ClassSession {
+  id                  String         @id
+  title               String
+  category            String
+  instructorId        String
+  instructorName      String
+  studioId            String
+  studioName          String
+  date                String         // YYYY-MM-DD local
+  dayOfWeek           Int            // 0=Sun..6=Sat
+  startTime           String         // HH:MM
+  endTime             String         // HH:MM
+  durationMinutes     Int
+  capacity            Int            @default(20)
+  bookedCount         Int            @default(0)
+  waitlistCount       Int            @default(0)
+  maxWaitlist         Int            @default(5)
+  intensity           String         @default("High")
+  description         String?
+  status              String         @default("scheduled") // scheduled, full, cancelled, completed
+  pilatesDayGroup     String?        // A, B
+  recurringScheduleId String?
+  bookings            ClassBooking[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([date, status])
+  @@index([instructorId, date])
+  @@index([studioId, date])
+}
+
+model ClassBooking {
+  id                   String       @id
+  sessionId            String
+  memberId             String
+  memberName           String
+  memberPhone          String
+  memberCode           String
+  status               String       @default("confirmed") // confirmed, waitlisted, cancelled, attended, no_show
+  waitlistPosition     Int?
+  bookedAt             DateTime     @default(now())
+  cancelledAt          DateTime?
+  checkedInAt          DateTime?
+  adjustmentCreditUsed Boolean      @default(false)
+  session              ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  member               Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, status])
+  @@index([memberId, status])
+}
+
+model PTSessionLog {
+  id              String   @id
+  memberId        String
+  memberName      String
+  trainerId       String
+  trainerName     String
+  date            String   // YYYY-MM-DD
+  durationMinutes Int      @default(60)
+  workoutFocus    String
+  rating          Int      @default(5)
+  clientFeedback  String?
+  status          String   @default("completed") // completed, cancelled, no_show
+  ptTier          String?  @default("premium")
+  member          Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+
+  @@index([memberId, date])
+  @@index([trainerId, date])
+}
+
+model Invoice {
+  id               String        @id
+  invoiceNumber    String        @unique
+  memberId         String
+  memberName       String
+  memberPhone      String
+  memberEmail      String?
+  status           String        @default("pending") // pending, paid, partially_paid, void
+  subtotalMinor    BigInt        @default(0)
+  taxableMinor     BigInt        @default(0)
+  cgstMinor        BigInt        @default(0)
+  sgstMinor        BigInt        @default(0)
+  grandTotalMinor  BigInt        @default(0)
+  paidAmountMinor  BigInt        @default(0)
+  dueAmountMinor   BigInt        @default(0)
+  issueDate        String
+  dueDate          String
+  salesRepName     String?
+  notes            String?
+  member           Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  payments         Payment[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([memberId, status])
+  @@index([status])
+}
+
+model Payment {
+  id             String   @id
+  invoiceId      String
+  mode           String   @default("Online") // UPI, Card, Razorpay Live, Cash, Net Banking
+  amountMinor    BigInt
+  transactionRef String?
+  recordedAt     DateTime @default(now())
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([transactionRef])
+}
+
+model RazorpayOrderRecord {
+  orderId             String    @id
+  invoiceId           String
+  memberId            String
+  expectedAmountMinor BigInt
+  status              String    @default("created") // created, paid, failed
+  paymentId           String?
+  planId              String?
+  planTitle           String?
+  createdAt           DateTime  @default(now())
+  verifiedAt          DateTime?
+
+  @@index([memberId])
+  @@index([invoiceId])
+}
+
+model auth_sessions {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token_hash           String    @unique
+  user_id              String
+  user_type            String
+  role_slug            String
+  must_change_password Boolean   @default(false)
+  created_at           DateTime  @default(now()) @db.Timestamptz(6)
+  last_active_at       DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at           DateTime  @db.Timestamptz(6)
+  revoked_at           DateTime? @db.Timestamptz(6)
+  ip                   String?
+  user_agent           String?
+
+  @@index([token_hash], map: "idx_auth_sessions_token")
+  @@index([user_id], map: "idx_auth_sessions_user")
+}
+
+model login_attempts {
+  identifier       String    @id
+  attempts         Int       @default(0)
+  first_attempt_at DateTime  @default(now()) @db.Timestamptz(6)
+  locked_until     DateTime? @db.Timestamptz(6)
+}
+
+model rate_limit_events {
+  id          BigInt   @id @default(autoincrement())
+  bucket_key  String
+  occurred_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([bucket_key, occurred_at], map: "idx_rate_limit_bucket")
+}
+
+

@@ -36,6 +36,78 @@ export async function GET(req: NextRequest) {
     const statusFilter = url.searchParams.get('status') || 'all'
     const unmaskPii = url.searchParams.get('unmasked') === 'true' && isOwner
 
+    // 1. Query Supabase Central PostgreSQL Database
+    try {
+      const { prisma } = await import('@/lib/prisma')
+      const where: any = {}
+      if (!canViewAll && canViewOwn) {
+        where.assignedTrainerId = user.id
+      }
+      if (statusFilter !== 'all') {
+        where.status = statusFilter
+      }
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { memberCode: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ]
+      }
+
+      const totalCount = await prisma.member.count({ where })
+      if (totalCount > 0) {
+        const dbRecords = await prisma.member.findMany({
+          where,
+          include: {
+            memberships: {
+              where: { status: 'active' },
+            },
+          },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          orderBy: { name: 'asc' },
+        })
+
+        const sanitizedRecords = dbRecords.map(m => ({
+          id: m.id,
+          member_code: m.memberCode,
+          name: m.name,
+          first_name: m.firstName,
+          last_name: m.lastName,
+          phone: unmaskPii ? m.phone : maskPhoneNumber(m.phone),
+          isPhoneMasked: !unmaskPii,
+          email: m.email,
+          gender: m.gender,
+          status: m.status,
+          joined_date: m.joinedDate,
+          attendance_streak: m.attendanceStreak || 0,
+          total_check_ins: m.totalCheckIns || 0,
+          active_memberships: m.memberships.map(ms => ({
+            id: ms.id,
+            product_name: ms.productName,
+            expiry_date: ms.expiryDate,
+            status: ms.status,
+            sessions_remaining: ms.sessionsRemaining,
+            sessions_total: ms.sessionsTotal,
+          })),
+          assigned_trainer_name: m.assignedTrainerName,
+        }))
+
+        return NextResponse.json({
+          members: sanitizedRecords,
+          pagination: {
+            page,
+            pageSize,
+            total: totalCount,
+            totalPages: Math.ceil(totalCount / pageSize),
+          },
+        })
+      }
+    } catch (dbErr) {
+      console.warn('Supabase DB member query fallback:', dbErr)
+    }
+
     let allMembers = getStoredMembers()
 
     // Trainer Role Restriction: Trainers ONLY see their own assigned clients

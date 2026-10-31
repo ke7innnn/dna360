@@ -351,6 +351,25 @@ export function logPTSession(data: {
     })
   }
 
+  // Central Supabase Database sync
+  if (typeof window !== 'undefined') {
+    fetch('/api/pt-ledger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        memberId: data.clientId,
+        trainerId: data.trainerId,
+        trainerName: data.trainerName,
+        workoutFocus: data.workoutFocus,
+        rating: data.rating,
+        clientFeedback: data.clientFeedback,
+        durationMinutes: data.durationMinutes,
+      }),
+    }).catch(err => {
+      console.warn('PT ledger central DB sync note:', err)
+    })
+  }
+
   logAuditEvent({
     actor: { id: data.trainerId, name: data.trainerName, email: '', role: 'Trainer' },
     action: 'CREATE',
