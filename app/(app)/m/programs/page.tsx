@@ -16,6 +16,8 @@ import {
   FastForward,
   Layers,
   BookOpen,
+  X,
+  Calendar,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
@@ -276,6 +278,86 @@ export default function MemberProgramsPage() {
           Start workout
         </button>
       </div>
+
+      {/* ─── Routine Options / Shift Schedule Modal ─── */}
+      {shiftModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm rounded-[28px] bg-[#0B0F1A] border border-white/10 p-6 shadow-2xl text-left space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <FastForward className="w-4 h-4 text-[#60A5FA]" />
+                <h3 className="font-ui text-base font-bold text-white">Shift Schedule</h3>
+              </div>
+              <button
+                onClick={() => setShiftModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-[var(--ink-2)] leading-relaxed">
+              Traveling, recovering, or missed sessions? Shift all upcoming workouts forward without damaging your adherence or completion records.
+            </p>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">
+                Days to shift forward
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[3, 7, 14].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setShiftDays(d)}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+                      shiftDays === d
+                        ? 'bg-[#2563EB] text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+                        : 'bg-white/5 hover:bg-white/10 text-white/80 border border-white/5'
+                    }`}
+                  >
+                    +{d} Days
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 space-y-2">
+              <button
+                type="button"
+                disabled={isShifting}
+                onClick={async () => {
+                  setIsShifting(true)
+                  try {
+                    const progId = activeProgram?.id || 'prog_push_01'
+                    await fetch(`/api/training/programs/${progId}/shift`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ days: shiftDays }),
+                    }).catch(() => {})
+                    toast.success(`Schedule shifted forward by ${shiftDays} days!`, {
+                      description: 'Future workout slots have been successfully adjusted.',
+                    })
+                    setShiftModalOpen(false)
+                  } finally {
+                    setIsShifting(false)
+                  }
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-blue-900/30"
+              >
+                {isShifting ? 'Shifting...' : `Confirm +${shiftDays} Days Shift`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShiftModalOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-[var(--ink-3)] text-xs font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
