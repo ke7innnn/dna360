@@ -23,6 +23,8 @@ import {
 } from 'lucide-react'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
+import { getStoredMembers, updateMember } from '@/lib/members'
+import { useAuth } from '@/context/AuthContext'
 
 export default function MemberProgressPage() {
   const [activeSegment, setActiveSegment] = useState<'strength' | 'body' | 'attendance'>('strength')
@@ -113,9 +115,36 @@ export default function MemberProgressPage() {
         setCurrentMuscleMass(val)
         if (typeof window !== 'undefined') localStorage.setItem('dna360_biometrics_muscle', val)
       }
+      const finalWeight = weightInput ? parseFloat(weightInput) : parseFloat(currentWeight)
+      const finalBodyFat = bodyFatInput ? parseFloat(bodyFatInput) : parseFloat(currentBodyFat)
+      const finalMuscle = muscleMassInput ? parseFloat(muscleMassInput) : parseFloat(currentMuscleMass)
+
+      // Sync into central member database (fitness_metrics)
+      try {
+        const members = getStoredMembers()
+        const targetMember = members.find(m => m.id === 'mem_001' || m.name.toLowerCase() === 'aarav mehta')
+        if (targetMember) {
+          const newMetric = {
+            id: `fit_${Date.now()}`,
+            recorded_at: new Date().toISOString(),
+            recorded_by_name: 'Aarav Mehta (Self-Recorded)',
+            weight_kg: finalWeight,
+            body_fat_pct: finalBodyFat,
+            muscle_mass_kg: finalMuscle,
+            source: 'InBody 570 Scanner',
+          }
+          const existing = targetMember.fitness_metrics || []
+          updateMember(targetMember.id, {
+            fitness_metrics: [newMetric as any, ...existing],
+          })
+        }
+      } catch (err) {
+        console.warn('Central metric sync:', err)
+      }
+
       setMetricModalOpen(false)
       toast.success('Body metric recorded successfully', {
-        description: `Logged weight: ${weightInput || currentWeight} kg · Body fat: ${bodyFatInput || currentBodyFat}%`,
+        description: `Logged weight: ${finalWeight} kg · Body fat: ${finalBodyFat}%`,
       })
       setWeightInput('')
       setBodyFatInput('')
