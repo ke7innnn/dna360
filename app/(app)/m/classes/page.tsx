@@ -21,7 +21,7 @@ interface MemberClassItem {
 export default function MemberClassesPage() {
   const [selectedDayIndex, setSelectedDayIndex] = useState(0)
 
-  const [classes, setClasses] = useState<MemberClassItem[]>([
+  const DEFAULT_CLASSES: MemberClassItem[] = [
     {
       id: 'cls-1',
       title: 'Reformer Pilates',
@@ -67,7 +67,19 @@ export default function MemberClassesPage() {
       capacity: 15,
       isBooked: false,
     },
-  ])
+  ]
+
+  const [classes, setClasses] = useState<MemberClassItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dna360_member_classes')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {}
+      }
+    }
+    return DEFAULT_CLASSES
+  })
 
   const days = [
     { name: 'Tue', num: '8', hasDot: false },
@@ -80,8 +92,8 @@ export default function MemberClassesPage() {
   ]
 
   const handleToggleBook = (cls: MemberClassItem) => {
-    setClasses((prev) =>
-      prev.map((c) => {
+    setClasses((prev) => {
+      const updated = prev.map((c) => {
         if (c.id === cls.id) {
           if (c.isBooked) {
             toast.info(`Cancelled reservation for ${c.title}`)
@@ -95,7 +107,11 @@ export default function MemberClassesPage() {
         }
         return c
       })
-    )
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('dna360_member_classes', JSON.stringify(updated))
+      }
+      return updated
+    })
   }
 
   const handleJoinWaitlist = (cls: MemberClassItem) => {

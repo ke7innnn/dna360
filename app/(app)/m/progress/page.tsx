@@ -32,10 +32,25 @@ export default function MemberProgressPage() {
   const [muscleMassInput, setMuscleMassInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
-  // Dynamic user-logged metrics state
-  const [currentWeight, setCurrentWeight] = useState('68.2')
-  const [currentBodyFat, setCurrentBodyFat] = useState('16.8')
-  const [currentMuscleMass, setCurrentMuscleMass] = useState('33.4')
+  // Dynamic user-logged metrics state (persisted in localStorage)
+  const [currentWeight, setCurrentWeight] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dna360_biometrics_weight') || '68.2'
+    }
+    return '68.2'
+  })
+  const [currentBodyFat, setCurrentBodyFat] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dna360_biometrics_bodyfat') || '16.8'
+    }
+    return '16.8'
+  })
+  const [currentMuscleMass, setCurrentMuscleMass] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dna360_biometrics_muscle') || '33.4'
+    }
+    return '33.4'
+  })
 
   // PR Records (Strength)
   const prs = [
@@ -66,7 +81,7 @@ export default function MemberProgressPage() {
     { label: 'W5', weight: 69.1, heightPct: 74 },
     { label: 'W6', weight: 68.8, heightPct: 70 },
     { label: 'W7', weight: 68.5, heightPct: 66 },
-    { label: 'W8', weight: 68.2, heightPct: 62 },
+    { label: 'W8', weight: parseFloat(currentWeight), heightPct: 62 },
   ]
 
   // 35-Day Attendance Heatmap (August - September)
@@ -83,9 +98,21 @@ export default function MemberProgressPage() {
     setIsSaving(true)
     setTimeout(() => {
       setIsSaving(false)
-      if (weightInput) setCurrentWeight(parseFloat(weightInput).toFixed(1))
-      if (bodyFatInput) setCurrentBodyFat(parseFloat(bodyFatInput).toFixed(1))
-      if (muscleMassInput) setCurrentMuscleMass(parseFloat(muscleMassInput).toFixed(1))
+      if (weightInput) {
+        const val = parseFloat(weightInput).toFixed(1)
+        setCurrentWeight(val)
+        if (typeof window !== 'undefined') localStorage.setItem('dna360_biometrics_weight', val)
+      }
+      if (bodyFatInput) {
+        const val = parseFloat(bodyFatInput).toFixed(1)
+        setCurrentBodyFat(val)
+        if (typeof window !== 'undefined') localStorage.setItem('dna360_biometrics_bodyfat', val)
+      }
+      if (muscleMassInput) {
+        const val = parseFloat(muscleMassInput).toFixed(1)
+        setCurrentMuscleMass(val)
+        if (typeof window !== 'undefined') localStorage.setItem('dna360_biometrics_muscle', val)
+      }
       setMetricModalOpen(false)
       toast.success('Body metric recorded successfully', {
         description: `Logged weight: ${weightInput || currentWeight} kg · Body fat: ${bodyFatInput || currentBodyFat}%`,

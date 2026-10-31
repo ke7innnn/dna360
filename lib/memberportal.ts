@@ -354,12 +354,15 @@ export function renewOrUpgradePlan(
   const current = getMemberPortalState(memberId)
   const newExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
+  const isVipPt = planTier.includes('VIP')
   const updated: MemberPortalState = {
     ...current,
     planName,
     planTier,
     daysRemaining: (current.daysRemaining ?? 0) + 365,
     expiryDate: newExpiry,
+    ptSessionsRemaining: isVipPt ? (current.ptSessionsRemaining ?? 8) + 20 : current.ptSessionsRemaining,
+    ptSessionsTotal: isVipPt ? (current.ptSessionsTotal ?? 12) + 20 : current.ptSessionsTotal,
   }
 
   saveMemberPortalState(updated, memberId)

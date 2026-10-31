@@ -293,6 +293,20 @@ export function signOffPTSession(
     active_memberships: member.active_memberships,
   })
 
+  try {
+    if (typeof window !== 'undefined') {
+      const psKey = `dna360_member_portal_state_${memberId}`
+      const stored = localStorage.getItem(psKey) || localStorage.getItem('dna360_member_portal_state_mem_001')
+      if (stored) {
+        const ps = JSON.parse(stored)
+        ps.ptSessionsRemaining = newRemaining
+        localStorage.setItem(psKey, JSON.stringify(ps))
+        localStorage.setItem('dna360_member_portal_state_mem_001', JSON.stringify(ps))
+      }
+      window.dispatchEvent(new Event('dna360_memberportal_updated'))
+    }
+  } catch {}
+
   auditTrainingEvent(
     trainer,
     'UPDATE',

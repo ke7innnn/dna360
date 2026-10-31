@@ -23,15 +23,24 @@ export default function MemberPTLedgerPage() {
   const [trainerName, setTrainerName] = useState('Rajesh Poojary')
 
   useEffect(() => {
-    const ps = getMemberPortalState(user?.id || user?.name)
-    if (ps.ptSessionsRemaining !== undefined && ps.ptSessionsRemaining !== null) {
-      setRemainingSessions(ps.ptSessionsRemaining)
+    const reload = () => {
+      const ps = getMemberPortalState(user?.id || user?.name)
+      if (ps.ptSessionsRemaining !== undefined && ps.ptSessionsRemaining !== null) {
+        setRemainingSessions(ps.ptSessionsRemaining)
+      }
+      if (ps.ptSessionsTotal !== undefined && ps.ptSessionsTotal !== null) {
+        setTotalSessions(ps.ptSessionsTotal)
+      }
+      if (ps.assignedTrainer) {
+        setTrainerName(ps.assignedTrainer)
+      }
     }
-    if (ps.ptSessionsTotal !== undefined && ps.ptSessionsTotal !== null) {
-      setTotalSessions(ps.ptSessionsTotal)
-    }
-    if (ps.assignedTrainer) {
-      setTrainerName(ps.assignedTrainer)
+    reload()
+    window.addEventListener('dna360_memberportal_updated', reload)
+    window.addEventListener('storage', reload)
+    return () => {
+      window.removeEventListener('dna360_memberportal_updated', reload)
+      window.removeEventListener('storage', reload)
     }
   }, [user?.id, user?.name])
 
