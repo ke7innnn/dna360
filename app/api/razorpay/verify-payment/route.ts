@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyRazorpaySignature } from '@/lib/razorpay'
+import { verifyRazorpaySignature, fetchRazorpayOrder } from '@/lib/razorpay'
 import { getServerSession } from '@/lib/server-auth'
-import { getOrderMapping, markOrderVerified } from '@/lib/razorpay-orders'
+import { getOrderMapping, markOrderVerified, saveOrderMapping } from '@/lib/razorpay-orders'
 import { getStoredInvoices, saveInvoices } from '@/lib/billing'
 import { logAuditEvent } from '@/lib/audit'
 
@@ -45,11 +45,65 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Load server-persisted order record (§4.3)
-    const orderRecord = getOrderMapping(orderId)
+    let orderRecord = getOrderMapping(orderId)
+    if (!orderRecord) {
+      // Serverless instances don't share memory: rebuild the mapping from Razorpay's own
+      // order record. Only accepted when the order is fully paid and carries our notes.
+      const remote = await fetchRazorpayOrder(orderId)
+      if (
+        remote &&
+        remote.status === 'paid' &&
+        remote.amount_paid === remote.amount &&
+        remote.notes?.memberId &&
+        remote.notes?.invoiceId
+      ) {
+        orderRecord = {
+          orderId,
+          invoiceId: remote.notes.invoiceId,
+          expectedAmountMinor: remote.amount,
+          memberId: remote.notes.memberId,
+          createdAt: new Date().toISOString(),
+          planId: remote.notes.planId,
+          planTitle: remote.notes.planTitle,
+        }
+        saveOrderMapping(orderId, orderRecord)
+      }
+    }
     if (!orderRecord) {
       return NextResponse.json(
-        { error: 'Order record not found or mapping expired.' },
+        { error: 'Order record not found or payment not confirmed by Razorpay.' },
         { status: 400 }
+      )
+    }
+
+    // 3b. Account isolation: a member session may only verify its own orders
+    const roleSlug = session.user.role?.slug?.toLowerCase() || ''
+    const isMember = session.user.type === 'MEMBER' || roleSlug === 'member'
+    if (isMember && orderRecord.memberId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: Order does not belong to the authenticated member.' },
+        { status: 403 }
+      )
+    }
+
+    // 3c. Replay protection: an order settles exactly once
+    if (orderRecord.verifiedAt) {
+      if (orderRecord.paymentId === paymentId) {
+        return NextResponse.json({
+          success: true,
+          verified: true,
+          alreadyVerified: true,
+          paymentId,
+          orderId,
+          invoiceId: orderRecord.invoiceId,
+          amountMinor: orderRecord.expectedAmountMinor,
+          planId: orderRecord.planId,
+          planTitle: orderRecord.planTitle,
+        })
+      }
+      return NextResponse.json(
+        { error: 'This order has already been settled with a different payment.' },
+        { status: 409 }
       )
     }
 
@@ -134,6 +188,8 @@ export async function POST(req: NextRequest) {
       orderId,
       invoiceId: orderRecord.invoiceId,
       amountMinor: orderRecord.expectedAmountMinor,
+      planId: orderRecord.planId,
+      planTitle: orderRecord.planTitle,
     })
   } catch (err: any) {
     console.error('Razorpay Verify Payment Error:', err)

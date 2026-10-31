@@ -11,9 +11,9 @@ import { getMemberPortalState } from '@/lib/memberportal'
 export default function MemberCheckinPage() {
   const { user } = useAuth()
   const portalState = getMemberPortalState(user?.id || user?.name)
-  const userName = user?.name || portalState.memberName || 'Aditi Deshpande'
-  const memberCode = (user as any)?.member_code || portalState.memberCode || 'DNA-0412'
-  const planName = portalState.planName || 'PREMIUM ANNUAL'
+  const userName = user?.name || portalState.memberName || 'Member'
+  const memberCode = (user as any)?.member_code || portalState.memberCode || ''
+  const planName = portalState.planName || 'Active Membership'
 
   const [secondsRemaining, setSecondsRemaining] = useState(18)
   const [tokenSeed, setTokenSeed] = useState(Date.now())

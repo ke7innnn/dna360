@@ -210,6 +210,8 @@ export function getStoredPTSessions(): PTSessionLog[] {
 export function savePTSessions(logs: PTSessionLog[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(PT_SESSIONS_LOG_KEY, JSON.stringify(logs))
+  window.dispatchEvent(new Event('dna360_pt_sessions_updated'))
+  window.dispatchEvent(new Event('dna360_memberportal_updated'))
 }
 
 export function getStoredCommissions(): TrainerCommission[] {

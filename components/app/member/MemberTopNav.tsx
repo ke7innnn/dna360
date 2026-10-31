@@ -20,7 +20,7 @@ export default function MemberTopNav({
   const pathname = usePathname()
   const { user, logout } = useAuth()
 
-  const userName = user?.name || 'Aditi Deshpande'
+  const userName = user?.name || 'Member'
 
   const navLinks = [
     { label: 'Home', href: '/m' },

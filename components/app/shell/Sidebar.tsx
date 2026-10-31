@@ -142,7 +142,7 @@ export default function Sidebar({ role }: { role?: RoleName }) {
   const { user, can, logout } = useAuth()
 
   const isMember = user?.type === 'MEMBER' || (!user && role === 'member')
-  const userName = user?.name || (isMember ? 'Arjun Mehta' : 'Executive Admin')
+  const userName = user?.name || (isMember ? 'Member' : 'Executive Admin')
   const userRoleTitle = user?.designation || user?.role?.name || (isMember ? 'Member' : 'Owner / Executive')
 
   // Filter groups and items dynamically by user capabilities (Atomic Capability Engine)

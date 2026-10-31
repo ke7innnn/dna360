@@ -23,9 +23,14 @@ import { PILATES_DAY_GROUPS, DEFAULT_BOOKING_RULES } from '@/types/class'
 import { getStoredMembers, updateMember } from '@/lib/members'
 import { getPendingConfig } from '@/lib/settings'
 import { logAuditEvent } from '@/lib/audit'
+import { toLocalDateStr, localDateOffset, parseLocalDate, sessionStartDate } from '@/lib/dates'
 
-const SESSIONS_STORAGE_KEY = 'dna360_class_sessions'
+// v2: legacy key held dummy occupancy/bookings and a single frozen week.
+const SESSIONS_STORAGE_KEY = 'dna360_class_sessions_v2'
+const LEGACY_SESSIONS_STORAGE_KEY = 'dna360_class_sessions'
 const STUDIOS_STORAGE_KEY = 'dna360_studios'
+/** How many days ahead the rolling timetable is materialised. */
+const SCHEDULE_HORIZON_DAYS = 14
 
 // ─── Single Location Studios ───
 
@@ -66,9 +71,7 @@ function getDayDate(dayOffset: number): string {
   const now = new Date()
   const currentDay = now.getDay() // 0 = Sun, 1 = Mon
   const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay
-  const targetDate = new Date(now)
-  targetDate.setDate(now.getDate() + mondayOffset + dayOffset)
-  return targetDate.toISOString().slice(0, 10)
+  return localDateOffset(mondayOffset + dayOffset, now)
 }
 
 // ─── Seeded Timetable (Real DNA 360 Schedule) ───
@@ -89,12 +92,12 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '08:00',
     durationMinutes: 60,
     capacity: 10,
-    bookedCount: 10, // Full
-    waitlistCount: 2,
+    bookedCount: 0,
+    waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'High',
     description: 'Dynamic reformer flow targeting lumbo-pelvic stability and spinal articulation.',
-    status: 'full', // 07:00-08:00 MWF marked FULL per schedule
+    status: 'scheduled',
     pilatesDayGroup: 'A',
     bookings: [],
   },
@@ -112,7 +115,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '10:00',
     durationMinutes: 60,
     capacity: 10,
-    bookedCount: 7,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'Medium',
@@ -135,7 +138,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '15:00',
     durationMinutes: 60,
     capacity: 10,
-    bookedCount: 4,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'Medium',
@@ -159,7 +162,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '19:00',
     durationMinutes: 60,
     capacity: 10,
-    bookedCount: 8,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'High',
@@ -184,7 +187,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '09:00',
     durationMinutes: 60,
     capacity: 10,
-    bookedCount: 6,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'Medium',
@@ -207,7 +210,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '13:00',
     durationMinutes: 60,
     capacity: 8,
-    bookedCount: 3,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 3,
     intensity: 'Low',
@@ -233,7 +236,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '10:30',
     durationMinutes: 60,
     capacity: 25,
-    bookedCount: 14,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'Medium',
@@ -257,7 +260,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '19:00',
     durationMinutes: 60,
     capacity: 25,
-    bookedCount: 18,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'Medium',
@@ -281,7 +284,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '20:00',
     durationMinutes: 60,
     capacity: 25,
-    bookedCount: 22,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'High',
@@ -305,7 +308,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '20:00',
     durationMinutes: 60,
     capacity: 20,
-    bookedCount: 16,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'Extreme',
@@ -329,7 +332,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '09:00',
     durationMinutes: 45,
     capacity: 20,
-    bookedCount: 17,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'High',
@@ -351,12 +354,12 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '18:45',
     durationMinutes: 45,
     capacity: 20,
-    bookedCount: 20,
-    waitlistCount: 3,
+    bookedCount: 0,
+    waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'High',
     description: 'Evening HIIT cycle theatre experience.',
-    status: 'full',
+    status: 'scheduled',
     bookings: [],
   },
 
@@ -375,7 +378,7 @@ export const SEEDED_SESSIONS: ClassSession[] = [
     endTime: '08:00',
     durationMinutes: 60,
     capacity: 20,
-    bookedCount: 15,
+    bookedCount: 0,
     waitlistCount: 0,
     maxWaitlist: 5,
     intensity: 'Extreme',
@@ -397,14 +400,70 @@ export function getStoredStudios(): StudioRoom[] {
   try { return JSON.parse(stored) } catch { return SEEDED_STUDIOS }
 }
 
+/**
+ * Weekdays (0=Sun..6=Sat) on which a weekly template repeats.
+ * Template ids encode the recurrence: *_mwf, *_tths; otherwise its own dayOfWeek.
+ */
+function templateWeekdays(t: ClassSession): number[] {
+  if (t.id.endsWith('_mwf')) return [1, 3, 5]
+  if (t.id.endsWith('_tths')) return [2, 4, 6]
+  return [t.dayOfWeek]
+}
+
+/**
+ * Materialise the weekly templates into real dated sessions for today and the
+ * next SCHEDULE_HORIZON_DAYS days. Existing sessions (and their bookings) are
+ * never touched; generated sessions that are in the past and empty are pruned.
+ */
+function withRollingSchedule(existing: ClassSession[]): ClassSession[] {
+  const today = toLocalDateStr()
+  const known = new Set(existing.map(s => s.id))
+  const out = [...existing]
+
+  for (let i = 0; i < SCHEDULE_HORIZON_DAYS; i++) {
+    const date = localDateOffset(i)
+    const weekday = parseLocalDate(date).getDay()
+    for (const t of SEEDED_SESSIONS) {
+      if (!templateWeekdays(t).includes(weekday)) continue
+      const id = `${t.id}@${date}`
+      if (known.has(id)) continue
+      known.add(id)
+      out.push({
+        ...t,
+        id,
+        date,
+        dayOfWeek: weekday,
+        bookedCount: 0,
+        waitlistCount: 0,
+        status: 'scheduled',
+        bookings: [],
+        recurringScheduleId: t.id,
+      })
+    }
+  }
+
+  return out.filter(s => !(s.id.includes('@') && s.date < today && s.bookings.length === 0))
+}
+
 export function getStoredSessions(): ClassSession[] {
   if (typeof window === 'undefined') return SEEDED_SESSIONS
-  const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-  if (!stored) {
-    localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(SEEDED_SESSIONS))
-    return SEEDED_SESSIONS
+  try { localStorage.removeItem(LEGACY_SESSIONS_STORAGE_KEY) } catch {}
+
+  let stored: ClassSession[] = []
+  const raw = localStorage.getItem(SESSIONS_STORAGE_KEY)
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) stored = parsed
+    } catch { /* start from an empty timetable */ }
   }
-  try { return JSON.parse(stored) } catch { return SEEDED_SESSIONS }
+
+  const rolled = withRollingSchedule(stored)
+  if (!raw || rolled.length !== stored.length) {
+    // Persist silently (no event) so callers reading state never trigger a render loop.
+    localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(rolled))
+  }
+  return rolled
 }
 
 export function saveSessions(sessions: ClassSession[]) {
@@ -460,10 +519,9 @@ export function getSessionById(id: string): ClassSession | null {
  * Validate booking window (opens 1 day in advance per §7).
  */
 export function isBookingWindowOpen(sessionDate: string): boolean {
-  const sessionD = new Date(sessionDate)
-  const now = new Date()
-  const todayD = new Date(now.toISOString().slice(0, 10))
-  const diffDays = Math.ceil((sessionD.getTime() - todayD.getTime()) / (1000 * 60 * 60 * 24))
+  const todayD = parseLocalDate(toLocalDateStr())
+  const sessionD = parseLocalDate(sessionDate)
+  const diffDays = Math.round((sessionD.getTime() - todayD.getTime()) / (1000 * 60 * 60 * 24))
 
   const rules = DEFAULT_BOOKING_RULES
   return diffDays <= rules.advanceBookingDays
@@ -477,6 +535,8 @@ export function bookClassSession(params: {
   sessionId: string
   memberId: string
   useAdjustmentCredit?: boolean
+  /** 'member' = self-service (full rule enforcement). Defaults to 'staff' (front-desk override). */
+  source?: 'member' | 'staff'
 }): { success: boolean; booking?: ClassBooking; isWaitlisted?: boolean; error?: string } {
   const sessions = getStoredSessions()
   const sessionIndex = sessions.findIndex(s => s.id === params.sessionId)
@@ -486,20 +546,33 @@ export function bookClassSession(params: {
   const member = getStoredMembers().find(m => m.id === params.memberId)
   if (!member) return { success: false, error: 'Member not found' }
 
+  if (session.status === 'cancelled') {
+    return { success: false, error: 'This class has been cancelled.' }
+  }
+
+  if (params.source === 'member') {
+    if (member.status === 'inactive' || member.status === 'blacklisted') {
+      return { success: false, error: 'Your membership is not active. Please renew to book classes.' }
+    }
+    if (sessionStartDate(session.date, session.startTime).getTime() <= Date.now()) {
+      return { success: false, error: 'This class has already started.' }
+    }
+    if (!isBookingWindowOpen(session.date)) {
+      return {
+        success: false,
+        error: `Booking opens ${DEFAULT_BOOKING_RULES.advanceBookingDays} day before the class.`,
+      }
+    }
+  }
+
   // Check if member already booked
   if (session.bookings.some(b => b.memberId === params.memberId && (b.status === 'confirmed' || b.status === 'waitlisted'))) {
     return { success: false, error: 'Member already has an active booking for this session.' }
   }
 
-  // Handle Adjustment Credit (Pilates)
-  if (params.useAdjustmentCredit) {
-    if (member.adjustment_credits_remaining <= 0) {
-      return { success: false, error: 'No adjustment credits remaining (2 per tenure limit reached).' }
-    }
-    // Deduct adjustment credit
-    updateMember(member.id, {
-      adjustment_credits_remaining: member.adjustment_credits_remaining - 1,
-    })
+  // Validate Adjustment Credit (Pilates) — deducted only once the booking is certain
+  if (params.useAdjustmentCredit && member.adjustment_credits_remaining <= 0) {
+    return { success: false, error: 'No adjustment credits remaining (2 per tenure limit reached).' }
   }
 
   const capacity = session.capacity ?? 20
@@ -523,7 +596,7 @@ export function bookClassSession(params: {
   }
 
   const booking: ClassBooking = {
-    id: `book_${Date.now()}`,
+    id: `book_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     sessionId: session.id,
     memberId: member.id,
     memberName: member.name,
@@ -537,6 +610,11 @@ export function bookClassSession(params: {
 
   session.bookings.push(booking)
   sessions[sessionIndex] = session
+  if (params.useAdjustmentCredit) {
+    updateMember(member.id, {
+      adjustment_credits_remaining: member.adjustment_credits_remaining - 1,
+    })
+  }
   saveSessions(sessions)
 
   logAuditEvent({
@@ -573,6 +651,27 @@ export function cancelClassBooking(params: {
   const booking = session.bookings[bookingIndex]
   const previousStatus = booking.status
 
+  if (previousStatus !== 'confirmed' && previousStatus !== 'waitlisted') {
+    return { success: false, error: 'This booking is no longer active.' }
+  }
+
+  // Member self-service: may only cancel own booking, and confirmed spots are subject to the cutoff.
+  if (params.cancelledBy.role === 'Member') {
+    if (booking.memberId !== params.cancelledBy.id) {
+      return { success: false, error: 'You can only cancel your own booking.' }
+    }
+    if (previousStatus === 'confirmed') {
+      const cutoffMs = DEFAULT_BOOKING_RULES.cancellationCutoffHours * 60 * 60 * 1000
+      const msToStart = sessionStartDate(session.date, session.startTime).getTime() - Date.now()
+      if (msToStart < cutoffMs) {
+        return {
+          success: false,
+          error: `Bookings can only be cancelled up to ${DEFAULT_BOOKING_RULES.cancellationCutoffHours} hours before the class starts.`,
+        }
+      }
+    }
+  }
+
   booking.status = 'cancelled'
   booking.cancelledAt = new Date().toISOString()
 
@@ -591,11 +690,17 @@ export function cancelClassBooking(params: {
       topWaitlist.waitlistPosition = undefined
       session.waitlistCount = Math.max(0, session.waitlistCount - 1)
       session.bookedCount++
+      if (session.bookedCount >= (session.capacity ?? 20)) session.status = 'full'
       autoPromotedMemberName = topWaitlist.memberName
     }
   } else if (previousStatus === 'waitlisted') {
     session.waitlistCount = Math.max(0, session.waitlistCount - 1)
   }
+
+  // Renumber remaining waitlist so positions stay contiguous
+  session.bookings
+    .filter(b => b.status === 'waitlisted')
+    .forEach((b, i) => { b.waitlistPosition = i + 1 })
 
   sessions[sessionIndex] = session
   saveSessions(sessions)

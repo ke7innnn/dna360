@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     const { invoiceId, invoiceData, planType, planId, isTest } = body
 
     let targetInvoice: any = null
+    let purchasedPlan: { id: string; title: string } | null = null
 
     // 2. Scenario A: Direct invoiceId provided
     if (invoiceId && typeof invoiceId === 'string') {
@@ -46,39 +47,41 @@ export async function POST(req: NextRequest) {
       }
     }
     // 3. Scenario B: Plan purchase / upgrade requested by authenticated member
-    else if (planType || planId || body.notes?.planName) {
-      const planKey = (planType || planId || '').toLowerCase()
-      let planTitle = 'Annual All-Access Membership Renewal'
-      let planAmountMinor = 5664000 // ₹56,640 (incl. GST)
-      let planDurationDays = 365
-
-      if (planKey === 'vip_pt' || planKey.includes('vip')) {
-        planTitle = 'VIP Multi-Club Platinum + 20 PT Bundle'
-        planAmountMinor = 8850000 // ₹88,500 (incl. GST)
-      } else {
-        // Check stored plans catalog
-        const storedPlans = getStoredPlans()
-        const matched = storedPlans.find(p => p.id === planId || p.slug === planKey)
-        if (matched) {
-          planTitle = matched.name
-          planAmountMinor = matched.totalPriceMinor
-          planDurationDays = (matched.durationMonths || 12) * 30
-        }
+    else if (planType || planId) {
+      // Plan must exist in the real catalog — the server never invents a plan or a price.
+      const planKey = String(planId || planType || '').trim().toLowerCase()
+      const matched = getStoredPlans().find(
+        (p) => p.isActive !== false && (p.id.toLowerCase() === planKey || p.slug?.toLowerCase() === planKey)
+      )
+      if (!matched) {
+        return NextResponse.json(
+          { error: 'Selected plan is not available. Please refresh and try again.' },
+          { status: 400 }
+        )
       }
 
-      const memberId = session.user.id || 'mem_001'
+      const planTitle = matched.name
+      const planAmountMinor = matched.totalPriceMinor
+
+      const memberId = session.user.id
+      if (!memberId) {
+        return NextResponse.json(
+          { error: 'Unable to identify the member for this purchase.' },
+          { status: 400 }
+        )
+      }
       const memberName = session.user.name || 'Member'
       const memberEmail = session.user.email || undefined
-      const memberPhone = session.user.phone || '+91 98200 00000'
+      const memberPhone = session.user.phone || ''
 
       const lineItem = buildLineItem({
-        productId: 'prod_membership_upgrade',
+        productId: matched.id,
         description: planTitle,
         sacCode: '999723',
         unitPriceInclusiveMinor: planAmountMinor,
         quantity: 1,
         discountMinor: 0,
-        taxRate: 0.05,
+        taxRate: matched.taxRate ?? 0.05,
       })
 
       // Issue pending invoice on server
@@ -98,6 +101,7 @@ export async function POST(req: NextRequest) {
           role: session.user.role?.name || 'Member',
         },
       })
+      purchasedPlan = { id: matched.id, title: planTitle }
     }
     // 4. Scenario C: Admin Live Gateway Test (₹1.00 verification)
     else if (isTest === true || (body.receipt && typeof body.receipt === 'string' && body.receipt.startsWith('rcpt_live_test_'))) {
@@ -182,6 +186,7 @@ export async function POST(req: NextRequest) {
         invoiceNumber: targetInvoice.invoiceNumber,
         memberId: targetInvoice.memberId,
         memberName: targetInvoice.memberName,
+        ...(purchasedPlan ? { planId: purchasedPlan.id, planTitle: purchasedPlan.title } : {}),
       },
     })
 
@@ -192,6 +197,8 @@ export async function POST(req: NextRequest) {
       expectedAmountMinor: amountMinor,
       memberId: targetInvoice.memberId,
       createdAt: new Date().toISOString(),
+      planId: purchasedPlan?.id,
+      planTitle: purchasedPlan?.title,
     })
 
     return NextResponse.json({

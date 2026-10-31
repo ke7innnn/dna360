@@ -34,9 +34,9 @@ export default function MemberAppHomePage() {
   const router = useRouter()
   const { user } = useAuth()
 
-  const userName = user?.name ? user.name.split(' ')[0] : 'Alex'
-  const userFullName = user?.name || 'Alex Morgan'
-  const initials = getInitials(userFullName) || 'AM'
+  const userName = user?.name ? user.name.split(' ')[0] : 'Member'
+  const userFullName = user?.name || 'Member'
+  const initials = getInitials(userFullName) || 'M'
 
   const [portalState, setPortalState] = useState<MemberPortalState | null>(null)
   const [selectedMood, setSelectedMood] = useState<MoodType>('calm')
@@ -55,11 +55,11 @@ export default function MemberAppHomePage() {
     }
   }, [user?.id, user?.name])
 
-  const planName = portalState?.planName || 'Annual All-Access Membership'
-  const memberCode = portalState?.memberCode || (user as any)?.member_code || 'DNA-0412'
-  const ptRemaining = portalState?.ptSessionsRemaining ?? 6
-  const ptTotal = portalState?.ptSessionsTotal ?? 12
-  const streak = portalState?.attendanceStreak ?? 12
+  const planName = portalState?.planName || 'No Active Plan'
+  const memberCode = portalState?.memberCode || (user as any)?.member_code || ''
+  const ptRemaining = portalState?.ptSessionsRemaining ?? 0
+  const ptTotal = portalState?.ptSessionsTotal ?? 0
+  const streak = portalState?.attendanceStreak ?? 0
 
   // Dynamic time-based greeting prefix (e.g. Gm, Alex)
   const greetingPrefix = useMemo(() => {
@@ -291,8 +291,8 @@ export default function MemberAppHomePage() {
 
           {/* Time & Title Inside Orb (Matching Screenshot "14s shake to turn off") */}
           <div className="relative z-10 flex flex-col items-center text-center text-white px-2">
-            <span className="font-sans font-black text-[52px] sm:text-[56px] tracking-tight leading-none tabular-nums drop-shadow-md">
-              52m
+            <span className="font-sans font-black text-[46px] sm:text-[50px] tracking-tight leading-none tabular-nums drop-shadow-md">
+              START
             </span>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
@@ -318,7 +318,7 @@ export default function MemberAppHomePage() {
           </span>
           <div className="flex items-center gap-1 text-white font-bold text-xs sm:text-[13px] mt-1">
             <Activity className="w-3.5 h-3.5 text-[#38BDF8]" />
-            <span className="truncate">Push Day</span>
+            <span className="truncate">{portalState?.assignedTrainer ? 'Coach Plan' : 'Workout'}</span>
           </div>
         </button>
 
@@ -344,7 +344,7 @@ export default function MemberAppHomePage() {
             PT Ledger
           </span>
           <span className="text-white font-bold text-xs sm:text-[13px] mt-1 tabular-nums group-hover:text-emerald-400 transition-colors">
-            {ptRemaining} of {ptTotal}
+            {ptTotal > 0 ? `${ptRemaining} of ${ptTotal}` : '0 Sessions'}
           </span>
         </button>
       </div>

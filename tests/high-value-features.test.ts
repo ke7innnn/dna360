@@ -71,11 +71,12 @@ async function runTests() {
     `Approved template catalog contains ${APPROVED_TEMPLATES.length} pre-approved templates`
   )
 
-  const renewalTpl = APPROVED_TEMPLATES.find((t) => t.id === 'tpl_renewal_reminder')!
+  const renewalTpl = APPROVED_TEMPLATES.find((t) => t.id === 'tpl_membership_renewal_confirmed')!
   const interpolated = interpolateTemplate(renewalTpl, {
     member_name: 'Arjun Mehta',
     plan_name: 'Annual Gym Membership',
-    expiry_date: '15 Sep 2026',
+    start_date: '15 Sep 2026',
+    validity_date: '14 Sep 2027',
   })
   assert(
     interpolated.includes('Arjun Mehta') &&
@@ -90,7 +91,7 @@ async function runTests() {
     memberId: 'mem_001',
     memberName: 'Arjun Mehta',
     phone: '+919820011111',
-    templateId: 'tpl_renewal_reminder',
+    templateId: 'tpl_membership_expiry_reminder',
     variables: { member_name: 'Arjun Mehta', plan_name: 'Annual Gym', expiry_date: '15 Sep 2026' },
     actor: { id: 'usr_staff_01', name: 'Amit Sharma', role: 'Fitness Consultant' },
   })

@@ -1,123 +1,152 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Calendar, CheckCircle2, Clock, MapPin, Users, ChevronRight, X } from 'lucide-react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { Calendar, AlertCircle } from 'lucide-react'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext'
+import { resolveMember } from '@/lib/memberportal'
+import {
+  getSessions,
+  bookClassSession,
+  cancelClassBooking,
+  isBookingWindowOpen,
+} from '@/lib/classes'
+import type { ClassSession } from '@/types/class'
+import {
+  toLocalDateStr,
+  localDateOffset,
+  parseLocalDate,
+  formatTime12h,
+  sessionStartDate,
+} from '@/lib/dates'
 
-interface MemberClassItem {
-  id: string
-  title: string
-  instructor: string
-  studio: string
-  durationMinutes: number
-  time: string
-  spotsLeft: number
-  capacity: number
-  waitlistCount?: number
-  isBooked?: boolean
+interface DayOption {
+  dateStr: string
+  name: string
+  num: string
+  isToday: boolean
 }
 
 export default function MemberClassesPage() {
+  const { user } = useAuth()
+  const member = useMemo(() => resolveMember(user?.id || user?.name), [user?.id, user?.name])
+
+  // Rolling 7 days starting from today (in device local timezone)
+  const days: DayOption[] = useMemo(() => {
+    const list: DayOption[] = []
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    for (let i = 0; i < 7; i++) {
+      const dateStr = localDateOffset(i)
+      const d = parseLocalDate(dateStr)
+      list.push({
+        dateStr,
+        name: i === 0 ? 'Today' : dayNames[d.getDay()],
+        num: String(d.getDate()),
+        isToday: i === 0,
+      })
+    }
+    return list
+  }, [])
+
   const [selectedDayIndex, setSelectedDayIndex] = useState(0)
+  const selectedDateStr = days[selectedDayIndex]?.dateStr || toLocalDateStr()
 
-  const DEFAULT_CLASSES: MemberClassItem[] = [
-    {
-      id: 'cls-1',
-      title: 'Reformer Pilates',
-      instructor: 'Hemant Shirke',
-      studio: 'Studio 2',
-      durationMinutes: 50,
-      time: '6:30 AM',
-      spotsLeft: 4,
-      capacity: 8,
-      isBooked: false,
-    },
-    {
-      id: 'cls-2',
-      title: 'HIIT & Conditioning',
-      instructor: 'Nikhil Shetty',
-      studio: 'Main floor',
-      durationMinutes: 45,
-      time: '7:00 AM',
-      spotsLeft: 0,
-      capacity: 12,
-      waitlistCount: 3,
-      isBooked: false,
-    },
-    {
-      id: 'cls-3',
-      title: 'Spin / RPM Cycling',
-      instructor: 'Aftab Memon',
-      studio: 'Cycle studio',
-      durationMinutes: 45,
-      time: '7:00 PM',
-      spotsLeft: 2,
-      capacity: 16,
-      isBooked: true,
-    },
-    {
-      id: 'cls-4',
-      title: 'Hatha Yoga',
-      instructor: 'Hemant Shirke',
-      studio: 'Studio 1',
-      durationMinutes: 60,
-      time: '8:00 PM',
-      spotsLeft: 9,
-      capacity: 15,
-      isBooked: false,
-    },
-  ]
+  const [sessions, setSessions] = useState<ClassSession[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const [classes, setClasses] = useState<MemberClassItem[]>(() => {
+  // Clean up legacy dummy storage key from previous iterations
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('dna360_member_classes')
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch {}
+      try {
+        localStorage.removeItem('dna360_member_classes')
+      } catch {}
+    }
+  }, [])
+
+  const reloadSessions = useCallback(() => {
+    const daySessions = getSessions({ date: selectedDateStr })
+    setSessions(daySessions)
+  }, [selectedDateStr])
+
+  useEffect(() => {
+    reloadSessions()
+    const handleUpdate = () => reloadSessions()
+    window.addEventListener('dna360_sessions_updated', handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+    return () => {
+      window.removeEventListener('dna360_sessions_updated', handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
+    }
+  }, [reloadSessions])
+
+  // Days with at least one active confirmed/waitlisted booking for the logged-in member
+  const daysWithBookings = useMemo(() => {
+    if (!member) return new Set<string>()
+    const allSessions = getSessions()
+    const bookedDates = new Set<string>()
+    for (const s of allSessions) {
+      if (
+        s.bookings.some(
+          (b) =>
+            b.memberId === member.id &&
+            (b.status === 'confirmed' || b.status === 'waitlisted')
+        )
+      ) {
+        bookedDates.add(s.date)
       }
     }
-    return DEFAULT_CLASSES
-  })
+    return bookedDates
+  }, [member, sessions])
 
-  const days = [
-    { name: 'Tue', num: '8', hasDot: false },
-    { name: 'Wed', num: '9', hasDot: true },
-    { name: 'Thu', num: '10', hasDot: true },
-    { name: 'Fri', num: '11', hasDot: false },
-    { name: 'Sat', num: '12', hasDot: true },
-    { name: 'Sun', num: '13', hasDot: false },
-    { name: 'Mon', num: '14', hasDot: false },
-  ]
+  const handleBook = (session: ClassSession) => {
+    if (!member) {
+      toast.error('Please log in as a member to book a class.')
+      return
+    }
 
-  const handleToggleBook = (cls: MemberClassItem) => {
-    setClasses((prev) => {
-      const updated = prev.map((c) => {
-        if (c.id === cls.id) {
-          if (c.isBooked) {
-            toast.info(`Cancelled reservation for ${c.title}`)
-            return { ...c, isBooked: false, spotsLeft: c.spotsLeft + 1 }
-          } else {
-            toast.success(`Reserved spot for ${c.title} at ${c.time}!`, {
-              description: `Instructor: ${c.instructor} · Studio: ${c.studio}`,
-            })
-            return { ...c, isBooked: true, spotsLeft: Math.max(0, c.spotsLeft - 1) }
-          }
-        }
-        return c
-      })
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('dna360_member_classes', JSON.stringify(updated))
-      }
-      return updated
+    setLoading(true)
+    const res = bookClassSession({
+      sessionId: session.id,
+      memberId: member.id,
+      source: 'member',
     })
+    setLoading(false)
+
+    if (!res.success) {
+      toast.error('Booking failed', { description: res.error || 'Unable to book session.' })
+      return
+    }
+
+    if (res.isWaitlisted) {
+      toast.info(`Added to waitlist for ${session.title}`, {
+        description: `Position #${res.booking?.waitlistPosition ?? 1}. You'll be auto-promoted if a spot opens up.`,
+      })
+    } else {
+      toast.success(`Booked ${session.title}!`, {
+        description: `${formatTime12h(session.startTime)} · ${session.studioName}`,
+      })
+    }
+    reloadSessions()
   }
 
-  const handleJoinWaitlist = (cls: MemberClassItem) => {
-    toast.success(`Added to waitlist for ${cls.title}`, {
-      description: 'You will receive a notification if a spot opens up.',
+  const handleCancel = (session: ClassSession, bookingId: string) => {
+    if (!member) return
+    setLoading(true)
+    const res = cancelClassBooking({
+      sessionId: session.id,
+      bookingId,
+      cancelledBy: { id: member.id, name: member.name, role: 'Member' },
     })
+    setLoading(false)
+
+    if (!res.success) {
+      toast.error('Cancellation failed', { description: res.error || 'Cannot cancel booking.' })
+      return
+    }
+
+    toast.info(`Cancelled booking for ${session.title}`)
+    reloadSessions()
   }
 
   return (
@@ -128,23 +157,20 @@ export default function MemberClassesPage() {
           <p className="hi">Book a</p>
           <h1 className="nm text-2xl sm:text-3xl text-white">Class</h1>
         </div>
-        <div className="member-icbtn shrink-0" title="Calendar View">
-          <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] stroke-current fill-none" strokeWidth="1.8">
-            <rect x="3" y="5" width="18" height="16" rx="2" />
-            <path d="M8 3v4M16 3v4M3 11h18" />
-          </svg>
+        <div className="member-icbtn shrink-0" title="Live Schedule">
+          <Calendar className="w-[18px] h-[18px] stroke-current" />
         </div>
       </div>
 
-      {/* Week Day Pill Selector */}
+      {/* Week Day Pill Selector (Live, Dynamic Dates) */}
       <div className="member-week max-w-md mx-auto sm:max-w-none">
         {days.map((d, idx) => (
           <div
-            key={d.num}
+            key={d.dateStr}
             onClick={() => setSelectedDayIndex(idx)}
             className={cn(
               'member-day',
-              d.hasDot && 'dot',
+              daysWithBookings.has(d.dateStr) && 'dot',
               selectedDayIndex === idx && 'sel'
             )}
           >
@@ -154,69 +180,130 @@ export default function MemberClassesPage() {
         ))}
       </div>
 
-      {/* Class Schedule Grid: 1 col on mobile, 2 cols on PC */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-2">
-        {classes.map((c) => (
-          <div
-            key={c.id}
-            className={cn(
-              'member-cls flex flex-col justify-between transition-all duration-200 min-w-0',
-              c.isBooked && 'border-[rgba(77,141,255,0.45)] bg-[rgba(77,141,255,0.04)] shadow-[0_8px_24px_rgba(30,64,175,0.15)]'
-            )}
-          >
-            <div className="member-cls-top flex items-start justify-between gap-3 min-w-0">
-              <div className="min-w-0 flex-1">
-                <p className="member-cls-t truncate">{c.title}</p>
-                <p className="member-cls-s truncate">
-                  {c.instructor} · {c.studio} · {c.durationMinutes} min
-                </p>
-              </div>
-              <span className="member-cls-time shrink-0">{c.time}</span>
-            </div>
+      {/* Class Schedule Grid */}
+      {sessions.length === 0 ? (
+        <div className="p-8 my-6 text-center rounded-2xl bg-[#0E131F]/70 border border-white/[0.08] backdrop-blur-md max-w-md mx-auto">
+          <p className="text-sm font-semibold text-white/90">No classes scheduled</p>
+          <p className="text-xs text-[var(--ink-3)] mt-1">
+            There are no studio classes scheduled for this date.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-2">
+          {sessions.map((session) => {
+            const capacity = session.capacity ?? 20
+            const spotsLeft = Math.max(0, capacity - session.bookedCount)
+            const isFull = session.bookedCount >= capacity
+            const myBooking = member
+              ? session.bookings.find(
+                  (b) =>
+                    b.memberId === member.id &&
+                    (b.status === 'confirmed' || b.status === 'waitlisted')
+                )
+              : undefined
 
-            <div className="member-cls-bot flex items-center justify-between gap-3 min-w-0">
-              <div className="min-w-0 flex-1">
-                {c.isBooked ? (
-                  <span className="member-pill member-p-blue shrink-0">BOOKED</span>
-                ) : c.spotsLeft > 0 ? (
-                  <span className="member-spots truncate block">
-                    {c.spotsLeft} of {c.capacity} spots left
-                  </span>
-                ) : (
-                  <span className="member-spots text-[#FBBF24] truncate block">
-                    Full · {c.waitlistCount} on waitlist
-                  </span>
-                )}
-              </div>
+            const isBooked = myBooking?.status === 'confirmed'
+            const isWaitlisted = myBooking?.status === 'waitlisted'
 
-              <div className="shrink-0">
-                {c.isBooked ? (
-                  <button
-                    onClick={() => handleToggleBook(c)}
-                    className="member-bk ghost"
-                  >
-                    Cancel
-                  </button>
-                ) : c.spotsLeft > 0 ? (
-                  <button
-                    onClick={() => handleToggleBook(c)}
-                    className="member-bk"
-                  >
-                    Book
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleJoinWaitlist(c)}
-                    className="member-bk full"
-                  >
-                    Join waitlist
-                  </button>
+            const isPast =
+              sessionStartDate(session.date, session.startTime).getTime() <= Date.now()
+            const windowOpen = isBookingWindowOpen(session.date)
+
+            return (
+              <div
+                key={session.id}
+                className={cn(
+                  'member-cls flex flex-col justify-between transition-all duration-200 min-w-0',
+                  isBooked &&
+                    'border-[rgba(77,141,255,0.45)] bg-[rgba(77,141,255,0.04)] shadow-[0_8px_24px_rgba(30,64,175,0.15)]',
+                  isWaitlisted &&
+                    'border-[rgba(251,191,36,0.45)] bg-[rgba(251,191,36,0.04)] shadow-[0_8px_24px_rgba(251,191,36,0.12)]'
                 )}
+              >
+                <div className="member-cls-top flex items-start justify-between gap-3 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <p className="member-cls-t truncate">{session.title}</p>
+                    <p className="member-cls-s truncate">
+                      {session.instructorName} · {session.studioName} · {session.durationMinutes} min
+                    </p>
+                  </div>
+                  <span className="member-cls-time shrink-0">
+                    {formatTime12h(session.startTime)}
+                  </span>
+                </div>
+
+                <div className="member-cls-bot flex items-center justify-between gap-3 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    {isBooked ? (
+                      <span className="member-pill member-p-blue shrink-0">BOOKED</span>
+                    ) : isWaitlisted ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                        WAITLIST #{myBooking.waitlistPosition ?? 1}
+                      </span>
+                    ) : isPast ? (
+                      <span className="member-spots text-[var(--ink-3)] truncate block">
+                        Class ended
+                      </span>
+                    ) : !windowOpen ? (
+                      <span className="member-spots text-cyan-400/80 truncate block">
+                        Booking opens 1 day prior
+                      </span>
+                    ) : !isFull ? (
+                      <span className="member-spots truncate block">
+                        {spotsLeft} of {capacity} spots left
+                      </span>
+                    ) : (
+                      <span className="member-spots text-[#FBBF24] truncate block">
+                        Full · {session.waitlistCount} on waitlist
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="shrink-0">
+                    {myBooking ? (
+                      <button
+                        onClick={() => handleCancel(session, myBooking.id)}
+                        disabled={loading}
+                        className="member-bk ghost"
+                      >
+                        Cancel
+                      </button>
+                    ) : isPast ? (
+                      <button disabled className="member-bk opacity-40 cursor-not-allowed">
+                        Closed
+                      </button>
+                    ) : !windowOpen ? (
+                      <button disabled className="member-bk opacity-40 cursor-not-allowed">
+                        Locked
+                      </button>
+                    ) : !isFull ? (
+                      <button
+                        onClick={() => handleBook(session)}
+                        disabled={loading}
+                        className="member-bk"
+                      >
+                        Book
+                      </button>
+                    ) : session.waitlistCount < (session.maxWaitlist ?? 5) ? (
+                      <button
+                        onClick={() => handleBook(session)}
+                        disabled={loading}
+                        className="member-bk full"
+                      >
+                        Join waitlist
+                      </button>
+                    ) : (
+                      <button disabled className="member-bk full opacity-50 cursor-not-allowed">
+                        Full
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

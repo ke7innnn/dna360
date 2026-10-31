@@ -30,15 +30,15 @@ interface MemberProfileModalProps {
 export default function MemberProfileModal({
   isOpen,
   onClose,
-  memberCode = 'DNA-0412',
-  planName = 'Annual All-Access Membership',
+  memberCode,
+  planName,
 }: MemberProfileModalProps) {
   const router = useRouter()
   const { user, logout } = useAuth()
 
-  const userName = user?.name || 'Aditi Deshpande'
-  const userEmail = user?.email || 'aditi.d@example.com'
-  const initials = getInitials(userName) || 'AD'
+  const userName = user?.name || 'Member'
+  const userEmail = user?.email || ''
+  const initials = getInitials(userName) || 'M'
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [confirmWord, setConfirmWord] = useState('')

@@ -6,6 +6,9 @@ export interface RazorpayOrderMapping {
   createdAt: string
   verifiedAt?: string
   paymentId?: string
+  /** Catalog plan chosen server-side (self-service plan purchases only) */
+  planId?: string
+  planTitle?: string
 }
 
 const g = globalThis as unknown as {

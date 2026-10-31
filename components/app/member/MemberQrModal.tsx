@@ -26,9 +26,9 @@ export default function MemberQrModal({
   onSimulateScan,
 }: MemberQrModalProps) {
   const { user } = useAuth()
-  const userName = propMemberName || user?.name || 'Arjun Mehta'
-  const memberCode = propMemberCode || (user as any)?.member_code || 'DNA-2025-0001'
-  const planName = propPlanName || 'PREMIUM ANNUAL'
+  const userName = propMemberName || user?.name || 'Member'
+  const memberCode = propMemberCode || (user as any)?.member_code || ''
+  const planName = propPlanName || 'Active Membership'
 
   const [secondsRemaining, setSecondsRemaining] = useState(18)
   const [tokenSeed, setTokenSeed] = useState(Date.now())

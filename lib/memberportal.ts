@@ -5,207 +5,179 @@ import type {
 } from '@/types/memberportal'
 
 export type { MemberPortalState, MemberClassBooking, MemberFreezeRequest }
+import type { Member, MembershipRecord } from '@/types/member'
+import type { GymPlan } from '@/types/billing'
 import { getStoredMembers, updateMember } from '@/lib/members'
 import { recordMembershipInvoice } from '@/lib/billing'
 import { logAuditEvent } from '@/lib/audit'
+import { getStoredSessions, cancelClassBooking } from '@/lib/classes'
+import { toLocalDateStr, parseLocalDate } from '@/lib/dates'
 
 const PORTAL_STATE_KEY = 'dna360_member_portal_state'
-const PORTAL_BOOKINGS_KEY = 'dna360_member_portal_bookings'
+const PORTAL_WATER_KEY = 'dna360_member_water'
 const PORTAL_FREEZE_KEY = 'dna360_member_portal_freeze'
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Neutral, zeroed portal state. It is only used when no member record can be
+ * resolved (e.g. signed-out render) — it never contains another person's data.
+ */
 export const SEEDED_PORTAL_STATE: MemberPortalState = {
-  memberId: 'mem_001',
-  memberName: 'Arjun Mehta',
-  memberCode: 'DNA-POW-2025-0892',
-  phone: '+919820011111',
-  email: 'arjun.mehta@gmail.com',
-  planName: 'Annual All-Access Premium',
-  planTier: 'Platinum All-Access',
-  branchName: 'Powai Flagship (+ Multi-Club)',
-  expiryDate: '2027-03-15',
-  daysRemaining: 218,
-  activePlans: [
-    {
-      productName: 'Annual Gym Membership Package 1',
-      category: 'gym_membership',
-      expiryDate: '2027-03-15',
-      daysRemaining: 218,
-      sessionsRemaining: null,
-      sessionsTotal: null,
-      accessWindow: null,
-    },
-    {
-      productName: 'Tier 1 PT — 12 Sessions (1 Month)',
-      category: 'personal_training',
-      expiryDate: '2026-09-30',
-      daysRemaining: 33,
-      sessionsRemaining: 8,
-      sessionsTotal: 12,
-      accessWindow: null,
-    },
-  ],
-  attendanceStreak: 14,
-  totalVisits: 142,
-  ptSessionsRemaining: 8,
-  ptSessionsTotal: 12,
-  waterIntakeMl: 2250,
+  memberId: '',
+  memberName: 'Member',
+  memberCode: '',
+  phone: '',
+  email: '',
+  planName: 'No active plan',
+  planTier: 'No active plan',
+  branchName: 'DNA 360 Powai',
+  expiryDate: null,
+  daysRemaining: 0,
+  activePlans: [],
+  attendanceStreak: 0,
+  totalVisits: 0,
+  ptSessionsRemaining: 0,
+  ptSessionsTotal: 0,
+  waterIntakeMl: 0,
   waterTargetMl: 3500,
-  qrToken: 'OTP-9821-4402',
-  qrExpiresInSeconds: 28,
+  qrToken: '',
+  qrExpiresInSeconds: 0,
 }
 
-export const SEEDED_PORTAL_BOOKINGS: MemberClassBooking[] = [
-  {
-    id: 'mb_001',
-    sessionId: 'cls_001',
-    classTitle: 'CrossFit WOD: Helen & Heavy Cleans',
-    category: 'CrossFit / Functional',
-    instructorName: 'Rajesh Poojary',
-    date: 'Today',
-    time: '18:30 - 19:30 IST',
-    studioName: 'Studio A (Functional Turf)',
-    status: 'confirmed',
-  },
-  {
-    id: 'mb_002',
-    sessionId: 'cls_003',
-    classTitle: 'RPM Sprint High-Intensity Cycle',
-    category: 'RPM Cycling',
-    instructorName: 'Aftab Memon',
-    date: 'Tomorrow',
-    time: '07:00 - 07:45 IST',
-    studioName: 'Studio C (Cycle Theatre)',
-    status: 'confirmed',
-  },
-]
-
-export function getMemberPortalState(memberId?: string): MemberPortalState {
+/**
+ * Single source of truth for mapping whatever identifier the session/UI holds
+ * (member id, member code, phone, e-mail or name) to the stored member record.
+ * Returns null — never a different member — when there is no match.
+ */
+export function resolveMember(ref?: string | null): Member | null {
+  if (!ref) return null
+  const needle = ref.trim().toLowerCase()
+  if (!needle) return null
   const members = getStoredMembers()
-  const rawId = memberId || 'mem_001'
-  const found =
-    members.find(
-      (m) =>
-        m.id === rawId ||
-        m.member_code === rawId ||
-        m.name.toLowerCase() === rawId.toLowerCase() ||
-        m.phone === rawId ||
-        (m.email && m.email.toLowerCase() === rawId.toLowerCase())
-    ) || members[0]
+  return (
+    members.find((m) => m.id.toLowerCase() === needle) ||
+    members.find((m) => m.member_code?.toLowerCase() === needle) ||
+    members.find((m) => m.phone === ref.trim()) ||
+    members.find((m) => !!m.email && m.email.toLowerCase() === needle) ||
+    members.find((m) => m.name.toLowerCase() === needle) ||
+    null
+  )
+}
 
-  const canonicalId = found ? found.id : 'mem_001'
-  const canonicalKey = `${PORTAL_STATE_KEY}_${canonicalId}`
+function daysUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null
+  const diff = parseLocalDate(dateStr).getTime() - parseLocalDate(toLocalDateStr()).getTime()
+  return Math.max(0, Math.round(diff / DAY_MS))
+}
 
-  if (typeof window !== 'undefined') {
-    const stored =
-      localStorage.getItem(canonicalKey) ||
-      localStorage.getItem(`${PORTAL_STATE_KEY}_${rawId}`) ||
-      localStorage.getItem(`${PORTAL_STATE_KEY}_mem_001`)
+// ─── Water intake (resets every local day) ───
 
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored)
-        if (parsed && typeof parsed.attendanceStreak === 'number') {
-          return parsed
-        }
-      } catch {
-        // Fall through to rehydration
-      }
-    }
+function readWaterToday(memberId: string): number {
+  if (typeof window === 'undefined') return 0
+  try {
+    const raw = localStorage.getItem(`${PORTAL_WATER_KEY}_${memberId}`)
+    if (!raw) return 0
+    const parsed = JSON.parse(raw) as { date: string; ml: number }
+    return parsed.date === toLocalDateStr() ? Math.max(0, Number(parsed.ml) || 0) : 0
+  } catch {
+    return 0
   }
+}
 
-  if (found) {
-    const primaryMs = found.active_memberships?.[0]
-    const expiry = primaryMs?.expiry_date || '2027-03-15'
-    const daysLeft = Math.max(
-      0,
-      Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+function writeWaterToday(memberId: string, ml: number) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(
+      `${PORTAL_WATER_KEY}_${memberId}`,
+      JSON.stringify({ date: toLocalDateStr(), ml })
     )
+  } catch {}
+}
 
-    const ptMs = found.active_memberships?.find(
-      (ms) =>
-        ms.sessions_remaining !== null ||
-        ms.category === 'personal_training' ||
-        ms.product_name?.toLowerCase().includes('pt') ||
-        ms.product_name?.toLowerCase().includes('personal')
-    )
-    const ptSessionsRemaining = ptMs ? (ptMs.sessions_remaining ?? 0) : (found.id === 'mem_001' ? 8 : 0)
-    const ptSessionsTotal = ptMs ? (ptMs.sessions_total ?? 12) : (found.id === 'mem_001' ? 12 : 0)
+/** The member's primary (gym) membership: first active gym plan, else first active, else first. */
+function primaryMembership(m: Member): MembershipRecord | undefined {
+  const list = m.active_memberships || []
+  const isGym = (ms: MembershipRecord) =>
+    (ms.category || ms.product_category || '') === 'gym_membership'
+  return (
+    list.find((ms) => ms.status === 'active' && isGym(ms)) ||
+    list.find((ms) => ms.status === 'active') ||
+    list[0]
+  )
+}
 
-    const hydrated: MemberPortalState = {
-      memberId: found.id,
-      memberName: found.name,
-      memberCode: found.member_code,
-      phone: found.phone,
-      email: found.email || '',
-      planName: primaryMs?.product_name || 'Annual All-Access Membership',
-      planTier: 'Platinum All-Access',
-      branchName: 'Powai Flagship (+ Multi-Club)',
-      expiryDate: expiry,
-      daysRemaining: daysLeft,
-      activePlans: found.active_memberships?.map((ms) => ({
+function isPtMembership(ms: MembershipRecord): boolean {
+  const cat = ms.category || ms.product_category || ''
+  return (
+    cat === 'personal_training' ||
+    (ms.sessions_total !== null && ms.sessions_total !== undefined && cat !== 'reformer_pilates' && cat !== 'pilates') ||
+    /\bpt\b|personal/i.test(ms.product_name || '')
+  )
+}
+
+/**
+ * The portal state is always derived from the member record (the single
+ * source of truth), so streak / visits / PT balance / plan can never drift.
+ * Only the daily water counter is portal-owned.
+ */
+export function getMemberPortalState(memberId?: string): MemberPortalState {
+  const found = resolveMember(memberId)
+  if (!found) return SEEDED_PORTAL_STATE
+
+  const primaryMs = primaryMembership(found)
+  const expiry = primaryMs?.expiry_date ?? null
+
+  const ptMs = found.active_memberships?.find((ms) => ms.status === 'active' && isPtMembership(ms))
+  const ptSessionsRemaining = ptMs?.sessions_remaining ?? 0
+  const ptSessionsTotal = ptMs?.sessions_total ?? 0
+
+  return {
+    memberId: found.id,
+    memberName: found.name,
+    memberCode: found.member_code,
+    phone: found.phone,
+    email: found.email || '',
+    planName: primaryMs?.product_name || 'No active plan',
+    planTier: primaryMs?.product_name || 'No active plan',
+    branchName: 'DNA 360 Powai',
+    expiryDate: expiry,
+    daysRemaining: daysUntil(expiry) ?? 0,
+    activePlans:
+      found.active_memberships?.map((ms) => ({
         productName: ms.product_name,
         category: ms.category || ms.product_category || 'gym_membership',
         expiryDate: ms.expiry_date,
-        daysRemaining: ms.expiry_date
-          ? Math.max(0, Math.ceil((new Date(ms.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-          : null,
+        daysRemaining: daysUntil(ms.expiry_date),
         sessionsRemaining: ms.sessions_remaining,
         sessionsTotal: ms.sessions_total,
         accessWindow: ms.access_window || null,
       })) || [],
-      attendanceStreak: found.attendance_streak || 12,
-      totalVisits: found.total_check_ins || 48,
-      ptSessionsRemaining,
-      ptSessionsTotal,
-      waterIntakeMl: 2250,
-      waterTargetMl: 3500,
-      qrToken: `OTP-${found.member_code.replace(/[^0-9]/g, '').slice(-4) || '9821'}-4402`,
-      qrExpiresInSeconds: 28,
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(canonicalKey, JSON.stringify(hydrated))
-      } catch {}
-    }
-    return hydrated
+    attendanceStreak: found.attendance_streak ?? 0,
+    totalVisits: found.total_check_ins ?? 0,
+    ptSessionsRemaining,
+    ptSessionsTotal,
+    waterIntakeMl: readWaterToday(found.id),
+    waterTargetMl: 3500,
+    specialInclusions: found.special_inclusions,
+    adjustmentCreditsRemaining: found.adjustment_credits_remaining,
+    assignedTrainer: found.assigned_trainer_name || undefined,
+    qrToken: found.member_code,
+    qrExpiresInSeconds: 0,
   }
-
-  // Fallback to seeded state
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(canonicalKey, JSON.stringify(SEEDED_PORTAL_STATE))
-    } catch {}
-  }
-  return SEEDED_PORTAL_STATE
 }
 
 export function saveMemberPortalState(state: MemberPortalState, memberId?: string) {
   if (typeof window === 'undefined') return
-  const members = getStoredMembers()
-  const rawId = memberId || state.memberId || 'mem_001'
-  const found = members.find(
-    (m) =>
-      m.id === rawId ||
-      m.member_code === rawId ||
-      m.name.toLowerCase() === rawId.toLowerCase() ||
-      m.phone === rawId ||
-      (m.email && m.email.toLowerCase() === rawId.toLowerCase())
-  )
+  const found = resolveMember(memberId || state.memberId)
+  if (!found) return
 
-  const canonicalId = found ? found.id : (state.memberId || 'mem_001')
-  const canonicalKey = `${PORTAL_STATE_KEY}_${canonicalId}`
-  const rawKey = `${PORTAL_STATE_KEY}_${rawId}`
-
-  localStorage.setItem(canonicalKey, JSON.stringify(state))
-  if (canonicalKey !== rawKey) {
-    localStorage.setItem(rawKey, JSON.stringify(state))
+  if (typeof state.waterIntakeMl === 'number') {
+    writeWaterToday(found.id, state.waterIntakeMl)
   }
-  // Also ensure default mem_001 fallback key is synced
-  localStorage.setItem(`${PORTAL_STATE_KEY}_mem_001`, JSON.stringify(state))
 
-  // Sync with persistent members database
-  if (found && typeof state.attendanceStreak === 'number') {
+  // Sync streak / visits into the persistent members database
+  if (typeof state.attendanceStreak === 'number') {
     updateMember(found.id, {
       attendance_streak: state.attendanceStreak,
       total_check_ins: state.totalVisits ?? found.total_check_ins,
@@ -216,35 +188,33 @@ export function saveMemberPortalState(state: MemberPortalState, memberId?: strin
   window.dispatchEvent(new Event('dna360_memberportal_updated'))
 }
 
+// ─── Class bookings (derived from the single class-session engine) ───
+
 export function getMemberBookings(memberId?: string): MemberClassBooking[] {
-  const targetId = memberId || 'mem_001'
-  const key = `${PORTAL_BOOKINGS_KEY}_${targetId}`
+  const member = resolveMember(memberId)
+  if (!member) return []
+  const today = toLocalDateStr()
 
-  if (typeof window === 'undefined') {
-    return targetId === 'mem_001' ? SEEDED_PORTAL_BOOKINGS : []
+  const out: MemberClassBooking[] = []
+  for (const s of getStoredSessions()) {
+    if (s.date < today || s.status === 'cancelled') continue
+    for (const b of s.bookings) {
+      if (b.memberId !== member.id) continue
+      if (b.status !== 'confirmed' && b.status !== 'waitlisted') continue
+      out.push({
+        id: b.id,
+        sessionId: s.id,
+        classTitle: s.title,
+        category: s.category,
+        instructorName: s.instructorName,
+        date: s.date,
+        time: `${s.startTime} - ${s.endTime}`,
+        studioName: s.studioName,
+        status: b.status,
+      })
+    }
   }
-
-  const stored = localStorage.getItem(key)
-  if (!stored) {
-    const initial = targetId === 'mem_001' ? SEEDED_PORTAL_BOOKINGS : []
-    try {
-      localStorage.setItem(key, JSON.stringify(initial))
-    } catch {}
-    return initial
-  }
-  try {
-    return JSON.parse(stored)
-  } catch {
-    return []
-  }
-}
-
-export function saveMemberBookings(bookings: MemberClassBooking[], memberId?: string) {
-  if (typeof window === 'undefined') return
-  const targetId = memberId || 'mem_001'
-  const key = `${PORTAL_BOOKINGS_KEY}_${targetId}`
-  localStorage.setItem(key, JSON.stringify(bookings))
-  window.dispatchEvent(new Event('dna360_memberportal_updated'))
+  return out.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
 }
 
 export function addWaterIntake(amountMl: number, memberId?: string): MemberPortalState {
@@ -257,28 +227,28 @@ export function addWaterIntake(amountMl: number, memberId?: string): MemberPorta
   return updated
 }
 
-export function cancelMemberBooking(bookingId: string, memberId?: string): boolean {
-  const bookings = getMemberBookings(memberId)
-  const filtered = bookings.filter((b) => b.id !== bookingId)
-  saveMemberBookings(filtered, memberId)
+/** Member self-service cancellation — goes through the same engine (4h cutoff enforced). */
+export function cancelMemberBooking(
+  bookingId: string,
+  memberId?: string
+): { success: boolean; error?: string } {
+  const member = resolveMember(memberId)
+  if (!member) return { success: false, error: 'Member not found' }
 
-  const current = getMemberPortalState(memberId)
-  logAuditEvent({
-    actor: { id: current.memberId, name: current.memberName, email: current.email || '', role: 'Member' },
-    action: 'DELETE',
-    entity: 'ClassBooking',
-    entityId: bookingId,
-    branchId: 'pow',
-    description: `Member ${current.memberName} cancelled self-service class reservation ${bookingId}`,
+  const session = getStoredSessions().find((s) => s.bookings.some((b) => b.id === bookingId))
+  if (!session) return { success: false, error: 'Booking not found' }
+
+  return cancelClassBooking({
+    sessionId: session.id,
+    bookingId,
+    cancelledBy: { id: member.id, name: member.name, role: 'Member' },
   })
-
-  return true
 }
 
 let memoryFreezeRequests: Record<string, MemberFreezeRequest[]> = {}
 
 export function getMemberFreezeRequests(memberId?: string): MemberFreezeRequest[] {
-  const targetId = memberId || 'mem_001'
+  const targetId = resolveMember(memberId)?.id || memberId || ''
   const key = `${PORTAL_FREEZE_KEY}_${targetId}`
 
   if (typeof window === 'undefined') {
@@ -295,7 +265,7 @@ export function getMemberFreezeRequests(memberId?: string): MemberFreezeRequest[
 }
 
 export function saveMemberFreezeRequests(requests: MemberFreezeRequest[], memberId?: string) {
-  const targetId = memberId || 'mem_001'
+  const targetId = resolveMember(memberId)?.id || memberId || ''
   const key = `${PORTAL_FREEZE_KEY}_${targetId}`
   memoryFreezeRequests[targetId] = requests
   if (typeof window !== 'undefined') {
@@ -344,103 +314,125 @@ export function submitFreezeRequest(
   return newRequest
 }
 
-export function renewOrUpgradePlan(
-  planName: string,
-  planTier: string,
-  priceMinor: number,
-  memberId?: string,
-  paymentReference?: string
-): MemberPortalState {
-  const current = getMemberPortalState(memberId)
-  const newExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-
-  const isVipPt = planTier.includes('VIP')
-  const updated: MemberPortalState = {
-    ...current,
-    planName,
-    planTier,
-    daysRemaining: (current.daysRemaining ?? 0) + 365,
-    expiryDate: newExpiry,
-    ptSessionsRemaining: isVipPt ? (current.ptSessionsRemaining ?? 8) + 20 : current.ptSessionsRemaining,
-    ptSessionsTotal: isVipPt ? (current.ptSessionsTotal ?? 12) + 20 : current.ptSessionsTotal,
-  }
-
-  saveMemberPortalState(updated, memberId)
-
-  // 1. Central Member Directory Update
-  try {
-    updateMember(current.memberId, {
-      status: 'active',
-      lifetime_value: (priceMinor || 0) + 5000000,
-      active_memberships: [
-        {
-          id: `ms_upg_${Date.now()}`,
-          product_id: 'prod_membership_upgrade',
-          product_name: planName,
-          product_category: 'gym_membership',
-          category: 'gym_membership',
-          enrolment_date: new Date().toISOString().slice(0, 10),
-          activation_date: new Date().toISOString().slice(0, 10),
-          expiry_date: newExpiry,
-          amount_paid: priceMinor,
-          discount_amount: 0,
-          discount_reason: null,
-          discount_approved_by: null,
-          tax_rate: 0.05,
-          status: 'active',
-          invoice_id: `inv_upg_${Date.now()}`,
-          invoice_number: `DNA/2026-27/${Math.floor(1000 + Math.random() * 9000)}`,
-          sales_rep_id: 'usr_online',
-          sales_rep_name: 'Member Self-Service Online',
-          sessions_total: planTier.includes('VIP') ? 20 : null,
-          sessions_consumed: 0,
-          sessions_remaining: planTier.includes('VIP') ? 20 : null,
-          access_window: null,
-          void_reason: null,
-          voided_by: null,
-          voided_at: null,
-          transferred_from: null,
-          transferred_to: null,
-          transfer_fee_invoice_id: null,
-        },
-      ],
-    })
-  } catch (e) {
-    console.error('Failed to sync member directory on upgrade:', e)
-  }
-
-  // 2. Central Tax Invoice Generation (Recorded in Billing Ledger)
-  try {
-    recordMembershipInvoice({
-      memberId: current.memberId,
-      memberName: current.memberName,
-      memberPhone: current.phone,
-      memberEmail: current.email,
-      planName,
-      amountInclusiveMinor: priceMinor,
-      paymentMode: 'Razorpay Live',
-      paymentReference: paymentReference || `rzp_live_${Date.now()}`,
-      notes: `Member portal self-service upgrade: ${planName} (${planTier})`,
-      createdBy: {
-        id: current.memberId,
-        name: current.memberName,
-        role: 'Member',
-      },
-    })
-  } catch (e) {
-    console.error('Failed to record billing invoice on upgrade:', e)
-  }
-
-  logAuditEvent({
-    actor: { id: current.memberId, name: current.memberName, email: current.email || '', role: 'Member' },
-    action: 'UPDATE',
-    entity: 'MembershipPlan',
-    entityId: `ren_${Date.now()}`,
-    branchId: 'pow',
-    description: `Member executed self-service plan upgrade/renewal to ${planName} for ₹${(priceMinor / 100).toLocaleString('en-IN')}`,
-    afterState: updated,
-  })
-
-  return updated
+function addMonthsLocal(base: Date, months: number): Date {
+  const d = new Date(base.getFullYear(), base.getMonth() + months, base.getDate())
+  // Guard month overflow (e.g. 31 Jan + 1 month)
+  if (d.getDate() !== base.getDate()) d.setDate(0)
+  return d
 }
 
+/**
+ * Apply a plan purchase that Razorpay has already CONFIRMED (verified server-side).
+ * - Renewing the same plan extends from the later of (current expiry, today).
+ * - A different plan is added alongside existing memberships (nothing is wiped).
+ * - PT sessions included in the plan are added to the member's balance.
+ * - Exactly one tax invoice is recorded, for the amount that was actually paid.
+ */
+export function renewOrUpgradePlan(
+  plan: Pick<GymPlan, 'id' | 'name' | 'durationMonths' | 'ptSessionsCount' | 'taxRate'> & {
+    durationDays?: number
+  },
+  amountPaidMinor: number,
+  memberId: string | undefined,
+  paymentReference: string
+): MemberPortalState {
+  const member = resolveMember(memberId)
+  if (!member) throw new Error('Member record not found — cannot apply plan.')
+
+  const todayStr = toLocalDateStr()
+  const existing = member.active_memberships.find(
+    (ms) => ms.product_id === plan.id && ms.status !== 'void'
+  )
+
+  const baseStr =
+    existing?.expiry_date && existing.expiry_date > todayStr ? existing.expiry_date : todayStr
+  const baseDate = parseLocalDate(baseStr)
+  const newExpiryDate =
+    plan.durationMonths > 0
+      ? addMonthsLocal(baseDate, plan.durationMonths)
+      : new Date(baseDate.getTime() + (plan.durationDays ?? 1) * DAY_MS)
+  const newExpiry = toLocalDateStr(newExpiryDate)
+
+  const ptAdded = plan.ptSessionsCount || 0
+  const invoice = recordMembershipInvoice({
+    memberId: member.id,
+    memberName: member.name,
+    memberPhone: member.phone,
+    memberEmail: member.email,
+    planName: plan.name,
+    amountInclusiveMinor: amountPaidMinor,
+    paymentMode: 'Razorpay Live',
+    paymentReference,
+    notes: `Member portal self-service purchase: ${plan.name}`,
+    createdBy: { id: member.id, name: member.name, role: 'Member' },
+  })
+
+  let memberships: MembershipRecord[]
+  if (existing) {
+    memberships = member.active_memberships.map((ms) =>
+      ms.id === existing.id
+        ? {
+            ...ms,
+            status: 'active',
+            expiry_date: newExpiry,
+            amount_paid: (ms.amount_paid || 0) + amountPaidMinor,
+            invoice_id: invoice.id,
+            invoice_number: invoice.invoiceNumber,
+            sessions_total: ptAdded ? (ms.sessions_total ?? 0) + ptAdded : ms.sessions_total,
+            sessions_remaining: ptAdded ? (ms.sessions_remaining ?? 0) + ptAdded : ms.sessions_remaining,
+          }
+        : ms
+    )
+  } else {
+    const record: MembershipRecord = {
+      id: `ms_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      product_id: plan.id,
+      product_name: plan.name,
+      product_category: 'gym_membership',
+      category: 'gym_membership',
+      enrolment_date: todayStr,
+      activation_date: todayStr,
+      expiry_date: newExpiry,
+      amount_paid: amountPaidMinor,
+      discount_amount: 0,
+      discount_reason: null,
+      discount_approved_by: null,
+      tax_rate: plan.taxRate,
+      status: 'active',
+      invoice_id: invoice.id,
+      invoice_number: invoice.invoiceNumber,
+      sales_rep_id: 'usr_online',
+      sales_rep_name: 'Member Self-Service Online',
+      sessions_total: ptAdded || null,
+      sessions_consumed: ptAdded ? 0 : null,
+      sessions_remaining: ptAdded || null,
+      access_window: null,
+      void_reason: null,
+      voided_by: null,
+      voided_at: null,
+      transferred_from: null,
+      transferred_to: null,
+      transfer_fee_invoice_id: null,
+    }
+    memberships = [...member.active_memberships, record]
+  }
+
+  updateMember(member.id, {
+    status: 'active',
+    lifetime_value: (member.lifetime_value || 0) + amountPaidMinor,
+    active_memberships: memberships,
+  })
+
+  logAuditEvent({
+    actor: { id: member.id, name: member.name, email: member.email || '', role: 'Member' },
+    action: 'UPDATE',
+    entity: 'MembershipPlan',
+    entityId: invoice.id,
+    branchId: 'pow',
+    description: `Member purchased ${plan.name} for ₹${(amountPaidMinor / 100).toLocaleString('en-IN')} (Razorpay ${paymentReference})`,
+    afterState: { planId: plan.id, expiry: newExpiry, invoiceNumber: invoice.invoiceNumber },
+  })
+
+  window.dispatchEvent(new Event('dna360_memberportal_updated'))
+  return getMemberPortalState(member.id)
+}

@@ -72,6 +72,41 @@ export async function createRazorpayOrder(params: {
     receipt: data.receipt,
   }
 }
+/**
+ * Server-side: Fetch an order from Razorpay (source of truth for amount, paid status and notes).
+ * Used to verify a payment when the in-memory order mapping is unavailable
+ * (e.g. create-order and verify-payment were served by different serverless instances).
+ */
+export async function fetchRazorpayOrder(orderId: string): Promise<{
+  id: string
+  amount: number
+  amount_paid: number
+  status: string
+  notes: Record<string, string>
+} | null> {
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  if (!keyId || !keySecret || process.env.NODE_ENV === 'test') return null
+
+  const authHeader = `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`
+  try {
+    const res = await fetch(`https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}`, {
+      headers: { Authorization: authHeader },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return {
+      id: data.id,
+      amount: data.amount,
+      amount_paid: data.amount_paid,
+      status: data.status,
+      notes: Array.isArray(data.notes) ? {} : data.notes || {},
+    }
+  } catch {
+    return null
+  }
+}
+
 
 /**
  * Server-side: Verify Razorpay Payment Signature

@@ -26,6 +26,8 @@ import {
 import { generateFutureSessions } from './revisions-service'
 import { auditTrainingEvent } from './auth-guard'
 import { getStoredMembers, updateMember } from '@/lib/members'
+import { getStoredPTSessions, savePTSessions } from '@/lib/trainers'
+import type { PTSessionLog } from '@/types/trainer'
 
 // ─── Trainer Client Roster (§6) ───
 
@@ -295,15 +297,22 @@ export function signOffPTSession(
 
   try {
     if (typeof window !== 'undefined') {
-      const psKey = `dna360_member_portal_state_${memberId}`
-      const stored = localStorage.getItem(psKey) || localStorage.getItem('dna360_member_portal_state_mem_001')
-      if (stored) {
-        const ps = JSON.parse(stored)
-        ps.ptSessionsRemaining = newRemaining
-        localStorage.setItem(psKey, JSON.stringify(ps))
-        localStorage.setItem('dna360_member_portal_state_mem_001', JSON.stringify(ps))
+      const logs = getStoredPTSessions()
+      const newLog: PTSessionLog = {
+        id: sessionId || `pt_sess_${Date.now()}`,
+        clientId: member.id,
+        clientName: member.name,
+        trainerId: trainer.id,
+        trainerName: trainer.name,
+        date: new Date().toISOString().slice(0, 10),
+        durationMinutes: 60,
+        workoutFocus: note || '1-on-1 PT Session',
+        rating: 5,
+        commissionEarnedMinor: 0,
+        status: 'completed',
+        ptTier: 'premium',
       }
-      window.dispatchEvent(new Event('dna360_memberportal_updated'))
+      savePTSessions([newLog, ...logs])
     }
   } catch {}
 
