@@ -95,8 +95,17 @@ export default function TrainerClientsPage() {
   }
 
   useEffect(() => {
-    setClients(buildRealInitialRoster())
-    loadTrainerData()
+    const handleSync = () => {
+      setClients(buildRealInitialRoster())
+      loadTrainerData()
+    }
+    handleSync()
+    window.addEventListener('dna360_members_updated', handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener('dna360_members_updated', handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
   }, [])
 
   // Sign off PT Session (§8.7)

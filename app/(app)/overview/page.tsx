@@ -26,7 +26,19 @@ import { toast } from '@/components/app/ui/toast'
 export default function FloorOverviewPage() {
   const router = useRouter()
   const { user, canRevenue } = useAuth()
-  const metrics = getSystemMetrics()
+  const [metrics, setMetrics] = useState(getSystemMetrics())
+
+  useEffect(() => {
+    const handleSync = () => {
+      setMetrics(getSystemMetrics())
+    }
+    window.addEventListener('dna360_members_updated', handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener('dna360_members_updated', handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
+  }, [])
 
   const isMember = user?.type === 'MEMBER' || String(user?.role?.slug).toLowerCase() === 'member'
 
