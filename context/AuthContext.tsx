@@ -9,11 +9,13 @@ import {
   SEEDED_USERS,
   SEEDED_ROLE_DEFINITIONS,
   SEEDED_ACTIVE_SESSIONS,
+  SEEDED_DEFAULT_TEMP_PASSWORD,
   normaliseIndianPhone,
   getRoleDefaultRedirect,
   requireCapability,
   canAccessRevenue,
 } from '@/lib/auth'
+import { getStoredMembers } from '@/lib/members'
 import { logAuditEvent } from '@/lib/audit'
 import { toast } from '@/components/app/ui/toast'
 
@@ -81,6 +83,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const storedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY)
         if (storedSessions) setSessions(JSON.parse(storedSessions))
+
+        // Hydrate live roles & active sessions from Supabase
+        fetch('/api/settings?scope=all')
+          .then((r) => (r.ok ? r.json() : null))
+          .then((remote) => {
+            if (Array.isArray(remote?.configs?.roles) && remote.configs.roles.length > 0) {
+              setRoles(remote.configs.roles)
+              localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(remote.configs.roles))
+            }
+            if (Array.isArray(remote?.sessions) && remote.sessions.length > 0) {
+              setSessions(remote.sessions)
+              localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(remote.sessions))
+            }
+          })
+          .catch(() => {})
       } catch (err) {
         console.error('Failed to initialize session:', err)
       } finally {
@@ -145,12 +162,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 2. Phone OTP Login via Server API
   const sendLoginOtp = async (phone: string): Promise<{ success: boolean; message: string }> => {
     const clean = normaliseIndianPhone(phone)
-    let matched = SEEDED_USERS.find((u) => u.phone === clean || u.phone.endsWith(phone.slice(-10)))
+    const last10 = phone.replace(/\D/g, '').slice(-10)
+    const matchedStaff = SEEDED_USERS.find((u) => u.phone === clean || (last10.length === 10 && u.phone.endsWith(last10)))
+    const matchedMember = !matchedStaff
+      ? getStoredMembers().find((m) => m.phone === clean || (last10.length === 10 && m.phone.endsWith(last10)))
+      : null
 
-    if (!matched) {
+    if (!matchedStaff && !matchedMember) {
       return { success: false, message: 'No registered member or staff found with this mobile number.' }
     }
-    return { success: true, message: `OTP code sent to ${phone} via WhatsApp / SMS (Use demo OTP: 123456)` }
+    return { success: true, message: `Verification code sent to ${phone} via WhatsApp / SMS.` }
   }
 
   const loginWithOtp = async (
@@ -180,14 +201,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 3. 2FA Verification
   const verifyTwoFactor = async (otp: string): Promise<{ success: boolean; error?: string }> => {
     if (otp !== '123456' && otp !== '000000') {
-      return { success: false, error: 'Invalid 2FA code. Please enter 123456.' }
+      return { success: false, error: 'Invalid 2FA verification code.' }
     }
 
     if (pending2FAUser) {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: pending2FAUser.email || pending2FAUser.phone, password: 'password123' }),
+        body: JSON.stringify({
+          identifier: pending2FAUser.email || pending2FAUser.phone,
+          password: SEEDED_DEFAULT_TEMP_PASSWORD,
+        }),
       })
       const data = await res.json()
       saveUserSession(data.user || pending2FAUser)
@@ -215,14 +239,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 5. Persona Switcher (re-authenticates with server session cookie)
   const switchPersona = async (userId: string) => {
-    const target = SEEDED_USERS.find((u) => u.id === userId)
+    let target: any = SEEDED_USERS.find((u) => u.id === userId)
+    if (!target) {
+      const m = getStoredMembers().find((mem) => mem.id === userId)
+      if (m) {
+        const memberRole =
+          SEEDED_ROLE_DEFINITIONS.find((r) => r.slug.toLowerCase() === 'member') ||
+          SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1]
+        target = {
+          id: m.id,
+          name: m.name,
+          email: m.email || `${m.id}@dna360.in`,
+          phone: m.phone,
+          type: 'MEMBER',
+          role: memberRole,
+        }
+      }
+    }
     if (!target) return
+
+    const firstWord = (target.name || 'User').trim().split(/\s+/)[0] || 'User'
+    const cleanFirst = firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
+    const personaPass =
+      cleanFirst.toLowerCase() === 'executive'
+        ? 'Admin@123'
+        : cleanFirst.toLowerCase() === 'front'
+        ? 'Frontdesk@123'
+        : `${cleanFirst}@123`
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: target.email || target.phone, password: 'password123' }),
+        body: JSON.stringify({
+          identifier: target.email || target.phone || target.name,
+          password: personaPass,
+        }),
       })
 
       if (res.ok) {
@@ -239,6 +291,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const syncRolesRemote = (updated: RoleDefinition[]) => {
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SAVE_CONFIG', key: 'roles', payload: updated }),
+    }).catch(() => {})
+  }
+
   const createCustomRole = (roleData: Omit<RoleDefinition, 'id' | 'createdAt' | 'isSystem'>): RoleDefinition => {
     const newRole: RoleDefinition = {
       ...roleData,
@@ -249,6 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const updated = [...roles, newRole]
     setRoles(updated)
     localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(updated))
+    syncRolesRemote(updated)
     return newRole
   }
 
@@ -256,6 +317,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const updated = roles.map((r) => (r.id === roleId ? { ...r, capabilities, updatedAt: new Date().toISOString() } : r))
     setRoles(updated)
     localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(updated))
+    syncRolesRemote(updated)
     toast.success('Role capability permissions updated')
   }
 
@@ -265,6 +327,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const updated = roles.filter((r) => r.id !== roleId)
     setRoles(updated)
     localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(updated))
+    syncRolesRemote(updated)
     return true
   }
 
@@ -272,6 +335,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const updated = sessions.filter((s) => s.id !== sessionId)
     setSessions(updated)
     localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(updated))
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'REVOKE_SESSION', sessionId }),
+    }).catch(() => {})
+    logAuditEvent({
+      actor: { id: user?.id || 'system', name: user?.name || 'Admin', email: user?.email || '', role: user?.role?.name || 'Owner' },
+      action: 'DELETE',
+      entity: 'AuthSession',
+      entityId: sessionId,
+      branchId: 'pow',
+      description: `Revoked active terminal session ${sessionId}`,
+    })
   }
 
   return (

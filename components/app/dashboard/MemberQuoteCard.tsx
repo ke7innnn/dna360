@@ -98,8 +98,8 @@ export default function MemberQuoteCard() {
 
       <div className="relative z-10 space-y-4">
         {/* Eyebrow / Category Row */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-ui font-bold uppercase tracking-wider bg-[rgba(59,130,246,0.15)] text-[#60A5FA] border border-[rgba(59,130,246,0.30)]">
               <Sparkles className="w-3 h-3 text-[#3B82F6] animate-pulse" />
               DAILY MOTIVATION

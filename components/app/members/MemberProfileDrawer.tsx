@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   User, Mail, Phone, Calendar, ShieldCheck,
   CreditCard, Activity, Clock, FileText, Send,
@@ -45,10 +45,26 @@ export default function MemberProfileDrawer({
   const [blockModalOpen, setBlockModalOpen] = useState(false)
   const [blockReason, setBlockReason] = useState('Turnstile misconduct / conduct violation')
   const [customBlockReason, setCustomBlockReason] = useState('')
+  const [remoteProfile, setRemoteProfile] = useState<any>(null)
+
+  useEffect(() => {
+    if (!open || !member?.id) {
+      setRemoteProfile(null)
+      return
+    }
+    fetch(`/api/member/profile?memberId=${encodeURIComponent(member.id)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.profile || data?.member) {
+          setRemoteProfile(data.profile || data.member)
+        }
+      })
+      .catch(() => {})
+  }, [open, member?.id])
 
   if (!member) return null
 
-  const isBlocked = member.blacklisted || member.status === 'blacklisted'
+  const isBlocked = remoteProfile?.blacklisted ?? (member.blacklisted || member.status === 'blacklisted')
 
   const statusMap: Record<string, { status: string; label: string }> = {
     active: { status: 'ok', label: 'Active Member' },
@@ -58,11 +74,33 @@ export default function MemberProfileDrawer({
     blacklisted: { status: 'danger', label: 'Blocked' },
   }
 
+  const effectiveStatus = remoteProfile?.status || member.status
   const currentStatus = isBlocked
     ? { status: 'danger', label: 'Blocked' }
-    : statusMap[member.status] || { status: 'neutral', label: member.status || 'Active' }
+    : statusMap[effectiveStatus] || { status: 'neutral', label: effectiveStatus || 'Active' }
 
-  const activeMemberships = member.active_memberships || []
+  const activeMemberships =
+    remoteProfile?.activePlans && remoteProfile.activePlans.length > 0
+      ? remoteProfile.activePlans.map((p: any) => ({
+          id: p.id,
+          product_name: p.productName,
+          category: p.category,
+          status: p.status,
+          amount_paid: p.amountPaid,
+          start_date: p.startDate,
+          expiry_date: p.expiryDate,
+          sessions_total: p.sessionsTotal,
+          sessions_remaining: p.sessionsRemaining,
+          freeze_days_used: 0,
+          max_freeze_days: 30,
+        }))
+      : member.active_memberships || []
+  const effectiveStreak = remoteProfile?.streakCount ?? (member.attendance_streak || 0)
+  const effectiveCheckIns = remoteProfile?.visitCount ?? (member.total_check_ins || 0)
+  const effectiveCredits = remoteProfile?.adjustmentCreditsRemaining ?? (member.adjustment_credits_remaining ?? 2)
+  const effectiveLtv = remoteProfile?.lifetimeValue ?? (member.lifetime_value || 0)
+  const effectiveLastVisit = remoteProfile?.lastVisitAt || member.last_visit_at
+  const effectiveSpecialInclusions = remoteProfile?.specialInclusions || member.special_inclusions
   const kyc = member.kyc || {
     id_type: null,
     id_last_four: null,
@@ -100,7 +138,7 @@ export default function MemberProfileDrawer({
     blacklistMember({
       memberId: member.id,
       reason: finalReason,
-      blacklistedBy: 'Amit Sharma (Duty Manager)',
+      blacklistedBy: 'Rajesh Poojary (Duty Manager)',
     })
 
     toast.error(`${member.name} is now Blocked — turnstile access revoked`)
@@ -152,7 +190,7 @@ export default function MemberProfileDrawer({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="primary"
                 size="sm"
@@ -220,23 +258,23 @@ export default function MemberProfileDrawer({
           )}
 
           {/* Special Inclusions Alert Banner */}
-          {member.special_inclusions && (
+          {effectiveSpecialInclusions && (
             <div className="p-3.5 rounded-[var(--r-sm)] bg-[var(--accent-soft)] border border-[rgba(59,130,246,0.30)] text-xs text-[var(--accent)] flex items-start gap-2.5">
               <Sparkles className="w-4 h-4 mt-0.5 text-[var(--accent)] flex-shrink-0" />
               <div>
                 <strong className="font-semibold block text-[var(--ink)]">Special Inclusions / Custom Privileges:</strong>
-                <span>{member.special_inclusions}</span>
+                <span>{effectiveSpecialInclusions}</span>
               </div>
             </div>
           )}
 
           {/* Drawer Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-4 w-full bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] p-1">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="memberships">Plans ({activeMemberships.length})</TabsTrigger>
-              <TabsTrigger value="attendance">Access</TabsTrigger>
-              <TabsTrigger value="notes">Timeline</TabsTrigger>
+            <TabsList className="flex w-full overflow-x-auto h-auto min-h-10 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] p-1">
+              <TabsTrigger value="overview" className="shrink-0">Overview</TabsTrigger>
+              <TabsTrigger value="memberships" className="shrink-0">Plans ({activeMemberships.length})</TabsTrigger>
+              <TabsTrigger value="attendance" className="shrink-0">Access</TabsTrigger>
+              <TabsTrigger value="notes" className="shrink-0">Timeline</TabsTrigger>
             </TabsList>
 
             {/* TAB 1: Overview */}
@@ -247,26 +285,26 @@ export default function MemberProfileDrawer({
                   <div className="flex items-center justify-center gap-1.5 mt-1">
                     <Activity className="w-4 h-4 text-[var(--accent)]" />
                     <span className="font-data text-lg font-bold text-[var(--ink)] tabular-nums">
-                      {member.attendance_streak || 0}d
+                      {effectiveStreak}d
                     </span>
                   </div>
                 </div>
                 <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-center">
                   <span className="font-data text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] block">Total Check-ins</span>
                   <span className="font-data text-lg font-bold text-[var(--ink)] mt-1 block tabular-nums">
-                    {member.total_check_ins || 0}
+                    {effectiveCheckIns}
                   </span>
                 </div>
                 <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-center">
                   <span className="font-data text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] block">Pilates Credits</span>
                   <span className="font-data text-lg font-bold text-[var(--accent)] mt-1 block tabular-nums">
-                    {member.adjustment_credits_remaining ?? 2} / 2
+                    {effectiveCredits} / 2
                   </span>
                 </div>
                 <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-center">
                   <span className="font-data text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] block">Lifetime Value</span>
                   <span className="font-data text-sm font-bold text-[var(--ink)] mt-1.5 block tabular-nums">
-                    {formatINR(member.lifetime_value || 0)}
+                    {formatINR(effectiveLtv)}
                   </span>
                 </div>
               </div>
@@ -323,7 +361,7 @@ export default function MemberProfileDrawer({
 
             {/* TAB 2: Memberships & Packages */}
             <TabsContent value="memberships" className="space-y-4 pt-4">
-              {activeMemberships.map((pkg, idx) => (
+              {activeMemberships.map((pkg: any, idx: number) => (
                 <div
                   key={pkg.id || idx}
                   className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-3"
@@ -349,15 +387,21 @@ export default function MemberProfileDrawer({
                     </div>
                     <div>
                       <span className="font-data text-[10px] text-[var(--muted)] block">Started:</span>
-                      <span className="font-data tabular-nums text-[var(--ink)]">{pkg.start_date || '12 Oct 2025'}</span>
+                      <span className="font-data tabular-nums text-[var(--ink)]">{pkg.start_date || member.joined_date || '—'}</span>
                     </div>
                     <div>
                       <span className="font-data text-[10px] text-[var(--muted)] block">Expires:</span>
-                      <span className="font-data tabular-nums text-[var(--ink)] font-bold">{pkg.expiry_date || '11 Oct 2026'}</span>
+                      <span className="font-data tabular-nums text-[var(--ink)] font-bold">{pkg.expiry_date || '—'}</span>
                     </div>
                     <div>
-                      <span className="font-data text-[10px] text-[var(--muted)] block">Freeze Used:</span>
-                      <span className="font-data tabular-nums text-[var(--ink)]">{pkg.freeze_days_used || 0} / {pkg.max_freeze_days || 30}d</span>
+                      <span className="font-data text-[10px] text-[var(--muted)] block">
+                        {pkg.sessions_total ? 'Sessions Left:' : 'Freeze Used:'}
+                      </span>
+                      <span className="font-data tabular-nums text-[var(--ink)]">
+                        {pkg.sessions_total
+                          ? `${pkg.sessions_remaining ?? 0} / ${pkg.sessions_total}`
+                          : `${pkg.freeze_days_used || 0} / ${pkg.max_freeze_days || 30}d`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -375,17 +419,35 @@ export default function MemberProfileDrawer({
               <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-xs space-y-2.5">
                 <div className="flex justify-between py-1.5 border-b border-[var(--line)]">
                   <span className="font-ui text-[var(--muted)]">Total Studio Check-ins:</span>
-                  <span className="font-data font-bold text-[var(--ink)] tabular-nums">{member.total_check_ins || 0} visits</span>
+                  <span className="font-data font-bold text-[var(--ink)] tabular-nums">{effectiveCheckIns} visits</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-[var(--line)]">
                   <span className="font-ui text-[var(--muted)]">Current Attendance Streak:</span>
-                  <span className="font-data font-bold text-[var(--amber)] tabular-nums">{member.attendance_streak || 0} consecutive days</span>
+                  <span className="font-data font-bold text-[var(--amber)] tabular-nums">{effectiveStreak} consecutive days</span>
                 </div>
                 <div className="flex justify-between py-1.5">
                   <span className="font-ui text-[var(--muted)]">Last Turnstile Scan:</span>
-                  <span className="font-data tabular-nums text-[var(--ink)]">{member.last_visit_at ? formatDateTime(member.last_visit_at) : 'No recent scans'}</span>
+                  <span className="font-data tabular-nums text-[var(--ink)]">{effectiveLastVisit ? formatDateTime(effectiveLastVisit) : 'No recent scans'}</span>
                 </div>
               </div>
+
+              {remoteProfile?.recentBookings && remoteProfile.recentBookings.length > 0 && (
+                <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] text-xs space-y-2">
+                  <h4 className="font-data text-[10.5px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)]">
+                    Recent Class Bookings (Member Portal Sync)
+                  </h4>
+                  <div className="space-y-1.5">
+                    {remoteProfile.recentBookings.map((b: any) => (
+                      <div key={b.id} className="flex items-center justify-between py-1 border-b border-[var(--line)] last:border-0">
+                        <span className="font-ui text-[var(--ink)] font-medium">{b.title} ({b.date} · {b.startTime})</span>
+                        <Badge status={b.status === 'confirmed' || b.status === 'attended' ? 'ok' : 'warn'} size="sm">
+                          {String(b.status).toUpperCase()}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             {/* TAB 4: Timeline & Notes */}

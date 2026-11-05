@@ -71,6 +71,15 @@ const STAFF_ONLY_PREFIXES = [
   '/leads',
   '/front-desk',
   '/attendance',
+  '/members',
+  '/bookings',
+  '/plans',
+  '/products',
+  '/consent',
+  '/trainers',
+  '/my-clients',
+  '/schedule',
+  '/design-system',
 ]
 
 const SESSION_SECRET =

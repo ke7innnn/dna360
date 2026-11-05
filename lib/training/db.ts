@@ -177,7 +177,7 @@ function initSeedMemberData() {
     sessionId: pastSessionId,
     body: 'Solid leg drive on the bench press. Keep elbows tucked at 45 degrees next time.',
     createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    authorName: 'Sneha Rao',
+    authorName: 'Rajesh Poojary',
   })
 
   // Seed sample body metric
@@ -198,6 +198,89 @@ function initSeedMemberData() {
 }
 
 initSeedMemberData()
+
+// ─── Server-Side Prisma Hydration & Write-Through ───
+
+let prismaHydrated = false
+function ensurePrismaHydration() {
+  if (typeof window !== 'undefined' || prismaHydrated) return
+  prismaHydrated = true
+  import('@/lib/prisma')
+    .then(async ({ prisma }) => {
+      const [dbPrograms, dbMetrics, dbNotes, dbChecks] = await Promise.all([
+        prisma.memberProgram.findMany({ orderBy: { startDate: 'desc' }, take: 200 }).catch(() => []),
+        prisma.bodyMetric.findMany({ orderBy: { recordedAt: 'desc' }, take: 500 }).catch(() => []),
+        prisma.coachNote.findMany({ where: { NOT: { authorId: { startsWith: 'SYSTEM_' } } }, orderBy: { createdAt: 'desc' }, take: 300 }).catch(() => []),
+        prisma.formCheck.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }).catch(() => []),
+      ])
+      for (const mp of dbPrograms) {
+        if (!memMemberPrograms.some((x) => x.id === mp.id)) {
+          memMemberPrograms.push({
+            id: mp.id,
+            memberId: mp.memberId,
+            trainerId: mp.trainerId,
+            coachingMode: mp.coachingMode as any,
+            sourceProgramId: mp.sourceProgramId,
+            currentVersion: mp.currentVersion,
+            snapshot: mp.snapshot as any,
+            adaptationPolicy: mp.adaptationPolicy as any,
+            scheduleMode: mp.scheduleMode as any,
+            scheduleDays: mp.scheduleDays,
+            sessionsPerWeek: mp.sessionsPerWeek,
+            startDate: mp.startDate.toISOString(),
+            endDate: mp.endDate ? mp.endDate.toISOString() : null,
+            status: mp.status as any,
+          })
+        }
+      }
+      for (const bm of dbMetrics) {
+        if (!memBodyMetrics.some((x) => x.id === bm.id)) {
+          memBodyMetrics.push({
+            id: bm.id,
+            memberId: bm.memberId,
+            recordedAt: bm.recordedAt.toISOString(),
+            weightKg: bm.weightKg ?? undefined,
+            bodyFatPct: bm.bodyFatPct ?? undefined,
+            measurements: (bm.measurements as any) ?? undefined,
+            photoKeys: bm.photoKeys || [],
+            recordedById: bm.recordedById,
+          })
+        }
+      }
+      for (const cn of dbNotes) {
+        if (!cn.body.trim().startsWith('{') && !memCoachNotes.some((x) => x.id === cn.id)) {
+          memCoachNotes.push({
+            id: cn.id,
+            authorId: cn.authorId,
+            memberId: cn.memberId,
+            sessionId: cn.sessionId ?? undefined,
+            body: cn.body,
+            mediaKey: cn.mediaKey ?? undefined,
+            createdAt: cn.createdAt.toISOString(),
+            readAt: cn.readAt ? cn.readAt.toISOString() : undefined,
+          })
+        }
+      }
+      for (const fc of dbChecks) {
+        if (!memFormChecks.some((x) => x.id === fc.id)) {
+          memFormChecks.push({
+            id: fc.id,
+            memberId: fc.memberId,
+            trainerId: fc.trainerId,
+            exerciseId: fc.exerciseId ?? undefined,
+            videoKey: fc.videoKey,
+            memberNote: fc.memberNote ?? undefined,
+            reviewedAt: fc.reviewedAt ? fc.reviewedAt.toISOString() : null,
+            reviewBody: fc.reviewBody ?? null,
+            createdAt: fc.createdAt.toISOString(),
+          })
+        }
+      }
+    })
+    .catch(() => {})
+}
+
+ensurePrismaHydration()
 
 // ─── Exercise Queries & Mutations ───
 
@@ -310,6 +393,42 @@ export function saveMemberProgram(mp: MemberProgram): MemberProgram {
   }
   if (typeof window !== 'undefined') {
     localStorage.setItem(MEMBER_PROGRAMS_KEY, JSON.stringify(memMemberPrograms))
+  } else {
+    import('@/lib/prisma')
+      .then(({ prisma }) =>
+        prisma.memberProgram.upsert({
+          where: { id: mp.id },
+          update: {
+            trainerId: mp.trainerId || null,
+            coachingMode: (mp.coachingMode as any) || 'TRAINER_LED',
+            currentVersion: mp.currentVersion || 1,
+            snapshot: (mp.snapshot as any) || {},
+            adaptationPolicy: (mp.adaptationPolicy as any) || 'FLEXIBLE',
+            scheduleMode: (mp.scheduleMode as any) || 'FLEXIBLE',
+            scheduleDays: mp.scheduleDays || [],
+            sessionsPerWeek: mp.sessionsPerWeek ?? null,
+            status: mp.status || 'ACTIVE',
+            endDate: mp.endDate ? new Date(mp.endDate) : null,
+          },
+          create: {
+            id: mp.id,
+            memberId: mp.memberId,
+            trainerId: mp.trainerId || null,
+            coachingMode: (mp.coachingMode as any) || 'TRAINER_LED',
+            sourceProgramId: mp.sourceProgramId || null,
+            currentVersion: mp.currentVersion || 1,
+            snapshot: (mp.snapshot as any) || {},
+            adaptationPolicy: (mp.adaptationPolicy as any) || 'FLEXIBLE',
+            scheduleMode: (mp.scheduleMode as any) || 'FLEXIBLE',
+            scheduleDays: mp.scheduleDays || [],
+            sessionsPerWeek: mp.sessionsPerWeek ?? null,
+            startDate: mp.startDate ? new Date(mp.startDate) : new Date(),
+            endDate: mp.endDate ? new Date(mp.endDate) : null,
+            status: mp.status || 'ACTIVE',
+          },
+        })
+      )
+      .catch(() => {})
   }
   return mp
 }
@@ -350,6 +469,37 @@ export function saveWorkoutSession(session: WorkoutSession): WorkoutSession {
   if (typeof window !== 'undefined') {
     localStorage.setItem(WORKOUT_SESSIONS_KEY, JSON.stringify(memSessions))
     window.dispatchEvent(new Event('dna360_sessions_updated'))
+  } else {
+    import('@/lib/prisma')
+      .then(({ prisma }) =>
+        prisma.workoutSession.upsert({
+          where: { id: session.id },
+          update: {
+            status: (session.status as any) || 'IN_PROGRESS',
+            startedAt: session.startedAt ? new Date(session.startedAt) : undefined,
+            completedAt: session.completedAt ? new Date(session.completedAt) : undefined,
+            memberFeedback: session.memberFeedback ?? undefined,
+            perceivedEffort: session.perceivedEffort ?? undefined,
+          },
+          create: {
+            id: session.id,
+            memberId: session.memberId,
+            memberProgramId: null,
+            programVersion: session.programVersion ?? 1,
+            weekIndex: session.weekIndex ?? 0,
+            dayIndex: session.dayIndex ?? 0,
+            title: session.title || 'Workout Session',
+            scheduledDate: session.scheduledDate ? new Date(session.scheduledDate) : new Date(),
+            startedAt: session.startedAt ? new Date(session.startedAt) : new Date(),
+            completedAt: session.completedAt ? new Date(session.completedAt) : null,
+            status: (session.status as any) || 'IN_PROGRESS',
+            memberFeedback: session.memberFeedback ?? null,
+            perceivedEffort: session.perceivedEffort ?? null,
+            ptSessionId: session.ptSessionId ?? null,
+          },
+        })
+      )
+      .catch(() => {})
   }
   return session
 }
@@ -377,6 +527,23 @@ export function recordBodyMetric(metric: Omit<BodyMetric, 'id'>): BodyMetric {
   memBodyMetrics.push(newMetric)
   if (typeof window !== 'undefined') {
     localStorage.setItem(BODY_METRICS_KEY, JSON.stringify(memBodyMetrics))
+  } else {
+    import('@/lib/prisma')
+      .then(({ prisma }) =>
+        prisma.bodyMetric.create({
+          data: {
+            id: newMetric.id,
+            memberId: newMetric.memberId,
+            recordedAt: newMetric.recordedAt ? new Date(newMetric.recordedAt) : new Date(),
+            weightKg: newMetric.weightKg ?? null,
+            bodyFatPct: newMetric.bodyFatPct ?? null,
+            measurements: (newMetric.measurements as any) ?? undefined,
+            photoKeys: newMetric.photoKeys || [],
+            recordedById: newMetric.recordedById || newMetric.memberId,
+          },
+        })
+      )
+      .catch(() => {})
   }
   return newMetric
 }
@@ -405,6 +572,21 @@ export function addCoachNote(note: Omit<CoachNote, 'id' | 'createdAt'>): CoachNo
   memCoachNotes.push(newNote)
   if (typeof window !== 'undefined') {
     localStorage.setItem(COACH_NOTES_KEY, JSON.stringify(memCoachNotes))
+  } else {
+    import('@/lib/prisma')
+      .then(({ prisma }) =>
+        prisma.coachNote.create({
+          data: {
+            id: newNote.id,
+            authorId: newNote.authorId,
+            memberId: newNote.memberId,
+            sessionId: newNote.sessionId || null,
+            body: newNote.body,
+            mediaKey: newNote.mediaKey || null,
+          },
+        })
+      )
+      .catch(() => {})
   }
   return newNote
 }
@@ -435,6 +617,21 @@ export function submitFormCheck(data: Omit<FormCheck, 'id' | 'createdAt' | 'revi
   memFormChecks.push(newCheck)
   if (typeof window !== 'undefined') {
     localStorage.setItem(FORM_CHECKS_KEY, JSON.stringify(memFormChecks))
+  } else {
+    import('@/lib/prisma')
+      .then(({ prisma }) =>
+        prisma.formCheck.create({
+          data: {
+            id: newCheck.id,
+            memberId: newCheck.memberId,
+            trainerId: newCheck.trainerId,
+            exerciseId: newCheck.exerciseId || null,
+            videoKey: newCheck.videoKey,
+            memberNote: newCheck.memberNote || null,
+          },
+        })
+      )
+      .catch(() => {})
   }
   return newCheck
 }
@@ -446,6 +643,18 @@ export function reviewFormCheck(formCheckId: string, reviewBody: string): FormCh
   check.reviewedAt = new Date().toISOString()
   if (typeof window !== 'undefined') {
     localStorage.setItem(FORM_CHECKS_KEY, JSON.stringify(memFormChecks))
+  } else {
+    import('@/lib/prisma')
+      .then(({ prisma }) =>
+        prisma.formCheck.update({
+          where: { id: formCheckId },
+          data: {
+            reviewBody,
+            reviewedAt: new Date(check.reviewedAt!),
+          },
+        })
+      )
+      .catch(() => {})
   }
   return check
 }

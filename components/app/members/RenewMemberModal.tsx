@@ -74,7 +74,7 @@ export default function RenewMemberModal({
       invoice_id: `inv_rnw_${Date.now()}`,
       invoice_number: invoiceNumber,
       sales_rep_id: 'usr_fc_01',
-      sales_rep_name: 'Amit Sharma',
+      sales_rep_name: 'Rajesh Poojary',
       sessions_total: selectedPlan.category === 'reformer_pilates' ? 36 : null,
       sessions_consumed: 0,
       sessions_remaining: selectedPlan.category === 'reformer_pilates' ? 36 : null,
@@ -98,7 +98,7 @@ export default function RenewMemberModal({
         {
           id: `sn_rnw_${Date.now()}`,
           authorId: 'usr_fc_01',
-          authorName: 'Amit Sharma',
+          authorName: 'Rajesh Poojary',
           authorRole: 'Fitness Consultant',
           timestamp: new Date().toISOString(),
           content: `Renewed with ${selectedPlan.name}. Valid until ${expiryDate}. Mode: ${chosenMode || paymentMode}${paymentRef ? ` (Ref: ${paymentRef})` : ''}. Invoice: ${newMembership.invoice_number}`,
@@ -153,7 +153,7 @@ export default function RenewMemberModal({
     setLoading(true)
     try {
       const { openRazorpayCheckout } = await import('@/lib/razorpay')
-      const { issueInvoice, buildLineItem } = await import('@/lib/billing')
+      const { buildLineItem } = await import('@/lib/billing')
       const lineItem = buildLineItem({
         productId: selectedPlan.id,
         description: selectedPlan.name,
@@ -163,29 +163,16 @@ export default function RenewMemberModal({
         discountMinor: discountMinor,
         taxRate: 0.05,
       })
-      const pendingInvoice = issueInvoice({
-        memberId: member.id,
-        memberName: member.name,
-        memberPhone: member.phone,
-        memberEmail: member.email || undefined,
-        items: [lineItem],
-        payments: [],
-        salesRepId: 'usr_fc_01',
-        salesRepName: 'Front Desk Operations',
-        createdBy: {
-          id: 'usr_fc_01',
-          name: 'Front Desk',
-          role: 'Staff',
-        },
-        notes: `Membership renewal: ${selectedPlan.name}`,
-      })
 
       const res = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoiceId: pendingInvoice.id,
-          invoiceData: pendingInvoice,
+          amountMinor: netInclusiveMinor,
+          invoiceData: {
+            grandTotalMinor: netInclusiveMinor,
+            items: [lineItem],
+          },
           receipt: `rcpt_rnw_${Date.now()}`,
           notes: {
             memberId: member.id,
@@ -327,11 +314,11 @@ export default function RenewMemberModal({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-[var(--app-glass-border)]">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-[var(--app-glass-border)]">
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
             <Button
               type="button"
               variant="outline"

@@ -122,7 +122,7 @@ export default function Services() {
       >
         <Link
           href="/contact"
-          className="inline-block bg-white text-black font-black uppercase tracking-widest text-lg px-12 py-4 font-montserrat hover:bg-[#00c8c8] transition-all duration-300"
+          className="inline-block bg-white text-black font-black uppercase tracking-widest text-base sm:text-lg px-6 sm:px-12 py-4 font-montserrat hover:bg-[#00c8c8] transition-all duration-300"
         >
           Book your trial now
         </Link>

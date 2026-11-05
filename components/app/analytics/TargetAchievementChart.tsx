@@ -129,7 +129,7 @@ export default function TargetAchievementChart({
 
       {/* ─── Current Month Progress Meter ─── */}
       <div className="space-y-2 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-        <div className="flex items-center justify-between text-xs font-ui">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-ui">
           <span className="text-white/80 font-medium flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-[#38BDF8]" />
             <span>{currentMonthLabel} Target Completion</span>
@@ -155,7 +155,7 @@ export default function TargetAchievementChart({
 
       {/* ─── 12-Month Target vs Achievement Bar Chart ─── */}
       <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <span className="font-ui text-xs font-semibold text-white/90">
             Last 12 Months Dual Comparison (₹ Lakhs)
           </span>
@@ -173,32 +173,38 @@ export default function TargetAchievementChart({
         </div>
 
         {/* Chart Visualization Canvas */}
-        <div className="relative pt-6 pb-2">
-          {/* Background grid lines */}
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
-            <div className="border-b border-white/20 w-full" />
-            <div className="border-b border-white/20 w-full" />
-            <div className="border-b border-white/20 w-full" />
-            <div className="border-b border-white/20 w-full" />
-          </div>
+        <div className="overflow-x-auto pb-1">
+          <div className="relative min-w-[540px] pt-14 pb-2">
+            {/* Background grid lines */}
+            <div className="absolute inset-x-0 top-14 bottom-2 flex flex-col justify-between pointer-events-none opacity-20">
+              <div className="border-b border-white/20 w-full" />
+              <div className="border-b border-white/20 w-full" />
+              <div className="border-b border-white/20 w-full" />
+              <div className="border-b border-white/20 w-full" />
+            </div>
 
-          <div className="grid grid-cols-12 gap-1.5 sm:gap-3 items-end h-52 relative z-10">
-            {twelveMonthData.map((item, idx) => {
-              const targetHeightPct = (item.targetLakhs / maxLakhs) * 100
-              const achievedHeightPct = (item.achievedLakhs / maxLakhs) * 100
-              const isOverTarget = item.achievedLakhs >= item.targetLakhs
-              const isHovered = hoveredIdx === idx
+            <div className="grid grid-cols-12 gap-1.5 sm:gap-3 items-end h-52 relative z-10">
+              {twelveMonthData.map((item, idx) => {
+                const targetHeightPct = (item.targetLakhs / maxLakhs) * 100
+                const achievedHeightPct = (item.achievedLakhs / maxLakhs) * 100
+                const isOverTarget = item.achievedLakhs >= item.targetLakhs
+                const isHovered = hoveredIdx === idx
 
-              return (
-                <div
-                  key={item.month}
-                  className="flex flex-col items-center h-full justify-end group cursor-pointer"
-                  onMouseEnter={() => setHoveredIdx(idx)}
-                  onMouseLeave={() => setHoveredIdx(null)}
-                >
-                  {/* Tooltip on Hover */}
-                  {isHovered && (
-                    <div className="absolute -top-12 z-30 px-2.5 py-1.5 rounded-lg bg-[#0F172A] border border-[#38BDF8]/40 shadow-xl text-[10.5px] text-white whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-150">
+                return (
+                  <div
+                    key={item.month}
+                    className="relative flex flex-col items-center h-full justify-end group cursor-pointer"
+                    onMouseEnter={() => setHoveredIdx(idx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                  >
+                    {/* Tooltip on Hover */}
+                    {isHovered && (
+                      <div
+                        className={cn(
+                          'absolute -top-12 z-30 px-2.5 py-1.5 rounded-lg bg-[#0F172A] border border-[#38BDF8]/40 shadow-xl text-[10.5px] text-white whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-150',
+                          idx <= 1 ? 'left-0' : idx >= 10 ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                        )}
+                      >
                       <p className="font-bold text-[#38BDF8]">{item.month} {item.isCurrent ? '(Current Month)' : ''}</p>
                       <p className="font-data">
                         Achieved: <b className="text-emerald-400">₹{item.achievedLakhs}L</b> / Target: ₹{item.targetLakhs}L
@@ -254,6 +260,7 @@ export default function TargetAchievementChart({
                 </div>
               )
             })}
+            </div>
           </div>
         </div>
       </div>

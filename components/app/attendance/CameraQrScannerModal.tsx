@@ -365,10 +365,10 @@ export default function CameraQrScannerModal({
                 {/* Laser Scanning Reticle & Corner Brackets */}
                 <div className="absolute inset-5 pointer-events-none border-2 border-[#38BDF8]/40 rounded-2xl">
                   {/* Corner Accent Brackets */}
-                  <div className="absolute -top-1 -left-1 w-4 h-4 border-t-3 border-l-3 border-[#38BDF8]" />
-                  <div className="absolute -top-1 -right-1 w-4 h-4 border-t-3 border-r-3 border-[#38BDF8]" />
-                  <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-3 border-l-3 border-[#38BDF8]" />
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-3 border-r-3 border-[#38BDF8]" />
+                  <div className="absolute -top-1 -left-1 w-4 h-4 border-t-[3px] border-l-[3px] border-[#38BDF8]" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 border-t-[3px] border-r-[3px] border-[#38BDF8]" />
+                  <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-[3px] border-l-[3px] border-[#38BDF8]" />
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-[3px] border-r-[3px] border-[#38BDF8]" />
 
                   {/* Animated Electric Blue Laser Line */}
                   <motion.div

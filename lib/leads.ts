@@ -35,7 +35,7 @@ export const SEEDED_CRM_LEADS: CrmLead[] = [
     goal: 'Muscle Gain / Hypertrophy',
     expectedDealValueMinor: 4350000, // ₹43,500
     assignedRepId: 'usr_fc_01',
-    assignedRepName: 'Amit Sharma',
+    assignedRepName: 'Rajesh Poojary',
     notes: 'Clicked Instagram reel ad on CrossFit turf. Wants morning workout slot.',
     activityLog: [
       {
@@ -59,19 +59,19 @@ export const SEEDED_CRM_LEADS: CrmLead[] = [
     goal: 'Athletic Conditioning',
     expectedDealValueMinor: 4350000,
     assignedRepId: 'usr_fc_01',
-    assignedRepName: 'Amit Sharma',
+    assignedRepName: 'Rajesh Poojary',
     trialPassCode: 'TRIAL-POW-2026-0881',
     trialDate: new Date().toISOString().slice(0, 10),
-    nextFollowUpDate: '2026-08-25',
+    nextFollowUpDate: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
     isOverdue: true,
-    notes: 'Referred by Arjun Mehta. 1-Day Trial QR pass issued for CrossFit session.',
+    notes: 'Referred by Aarav Mehta (DNA-2025-0001). 1-Day Trial QR pass issued for CrossFit session.',
     activityLog: [
       {
         id: 'act_02',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
         type: 'sms',
         text: 'Sent welcome SMS with trial pass details.',
-        actor: 'Amit Sharma',
+        actor: 'Rajesh Poojary',
       },
     ],
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
@@ -87,7 +87,7 @@ export const SEEDED_CRM_LEADS: CrmLead[] = [
     goal: 'Reformer Pilates & Yoga',
     expectedDealValueMinor: 4463700, // ₹44,637
     assignedRepId: 'usr_fc_02',
-    assignedRepName: 'Neha Kapoor',
+    assignedRepName: 'Pallavi More',
     trialPassCode: 'TRIAL-POW-2026-0882',
     trialDate: new Date().toISOString().slice(0, 10),
     nextFollowUpDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10),
@@ -98,8 +98,8 @@ export const SEEDED_CRM_LEADS: CrmLead[] = [
         id: 'act_03',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
         type: 'call',
-        text: 'Followed up after Reformer trial. Member loved the session with Sneha.',
-        actor: 'Neha Kapoor',
+        text: 'Followed up after Reformer trial. Member loved the session with Hemant Shirke.',
+        actor: 'Pallavi More',
       },
     ],
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
@@ -225,6 +225,14 @@ export function createLead(data: Omit<CrmLead, 'id' | 'createdAt' | 'activityLog
   leads.unshift(newLead)
   saveLeads(leads)
 
+  if (typeof window !== 'undefined') {
+    fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newLead),
+    }).catch(() => null)
+  }
+
   logAuditEvent({
     actor: { id: data.assignedRepId, name: data.assignedRepName, email: '', role: 'Fitness Consultant' },
     action: 'CREATE',
@@ -247,6 +255,14 @@ export function updateLead(id: string, updates: Partial<CrmLead>): CrmLead | nul
   const updated = { ...before, ...updates }
   leads[index] = updated
   saveLeads(leads)
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/inquiries', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    }).catch(() => null)
+  }
 
   return updated
 }
@@ -390,7 +406,7 @@ export interface WebsiteInquiryInput {
  * Persists as a CRM Lead, adds staff in-app notification alerts, and triggers live updates.
  */
 export function submitWebsiteInquiry(input: WebsiteInquiryInput): CrmLead {
-  const rep = { id: 'usr_fc_01', name: 'Amit Sharma' }
+  const rep = { id: 'usr_fc_01', name: 'Rajesh Poojary' }
   const goal = input.service?.trim() || 'General Fitness'
   const notes = input.message.trim()
     ? `[Website Contact Form Query]\nInterested in: ${goal}\nMessage: ${input.message.trim()}`

@@ -63,7 +63,7 @@ export default function MemberOnboardingModal({
   const [selectedPlanId, setSelectedPlanId] = useState('prod_001')
   const [discountMinor, setDiscountMinor] = useState(0)
   const [paymentMode, setPaymentMode] = useState<'UPI' | 'Card' | 'Cash' | 'NetBanking'>('UPI')
-  const [salesRep, setSalesRep] = useState('Amit Sharma')
+  const [salesRep, setSalesRep] = useState('Rajesh Poojary')
 
   // Result
   const [createdMember, setCreatedMember] = useState<Member | null>(null)
@@ -201,7 +201,7 @@ export default function MemberOnboardingModal({
     setError(null)
     setLoading(true)
     try {
-      const { issueInvoice, buildLineItem } = await import('@/lib/billing')
+      const { buildLineItem } = await import('@/lib/billing')
       const lineItem = buildLineItem({
         productId: selectedPlan.id,
         description: selectedPlan.name,
@@ -211,29 +211,16 @@ export default function MemberOnboardingModal({
         discountMinor: discountMinor,
         taxRate: 0.05,
       })
-      const pendingInvoice = issueInvoice({
-        memberId: `mem_temp_${Date.now()}`,
-        memberName: `${firstName.trim()} ${lastName.trim()}`,
-        memberPhone: phone.trim(),
-        memberEmail: email.trim() || undefined,
-        items: [lineItem],
-        payments: [],
-        salesRepId: 'usr_fc_01',
-        salesRepName: salesRep || 'Amit Sharma',
-        createdBy: {
-          id: 'usr_fc_01',
-          name: salesRep || 'Front Desk',
-          role: 'Fitness Consultant',
-        },
-        notes: `New onboarding membership: ${selectedPlan.name}`,
-      })
 
       const res = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoiceId: pendingInvoice.id,
-          invoiceData: pendingInvoice,
+          amountMinor: netInclusiveMinor,
+          invoiceData: {
+            grandTotalMinor: netInclusiveMinor,
+            items: [lineItem],
+          },
           receipt: `rcpt_onb_${Date.now()}`,
           notes: {
             memberName: `${firstName.trim()} ${lastName.trim()}`,
@@ -258,7 +245,20 @@ export default function MemberOnboardingModal({
           email: email.trim() || undefined,
           contact: phone.trim() || undefined,
         },
-        onSuccess: (paymentData) => {
+        onSuccess: async (paymentData) => {
+          try {
+            await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: paymentData.razorpay_order_id,
+                paymentId: paymentData.razorpay_payment_id,
+                signature: paymentData.razorpay_signature,
+              }),
+            })
+          } catch (vErr) {
+            console.warn('Payment verification notice:', vErr)
+          }
           executeCompleteOnboarding(paymentData.razorpay_payment_id, 'UPI')
           toast.success('Razorpay Payment Verified', {
             description: `Payment ID: ${paymentData.razorpay_payment_id}`,
@@ -507,7 +507,7 @@ export default function MemberOnboardingModal({
           {/* Marketing consent toggles */}
           <div className="p-3 rounded-xl glass-input space-y-2 text-xs">
             <span className="font-semibold text-[var(--app-text-primary)] block">Marketing Communication Consent:</span>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 sm:gap-6 flex-wrap">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={consentSms} onChange={(e) => setConsentSms(e.target.checked)} className="rounded" />
                 <span>SMS Alerts (100% reach)</span>
@@ -591,9 +591,9 @@ export default function MemberOnboardingModal({
               <Select value={salesRep} onValueChange={setSalesRep}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Amit Sharma">Amit Sharma (Fitness Consultant)</SelectItem>
-                  <SelectItem value="Neha Kapoor">Neha Kapoor (Fitness Consultant)</SelectItem>
-                  <SelectItem value="Karan Malhotra">Karan Malhotra (Fitness Consultant)</SelectItem>
+                  <SelectItem value="Rajesh Poojary">Rajesh Poojary (Head Coach & Consultant)</SelectItem>
+                  <SelectItem value="Pallavi More">Pallavi More (Fitness Consultant)</SelectItem>
+                  <SelectItem value="Krish Rawat">Krish Rawat (Fitness Consultant)</SelectItem>
                   <SelectItem value="Vikramaditya Shinde">Vikramaditya Shinde (Asst. Sales Head)</SelectItem>
                 </SelectContent>
               </Select>
@@ -626,11 +626,11 @@ export default function MemberOnboardingModal({
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-3 border-t border-[var(--app-glass-border)] gap-2">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between pt-3 border-t border-[var(--app-glass-border)] gap-2">
             <Button variant="secondary" onClick={() => setStep(2)} icon={<ArrowLeft className="w-4 h-4" />}>
               Back
             </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
               <Button
                 variant="secondary"
                 disabled={loading}

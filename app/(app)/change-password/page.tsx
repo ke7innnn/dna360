@@ -63,8 +63,8 @@ export default function ChangePasswordPage() {
         description: 'Your account is now secured with your personal password.',
       })
 
-      // Redirect to assigned landing page or overview
-      router.push(data.redirectUrl || '/overview')
+      // Redirect to assigned landing page or overview with fresh session cookie
+      window.location.replace(data.redirectUrl || '/overview')
     } catch (err: any) {
       setLoading(false)
       setError(err.message || 'An unexpected error occurred')

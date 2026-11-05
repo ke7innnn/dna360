@@ -22,10 +22,13 @@ export async function GET(req: NextRequest) {
       phone: user.phone,
       type: user.type,
       role: user.role,
+      designation: user.designation,
       branchId: user.branchId,
       branches: user.branches,
       can_view_revenue: user.can_view_revenue,
+      assignedClientIds: user.assignedClientIds,
       membershipStatus: user.membershipStatus,
+      must_change_password: user.must_change_password,
     }
 
     return NextResponse.json({

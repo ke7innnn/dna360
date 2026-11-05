@@ -76,7 +76,7 @@ export const SEEDED_ACCESS_LOGS: AccessLogEntry[] = [
     id: 'acc_001',
     timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
     memberId: 'mem_001',
-    memberName: 'Arjun Mehta',
+    memberName: 'Aarav Mehta',
     memberCode: 'DNA-2025-0001',
     memberPhone: '+919820011111',
     scanType: 'QR',
@@ -101,7 +101,7 @@ export const SEEDED_ACCESS_LOGS: AccessLogEntry[] = [
     id: 'acc_003',
     timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     memberId: 'mem_003',
-    memberName: 'Vikram Singh',
+    memberName: 'Vikram Singhania',
     memberPhone: '+919820033333',
     scanType: 'QR',
     decision: 'GRANTED_GRACE_PERIOD',
@@ -136,8 +136,43 @@ export function getStoredAccessLogs(): AccessLogEntry[] {
 
 export function saveAccessLogs(logs: AccessLogEntry[]) {
   if (typeof window === 'undefined') return
-  localStorage.setItem(ACCESS_LOGS_STORAGE_KEY, JSON.stringify(logs.slice(0, 5000)))
+  const trimmed = logs.slice(0, 5000)
+  localStorage.setItem(ACCESS_LOGS_STORAGE_KEY, JSON.stringify(trimmed))
+  if (trimmed[0]) {
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'LOG_ACCESS', entry: trimmed[0] }),
+    }).catch(() => {})
+  }
   window.dispatchEvent(new Event('dna360_access_logs_updated'))
+  window.dispatchEvent(new Event('dna360_attendance_updated'))
+}
+
+export async function syncAccessLogsFromRemote(): Promise<AccessLogEntry[]> {
+  if (typeof window === 'undefined') return SEEDED_ACCESS_LOGS
+  try {
+    const res = await fetch('/api/settings?scope=access_logs')
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data?.accessLogs) && data.accessLogs.length > 0) {
+        const local = getStoredAccessLogs()
+        const map = new Map<string, AccessLogEntry>()
+        for (const l of local) map.set(l.id, l)
+        for (const r of data.accessLogs) {
+          if (r?.id) map.set(r.id, r)
+        }
+        const merged = Array.from(map.values()).sort(
+          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        )
+        localStorage.setItem(ACCESS_LOGS_STORAGE_KEY, JSON.stringify(merged.slice(0, 5000)))
+        return merged
+      }
+    }
+  } catch {
+    // offline fallback
+  }
+  return getStoredAccessLogs()
 }
 
 export function getStoredGates(): GateDevice[] {
@@ -250,6 +285,16 @@ export function scanTurnstilePass(query: string, gateId = 'gate_pow_01', scanTyp
         total_check_ins: member.total_check_ins + 1,
         last_visit_at: new Date().toISOString(),
       })
+      if (typeof window !== 'undefined') {
+        fetch('/api/member/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            memberId: member.id,
+            action: 'COMPLETE_WORKOUT',
+          }),
+        }).catch(() => {})
+      }
     }
   }
 
@@ -291,7 +336,7 @@ export function triggerManualOverride(
   memberId: string,
   gateId = 'gate_pow_01',
   reason: string,
-  staffName = 'Amit Sharma (Fitness Consultant)'
+  staffName = 'Aftab Memon (Front Desk)'
 ): AccessLogEntry | null {
   const members = getStoredMembers()
   const member = members.find(m => m.id === memberId)

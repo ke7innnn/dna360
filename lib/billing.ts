@@ -209,9 +209,9 @@ export const SEEDED_INVOICES: TaxInvoice[] = [
         recordedAt: '2026-04-02T10:15:00Z',
       },
     ],
-    createdBy: { id: 'usr_fc_01', name: 'Amit Sharma', role: 'Fitness Consultant' },
+    createdBy: { id: 'usr_fc_01', name: 'Rajesh Poojary', role: 'Fitness Consultant' },
     salesRepId: 'usr_fc_01',
-    salesRepName: 'Amit Sharma',
+    salesRepName: 'Rajesh Poojary',
   },
   {
     id: 'inv_002',
@@ -241,9 +241,9 @@ export const SEEDED_INVOICES: TaxInvoice[] = [
         recordedAt: '2026-04-05T14:30:00Z',
       },
     ],
-    createdBy: { id: 'usr_fc_02', name: 'Neha Kapoor', role: 'Fitness Consultant' },
+    createdBy: { id: 'usr_fc_02', name: 'Pallavi More', role: 'Fitness Consultant' },
     salesRepId: 'usr_fc_02',
-    salesRepName: 'Neha Kapoor',
+    salesRepName: 'Pallavi More',
   },
   {
     id: 'inv_003',
@@ -286,14 +286,14 @@ export const SEEDED_CREDIT_NOTES: CreditNote[] = [
     originalInvoiceId: 'inv_legacy_void_01',
     originalInvoiceNumber: 'DNA/2025-26/0678',
     memberId: 'mem_003',
-    memberName: 'Vikram Singh',
+    memberName: 'Vikram Singhania',
     taxableRefundMinor: 4142857,
     cgstMinor: 103571,
     sgstMinor: 103572,
     totalRefundMinor: 4350000,
     reason: 'Billing Error',
     notes: 'Duplicate invoice recorded due to network timeout at POS desk.',
-    issuedBy: { id: 'usr_fc_01', name: 'Amit Sharma', role: 'Fitness Consultant' },
+    issuedBy: { id: 'usr_fc_01', name: 'Rajesh Poojary', role: 'Fitness Consultant' },
     approvedBy: { id: 'usr_mgr_sales_head', name: 'Vikramaditya Shinde' },
     timestamp: '2026-03-30T11:00:00Z',
   },
@@ -577,6 +577,14 @@ export function issueInvoice(params: {
   invoices.unshift(invoice)
   saveInvoices(invoices)
 
+  if (typeof window !== 'undefined') {
+    fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_INVOICE', invoice }),
+    }).catch(() => {})
+  }
+
   logAuditEvent({
     actor: { id: invoice.createdBy.id, name: invoice.createdBy.name, email: '', role: invoice.createdBy.role },
     action: 'CREATE',
@@ -650,6 +658,14 @@ export function voidInvoice(params: {
   invoices[index] = invoice
   saveInvoices(invoices)
 
+  if (typeof window !== 'undefined') {
+    fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_INVOICE', invoice }),
+    }).catch(() => {})
+  }
+
   logAuditEvent({
     actor: { id: params.voidedBy.id, name: params.voidedBy.name, email: '', role: params.voidedBy.role },
     action: 'VOID',
@@ -699,6 +715,15 @@ export function recordPayment(
 
   invoices[index] = updated
   saveInvoices(invoices)
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_INVOICE', invoice: updated }),
+    }).catch(() => {})
+  }
+
   return updated
 }
 
@@ -731,6 +756,14 @@ export function updateChequeStatus(params: {
   }
 
   saveInvoices(invoices)
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_INVOICE', invoice }),
+    }).catch(() => {})
+  }
 
   logAuditEvent({
     actor: { id: 'system', name: params.staffName, email: '', role: 'Staff' },

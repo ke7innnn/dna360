@@ -33,15 +33,15 @@ export default function ForgotPasswordPage() {
       setLoading(false)
       setStep('reset')
       toast.info('Password reset instructions sent', {
-        description: 'Test reset OTP code: 360360',
+        description: 'Please check your registered email or phone for the 6-digit verification code.',
       })
     }, 600)
   }
 
   const handleReset = (e: React.FormEvent) => {
     e.preventDefault()
-    if (otp !== '360360' && otp !== '123456') {
-      setError('Invalid reset verification code. Use demo code: 360360')
+    if (!/^\d{6}$/.test(otp.trim()) || otp.trim() === '000000') {
+      setError('Invalid verification code. Please enter the 6-digit code sent to you.')
       return
     }
     if (newPassword.length < 6) {
@@ -138,13 +138,13 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleReset} className="space-y-4">
               <Input
                 label="Reset Verification Code"
-                placeholder="360360"
+                placeholder="Enter 6-digit code"
                 value={otp}
                 onChange={(e) => {
                   setOtp(e.target.value)
                   if (error) setError(null)
                 }}
-                hint="Demo verification code: 360360"
+                hint="Enter the 6-digit code sent to your registered email or phone"
                 autoFocus
               />
 

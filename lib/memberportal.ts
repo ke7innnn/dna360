@@ -301,6 +301,22 @@ export function submitFreezeRequest(
   const existing = getMemberFreezeRequests(current.memberId)
   saveMemberFreezeRequests([newRequest, ...existing], current.memberId)
 
+  if (typeof window !== 'undefined' && current.memberId) {
+    fetch('/api/member/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'FREEZE_REQUEST',
+        memberId: current.memberId,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        daysCount: data.daysCount,
+        reason: data.reason,
+        notes: data.notes,
+      }),
+    }).catch(() => {})
+  }
+
   logAuditEvent({
     actor: { id: current.memberId, name: current.memberName, email: current.email || '', role: 'Member' },
     action: 'CREATE',

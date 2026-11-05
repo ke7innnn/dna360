@@ -33,7 +33,9 @@ export async function POST(
 
     // If trainer, check that they are assigned to this member
     if (!canViewAll) {
-      if (!canViewOwn || member.assigned_trainer_id !== user.id) {
+      const isAssigned =
+        member.assigned_trainer_id === user.id || Boolean(user.assignedClientIds?.includes(member.id))
+      if (!canViewOwn || !isAssigned) {
         return NextResponse.json(
           { error: 'Forbidden: You can only reveal contact info for your assigned clients.' },
           { status: 403 }

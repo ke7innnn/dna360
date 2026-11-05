@@ -140,6 +140,60 @@ export const SEEDED_PAYMENTS_CONFIG: PaymentGatewayConfig = {
 
 // ─── Storage Helpers ───
 
+function pushConfigRemote(key: string, payload: unknown) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event('dna360_settings_updated'))
+  fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'SAVE_CONFIG', key, payload }),
+  }).catch(() => {})
+}
+
+export async function syncSettingsFromRemote(): Promise<void> {
+  if (typeof window === 'undefined') return
+  try {
+    const res = await fetch('/api/settings?scope=config')
+    if (!res.ok) return
+    const data = await res.json()
+    const cfg = data?.configs || {}
+    let changed = false
+    if (cfg.profile) {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(cfg.profile))
+      changed = true
+    }
+    if (cfg.branches) {
+      localStorage.setItem(BRANCHES_KEY, JSON.stringify(cfg.branches))
+      changed = true
+    }
+    if (cfg.turnstiles) {
+      localStorage.setItem(TURNSTILES_KEY, JSON.stringify(cfg.turnstiles))
+      changed = true
+    }
+    if (cfg.pending_config) {
+      localStorage.setItem(PENDING_CONFIG_KEY, JSON.stringify(cfg.pending_config))
+      changed = true
+    }
+    if (cfg.bank_details) {
+      localStorage.setItem(BANK_DETAILS_KEY, JSON.stringify(cfg.bank_details))
+      changed = true
+    }
+    if (cfg.notifications_config) {
+      localStorage.setItem(NOTIFICATIONS_CONFIG_KEY, JSON.stringify(cfg.notifications_config))
+      changed = true
+    }
+    if (cfg.payments_config) {
+      localStorage.setItem(PAYMENTS_CONFIG_KEY, JSON.stringify(cfg.payments_config))
+      changed = true
+    }
+    if (changed) {
+      window.dispatchEvent(new Event('dna360_settings_updated'))
+    }
+  } catch {
+    // offline or unauthenticated fallback
+  }
+}
+
 export function getProfile(): BusinessProfile {
   if (typeof window === 'undefined') return SEEDED_PROFILE
   const stored = localStorage.getItem(PROFILE_KEY)
@@ -154,6 +208,7 @@ export function saveProfile(profile: BusinessProfile) {
   if (typeof window === 'undefined') return
   const before = getProfile()
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
+  pushConfigRemote('profile', profile)
   logAuditEvent({
     actor: { id: 'system', name: 'Admin', email: '', role: 'Owner' },
     action: 'UPDATE',
@@ -181,6 +236,7 @@ export const getStoredBranches = getBranches
 export function saveBranches(branches: BranchConfig[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(BRANCHES_KEY, JSON.stringify(branches))
+  pushConfigRemote('branches', branches)
 }
 
 export function saveBranch(branch: BranchConfig) {
@@ -211,6 +267,7 @@ export function saveTurnstile(turnstile: TurnstileDeviceConfig) {
   }
   if (typeof window !== 'undefined') {
     localStorage.setItem(TURNSTILES_KEY, JSON.stringify(list))
+    pushConfigRemote('turnstiles', list)
   }
 }
 
@@ -228,6 +285,7 @@ export function savePendingConfig(config: PendingConfig) {
   if (typeof window === 'undefined') return
   const before = getPendingConfig()
   localStorage.setItem(PENDING_CONFIG_KEY, JSON.stringify(config))
+  pushConfigRemote('pending_config', config)
   logAuditEvent({
     actor: { id: 'system', name: 'Admin', email: '', role: 'Owner' },
     action: 'UPDATE',
@@ -250,6 +308,7 @@ export function getBankDetails(): BankDetails {
 export function saveBankDetails(details: BankDetails) {
   if (typeof window === 'undefined') return
   localStorage.setItem(BANK_DETAILS_KEY, JSON.stringify(details))
+  pushConfigRemote('bank_details', details)
 }
 
 export function getNotificationsConfig(): NotificationGatewayConfig {
@@ -262,6 +321,7 @@ export function getNotificationsConfig(): NotificationGatewayConfig {
 export function saveNotificationsConfig(config: NotificationGatewayConfig) {
   if (typeof window === 'undefined') return
   localStorage.setItem(NOTIFICATIONS_CONFIG_KEY, JSON.stringify(config))
+  pushConfigRemote('notifications_config', config)
 }
 
 export function getPaymentsConfig(): PaymentGatewayConfig {
@@ -274,6 +334,7 @@ export function getPaymentsConfig(): PaymentGatewayConfig {
 export function savePaymentsConfig(config: PaymentGatewayConfig) {
   if (typeof window === 'undefined') return
   localStorage.setItem(PAYMENTS_CONFIG_KEY, JSON.stringify(config))
+  pushConfigRemote('payments_config', config)
 }
 
 /**

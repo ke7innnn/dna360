@@ -36,6 +36,36 @@ export default function AuditLogPage() {
       entity: entityFilter,
     })
     setLogs(data)
+    fetch('/api/members?includeAuditLogs=true')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((remote) => {
+        if (Array.isArray(remote?.auditLogs) && remote.auditLogs.length > 0) {
+          const allLocal = getAuditLogs()
+          const map = new Map<string, AuditLogEntry>()
+          for (const l of allLocal) {
+            map.set(l.id, l)
+          }
+          for (const r of remote.auditLogs) {
+            if (r?.id && r?.action) {
+              map.set(r.id, r)
+            }
+          }
+          const merged = Array.from(map.values()).sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          )
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('dna360_audit_log', JSON.stringify(merged))
+          }
+          setLogs(
+            getAuditLogs({
+              search,
+              action: actionFilter,
+              entity: entityFilter,
+            })
+          )
+        }
+      })
+      .catch(() => null)
   }
 
   useEffect(() => {

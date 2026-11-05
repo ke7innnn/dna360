@@ -43,8 +43,30 @@ export default function MemberAppHomePage() {
   const [isOrbPressed, setIsOrbPressed] = useState(false)
 
   useEffect(() => {
-    const reload = () => {
-      setPortalState(getMemberPortalState(user?.id || user?.name))
+    const reload = async () => {
+      // 1. Instant local render
+      const localState = getMemberPortalState(user?.id || user?.name)
+      setPortalState(localState)
+
+      // 2. Fetch authoritative state from Supabase database
+      const userRef = user?.id || user?.name || ''
+      if (userRef && typeof window !== 'undefined') {
+        try {
+          const res = await fetch(`/api/member/profile?memberId=${encodeURIComponent(userRef)}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data.profile) {
+              setPortalState((prev) => ({
+                ...(prev || localState),
+                ...data.profile,
+                waterIntakeMl: prev?.waterIntakeMl ?? localState.waterIntakeMl,
+              }))
+            }
+          }
+        } catch {
+          // offline fallback
+        }
+      }
     }
     reload()
     window.addEventListener('dna360_memberportal_updated', reload)
@@ -90,7 +112,7 @@ export default function MemberAppHomePage() {
       label: 'Heavy',
       desc: 'Sluggish, foggy',
       icon: <CloudRain className="w-5 h-5 text-[#94A3B8]" />,
-      coachingCue: 'Sluggish today? Coach Rohan added 10m extra dynamic warm-up. Prioritize form over load.',
+      coachingCue: 'Sluggish today? 10m extra dynamic warm-up added to routine. Prioritize form over load.',
     },
     {
       id: 'calm',
@@ -204,8 +226,11 @@ export default function MemberAppHomePage() {
           <button
             type="button"
             onClick={() => {
+              const trainer = portalState?.assignedTrainer
               toast.info('Studio Updates', {
-                description: 'Next Push & Core session scheduled with Rohan.',
+                description: trainer
+                  ? `Assigned coach: ${trainer}. Studio open till 11 PM.`
+                  : 'Welcome to DNA 360 Studio. Check-in pass ready.',
               })
             }}
             className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] active:scale-90 border border-white/10 flex items-center justify-center text-white transition-all relative shadow-[0_2px_8px_rgba(0,0,0,0.4)]"

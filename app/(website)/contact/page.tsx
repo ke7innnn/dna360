@@ -235,9 +235,10 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   id="contact-submit"
-                  className="w-full mt-2 bg-[#00c8c8] text-black font-black font-montserrat uppercase tracking-widest text-sm py-4 hover:bg-white transition-all duration-300 active:scale-95"
+                  disabled={isSubmitting}
+                  className="w-full mt-2 bg-[#00c8c8] text-black font-black font-montserrat uppercase tracking-widest text-sm py-4 hover:bg-white transition-all duration-300 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {submitted ? '✓ Message Sent!' : 'Send Message'}
+                  {isSubmitting ? 'Sending...' : submitted ? '✓ Message Sent!' : 'Send Message'}
                 </button>
 
                 {submitted && (

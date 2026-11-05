@@ -44,7 +44,7 @@ export default function WalkInLeadModal({
       source,
       issueTrialPass,
       notes: notes.trim() || undefined,
-      assignedTo: 'Amit Sharma (Front Desk)',
+      assignedTo: 'Aftab Memon (Front Desk)',
     })
 
     setLoading(false)

@@ -79,7 +79,7 @@ export default function EmergencyModal({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--app-glass-border)]">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-[var(--app-glass-border)]">
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

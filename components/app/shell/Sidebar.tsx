@@ -161,6 +161,10 @@ export default function Sidebar({ role }: { role?: RoleName }) {
       ]
     : ALL_NAV_GROUPS.map((group) => {
         const filteredItems = group.items.filter((item) => {
+          // Gated by any-of capability set
+          if (item.anyOfCapabilities && item.anyOfCapabilities.length > 0) {
+            return item.anyOfCapabilities.some((cap) => can(cap))
+          }
           // Gated by specific capability
           if (item.requiredCapability) {
             return can(item.requiredCapability)
@@ -189,11 +193,11 @@ export default function Sidebar({ role }: { role?: RoleName }) {
 
       <aside
         className={cn(
-          'fixed left-0 top-0 bottom-0 z-40 flex flex-col',
-          'bg-[#07090E]/80 border-r border-[rgba(255,255,255,0.06)] backdrop-blur-2xl transition-all duration-200',
+          'fixed left-0 top-0 bottom-0 z-40 flex flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]',
+          'bg-[#07090E]/95 md:bg-[#07090E]/80 border-r border-[rgba(255,255,255,0.06)] backdrop-blur-2xl transition-all duration-200',
           collapsed ? 'w-[68px]' : 'w-[250px]',
           'md:translate-x-0',
-          mobileOpen ? 'translate-x-0 shadow-2xl w-[270px]' : '-translate-x-full md:translate-x-0'
+          mobileOpen ? 'translate-x-0 shadow-2xl w-[270px] max-w-[85vw]' : '-translate-x-full md:translate-x-0'
         )}
         role="navigation"
         aria-label="Main navigation"
@@ -252,24 +256,33 @@ export default function Sidebar({ role }: { role?: RoleName }) {
 
         {/* Sidebar Footer: Early renewal card (Member) or Quick Search (Staff) + User Chip */}
         <div className="p-3 border-t border-[rgba(255,255,255,0.06)] space-y-2.5 shrink-0 bg-transparent">
-          {/* Member Early Renewal Notice */}
+          {/* Member Membership Quick Link */}
           {isMember && (!collapsed || mobileOpen) && (
             <Link
-              href="/profile"
+              href="/m/ledger"
               className="block p-3 rounded-[16px] bg-[#0E131F]/90 border border-[rgba(59,130,246,0.28)] hover:border-[#3B82F6] transition-all text-xs group"
             >
               <div className="font-ui font-semibold text-white group-hover:text-[#60A5FA] transition-colors">
-                47 days left
+                Membership &amp; Ledger
               </div>
               <div className="text-[11px] text-[var(--ink-2)] mt-0.5 leading-snug">
-                Renew before 11 Oct to keep your rate
+                Manage active plan, freeze &amp; GST receipts
               </div>
             </Link>
           )}
 
-          {/* Quick Search Hint (Staff Only) */}
+          {/* Quick Search Trigger (Staff Only) */}
           {!isMember && (!collapsed || mobileOpen) && (
-            <div className="flex items-center justify-between px-3 py-1.5 rounded-[var(--r-sm)] bg-[var(--surface)] border border-[var(--line)] text-xs text-[var(--muted)] select-none">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false)
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('dna:open-command-palette'))
+                }
+              }}
+              className="w-full flex items-center justify-between px-3 py-1.5 rounded-[var(--r-sm)] bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--line)] text-xs text-[var(--muted)] hover:text-white transition-colors cursor-pointer select-none"
+            >
               <div className="flex items-center gap-2">
                 <Search className="w-3 h-3 text-[var(--muted)]" />
                 <span className="font-ui text-xs">Quick search</span>
@@ -277,7 +290,7 @@ export default function Sidebar({ role }: { role?: RoleName }) {
               <kbd className="font-ui text-[10px] bg-[var(--surface-2)] border border-[var(--line)] px-1.5 py-0.5 rounded text-[var(--ink-2)]">
                 ⌘K
               </kbd>
-            </div>
+            </button>
           )}
 
           {/* User Profile Info Chip */}

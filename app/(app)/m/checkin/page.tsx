@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, UserPlus, ShieldCheck, Clock } from 'lucide-react'
+import { ArrowLeft, UserPlus } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
 import { QRCodeSVG } from 'qrcode.react'
@@ -10,10 +10,27 @@ import { getMemberPortalState } from '@/lib/memberportal'
 
 export default function MemberCheckinPage() {
   const { user } = useAuth()
-  const portalState = getMemberPortalState(user?.id || user?.name)
-  const userName = user?.name || portalState.memberName || 'Member'
-  const memberCode = (user as any)?.member_code || portalState.memberCode || ''
-  const planName = portalState.planName || 'Active Membership'
+  const [portalState, setPortalState] = useState(() => getMemberPortalState(user?.id || user?.name))
+
+  useEffect(() => {
+    const local = getMemberPortalState(user?.id || user?.name)
+    setPortalState(local)
+    const userRef = user?.id || user?.name || ''
+    if (userRef && typeof window !== 'undefined') {
+      fetch(`/api/member/profile?memberId=${encodeURIComponent(userRef)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.profile) {
+            setPortalState((prev) => ({ ...prev, ...data.profile }))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [user?.id, user?.name])
+
+  const userName = portalState.memberName || user?.name || 'Member'
+  const memberCode = portalState.memberCode || (user as any)?.member_code || ''
+  const planName = portalState.planName || 'No Active Plan'
 
   const [secondsRemaining, setSecondsRemaining] = useState(18)
   const [tokenSeed, setTokenSeed] = useState(Date.now())
@@ -68,7 +85,7 @@ export default function MemberCheckinPage() {
         </div>
 
         <p className="member-qrhelp">
-          This code changes every 30 seconds. Screenshots won't work — that's deliberate.
+          This code changes every 30 seconds. Screenshots won&apos;t work — that&apos;s deliberate.
         </p>
 
         <div className="w-full mt-8 max-w-[320px]">

@@ -44,6 +44,32 @@ export default function MemberDetailPage() {
     if (!memberId) return
     const found = getMemberById(memberId)
     setMember(found)
+    fetch(`/api/member/profile?memberId=${encodeURIComponent(memberId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.profile && found) {
+          const p = data.profile
+          setMember((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  name: p.name || prev.name,
+                  phone: p.phone || prev.phone,
+                  email: p.email ?? prev.email,
+                  status: (p.status as MemberStatus) || prev.status,
+                  attendance_streak: typeof p.attendanceStreak === 'number' ? p.attendanceStreak : prev.attendance_streak,
+                  total_check_ins: typeof p.totalCheckIns === 'number' ? p.totalCheckIns : prev.total_check_ins,
+                  adjustment_credits_remaining:
+                    typeof p.adjustmentCreditsRemaining === 'number'
+                      ? p.adjustmentCreditsRemaining
+                      : prev.adjustment_credits_remaining,
+                  lifetime_value: typeof p.lifetimeValue === 'number' ? p.lifetimeValue : prev.lifetime_value,
+                }
+              : prev
+          )
+        }
+      })
+      .catch(() => null)
   }
 
   useEffect(() => {
@@ -132,9 +158,25 @@ export default function MemberDetailPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Button
             variant="secondary"
+            size="sm"
+            onClick={() => setWaModalOpen(true)}
+            icon={<Send className="w-3.5 h-3.5 text-[#25D366]" />}
+          >
+            WhatsApp
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setFreezeModalOpen(true)}
+            icon={<Snowflake className="w-3.5 h-3.5 text-[#38BDF8]" />}
+          >
+            Freeze Override
+          </Button>
+          <Button
+            variant="primary"
             size="sm"
             onClick={() => setRenewModalOpen(true)}
             icon={<RefreshCw className="w-3.5 h-3.5" />}
@@ -181,11 +223,11 @@ export default function MemberDetailPage() {
 
       {/* Tabs Layout */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-md">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="memberships">Packages ({member.active_memberships.length})</TabsTrigger>
-          <TabsTrigger value="kyc">KYC & Bio</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+        <TabsList className="flex w-full max-w-md overflow-x-auto h-auto min-h-10">
+          <TabsTrigger value="overview" className="shrink-0">Overview</TabsTrigger>
+          <TabsTrigger value="memberships" className="shrink-0">Packages ({member.active_memberships.length})</TabsTrigger>
+          <TabsTrigger value="kyc" className="shrink-0">KYC & Bio</TabsTrigger>
+          <TabsTrigger value="timeline" className="shrink-0">Timeline</TabsTrigger>
         </TabsList>
 
         {/* TAB 1: Overview */}
@@ -366,6 +408,28 @@ export default function MemberDetailPage() {
         open={renewModalOpen}
         onOpenChange={setRenewModalOpen}
         onUpdated={loadMember}
+        onRenewed={loadMember}
+      />
+
+      <FreezeMemberModal
+        member={member}
+        open={freezeModalOpen}
+        onOpenChange={setFreezeModalOpen}
+        onUpdated={loadMember}
+        onFrozen={loadMember}
+      />
+
+      <WhatsAppComposeModal
+        isOpen={waModalOpen}
+        onClose={() => setWaModalOpen(false)}
+        recipient={{
+          memberId: member.id,
+          memberName: member.name,
+          phone: member.phone,
+          memberCode: member.member_code,
+          planName: member.active_memberships[0]?.product_name,
+          expiryDate: member.active_memberships[0]?.expiry_date || undefined,
+        }}
       />
     </div>
   )

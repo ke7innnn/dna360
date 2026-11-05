@@ -58,7 +58,7 @@ export default function AuditDetailModal({
           </div>
           <div>
             <span className="text-[var(--app-text-muted)] block mb-1">Entity</span>
-            <span className="font-semibold text-[var(--app-text-primary)]">
+            <span className="font-semibold text-[var(--app-text-primary)] break-words">
               {entry.entity} ({entry.entityId})
             </span>
           </div>
@@ -92,9 +92,9 @@ export default function AuditDetailModal({
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-1">
               Before State
             </h4>
-            <div className="rounded-xl glass-input p-3 h-48 overflow-y-auto font-mono text-[0.6875rem] text-[var(--app-text-secondary)]">
+            <div className="rounded-xl glass-input p-3 h-48 overflow-y-auto overflow-x-auto font-mono text-[0.6875rem] text-[var(--app-text-secondary)]">
               {entry.beforeState ? (
-                <pre>{JSON.stringify(entry.beforeState, null, 2)}</pre>
+                <pre className="whitespace-pre-wrap break-words">{JSON.stringify(entry.beforeState, null, 2)}</pre>
               ) : (
                 <span className="text-[var(--app-text-muted)] italic">null (Initial creation)</span>
               )}
@@ -105,9 +105,9 @@ export default function AuditDetailModal({
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] mb-1">
               After State
             </h4>
-            <div className="rounded-xl glass-input p-3 h-48 overflow-y-auto font-mono text-[0.6875rem] text-[var(--app-text-primary)] border border-[var(--aurora-1)]/20">
+            <div className="rounded-xl glass-input p-3 h-48 overflow-y-auto overflow-x-auto font-mono text-[0.6875rem] text-[var(--app-text-primary)] border border-[var(--aurora-1)]/20">
               {entry.afterState ? (
-                <pre>{JSON.stringify(entry.afterState, null, 2)}</pre>
+                <pre className="whitespace-pre-wrap break-words">{JSON.stringify(entry.afterState, null, 2)}</pre>
               ) : (
                 <span className="text-[var(--app-text-muted)] italic">null (Deletion)</span>
               )}

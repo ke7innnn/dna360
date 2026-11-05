@@ -42,8 +42,32 @@ export async function GET(req: NextRequest) {
 
     const memberId = resolved.memberId!
     const sessions = getMemberSessions(memberId)
-    const metrics = getMemberBodyMetrics(memberId)
+    let metrics = getMemberBodyMetrics(memberId)
     const programs = getMemberPrograms(memberId)
+
+    try {
+      const { prisma } = await import('@/lib/prisma')
+      const dbMetrics = await prisma.bodyMetric.findMany({
+        where: { memberId },
+        orderBy: { recordedAt: 'desc' },
+      })
+      if (dbMetrics.length > 0) {
+        const mapped = dbMetrics.map((m) => ({
+          id: m.id,
+          memberId: m.memberId,
+          recordedAt: m.recordedAt.toISOString(),
+          weightKg: m.weightKg,
+          bodyFatPct: m.bodyFatPct,
+          measurements: (m.measurements as any) || null,
+          photoKeys: m.photoKeys || [],
+          recordedById: m.recordedById,
+        }))
+        const seen = new Set(mapped.map((x) => x.id))
+        metrics = [...mapped, ...metrics.filter((x) => !seen.has(x.id))]
+      }
+    } catch {
+      // Fallback to in-memory
+    }
 
     // Write mandatory immutable audit log with actor, role, IP, row count (§5.4)
     logAuditEvent({

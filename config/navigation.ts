@@ -16,6 +16,7 @@ export interface AppNavItem {
   href: string
   badge?: number
   requiredCapability?: Capability
+  anyOfCapabilities?: Capability[]
   revenueGated?: boolean
   staffOnly?: boolean
 }
@@ -30,20 +31,31 @@ export const ALL_NAV_GROUPS: AppNavGroup[] = [
     label: 'Overview',
     items: [
       { id: 'overview', label: 'Overview', icon: 'BarChart3', href: '/overview', staffOnly: true },
-      { id: 'training', label: 'Workout & Training', icon: 'Dumbbell', href: '/m' },
     ],
   },
   {
     label: 'Operations',
     items: [
-      { id: 'bookings', label: 'Bookings & Trials', icon: 'Clock', href: '/bookings' },
+      {
+        id: 'bookings',
+        label: 'Bookings & Trials',
+        icon: 'Clock',
+        href: '/bookings',
+        anyOfCapabilities: ['classes.book_member', 'leads.manage', 'classes.manage.all'],
+      },
       { id: 'my-clients', label: 'Trainer Clients & PT', icon: 'Users', href: '/my-clients', requiredCapability: 'workouts.log' },
       { id: 'members', label: 'Member Directory', icon: 'Users', href: '/members', badge: 659, requiredCapability: 'members.view.all' },
       { id: 'front-desk', label: 'Front Desk Terminal', icon: 'Monitor', href: '/front-desk', requiredCapability: 'checkin.operate' },
-      { id: 'plans', label: 'Membership Packages', icon: 'Layers', href: '/plans' },
+      { id: 'plans', label: 'Membership Packages', icon: 'Layers', href: '/plans', requiredCapability: 'pricing.manage' },
       { id: 'products', label: 'Product Catalogue', icon: 'CreditCard', href: '/products', requiredCapability: 'products.view' },
       { id: 'billing', label: 'Invoices & Billing', icon: 'Receipt', href: '/billing', requiredCapability: 'billing.view' },
-      { id: 'classes', label: 'Classes & Timetable', icon: 'Calendar', href: '/classes', requiredCapability: 'classes.manage.all' },
+      {
+        id: 'classes',
+        label: 'Classes & Timetable',
+        icon: 'Calendar',
+        href: '/classes',
+        anyOfCapabilities: ['classes.manage.all', 'classes.manage.own', 'classes.book_member'],
+      },
       { id: 'staff', label: 'Staff Roster & Roles', icon: 'UserCog', href: '/settings/roles', requiredCapability: 'staff.view' },
       { id: 'attendance', label: 'Turnstile Attendance', icon: 'CheckCircle', href: '/attendance', requiredCapability: 'checkin.view' },
       { id: 'consent', label: 'Agreements & T&C', icon: 'FileText', href: '/consent', requiredCapability: 'members.view.all' },

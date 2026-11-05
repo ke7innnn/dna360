@@ -171,6 +171,29 @@ export function logAuditEvent(params: {
   // Dispatch custom event so reactive UI components can refresh instantly
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('dna360_audit_appended', { detail: newEntry }))
+    fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'LOG_AUDIT', entry: newEntry }),
+    }).catch(() => null)
+  } else {
+    void (async () => {
+      try {
+        const { prisma } = await import('@/lib/prisma')
+        await prisma.coachNote.upsert({
+          where: { id: newEntry.id },
+          update: { body: JSON.stringify(newEntry) },
+          create: {
+            id: newEntry.id,
+            authorId: 'SYSTEM_AUDIT',
+            memberId: newEntry.entityId || 'system',
+            body: JSON.stringify(newEntry),
+          },
+        })
+      } catch {
+        // non-fatal fallback if DB is unreachable
+      }
+    })()
   }
 
   return newEntry

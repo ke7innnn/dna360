@@ -30,6 +30,8 @@ export default function InvoiceModal({
 
   const profile = getProfile()
   const bank = getBankDetails()
+  const effectiveTaxRate = invoice.items?.[0]?.taxRate ?? 0.05
+  const halfRatePct = ((effectiveTaxRate * 100) / 2).toFixed(1).replace(/\.0$/, '')
 
   const statusMap: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
     paid: 'success',
@@ -113,22 +115,22 @@ export default function InvoiceModal({
               <p>Activation Date: <strong className="text-white font-mono">{invoice.activationDate || invoice.issueDate}</strong></p>
               <p>Expiry Date: <strong className="text-emerald-400 font-mono">{invoice.expiryDate || '2027-09-28'}</strong></p>
               <p>Place of Supply: <strong>27-Maharashtra</strong></p>
-              <p>Sales Rep: <strong>{invoice.salesRepName || 'Amit Sharma'}</strong></p>
+              <p>Sales Rep: <strong>{invoice.salesRepName || 'Rajesh Poojary'}</strong></p>
               <p>Reverse Charge: <strong>No</strong></p>
             </div>
           </div>
 
           {/* Line Items Table */}
-          <div className="border border-[var(--app-glass-border)] rounded-xl overflow-hidden">
-            <table className="w-full text-xs text-left">
+          <div className="border border-[var(--app-glass-border)] rounded-xl overflow-hidden overflow-x-auto">
+            <table className="min-w-[600px] w-full text-xs text-left">
               <thead className="bg-[var(--app-glass-bg)] text-[var(--app-text-muted)] uppercase text-[0.625rem] font-semibold tracking-wider">
                 <tr>
                   <th className="p-3">#</th>
                   <th className="p-3">Description of Service</th>
                   <th className="p-3">SAC</th>
                   <th className="p-3 text-right">Taxable Val</th>
-                  <th className="p-3 text-right">CGST (2.5%)</th>
-                  <th className="p-3 text-right">SGST (2.5%)</th>
+                  <th className="p-3 text-right">CGST ({halfRatePct}%)</th>
+                  <th className="p-3 text-right">SGST ({halfRatePct}%)</th>
                   <th className="p-3 text-right">Total (Inc)</th>
                 </tr>
               </thead>
@@ -197,11 +199,11 @@ export default function InvoiceModal({
                 <span>{formatINR(invoice.taxableMinor)}</span>
               </div>
               <div className="flex justify-between text-[var(--app-text-muted)]">
-                <span>CGST (2.5%):</span>
+                <span>CGST ({halfRatePct}%):</span>
                 <span>{formatINR(invoice.cgstMinor)}</span>
               </div>
               <div className="flex justify-between text-[var(--app-text-muted)]">
-                <span>SGST (2.5%):</span>
+                <span>SGST ({halfRatePct}%):</span>
                 <span>{formatINR(invoice.sgstMinor)}</span>
               </div>
               <div className="flex justify-between font-bold text-sm text-[var(--app-text-primary)] pt-2 border-t border-[var(--app-glass-border)]">
@@ -213,10 +215,22 @@ export default function InvoiceModal({
         </div>
 
         {/* Modal Action Buttons */}
-        <div className="flex items-center justify-between pt-2">
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+            {onVoid && invoice.status !== 'void' && (
+              <Button variant="danger" size="sm" onClick={() => onVoid(invoice)}>
+                Void Invoice
+              </Button>
+            )}
+            {onCreditNote && invoice.status !== 'void' && (
+              <Button variant="outline" size="sm" onClick={() => onCreditNote(invoice)}>
+                Issue Credit Note
+              </Button>
+            )}
+          </div>
           <Button variant="primary" onClick={handlePrint} icon={<Printer className="w-4 h-4" />}>
             Print / Save PDF
           </Button>

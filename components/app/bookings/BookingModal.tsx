@@ -14,11 +14,11 @@ import { createBooking } from '@/lib/bookings'
 import { toast } from '@/components/app/ui/toast'
 
 const TRAINERS = [
-  { id: 'usr_tr_01', name: 'Rohan Kulkarni', specialty: 'Elite Strength & Conditioning' },
-  { id: 'usr_tr_02', name: 'Rajesh Poojary', specialty: 'Reformer Pilates & Mobility Lead' },
-  { id: 'usr_tr_03', name: 'Sameer Khan', specialty: 'Hypertrophy & Body Recomposition' },
-  { id: 'usr_tr_04', name: 'Aniket Jadhav', specialty: 'Functional HIIT & Fitzone' },
-  { id: 'usr_tr_05', name: 'Dr. Nikhil Shinde', specialty: 'Body Assessment & InBody Specialist' },
+  { id: 'usr_trainer_01', name: 'Rajesh Poojary', specialty: 'Head Coach — Strength & Conditioning' },
+  { id: 'usr_trainer_02', name: 'Aftab Memon', specialty: 'Head Coach — Hypertrophy & Recomposition' },
+  { id: 'usr_trainer_03', name: 'Hemant Shirke', specialty: 'Reformer Pilates & Power Yoga Lead' },
+  { id: 'usr_trainer_04', name: 'Zeebran Shaikh', specialty: 'Functional HIIT, MMA & Fitzone' },
+  { id: 'usr_trainer_06', name: 'Kunal Chavan', specialty: 'Body Assessment, Nutrition & CPT' },
 ]
 
 const TIME_SLOTS = [
@@ -46,7 +46,7 @@ export default function BookingModal({
   const [serviceType, setServiceType] = useState<BookingServiceType>(initialService || 'gym_trial')
   const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0])
   const [timeSlot, setTimeSlot] = useState('10:00 AM')
-  const [assignedTrainerId, setAssignedTrainerId] = useState('usr_tr_01')
+  const [assignedTrainerId, setAssignedTrainerId] = useState('usr_trainer_01')
   const [source, setSource] = useState<'Walk-in' | 'WhatsApp' | 'Telephonic' | 'Social Media' | 'Reference'>('WhatsApp')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
@@ -239,7 +239,7 @@ export default function BookingModal({
         </div>
 
         {/* Submit Actions */}
-        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
           <Button variant="secondary" type="button" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

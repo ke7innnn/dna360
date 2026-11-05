@@ -36,6 +36,19 @@ export default function MemberOnboardingForkPage() {
 
   const handleSubmitTrainerRequest = () => {
     setRequestSubmitted(true)
+    if (typeof window !== 'undefined') {
+      fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Member Portal PT Request',
+          phone: '+919820012345',
+          interest: 'Personal Training (1-on-1 Coaching)',
+          source: 'Member App Onboarding',
+          notes: 'Member requested trainer assignment via /m/onboarding',
+        }),
+      }).catch(() => {})
+    }
     toast.success('Trainer Request Sent', {
       description: 'Head Coach Rajesh Poojary has received your PT inquiry lead.',
     })

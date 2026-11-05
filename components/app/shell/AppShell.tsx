@@ -34,18 +34,18 @@ function AppShellInner({
   const activeRoleSlug = (user?.role?.slug as RoleName) || role || 'owner'
 
   return (
-    <div className="min-h-screen" data-surface="app">
+    <div className="min-h-screen overflow-x-hidden" data-surface="app">
       <Sidebar role={activeRoleSlug} />
       <TopBar />
 
       {/* Main content area */}
       <main
         className={cn(
-          'pt-14 md:pt-3 min-h-screen transition-all duration-200',
+          'pt-[calc(3.5rem+env(safe-area-inset-top,0px))] md:pt-16 min-h-screen min-w-0 transition-all duration-200',
           collapsed ? 'md:pl-[68px]' : 'md:pl-[250px]'
         )}
       >
-        <div className="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10 max-w-[1560px] mx-auto">
+        <div className="px-3.5 pb-6 pt-3 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10 max-w-[1560px] mx-auto min-w-0">
           {children}
         </div>
       </main>

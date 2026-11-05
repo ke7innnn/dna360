@@ -13,12 +13,18 @@ import Image from 'next/image'
 export default function MemberTopNav({
   onOpenQr,
   onOpenProfile,
+  planName,
 }: {
   onOpenQr?: () => void
   onOpenProfile?: () => void
+  planName?: string
 }) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+
+  if (pathname === '/m/session' || pathname.startsWith('/m/session')) {
+    return null
+  }
 
   const userName = user?.name || 'Member'
 
@@ -120,8 +126,8 @@ export default function MemberTopNav({
               <span className="font-ui text-xs font-semibold text-white block leading-none">
                 {userName}
               </span>
-              <span className="font-data text-[9px] uppercase tracking-wider text-[var(--ink-3)] block mt-0.5">
-                Premium Annual
+              <span className="font-data text-[9px] uppercase tracking-wider text-[var(--ink-3)] block mt-0.5 max-w-[140px] truncate">
+                {planName || 'Active Member'}
               </span>
             </div>
           </button>

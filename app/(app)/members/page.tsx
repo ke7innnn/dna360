@@ -42,8 +42,19 @@ export default function MembersPage() {
 
   const isTrainerScoped = !can('members.view.all') && can('members.view.own')
 
-  const refreshMembers = () => {
-    let list = getMembers({ search })
+  const applyMemberFilters = (baseList: Member[]) => {
+    let list = [...baseList]
+
+    if (search.trim()) {
+      const q = search.toLowerCase().trim()
+      list = list.filter(
+        (m) =>
+          m.name.toLowerCase().includes(q) ||
+          m.phone.includes(q) ||
+          m.member_code.toLowerCase().includes(q) ||
+          (m.email && m.email.toLowerCase().includes(q))
+      )
+    }
 
     if (statusFilter === 'active') {
       list = list.filter((m) => m.status === 'active')
@@ -59,7 +70,61 @@ export default function MembersPage() {
       list = list.filter((m) => user.assignedClientIds?.includes(m.id) || m.id === 'mem_001')
     }
 
-    setMembers(list)
+    return list
+  }
+
+  const refreshMembers = async () => {
+    const localList = getMembers()
+    setMembers(applyMemberFilters(localList))
+    setSelectedMember((prev) => (prev ? localList.find((m) => m.id === prev.id) || prev : null))
+
+    if (typeof window !== 'undefined') {
+      try {
+        const res = await fetch('/api/members')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.members && Array.isArray(data.members) && data.members.length > 0) {
+            const dbMap = new Map<string, any>()
+            data.members.forEach((dbm: any) => {
+              dbMap.set(dbm.id, dbm)
+              if (dbm.memberCode) dbMap.set(dbm.memberCode, dbm)
+            })
+
+            const mergedList = localList.map((localM) => {
+              const dbm = dbMap.get(localM.id) || dbMap.get(localM.member_code)
+              if (!dbm) return localM
+              return {
+                ...localM,
+                name: dbm.name || localM.name,
+                phone: dbm.phone || localM.phone,
+                email: dbm.email ?? localM.email,
+                status: (dbm.status as any) || localM.status,
+                blacklisted: dbm.blacklisted ?? localM.blacklisted,
+                blacklist_reason: dbm.blacklistReason ?? localM.blacklist_reason,
+                assigned_trainer_id: dbm.assignedTrainerId ?? localM.assigned_trainer_id,
+                assigned_trainer_name: dbm.assignedTrainerName ?? localM.assigned_trainer_name,
+                attendance_streak: dbm.attendanceStreak ?? localM.attendance_streak,
+                total_check_ins: dbm.totalCheckIns ?? localM.total_check_ins,
+                last_visit_at: dbm.lastVisitAt
+                  ? new Date(dbm.lastVisitAt).toISOString()
+                  : localM.last_visit_at,
+                adjustment_credits_remaining:
+                  dbm.adjustmentCreditsRemaining ?? localM.adjustment_credits_remaining,
+                lifetime_value: dbm.lifetimeValue ?? localM.lifetime_value,
+                special_inclusions: dbm.specialInclusions ?? localM.special_inclusions,
+              }
+            })
+
+            setMembers(applyMemberFilters(mergedList))
+            setSelectedMember((prev) =>
+              prev ? mergedList.find((m) => m.id === prev.id) || prev : null
+            )
+          }
+        }
+      } catch {
+        // Fallback to local members when offline
+      }
+    }
   }
 
   useEffect(() => {
@@ -205,7 +270,7 @@ export default function MembersPage() {
               : 'border-[rgba(56,189,248,0.4)] text-[#38BDF8] hover:bg-[rgba(56,189,248,0.1)]'
           )}
         >
-          <span>At risk · 23</span>
+          <span>At risk · {atRiskCount}</span>
           {statusFilter === 'at_risk' ? <span>✕</span> : <span>▾</span>}
         </button>
       </div>
@@ -243,27 +308,33 @@ export default function MembersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--line)]">
-              {paginatedMembers.map((member, idx) => {
+              {paginatedMembers.map((member) => {
                 const planName = member.active_memberships?.[0]?.product_name || 'Annual All-Access'
                 const initials = getInitials(member.name)
                 const isExpiring = member.status === 'expiring_soon'
                 const isInactive = member.status === 'inactive' || member.status === 'blacklisted'
                 const isGrace = member.status === 'grace_period'
 
-                // Simulated PT sessions & trainers matching mockup density
-                const ptSessionsText = idx % 3 === 0 ? '6 / 12' : idx % 5 === 0 ? '11 / 24' : idx % 7 === 0 ? '8 / 8' : '—'
-                const trainerName = idx % 2 === 0 ? (idx % 4 === 0 ? 'Rohan' : 'Nikhil') : idx % 5 === 0 ? 'Tanvi' : 'Self'
-                const duesAmount = idx === 3 ? '₹18,000' : idx === 11 ? '₹14,500' : null
+                const ptPlan = member.active_memberships?.find(
+                  (p) => p.sessions_total && p.sessions_total > 0
+                )
+                const ptSessionsText = ptPlan
+                  ? `${ptPlan.sessions_remaining ?? 0} / ${ptPlan.sessions_total}`
+                  : '—'
+                const trainerName = member.assigned_trainer_name
+                  ? member.assigned_trainer_name.split(' ')[0]
+                  : 'Self'
+                const duesAmount = isGrace ? 'Pending Dues' : null
 
-                const lastCheckinText = idx === 0 || idx === 4 || idx === 6
-                  ? 'Today'
-                  : idx === 3
-                  ? 'Yesterday'
-                  : idx === 1
-                  ? '2 days ago'
-                  : idx === 7
-                  ? '4 days ago'
-                  : `${Math.min(31, 10 + (idx * 3))} days ago`
+                let lastCheckinText = 'No visits yet'
+                if (member.last_visit_at) {
+                  const visitDate = new Date(member.last_visit_at)
+                  const diffMs = Date.now() - visitDate.getTime()
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+                  if (diffDays <= 0) lastCheckinText = 'Today'
+                  else if (diffDays === 1) lastCheckinText = 'Yesterday'
+                  else lastCheckinText = `${diffDays} days ago`
+                }
 
                 const expiryDateStr = member.active_memberships?.[0]?.expiry_date
                   ? new Date(member.active_memberships[0].expiry_date).toLocaleDateString('en-GB', {
@@ -271,7 +342,7 @@ export default function MembersPage() {
                       month: 'short',
                       year: '2-digit',
                     })
-                  : '11 Oct \'26'
+                  : '—'
 
                 return (
                   <tr
@@ -361,7 +432,7 @@ export default function MembersPage() {
         </div>
 
         {/* Pagination Bar */}
-        <div className="p-3 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--ink-3)]">
+        <div className="p-3 border-t border-[var(--line)] flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--ink-3)]">
           <span className="font-sans tabular-nums text-[11.5px] text-[var(--muted)]">
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, members.length)} of {members.length} members
           </span>

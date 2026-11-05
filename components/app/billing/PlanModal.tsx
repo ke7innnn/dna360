@@ -7,6 +7,7 @@ import { Button } from '@/components/app/ui/button'
 import { Input } from '@/components/app/ui/input'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
 import { formatINR } from '@/lib/utils'
+import { backCalculateGst } from '@/lib/gst'
 import { createPlan, updatePlan } from '@/lib/billing'
 import type { GymPlan } from '@/types/billing'
 import { toast } from '@/components/app/ui/toast'
@@ -60,8 +61,9 @@ export default function PlanModal({
   }, [plan, open])
 
   const basePriceMinor = basePriceRupees * 100
-  const gstMinor = Math.round(basePriceMinor * 0.18)
-  const grandTotalMinor = basePriceMinor + gstMinor
+  const gst = backCalculateGst(basePriceMinor, 0.05)
+  const gstMinor = gst.totalTax
+  const grandTotalMinor = gst.inclusive
 
   const handleAddFeature = () => {
     if (!featureInput.trim()) return
@@ -161,7 +163,7 @@ export default function PlanModal({
         {/* Pricing Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Input
-            label="Base Price (₹ excl. GST)"
+            label="Plan Price (₹ incl. 5% GST)"
             type="number"
             value={basePriceRupees}
             onChange={(e) => setBasePriceRupees(Number(e.target.value))}
@@ -186,15 +188,15 @@ export default function PlanModal({
         {/* GST Live Calculation Bar */}
         <div className="p-3.5 rounded-xl glass-card text-xs font-sans tabular-nums border border-[var(--aurora-1)]/20 space-y-1.5">
           <div className="flex justify-between text-[var(--app-text-muted)]">
-            <span>Base Price:</span>
-            <span>{formatINR(basePriceMinor)}</span>
+            <span>Taxable Base (Ex-Tax):</span>
+            <span>{formatINR(gst.taxable)}</span>
           </div>
           <div className="flex justify-between text-[var(--app-text-secondary)]">
-            <span>18% GST (CGST 9% + SGST 9%):</span>
+            <span>5% GST (CGST 2.5% + SGST 2.5%):</span>
             <span>{formatINR(gstMinor)}</span>
           </div>
           <div className="flex justify-between font-bold text-sm text-[var(--app-text-primary)] pt-1 border-t border-[var(--app-glass-border)]">
-            <span>Total Member Payable:</span>
+            <span>Total Member Payable (Inclusive):</span>
             <span className="text-[var(--aurora-1)]">{formatINR(grandTotalMinor)}</span>
           </div>
         </div>

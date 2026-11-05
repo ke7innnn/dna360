@@ -480,7 +480,7 @@ export const SEEDED_GYM_PROGRAMS: Program[] = [
     goal: 'REHAB',
     weeks: 4,
     daysPerWeek: 3,
-    notes: 'Designed by Sneha Rao for the Allegro 2 Reformer studio. Emphasizes lumbo-pelvic stabilization, spine articulation, and eccentric hamstring length.',
+    notes: 'Designed by Hemant Shirke for the Allegro 2 Reformer studio. Emphasizes lumbo-pelvic stabilization, spine articulation, and eccentric hamstring length.',
     ownerType: 'GYM',
     ownerId: 'gym_powai',
     visibility: 'GYM_LIBRARY',

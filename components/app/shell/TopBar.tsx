@@ -20,10 +20,10 @@ import Link from 'next/link'
 // ─── Single Location Identifier (Powai Only) ───
 function LocationBadge() {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[rgba(59,130,246,0.35)] transition-colors">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shadow-[0_0_6px_rgba(59,130,246,0.9)] animate-pulse" />
-      <span className="font-ui text-xs font-semibold text-[var(--ink)]">Powai Flagship</span>
-      <span className="font-ui text-[11px] text-[var(--muted)]">· 400076</span>
+    <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.07)] select-none shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[rgba(59,130,246,0.35)] transition-colors min-w-0 max-w-[138px] sm:max-w-none">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shadow-[0_0_6px_rgba(59,130,246,0.9)] animate-pulse shrink-0" />
+      <span className="font-ui text-[11px] sm:text-xs font-semibold text-[var(--ink)] truncate">Powai Flagship</span>
+      <span className="hidden lg:inline font-ui text-[11px] text-[var(--muted)] shrink-0">· 400076</span>
     </div>
   )
 }
@@ -57,11 +57,12 @@ function RealtimeClockBadge() {
 // ─── User Menu ───
 function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
-  const { user, logout } = useAuth()
+  const { user, can, logout } = useAuth()
 
-  const userName = user?.name || 'Aarav Shah'
-  const userEmail = user?.email || 'aarav.shah@gmail.com'
-  const designation = user?.role?.name || user?.designation || 'Member'
+  const userName = user?.name || 'Staff User'
+  const userEmail = user?.email || ''
+  const designation = user?.role?.name || user?.designation || 'Staff'
+  const isMember = user?.type === 'MEMBER' || String(user?.role?.slug || '').toLowerCase() === 'member'
 
   return (
     <div className="relative">
@@ -107,7 +108,7 @@ function UserMenu() {
             {/* Menu Links */}
             <div className="py-1 space-y-0.5">
               <Link
-                href="/profile"
+                href={isMember ? '/m/ledger' : '/profile'}
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-2.5 px-3 py-2 text-xs font-ui text-[var(--ink-2)] hover:text-white hover:bg-[var(--surface-2)] rounded-[var(--r-sm)] transition-colors"
                 role="menuitem"
@@ -115,15 +116,17 @@ function UserMenu() {
                 <User className="w-3.5 h-3.5 text-[var(--muted)]" />
                 <span>My Profile</span>
               </Link>
-              <Link
-                href="/settings"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-xs font-ui text-[var(--ink-2)] hover:text-white hover:bg-[var(--surface-2)] rounded-[var(--r-sm)] transition-colors"
-                role="menuitem"
-              >
-                <Settings className="w-3.5 h-3.5 text-[var(--muted)]" />
-                <span>Settings</span>
-              </Link>
+              {can('settings.manage') && (
+                <Link
+                  href="/settings"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-ui text-[var(--ink-2)] hover:text-white hover:bg-[var(--surface-2)] rounded-[var(--r-sm)] transition-colors"
+                  role="menuitem"
+                >
+                  <Settings className="w-3.5 h-3.5 text-[var(--muted)]" />
+                  <span>Settings</span>
+                </Link>
+              )}
             </div>
 
             {/* Sign Out */}
@@ -150,7 +153,7 @@ function UserMenu() {
 // ─── Notification Dropdown ───
 function NotificationMenu() {
   const [isOpen, setIsOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, can } = useAuth()
   const [notifications, setNotifications] = useState<import('@/lib/notifications').InAppNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -201,7 +204,7 @@ function NotificationMenu() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div
-            className="absolute right-0 top-full mt-2 w-80 sm:w-96 p-3 bg-[#0D0C10]/95 border border-[rgba(255,255,255,0.10)] rounded-[var(--r-md)] shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 select-none backdrop-blur-2xl text-left"
+            className="fixed left-3 right-3 top-[calc(3.75rem+env(safe-area-inset-top,0px))] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 p-3 bg-[#0D0C10]/95 border border-[rgba(255,255,255,0.10)] rounded-[var(--r-md)] shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 select-none backdrop-blur-2xl text-left"
             role="menu"
           >
             {/* Header */}
@@ -270,15 +273,17 @@ function NotificationMenu() {
             </div>
 
             {/* Footer */}
-            <div className="pt-2 border-t border-[rgba(255,255,255,0.06)] text-center">
-              <Link
-                href="/leads"
-                onClick={() => setIsOpen(false)}
-                className="text-[11px] font-ui text-[var(--muted)] hover:text-white transition-colors"
-              >
-                Go to CRM Inquiries &rarr;
-              </Link>
-            </div>
+            {can('leads.manage') && (
+              <div className="pt-2 border-t border-[rgba(255,255,255,0.06)] text-center">
+                <Link
+                  href="/leads"
+                  onClick={() => setIsOpen(false)}
+                  className="text-[11px] font-ui text-[var(--muted)] hover:text-white transition-colors"
+                >
+                  Go to CRM Inquiries &rarr;
+                </Link>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -290,11 +295,11 @@ import CommandPalette from './CommandPalette'
 
 // ─── Main TopBar ───
 export default function TopBar() {
-  const { setMobileOpen } = useSidebar()
+  const { setMobileOpen, collapsed } = useSidebar()
   const { user, logout } = useAuth()
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 
-  // Listen for ⌘K / Ctrl+K
+  // Listen for ⌘K / Ctrl+K and custom Sidebar trigger
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -302,69 +307,84 @@ export default function TopBar() {
         setCommandPaletteOpen((prev) => !prev)
       }
     }
+    const handleOpenPalette = () => setCommandPaletteOpen(true)
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('dna:open-command-palette', handleOpenPalette)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('dna:open-command-palette', handleOpenPalette)
+    }
   }, [])
 
   return (
     <>
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 z-30 flex items-center justify-between px-4 border-b border-[rgba(255,255,255,0.06)] bg-[#07090E]/90 backdrop-blur-2xl overflow-hidden">
-        {/* Top subtle glowing aurora blue edge-light */}
-        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(59,130,246,0.6)] to-transparent pointer-events-none" />
-
-        {/* Ambient background blue gradient glow */}
-        <div
-          className="absolute top-0 right-1/4 w-[400px] h-[60px] rounded-full blur-[45px] pointer-events-none opacity-30"
-          style={{
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, transparent 80%)',
-          }}
-        />
-
-        {/* Left: Mobile Toggle & Location & ⌘K Search Button */}
-        <div className="flex items-center gap-3 relative z-10">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="md:hidden p-2 rounded-[var(--r-sm)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] cursor-pointer"
-            aria-label="Open navigation menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-
-          <LocationBadge />
-          <RealtimeClockBadge />
-
-          {/* ⌘K Command Palette Quick Search Button (Staff Only) */}
-          {user?.type !== 'MEMBER' && (
-            <button
-              onClick={() => setCommandPaletteOpen(true)}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(59,130,246,0.35)] text-xs font-ui text-[var(--muted)] transition-all cursor-pointer shadow-sm"
-            >
-              <Search className="w-3.5 h-3.5 text-[var(--accent)]" />
-              <span className="text-[11.5px]">Search members, actions...</span>
-              <kbd className="ml-1 px-1.5 py-0.5 rounded bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[10px] font-mono text-[var(--muted)]">
-                ⌘K
-              </kbd>
-            </button>
-          )}
+      <header
+        className={cn(
+          'fixed top-0 left-0 right-0 z-30 pt-[env(safe-area-inset-top,0px)] border-b border-[rgba(255,255,255,0.06)] bg-[#07090E]/90 backdrop-blur-2xl transition-all duration-200',
+          collapsed ? 'md:left-[68px]' : 'md:left-[250px]'
+        )}
+      >
+        {/* Clipped Decorative Glow Layer (keeps dropdowns unclipped) */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(59,130,246,0.6)] to-transparent" />
+          <div
+            className="absolute top-0 right-1/4 w-[400px] h-[60px] rounded-full blur-[45px] opacity-30"
+            style={{
+              background: 'radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, transparent 80%)',
+            }}
+          />
         </div>
 
-        {/* Right: Notification + User Menu + Direct Logout Button */}
-        <div className="flex items-center gap-2.5 sm:gap-3 relative z-10">
-          <NotificationMenu />
+        <div className="h-14 flex items-center justify-between gap-2 px-3 sm:px-6 relative z-10">
+          {/* Left: Mobile Toggle & Location & ⌘K Search Button */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="md:hidden p-1.5 rounded-[var(--r-sm)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] cursor-pointer shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-          <div className="h-5 w-px bg-[rgba(255,255,255,0.06)]" />
+            <LocationBadge />
+            <div className="hidden xl:block">
+              <RealtimeClockBadge />
+            </div>
 
-          <UserMenu />
+            {/* ⌘K Command Palette Quick Search Button (Staff Only) */}
+            {user?.type !== 'MEMBER' && (
+              <button
+                onClick={() => setCommandPaletteOpen(true)}
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(59,130,246,0.35)] text-xs font-ui text-[var(--muted)] transition-all cursor-pointer shadow-sm shrink-0"
+              >
+                <Search className="w-3.5 h-3.5 text-[var(--accent)]" />
+                <span className="text-[11.5px] hidden lg:inline">Search members, actions...</span>
+                <span className="text-[11.5px] lg:hidden">Search</span>
+                <kbd className="ml-0.5 px-1.5 py-0.5 rounded bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[10px] font-mono text-[var(--muted)]">
+                  ⌘K
+                </kbd>
+              </button>
+            )}
+          </div>
 
-          {/* Direct One-Click Log Out Button */}
-          <button
-            onClick={logout}
-            title="Sign out / Log out"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-ui text-xs font-semibold bg-[rgba(239,68,68,0.10)] hover:bg-[rgba(239,68,68,0.20)] text-[#F87171] border border-[rgba(239,68,68,0.25)] hover:border-[rgba(239,68,68,0.45)] transition-all cursor-pointer shadow-sm"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Log out</span>
-          </button>
+          {/* Right: Notification + User Menu + Direct Logout Button */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <NotificationMenu />
+
+            <div className="h-5 w-px bg-[rgba(255,255,255,0.06)] hidden xs:block sm:block" />
+
+            <UserMenu />
+
+            {/* Direct One-Click Log Out Button */}
+            <button
+              onClick={logout}
+              title="Sign out / Log out"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full font-ui text-xs font-semibold bg-[rgba(239,68,68,0.10)] hover:bg-[rgba(239,68,68,0.20)] text-[#F87171] border border-[rgba(239,68,68,0.25)] hover:border-[rgba(239,68,68,0.45)] transition-all cursor-pointer shadow-sm shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Log out</span>
+            </button>
+          </div>
         </div>
       </header>
 

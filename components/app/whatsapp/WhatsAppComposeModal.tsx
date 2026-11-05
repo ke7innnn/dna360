@@ -153,8 +153,8 @@ export default function WhatsAppComposeModal({
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-      <div className="w-full max-w-xl bg-[#0C0E14] border border-[rgba(255,255,255,0.12)] rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md">
+      <div className="w-full max-w-xl bg-[#0C0E14] border border-[rgba(255,255,255,0.12)] rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[92dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[rgba(255,255,255,0.08)] bg-gradient-to-r from-[rgba(37,211,102,0.12)] to-transparent shrink-0">
           <div className="flex items-center gap-3">
@@ -302,7 +302,7 @@ export default function WhatsAppComposeModal({
               Live WhatsApp Chat Bubble Preview
             </span>
             <div className="p-4 rounded-2xl bg-[#054640]/60 border border-[rgba(37,211,102,0.30)] text-[var(--ink)] space-y-2 relative overflow-hidden shadow-inner">
-              <div className="flex items-center justify-between text-[11px] text-[#25D366] font-semibold border-b border-[rgba(37,211,102,0.20)] pb-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-[#25D366] font-semibold border-b border-[rgba(37,211,102,0.20)] pb-1.5">
                 <span>{selectedTemplate.headerText || 'DNA 360 Fitness'}</span>
                 <span className="text-[10px] text-[var(--muted)] font-mono">{selectedTemplate.metaTemplateName}</span>
               </div>
@@ -316,7 +316,7 @@ export default function WhatsAppComposeModal({
           </div>
 
           {/* Budget Guard Meter */}
-          <div className="p-3 rounded-xl bg-[rgba(59,130,246,0.06)] border border-[rgba(59,130,246,0.18)] flex items-center justify-between text-xs font-ui">
+          <div className="p-3 rounded-xl bg-[rgba(59,130,246,0.06)] border border-[rgba(59,130,246,0.18)] flex flex-wrap items-center justify-between gap-2 text-xs font-ui">
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent)]" />
@@ -333,7 +333,7 @@ export default function WhatsAppComposeModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[rgba(255,255,255,0.08)] bg-[#080A0E] flex items-center justify-end gap-2.5 shrink-0">
+        <div className="p-4 border-t border-[rgba(255,255,255,0.08)] bg-[#080A0E] flex flex-wrap items-center justify-end gap-2.5 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Button variant="secondary" size="sm" onClick={onClose}>
             Cancel
           </Button>

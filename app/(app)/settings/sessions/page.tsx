@@ -52,7 +52,7 @@ export default function SessionsSettingsPage() {
                 {row.userName}
               </span>
               {row.isCurrent && (
-                <span className="text-[0.625rem] px-1.5 py-0.2 rounded-full bg-[var(--app-success)]/10 text-[var(--app-success)] font-medium">
+                <span className="text-[0.625rem] px-1.5 py-0.5 rounded-full bg-[var(--app-success)]/10 text-[var(--app-success)] font-medium">
                   Your session
                 </span>
               )}

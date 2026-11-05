@@ -1,237 +1,161 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ChevronLeft,
-  ChevronRight,
-  Pause,
-  ArrowUp,
   User,
-  Clock,
-  FileText,
-  Sparkles,
-  Gift,
-  HelpCircle,
   ShieldCheck,
+  Building2,
+  Clock,
+  KeyRound,
+  Mail,
+  Phone,
   CheckCircle2,
+  Calendar,
 } from 'lucide-react'
+import Card from '@/components/app/ui/glass-card'
+import Badge from '@/components/app/ui/badge'
+import Button from '@/components/app/ui/button'
+import PageHeader from '@/components/app/ui/PageHeader'
 import { useAuth } from '@/context/AuthContext'
-import { toast } from '@/components/app/ui/toast'
-import FreezeMemberModal from '@/components/app/members/FreezeMemberModal'
-import RenewMemberModal from '@/components/app/members/RenewMemberModal'
+import { getInitials } from '@/lib/utils'
 
-export default function MemberProfileMembershipPage() {
+export default function StaffSelfServiceProfilePage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, activeRole, isLoading } = useAuth()
 
-  const [freezeModalOpen, setFreezeModalOpen] = useState(false)
-  const [renewModalOpen, setRenewModalOpen] = useState(false)
+  const isMember =
+    user?.type === 'MEMBER' || String(user?.role?.slug || '').toLowerCase() === 'member'
+
+  useEffect(() => {
+    if (!isLoading && isMember) {
+      router.replace('/m/ledger')
+    }
+  }, [isLoading, isMember, router])
+
+  if (isLoading || isMember) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-7 h-7 border-2 border-[#38BDF8] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  const displayName = user?.name || 'Staff Member'
+  const designation = user?.designation || activeRole?.name || 'Staff'
+  const email = user?.email || '—'
+  const phone = user?.phone || '—'
+  const branchName = user?.branches?.[0]?.name || 'Hiranandani Gardens, Powai'
+  const capabilities = activeRole?.capabilities || user?.role?.capabilities || []
 
   return (
-    <div className="max-w-4xl mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none">
-      {/* ─── Top Nav Header ─── */}
-      <div className="flex items-center justify-between pb-2">
-        <button
-          onClick={() => router.push('/m')}
-          className="w-10 h-10 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:border-[#3B82F6] transition-colors cursor-pointer"
-          aria-label="Back to Home"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        <h1 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
-          Membership
-        </h1>
-
-        <button
-          onClick={() => toast.info('Support concierge available 24/7 on WhatsApp: +91 98200 36036')}
-          className="text-xs text-[var(--ink-2)] hover:text-white font-medium px-3.5 py-1.5 rounded-full bg-[#111726] border border-[rgba(255,255,255,0.08)] cursor-pointer"
-        >
-          Help
-        </button>
-      </div>
-
-      {/* ─── Main Membership Plan Card ─── */}
-      <div className="rounded-[24px] bg-[#0E131F] border border-[rgba(255,255,255,0.08)] p-6 space-y-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        <div className="flex items-center justify-between">
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#34D399]/15 text-[#34D399] border border-[#34D399]/30 uppercase">
-            ACTIVE
-          </span>
-          <span className="font-data text-[10.5px] text-[var(--ink-3)]">
-            DNA-POW-2025-0892
-          </span>
-        </div>
-
-        <div>
-          <h2 className="font-serif text-2xl sm:text-3xl text-white font-normal leading-tight">
-            12 months <em className="italic text-[#93C5FD]">Premium Annual</em>
-          </h2>
-        </div>
-
-        {/* Validity Progress Bar */}
-        <div className="space-y-2 pt-1">
-          <div className="h-2 w-full bg-[rgba(255,255,255,0.08)] rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#2563EB] to-[#60A5FA] rounded-full w-[78%]" />
-          </div>
-          <div className="flex items-center justify-between text-xs font-data text-[var(--ink-3)]">
-            <span>Started 12 Oct &apos;25</span>
-            <span>Ends 11 Oct &apos;26</span>
-          </div>
-        </div>
-
-        {/* Card Split Action Buttons (Freeze | Upgrade) */}
-        <div className="grid grid-cols-2 gap-3 pt-2">
-          <button
-            onClick={() => setFreezeModalOpen(true)}
-            className="py-3 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
-          >
-            <Pause className="w-3.5 h-3.5 text-[var(--ink-3)]" /> Freeze
-          </button>
-          <button
-            onClick={() => setRenewModalOpen(true)}
-            className="py-3 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
-          >
-            <ArrowUp className="w-3.5 h-3.5 text-[var(--ink-3)]" /> Upgrade
-          </button>
-        </div>
-      </div>
-
-      {/* ─── Entitlement List Rows ─── */}
-      <div className="space-y-3">
-        {/* Row 1: PT Sessions */}
-        <Link
-          href="/m/progress"
-          className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[rgba(59,130,246,0.15)] border border-[rgba(59,130,246,0.3)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform">
-              <User className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-ui text-sm font-bold text-white">
-                6 of 12 PT sessions left
-              </h4>
-              <p className="font-ui text-xs text-[var(--ink-3)]">
-                Elite tier · Rohan Kulkarni
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[var(--ink-3)] group-hover:text-white transition-colors" />
-        </Link>
-
-        {/* Row 2: Freeze Days */}
-        <div
-          onClick={() => setFreezeModalOpen(true)}
-          className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[rgba(59,130,246,0.15)] border border-[rgba(59,130,246,0.3)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-ui text-sm font-bold text-white">
-                18 of 30 freeze days left
-              </h4>
-              <p className="font-ui text-xs text-[var(--ink-3)]">
-                Resets on renewal
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[var(--ink-3)] group-hover:text-white transition-colors" />
-        </div>
-
-        {/* Row 3: Invoices & Payments */}
-        <Link
-          href="/billing"
-          className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[rgba(52,211,153,0.15)] border border-[rgba(52,211,153,0.3)] flex items-center justify-center text-[#34D399] group-hover:scale-105 transition-transform">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-ui text-sm font-bold text-white">
-                Invoices &amp; payments
-              </h4>
-              <p className="font-ui text-xs text-[var(--ink-3)]">
-                11 receipts · nothing due
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[var(--ink-3)] group-hover:text-white transition-colors" />
-        </Link>
-
-        {/* Row 4: Refer a Friend */}
-        <div
-          onClick={() => toast.success('Referral link copied! Share with friends to earn ₹2,000 credit.')}
-          className="p-4 rounded-[20px] bg-[#0E131F] border border-[rgba(255,255,255,0.07)] hover:border-[#3B82F6] hover:bg-[#111726] transition-all flex items-center justify-between cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[rgba(96,165,250,0.15)] border border-[rgba(96,165,250,0.3)] flex items-center justify-center text-[#60A5FA] group-hover:scale-105 transition-transform">
-              <Gift className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-ui text-sm font-bold text-white">
-                Refer a friend
-              </h4>
-              <p className="font-ui text-xs text-[var(--ink-3)]">
-                ₹2,000 credit each
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[var(--ink-3)] group-hover:text-white transition-colors" />
-        </div>
-      </div>
-
-      {/* ─── Bottom CTA: Early Renewal Button ─── */}
-      <div className="pt-2">
-        <button
-          onClick={() => setRenewModalOpen(true)}
-          className="w-full py-4 rounded-full bg-gradient-to-r from-[#2563EB] to-[#3B82F6] hover:from-[#1D4ED8] hover:to-[#2563EB] text-white font-bold font-ui text-sm shadow-[0_0_24px_rgba(37,99,235,0.45)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] active:scale-[0.99] transition-all cursor-pointer"
-        >
-          Renew early · save ₹4,000
-        </button>
-      </div>
-
-      {/* Freeze & Renew Modals */}
-      <FreezeMemberModal
-        open={freezeModalOpen}
-        onOpenChange={setFreezeModalOpen}
-        onFrozen={() => toast.success('Membership freeze submitted')}
+    <div className="max-w-5xl mx-auto space-y-6 select-none pb-12">
+      <PageHeader
+        eyebrow="STAFF SELF-SERVICE · POWAI FLAGSHIP"
+        title="My Profile & Credentials"
+        description="Employee identity, active shift assignment, biometric punch baseline, and granted RBAC security capabilities."
+        actions={
+          <Link href="/change-password">
+            <Button variant="secondary" size="md" icon={<KeyRound className="w-3.5 h-3.5" />}>
+              Change Password
+            </Button>
+          </Link>
+        }
       />
 
-      <RenewMemberModal
-        member={{
-          id: user?.id || 'mem_01',
-          name: user?.name || 'Aditi',
-          email: user?.email || 'aditi@gmail.com',
-          phone: '+919820011223',
-          member_code: 'DNA-POW-2026-88',
-          status: 'active',
-          joined_date: '12 Oct 2025',
-          branch_id: 'pow',
-          branch_name: 'Powai Flagship',
-          active_memberships: [
-            {
-              id: 'mem_pkg_01',
-              packageId: 'pkg_annual_01',
-              product_name: '12 Months Premium Annual',
-              category: 'gym_floor',
-              status: 'active',
-              start_date: '12 Oct 2025',
-              expiry_date: '11 Oct 2026',
-              amount_paid: 5400000,
-              freeze_days_used: 12,
-              max_freeze_days: 30,
-            },
-          ],
-        } as any}
-        open={renewModalOpen}
-        onOpenChange={setRenewModalOpen}
-        onUpdated={() => toast.success('Plan renewed successfully')}
-      />
+      {/* Identity & Branch Card */}
+      <Card className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#3B82F6] via-[#2563EB] to-[#1D4ED8] border border-[rgba(59,130,246,0.5)] flex items-center justify-center text-white font-display text-xl font-bold shrink-0 shadow-[0_0_20px_rgba(59,130,246,0.35)]">
+            {getInitials(displayName)}
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="font-display text-xl font-bold text-[var(--ink)]">{displayName}</h2>
+              <Badge status="ok" size="sm">Active Staff</Badge>
+            </div>
+            <p className="font-ui text-xs text-[var(--muted)] uppercase tracking-wider font-semibold">
+              {designation} · Role: {user?.role?.slug || 'staff'}
+            </p>
+            <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-[var(--ink-2)]">
+              <span className="inline-flex items-center gap-1.5 break-all">
+                <Mail className="w-3.5 h-3.5 text-[var(--muted)] shrink-0" />
+                {email}
+              </span>
+              <span className="inline-flex items-center gap-1.5 font-mono">
+                <Phone className="w-3.5 h-3.5 text-[var(--muted)]" />
+                {phone}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-[var(--accent)]" />
+                {branchName}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Shift & Biometric Self-Service Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Assigned Shift Window
+            </span>
+            <Calendar className="w-4 h-4 text-[var(--accent)]" />
+          </div>
+          <p className="font-display text-lg font-bold text-[var(--ink)]">06:00 – 22:00 IST</p>
+          <p className="text-xs text-[var(--muted)]">Powai Studio · Duty Roster Active</p>
+        </Card>
+
+        <Card className="p-5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Biometric Attendance
+            </span>
+            <Clock className="w-4 h-4 text-[#10B981]" />
+          </div>
+          <p className="font-display text-lg font-bold text-[#10B981]">Verified On-Duty</p>
+          <p className="text-xs text-[var(--muted)]">Synced with Powai Turnstile Terminal</p>
+        </Card>
+
+        <Card className="p-5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Security Posture
+            </span>
+            <ShieldCheck className="w-4 h-4 text-[#60A5FA]" />
+          </div>
+          <p className="font-display text-lg font-bold text-[var(--ink)]">
+            {user?.can_view_revenue ? 'Executive Revenue Tier' : 'Operational Scoped Tier'}
+          </p>
+          <p className="text-xs text-[var(--muted)]">
+            {capabilities.length} atomic capabilities granted
+          </p>
+        </Card>
+      </div>
+
+      {/* Granted Capabilities */}
+      <Card className="p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-[var(--accent)]" />
+          <h3 className="font-display text-sm font-semibold text-[var(--ink)]">
+            Granted RBAC Capabilities ({capabilities.length})
+          </h3>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {capabilities.map((cap) => (
+            <span
+              key={cap}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--line)] font-mono text-[11px] text-[var(--ink-2)]"
+            >
+              <CheckCircle2 className="w-3 h-3 text-[#10B981]" />
+              {cap}
+            </span>
+          ))}
+        </div>
+      </Card>
     </div>
   )
 }

@@ -146,7 +146,7 @@ export default function TodayPendingFollowups({
             <span>Renewals</span>
             <span
               className={cn(
-                'px-1.5 py-0.2 rounded-full text-[10px] font-bold font-data',
+                'px-1.5 py-0.5 rounded-full text-[10px] font-bold font-data',
                 activeTab === 'renewals'
                   ? 'bg-black/20 text-[#05070E]'
                   : 'bg-white/10 text-white/80'
@@ -168,7 +168,7 @@ export default function TodayPendingFollowups({
             <span>Fresh Enquiries</span>
             <span
               className={cn(
-                'px-1.5 py-0.2 rounded-full text-[10px] font-bold font-data',
+                'px-1.5 py-0.5 rounded-full text-[10px] font-bold font-data',
                 activeTab === 'enquiries'
                   ? 'bg-black/20 text-[#05070E]'
                   : 'bg-white/10 text-white/80'
@@ -190,7 +190,7 @@ export default function TodayPendingFollowups({
             <span>Trials Booked</span>
             <span
               className={cn(
-                'px-1.5 py-0.2 rounded-full text-[10px] font-bold font-data',
+                'px-1.5 py-0.5 rounded-full text-[10px] font-bold font-data',
                 activeTab === 'trials'
                   ? 'bg-black/20 text-[#05070E]'
                   : 'bg-white/10 text-white/80'

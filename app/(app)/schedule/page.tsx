@@ -27,9 +27,10 @@ import type { PTClient, PTAppointment } from '@/types/trainer'
 import { cn } from '@/lib/utils'
 
 export default function TrainerWorkspacePage() {
-  const [selectedTrainerId, setSelectedTrainerId] = useState('usr_trainer_01')
+  const [selectedTrainerId, setSelectedTrainerId] = useState('usr_tr_head_01')
   const [clients, setClients] = useState<PTClient[]>([])
   const [appointments, setAppointments] = useState<PTAppointment[]>([])
+  const [remoteLogsCount, setRemoteLogsCount] = useState<number | null>(null)
 
   const [selectedClient, setSelectedClient] = useState<PTClient | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -39,6 +40,14 @@ export default function TrainerWorkspacePage() {
   const refreshData = () => {
     setClients(getTrainerClients(selectedTrainerId))
     setAppointments(getTrainerAppointments(selectedTrainerId))
+    fetch(`/api/pt-ledger?trainerId=${encodeURIComponent(selectedTrainerId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.logs)) {
+          setRemoteLogsCount(data.logs.length)
+        }
+      })
+      .catch(() => null)
   }
 
   useEffect(() => {
@@ -50,7 +59,10 @@ export default function TrainerWorkspacePage() {
   }, [selectedTrainerId])
 
   const selectedTrainer = SEEDED_TRAINERS.find((t) => t.id === selectedTrainerId) || SEEDED_TRAINERS[0]
-  const completedSessions = getStoredPTSessions().filter((s) => s.trainerId === selectedTrainerId)
+  const localCompletedSessions = getStoredPTSessions().filter(
+    (s) => s.trainerId === selectedTrainerId || (selectedTrainerId === 'usr_tr_head_01' && s.trainerId === 'usr_trainer_01')
+  )
+  const deliveredSessionsCount = Math.max(localCompletedSessions.length, remoteLogsCount ?? 0)
   const commissions = getCommissionLedger(selectedTrainerId)
   const totalCommissionMinor = commissions.reduce((acc, c) => acc + c.amountMinor, 0)
   const remainingTotalSessions = clients.reduce((acc, c) => acc + c.ptSessionsRemaining, 0)
@@ -172,8 +184,8 @@ export default function TrainerWorkspacePage() {
         </div>
 
         {/* Trainer Selector & Commission Link */}
-        <div className="flex items-center gap-3">
-          <div className="w-56">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-full sm:w-56">
             <Select value={selectedTrainerId} onValueChange={setSelectedTrainerId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -204,7 +216,7 @@ export default function TrainerWorkspacePage() {
         />
         <StatCard
           label="Delivered Sessions (MTD)"
-          value={completedSessions.length}
+          value={deliveredSessionsCount}
           suffix=" sessions"
           icon={<CheckCircle className="w-5 h-5 text-[var(--app-success)]" />}
         />

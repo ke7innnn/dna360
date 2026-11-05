@@ -109,7 +109,7 @@ export default function ManualOverrideModal({
 
         <Input
           label="Additional Reference Note"
-          placeholder="e.g. Approved by Sneha Rao for morning workout"
+          placeholder="e.g. Approved by Rajesh Poojary for morning workout"
           value={customNote}
           onChange={(e) => setCustomNote(e.target.value)}
         />

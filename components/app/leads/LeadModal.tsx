@@ -26,7 +26,7 @@ export default function LeadModal({
   const [source, setSource] = useState<LeadSource>('Walk-in')
   const [stage, setStage] = useState<LeadStage>('inquiry')
   const [dealValue, setDealValue] = useState(56640) // ₹56,640
-  const [assignedRep, setAssignedRep] = useState('Amit Sharma')
+  const [assignedRep, setAssignedRep] = useState('Rajesh Poojary')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -146,9 +146,10 @@ export default function LeadModal({
             <Select value={assignedRep} onValueChange={setAssignedRep}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Amit Sharma">Amit Sharma (Front Desk Lead)</SelectItem>
-                <SelectItem value="Sneha Rao">Sneha Rao (Yoga Specialist)</SelectItem>
+                <SelectItem value="Aftab Memon">Aftab Memon (Front Desk Lead)</SelectItem>
+                <SelectItem value="Monica Picholla">Monica Picholla (Asst Sales Head)</SelectItem>
                 <SelectItem value="Rajesh Poojary">Rajesh Poojary (Head Coach)</SelectItem>
+                <SelectItem value="Hemant Shirke">Hemant Shirke (Reformer & Yoga Lead)</SelectItem>
               </SelectContent>
             </Select>
           </div>

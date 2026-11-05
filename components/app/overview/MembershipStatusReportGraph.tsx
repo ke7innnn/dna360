@@ -24,8 +24,8 @@ const DEFAULT_DATA: DataPoint[] = [
   { month: 'Jul', gold: 680, silver: 730, platinum: 880, goldDisplay: '1,180', silverDisplay: '31%', platinumDisplay: '29%' },
   { month: 'Aug', gold: 780, silver: 630, platinum: 910, goldDisplay: '1,290', silverDisplay: '27%', platinumDisplay: '32%' },
   { month: 'Sep', gold: 910, silver: 740, platinum: 990, goldDisplay: '1,420', silverDisplay: '29%', platinumDisplay: '35%' },
-  { month: 'Nov', gold: 620, silver: 890, platinum: 810, goldDisplay: '1,080', silverDisplay: '33%', platinumDisplay: '28%' },
   { month: 'Oct', gold: 400, silver: 620, platinum: 590, goldDisplay: '780', silverDisplay: '24%', platinumDisplay: '20%' },
+  { month: 'Nov', gold: 620, silver: 890, platinum: 810, goldDisplay: '1,080', silverDisplay: '33%', platinumDisplay: '28%' },
   { month: 'Dec', gold: 620, silver: 870, platinum: 760, goldDisplay: '1,100', silverDisplay: '32%', platinumDisplay: '26%' },
 ]
 
@@ -130,8 +130,8 @@ export default function MembershipStatusReportGraph({
       </div>
 
       {/* ─── Responsive Graph SVG Container ─── */}
-      <div className="relative w-full overflow-x-auto overflow-y-hidden no-scrollbar pt-2">
-        <div className="min-w-[680px]">
+      <div className="relative w-full overflow-x-auto no-scrollbar pt-2">
+        <div className="relative min-w-[680px] pt-24">
           <svg
             viewBox={`0 0 ${width} ${height}`}
             className="w-full h-auto overflow-visible cursor-crosshair"
@@ -287,8 +287,8 @@ export default function MembershipStatusReportGraph({
               className="absolute pointer-events-none transition-all duration-150 z-20"
               style={{
                 left: `${(activeGold.x / width) * 100}%`,
-                top: `${(activeGold.y / height) * 100}%`,
-                transform: 'translate(-50%, -125%)',
+                top: `calc(6rem + ${(activeGold.y / height) * 100}% * 0.72)`,
+                transform: `translate(${hoverIndex === 0 ? '-10%' : hoverIndex === DEFAULT_DATA.length - 1 ? '-90%' : '-50%'}, -115%)`,
               }}
             >
               <div className="bg-[#121318]/95 border border-[rgba(255,255,255,0.14)] rounded-2xl p-3.5 shadow-[0_20px_45px_rgba(0,0,0,0.9),0_0_24px_rgba(234,179,8,0.18)] backdrop-blur-2xl min-w-[170px] space-y-2">

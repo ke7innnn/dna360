@@ -18,7 +18,7 @@ import type { TrainerCommission } from '@/types/trainer'
 import { toast } from '@/components/app/ui/toast'
 
 export default function TrainerCommissionPage() {
-  const [selectedTrainerId, setSelectedTrainerId] = useState('usr_trainer_01')
+  const [selectedTrainerId, setSelectedTrainerId] = useState('usr_tr_head_01')
   const [commissions, setCommissions] = useState<TrainerCommission[]>([])
 
   const refreshCommissions = () => {
@@ -126,8 +126,8 @@ export default function TrainerCommissionPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-56">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-full sm:w-56">
             <Select value={selectedTrainerId} onValueChange={setSelectedTrainerId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

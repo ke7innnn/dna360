@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Dumbbell, Utensils, Calendar, Activity,
@@ -18,6 +18,7 @@ import {
   getClientNutrition,
   getStoredPTSessions,
 } from '@/lib/trainers'
+import { getMemberById } from '@/lib/members'
 import { formatINR, formatDateTime, getInitials } from '@/lib/utils'
 import type { PTClient, WorkoutProgram, NutritionPlan } from '@/types/trainer'
 
@@ -35,12 +36,77 @@ export default function ClientProgramDrawer({
   const [activeTab, setActiveTab] = useState('workout')
   const [builderOpen, setBuilderOpen] = useState(false)
   const [logModalOpen, setLogModalOpen] = useState(false)
+  const [remoteProfile, setRemoteProfile] = useState<any | null>(null)
+
+  useEffect(() => {
+    if (!open || !client?.id) {
+      setRemoteProfile(null)
+      return
+    }
+    fetch(`/api/member/profile?memberId=${encodeURIComponent(client.id)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.profile) {
+          setRemoteProfile(data.profile)
+        }
+      })
+      .catch(() => null)
+  }, [open, client?.id])
 
   if (!client) return null
 
   const program = getClientProgram(client.id)
   const nutrition = getClientNutrition(client.id)
-  const allSessions = getStoredPTSessions().filter((s) => s.clientId === client.id)
+  const localSessions = getStoredPTSessions().filter((s) => s.clientId === client.id)
+  const remotePtLogs = Array.isArray(remoteProfile?.recentPtLogs) ? remoteProfile.recentPtLogs : []
+  const allSessions = [
+    ...localSessions,
+    ...remotePtLogs
+      .filter((r: any) => !localSessions.some((l) => l.id === r.id))
+      .map((r: any) => ({
+        id: r.id,
+        clientId: client.id,
+        clientName: client.name,
+        trainerId: 'usr_tr_head_01',
+        trainerName: r.trainerName || 'Rajesh Poojary',
+        date: r.date,
+        durationMinutes: r.durationMinutes || 60,
+        workoutFocus: r.workoutFocus,
+        rating: r.rating || 5,
+        clientFeedback: r.clientFeedback,
+        commissionEarnedMinor: 67960,
+        status: r.status || 'completed',
+        ptTier: 'premium' as const,
+      })),
+  ]
+
+  const memberRecord = getMemberById(client.id)
+  const inbodyScans =
+    Array.isArray(remoteProfile?.recentMetrics) && remoteProfile.recentMetrics.length > 0
+      ? remoteProfile.recentMetrics.map((m: any) => ({
+          date: m.recordedAt ? String(m.recordedAt).slice(0, 10) : new Date().toISOString().slice(0, 10),
+          weightKg: m.weightKg ?? client.currentWeightKg,
+          bodyFatPct: m.bodyFatPct ?? client.bodyFatPct,
+          muscleMassKg: m.measurements?.muscleMassKg ?? Number(((m.weightKg || client.currentWeightKg) * 0.47).toFixed(1)),
+          bmi: Number(((m.weightKg || client.currentWeightKg) / (1.75 * 1.75)).toFixed(1)),
+        }))
+      : Array.isArray(memberRecord?.fitness_metrics) && memberRecord.fitness_metrics.length > 0
+      ? memberRecord.fitness_metrics.map((m) => ({
+          date: m.date ? String(m.date).slice(0, 10) : new Date().toISOString().slice(0, 10),
+          weightKg: m.weightKg ?? client.currentWeightKg,
+          bodyFatPct: m.bodyFatPct ?? client.bodyFatPct,
+          muscleMassKg: m.muscleMassKg ?? Number(((m.weightKg || client.currentWeightKg) * 0.47).toFixed(1)),
+          bmi: m.bmi ?? Number(((m.weightKg || client.currentWeightKg) / (1.75 * 1.75)).toFixed(1)),
+        }))
+      : [
+          {
+            date: client.lastSessionDate || new Date().toISOString().slice(0, 10),
+            weightKg: client.currentWeightKg,
+            bodyFatPct: client.bodyFatPct,
+            muscleMassKg: Number((client.currentWeightKg * 0.47).toFixed(1)),
+            bmi: Number((client.currentWeightKg / (1.75 * 1.75)).toFixed(1)),
+          },
+        ]
 
   return (
     <>
@@ -109,11 +175,11 @@ export default function ClientProgramDrawer({
 
           {/* Multi-Tab Workspace */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full grid grid-cols-4 glass-input p-1">
-              <TabsTrigger value="workout">Workout Split</TabsTrigger>
-              <TabsTrigger value="nutrition">Nutrition & Macros</TabsTrigger>
-              <TabsTrigger value="sessions">Session Log ({allSessions.length})</TabsTrigger>
-              <TabsTrigger value="inbody">InBody Progress</TabsTrigger>
+            <TabsList className="flex w-full overflow-x-auto h-auto min-h-10 glass-input p-1">
+              <TabsTrigger value="workout" className="shrink-0">Workout Split</TabsTrigger>
+              <TabsTrigger value="nutrition" className="shrink-0">Nutrition & Macros</TabsTrigger>
+              <TabsTrigger value="sessions" className="shrink-0">Session Log ({allSessions.length})</TabsTrigger>
+              <TabsTrigger value="inbody" className="shrink-0">InBody Progress</TabsTrigger>
             </TabsList>
 
             {/* TAB 1: Workout Split */}
@@ -298,8 +364,8 @@ export default function ClientProgramDrawer({
 
             {/* TAB 4: InBody Composition Progress */}
             <TabsContent value="inbody" className="space-y-4 pt-4">
-              <div className="rounded-xl glass-card overflow-hidden">
-                <table className="w-full text-xs text-left">
+              <div className="rounded-xl glass-card overflow-hidden overflow-x-auto">
+                <table className="min-w-[440px] w-full text-xs text-left">
                   <thead className="bg-[var(--app-glass-bg)] border-b border-[var(--app-glass-border)] text-[var(--app-text-muted)]">
                     <tr>
                       <th className="p-3">Scan Date</th>
@@ -310,20 +376,15 @@ export default function ClientProgramDrawer({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--app-glass-border)] font-sans tabular-nums">
-                    <tr>
-                      <td className="p-3 font-semibold text-[var(--app-text-primary)]">2026-08-20</td>
-                      <td className="p-3 font-bold text-[var(--aurora-1)]">78.5 kg</td>
-                      <td className="p-3 text-[var(--app-success)]">14.8%</td>
-                      <td className="p-3">37.2 kg</td>
-                      <td className="p-3">23.4</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 text-[var(--app-text-muted)]">2026-07-15</td>
-                      <td className="p-3">80.2 kg</td>
-                      <td className="p-3">16.2%</td>
-                      <td className="p-3">36.5 kg</td>
-                      <td className="p-3">23.9</td>
-                    </tr>
+                    {inbodyScans.map((scan: any, idx: number) => (
+                      <tr key={`${scan.date}_${idx}`}>
+                        <td className="p-3 font-semibold text-[var(--app-text-primary)]">{scan.date}</td>
+                        <td className="p-3 font-bold text-[var(--aurora-1)]">{scan.weightKg} kg</td>
+                        <td className="p-3 text-[var(--app-success)]">{scan.bodyFatPct}%</td>
+                        <td className="p-3">{scan.muscleMassKg} kg</td>
+                        <td className="p-3">{scan.bmi}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

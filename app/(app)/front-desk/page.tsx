@@ -30,8 +30,9 @@ import {
   getStoredPosSales,
   getStoredLockers,
   getStoredShifts,
+  syncFrontDeskFromRemote,
 } from '@/lib/frontdesk'
-import { getStoredAccessLogs, saveAccessLogs } from '@/lib/attendance'
+import { getStoredAccessLogs, saveAccessLogs, syncAccessLogsFromRemote } from '@/lib/attendance'
 import type { AccessLogEntry, AccessDecision } from '@/types/attendance'
 import { formatINR } from '@/lib/gst'
 import { getInitials } from '@/lib/utils'
@@ -129,6 +130,8 @@ export default function FrontDeskPage() {
 
   useEffect(() => {
     refreshData()
+    syncFrontDeskFromRemote().then(() => refreshData())
+    syncAccessLogsFromRemote().then(() => refreshData())
     const handleUpdate = () => refreshData()
     window.addEventListener('dna360_frontdesk_updated', handleUpdate)
     window.addEventListener('dna360_access_logs_updated', handleUpdate)
@@ -288,6 +291,14 @@ export default function FrontDeskPage() {
           last_visit_at: new Date().toISOString(),
           attendance_streak: (member.attendance_streak || 0) + 1,
         })
+        fetch('/api/member/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            memberId: member.id,
+            action: 'COMPLETE_WORKOUT',
+          }),
+        }).catch(() => {})
       } catch (e) {
         console.error('Failed to update member attendance statistics:', e)
       }
@@ -473,7 +484,7 @@ export default function FrontDeskPage() {
         italicWord="Turnstile"
         description="Mobile-first gate scanner, turnstile verification, trial pass issuance, and offline-tolerant access queue."
         actions={
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center flex-wrap gap-2">
             {liveClock && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.1] text-xs text-[var(--ink)] font-mono tabular-nums shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
@@ -509,7 +520,7 @@ export default function FrontDeskPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Scanner Input Form */}
           <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center text-white shadow-[0_0_12px_rgba(59,130,246,0.5)]">
                 <QrCode className="w-4 h-4" />
               </div>
@@ -521,16 +532,16 @@ export default function FrontDeskPage() {
               Scan turnstile RFID card, dynamic member QR token, or enter code (e.g. DNA-2025-0012)
             </p>
 
-            <form onSubmit={handleProcessScan} className="flex flex-col sm:flex-row gap-2">
+            <form onSubmit={handleProcessScan} className="flex flex-col sm:flex-row flex-wrap gap-2">
               <input
                 type="text"
                 value={scanInput}
                 onChange={(e) => setScanInput(e.target.value)}
                 placeholder="Scan or enter member code / phone / name..."
-                className="flex-1 bg-[#090B10] border border-[rgba(255,255,255,0.15)] focus:border-[var(--accent)] text-[var(--ink)] text-sm font-mono rounded-xl px-4 py-3 focus:outline-none shadow-inner"
+                className="flex-1 min-w-[220px] bg-[#090B10] border border-[rgba(255,255,255,0.15)] focus:border-[var(--accent)] text-[var(--ink)] text-sm font-mono rounded-xl px-4 py-3 focus:outline-none shadow-inner"
                 autoFocus
               />
-              <div className="flex gap-2">
+              <div className="flex items-center flex-wrap gap-2">
                 <Button
                   type="button"
                   variant="secondary"
@@ -610,15 +621,15 @@ export default function FrontDeskPage() {
 
       {/* ─── 2. Front Desk Operations Grid ─── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex items-center justify-between">
+        <Card className="p-4 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-ui text-xs text-[var(--muted)] block">Studio Lockers</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 {availableLockers} Free
               </span>
             </div>
-            <div className="flex items-baseline gap-2 mt-0.5">
+            <div className="flex flex-wrap items-baseline gap-2 mt-0.5">
               <span className="font-display font-bold text-2xl text-[var(--ink)]">
                 {occupiedLockers} Active
               </span>
@@ -637,7 +648,7 @@ export default function FrontDeskPage() {
           </Button>
         </Card>
 
-        <Card className="p-4 flex items-center justify-between">
+        <Card className="p-4 flex flex-wrap items-center justify-between gap-2">
           <div>
             <span className="font-ui text-xs text-[var(--muted)] block">Retail Sales Today</span>
             <span className="font-display font-bold text-2xl text-[var(--ink)]">
@@ -649,7 +660,7 @@ export default function FrontDeskPage() {
           </Button>
         </Card>
 
-        <Card className="p-4 flex items-center justify-between">
+        <Card className="p-4 flex flex-wrap items-center justify-between gap-2">
           <div>
             <span className="font-ui text-xs text-[var(--muted)] block">Active Trial Passes</span>
             <span className="font-display font-bold text-2xl text-[var(--ink)]">
@@ -665,7 +676,7 @@ export default function FrontDeskPage() {
       {/* ─── 3. Live Member Check-ins & Walk-in Leads Dual-Console ─── */}
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--line)] pb-4 mb-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap">
             <button
               type="button"
               onClick={() => setActiveTab('checkins')}
@@ -700,7 +711,7 @@ export default function FrontDeskPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {activeTab === 'checkins' ? (
               <p className="font-ui text-xs text-[var(--muted)]">
                 Real-time turnstile entry logs &amp; gate status
@@ -760,7 +771,7 @@ export default function FrontDeskPage() {
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
         memberCode="DNA-2025-0001"
-        memberName="Arjun Mehta"
+        memberName="Aarav Mehta"
         planName="Annual Gym Package 1"
         onSimulateScan={(code) => executeScanLookup(code)}
       />

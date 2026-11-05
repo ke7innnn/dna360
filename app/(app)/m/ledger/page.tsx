@@ -112,7 +112,7 @@ export default function MemberPTLedgerPage() {
   const progressPercent = ptTotal > 0 ? Math.min(100, Math.round((ptRemaining / ptTotal) * 100)) : 0
 
   return (
-    <div className="w-full max-w-lg mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none pb-28 relative">
+    <div className="w-full max-w-lg md:max-w-3xl mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none pb-28 md:pb-12 relative overflow-x-hidden">
       {/* ─── Ambient Glows ─── */}
       <div
         className="pointer-events-none absolute top-12 right-2 w-72 h-72 rounded-full opacity-30 -z-10 blur-3xl"
@@ -241,8 +241,8 @@ export default function MemberPTLedgerPage() {
 
       {/* ─── Deduction History ─── */}
       <div className="space-y-3.5 pt-1">
-        <div className="flex items-center justify-between pb-0.5">
-          <div className="space-y-0.5">
+        <div className="flex items-center justify-between gap-2 pb-0.5">
+          <div className="space-y-0.5 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-ui text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-[#60A5FA]" />

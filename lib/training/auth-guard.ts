@@ -62,7 +62,17 @@ export function canAccessMemberTraining(
   }
 
   // 3. Trainer / Coach access check: MUST have active assignment row
-  if (roleSlug === 'TRAINER' || roleSlug === 'HEAD_TRAINER') {
+  const TRAINER_ROLE_SLUGS = [
+    'TRAINER',
+    'HEAD_TRAINER',
+    'PERSONAL_TRAINER',
+    'PILATES_INSTRUCTOR',
+    'GENERAL_TRAINER',
+    'NUTRITIONIST',
+    'MASSEUR',
+    'CENTRE_MANAGER',
+  ]
+  if (TRAINER_ROLE_SLUGS.includes(roleSlug)) {
     const memberPrograms = getMemberPrograms(targetMemberId)
     const hasActiveAssignment = memberPrograms.some(
       mp => mp.trainerId === user.id && mp.status === 'ACTIVE'

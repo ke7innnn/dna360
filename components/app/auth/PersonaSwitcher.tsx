@@ -4,16 +4,54 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, ChevronRight, Shield, Sparkles, Check, Lock, DollarSign } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { SEEDED_USERS } from '@/lib/auth'
+import { SEEDED_USERS, SEEDED_ROLE_DEFINITIONS, POWAI_BRANCH, CLUB_ID_POWAI } from '@/lib/auth'
 import { canAccessRevenue } from '@/config/permissions'
 import { cn } from '@/lib/utils'
+import type { AuthUser } from '@/types/auth'
+
+const MEMBER_PERSONAS: AuthUser[] = [
+  {
+    id: 'mem_001',
+    clubId: CLUB_ID_POWAI,
+    type: 'MEMBER',
+    name: 'Aarav Mehta',
+    email: 'aarav.mehta@gmail.com',
+    phone: '+919820011111',
+    role: SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1],
+    designation: 'Member (Active · PT)',
+    branchId: 'pow',
+    branches: [POWAI_BRANCH],
+    status: 'active',
+    membershipStatus: 'ACTIVE',
+    can_view_revenue: false,
+    requires_login: true,
+  },
+  {
+    id: 'mem_002',
+    clubId: CLUB_ID_POWAI,
+    type: 'MEMBER',
+    name: 'Priya Sharma',
+    email: 'priya.s@outlook.com',
+    phone: '+919820022222',
+    role: SEEDED_ROLE_DEFINITIONS[SEEDED_ROLE_DEFINITIONS.length - 1],
+    designation: 'Member (Active · Pilates)',
+    branchId: 'pow',
+    branches: [POWAI_BRANCH],
+    status: 'active',
+    membershipStatus: 'ACTIVE',
+    can_view_revenue: false,
+    requires_login: true,
+  },
+]
 
 export default function PersonaSwitcher({ compact = false }: { compact?: boolean }) {
   const { user, switchPersona } = useAuth()
   const [filter, setFilter] = useState<'all' | 'revenue' | 'trainers' | 'members'>('all')
 
+  const allPersonas = [...SEEDED_USERS, ...MEMBER_PERSONAS]
+
   // Pick key representative personas
-  const keyPersonas = SEEDED_USERS.filter((p) => {
+  const keyPersonas = allPersonas.filter((p) => {
     if (filter === 'revenue') return canAccessRevenue(p.role.slug)
     if (filter === 'trainers') return p.role.slug.toUpperCase().includes('TRAINER') || p.role.slug.toUpperCase() === 'MASSEUR'
     if (filter === 'members') return p.type === 'MEMBER'
@@ -103,13 +141,13 @@ export default function PersonaSwitcher({ compact = false }: { compact?: boolean
                   {hasRevenue && (
                     <span
                       title="Revenue Access (The Wall)"
-                      className="px-1 py-0.2 rounded font-ui text-[9px] font-bold bg-[rgba(52,211,153,0.15)] text-[var(--green)] border border-[rgba(52,211,153,0.3)]"
+                      className="px-1 py-0.5 rounded font-ui text-[9px] font-bold bg-[rgba(52,211,153,0.15)] text-[var(--green)] border border-[rgba(52,211,153,0.3)]"
                     >
                       ₹ REVENUE
                     </span>
                   )}
                   {persona.membershipStatus === 'EXPIRED' && (
-                    <span className="px-1 py-0.2 rounded font-ui text-[9px] font-bold bg-[rgba(239,68,68,0.15)] text-[#EF4444] border border-[rgba(239,68,68,0.3)]">
+                    <span className="px-1 py-0.5 rounded font-ui text-[9px] font-bold bg-[rgba(239,68,68,0.15)] text-[#EF4444] border border-[rgba(239,68,68,0.3)]">
                       EXPIRED
                     </span>
                   )}

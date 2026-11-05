@@ -17,9 +17,11 @@ import CreateClassModal from '@/components/app/classes/CreateClassModal'
 import BookClassModal from '@/components/app/classes/BookClassModal'
 import { getSessions, getStoredStudios } from '@/lib/classes'
 import type { ClassSession, StudioRoom } from '@/types/class'
+import { useAuth } from '@/context/AuthContext'
 import { cn, getInitials } from '@/lib/utils'
 
 export default function ClassesPage() {
+  const { can } = useAuth()
   const [sessions, setSessions] = useState<ClassSession[]>([])
   const [studios, setStudios] = useState<StudioRoom[]>([])
   
@@ -37,12 +39,37 @@ export default function ClassesPage() {
   const [bookModalOpen, setBookModalOpen] = useState(false)
   const [bookModalSession, setBookModalSession] = useState<ClassSession | null>(null)
 
-  const refreshClasses = () => {
+  const refreshClasses = async () => {
+    // 1. Instant local render
     const list = getSessions({
       category: categoryFilter !== 'all' ? categoryFilter : undefined,
     })
     setSessions(list)
+    setSelectedSession((prev) => (prev ? list.find((s) => s.id === prev.id) || prev : null))
     setStudios(getStoredStudios())
+
+    // 2. Authoritative fetch from Supabase central database
+    if (typeof window !== 'undefined') {
+      try {
+        const res = await fetch('/api/classes')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.sessions && Array.isArray(data.sessions) && data.sessions.length > 0) {
+            // Silently persist authoritative Supabase state to eliminate zombie cancelled bookings on next render
+            try {
+              localStorage.setItem('dna360_class_sessions_v2', JSON.stringify(data.sessions))
+            } catch {}
+            const filtered = categoryFilter !== 'all'
+              ? data.sessions.filter((s: ClassSession) => s.category === categoryFilter)
+              : data.sessions
+            setSessions(filtered)
+            setSelectedSession((prev) => (prev ? data.sessions.find((s: ClassSession) => s.id === prev.id) || null : null))
+          }
+        }
+      } catch (err) {
+        console.warn('Classes DB sync notice:', err)
+      }
+    }
   }
 
   useEffect(() => {
@@ -52,16 +79,29 @@ export default function ClassesPage() {
     return () => window.removeEventListener('dna360_classes_updated', handleUpdate)
   }, [categoryFilter])
 
-  // Week Days configuration
-  const weekDays = [
-    { dayIndex: 1, name: 'Mon', fullName: 'Monday', dateTag: '7 Sep', group: 'Group A (MWF)', desc: 'Reformer Core & Athletic Flow' },
-    { dayIndex: 2, name: 'Tue', fullName: 'Tuesday', dateTag: '8 Sep', group: 'Group B (TThS)', desc: 'Reformer Sculpt & Jumpboard' },
-    { dayIndex: 3, name: 'Wed', fullName: 'Wednesday', dateTag: '9 Sep', group: 'Group A (MWF)', desc: 'Reformer Posture & Balance' },
-    { dayIndex: 4, name: 'Thu', fullName: 'Thursday', dateTag: '10 Sep', group: 'Group B (TThS)', desc: 'Reformer Athletic Conditioning' },
-    { dayIndex: 5, name: 'Fri', fullName: 'Friday', dateTag: '11 Sep', group: 'Group A (MWF)', desc: 'Reformer Dynamic Strength' },
-    { dayIndex: 6, name: 'Sat', fullName: 'Saturday', dateTag: '12 Sep', group: 'Group B (TThS)', desc: 'Weekend Intensity & Trials' },
-    { dayIndex: 0, name: 'Sun', fullName: 'Sunday', dateTag: '13 Sep', group: 'Weekend All-Access', desc: 'Restorative & Workshops' },
-  ]
+  // Dynamically compute current week days (Mon-Sun) with live dates
+  const weekDays = useMemo(() => {
+    const now = new Date()
+    const currentDay = now.getDay() // 0 = Sun, 1 = Mon..
+    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay
+
+    const baseConfigs = [
+      { dayIndex: 1, name: 'Mon', fullName: 'Monday', offset: 0, group: 'Group A (MWF)', desc: 'Reformer Core & Athletic Flow' },
+      { dayIndex: 2, name: 'Tue', fullName: 'Tuesday', offset: 1, group: 'Group B (TThS)', desc: 'Reformer Sculpt & Jumpboard' },
+      { dayIndex: 3, name: 'Wed', fullName: 'Wednesday', offset: 2, group: 'Group A (MWF)', desc: 'Reformer Posture & Balance' },
+      { dayIndex: 4, name: 'Thu', fullName: 'Thursday', offset: 3, group: 'Group B (TThS)', desc: 'Reformer Athletic Conditioning' },
+      { dayIndex: 5, name: 'Fri', fullName: 'Friday', offset: 4, group: 'Group A (MWF)', desc: 'Reformer Dynamic Strength' },
+      { dayIndex: 6, name: 'Sat', fullName: 'Saturday', offset: 5, group: 'Group B (TThS)', desc: 'Weekend Intensity & Trials' },
+      { dayIndex: 0, name: 'Sun', fullName: 'Sunday', offset: 6, group: 'Weekend All-Access', desc: 'Restorative & Workshops' },
+    ]
+
+    return baseConfigs.map((c) => {
+      const d = new Date(now)
+      d.setDate(now.getDate() + mondayOffset + c.offset)
+      const dateTag = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+      return { ...c, dateTag }
+    })
+  }, [])
 
   // Filter sessions based on all criteria
   const filteredSessions = useMemo(() => {
@@ -126,14 +166,16 @@ export default function ClassesPage() {
         title="Classes & Studio Timetable"
         description="Reformer Pilates MWF vs TThSat Batches · Group Activity Studios · 1-day advance booking window"
         actions={
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => setCreateModalOpen(true)}
-            icon={<Plus className="w-3.5 h-3.5" />}
-          >
-            Schedule class slot
-          </Button>
+          can('classes.manage.all') ? (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setCreateModalOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Schedule class slot
+            </Button>
+          ) : undefined
         }
       />
 
@@ -328,7 +370,7 @@ export default function ClassesPage() {
                       {day.name}
                     </span>
                     <span className={cn(
-                      'font-ui text-[10px] tabular-nums font-semibold px-1.5 py-0.2 rounded-full',
+                      'font-ui text-[10px] tabular-nums font-semibold px-1.5 py-0.5 rounded-full',
                       isSelected
                         ? 'bg-[var(--accent)] text-white'
                         : 'bg-[rgba(255,255,255,0.06)] text-[var(--muted)]'
@@ -417,7 +459,7 @@ export default function ClassesPage() {
                 return (
                   <Card
                     key={session.id}
-                    className="p-4 sm:p-4.5 flex flex-col justify-between hover:border-[rgba(59,130,246,0.45)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)] transition-all duration-160 group relative overflow-hidden space-y-3.5"
+                    className="p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(59,130,246,0.45)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)] transition-all duration-160 group relative overflow-hidden space-y-3.5"
                   >
                     {/* Top Specular Edge Highlight on Hover */}
                     <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[rgba(59,130,246,0.4)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />

@@ -54,7 +54,7 @@ export default function OccupancyHeatmap() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="flex items-center gap-1 text-[var(--aurora-1)]">
               <span className="w-2.5 h-2.5 rounded-sm bg-[var(--aurora-1)]" />
               <span>Regular</span>
@@ -67,35 +67,37 @@ export default function OccupancyHeatmap() {
         </div>
 
         {/* Bar Chart Container */}
-        <div className="h-44 flex items-end justify-between gap-1.5 pt-4">
-          {hourlyData.map((item) => {
-            const heightPct = Math.round((item.count / maxCount) * 100)
-            return (
-              <div key={item.hour} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end">
-                {/* Tooltip on hover */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-[0.625rem] text-white px-1.5 py-0.5 rounded font-sans tabular-nums pointer-events-none whitespace-nowrap shadow-lg">
-                  {item.count} check-ins
+        <div className="overflow-x-auto pb-1">
+          <div className="h-44 min-w-[440px] flex items-end justify-between gap-1.5 pt-4">
+            {hourlyData.map((item) => {
+              const heightPct = Math.round((item.count / maxCount) * 100)
+              return (
+                <div key={item.hour} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end">
+                  {/* Tooltip on hover */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-[0.625rem] text-white px-1.5 py-0.5 rounded font-sans tabular-nums pointer-events-none whitespace-nowrap shadow-lg">
+                    {item.count} check-ins
+                  </div>
+
+                  {/* Animated bar */}
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${heightPct}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className={cn(
+                      'w-full rounded-t-md transition-all',
+                      item.isPeak
+                        ? 'bg-gradient-to-t from-[var(--app-danger)]/80 to-[var(--app-danger)] shadow-sm shadow-[var(--app-danger)]/20'
+                        : 'bg-gradient-to-t from-[var(--aurora-1)]/60 to-[var(--aurora-1)]'
+                    )}
+                  />
+
+                  <span className="text-[0.625rem] font-sans tabular-nums text-[var(--app-text-muted)] mt-1">
+                    {item.hour.slice(0, 2)}
+                  </span>
                 </div>
-
-                {/* Animated bar */}
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${heightPct}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  className={cn(
-                    'w-full rounded-t-md transition-all',
-                    item.isPeak
-                      ? 'bg-gradient-to-t from-[var(--app-danger)]/80 to-[var(--app-danger)] shadow-sm shadow-[var(--app-danger)]/20'
-                      : 'bg-gradient-to-t from-[var(--aurora-1)]/60 to-[var(--aurora-1)]'
-                  )}
-                />
-
-                <span className="text-[0.625rem] font-sans tabular-nums text-[var(--app-text-muted)] rotate-[-45deg] sm:rotate-0 mt-1">
-                  {item.hour.slice(0, 2)}
-                </span>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </GlassCard>
 

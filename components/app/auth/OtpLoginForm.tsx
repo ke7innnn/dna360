@@ -190,7 +190,7 @@ export default function OtpLoginForm() {
       </div>
 
       {/* 6 Digit Boxes */}
-      <div className="flex items-center justify-between gap-2 pt-2" onPaste={handlePaste}>
+      <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-2" onPaste={handlePaste}>
         {otp.map((digit, idx) => (
           <input
             key={idx}
@@ -203,7 +203,7 @@ export default function OtpLoginForm() {
             value={digit}
             onChange={(e) => handleOtpChange(idx, e.target.value)}
             onKeyDown={(e) => handleKeyDown(idx, e)}
-            className="w-11 h-12 text-center text-lg font-bold rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none font-data tabular-nums"
+            className="w-10 sm:w-11 h-12 text-center text-base sm:text-lg font-bold rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] outline-none font-data tabular-nums min-w-0"
             autoFocus={idx === 0}
           />
         ))}

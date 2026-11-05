@@ -181,7 +181,7 @@ export default function MemberBottomTabs() {
       {sideMenuOpen && (
         <div
           onClick={() => setSideMenuOpen(false)}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity animate-in fade-in duration-200"
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity animate-in fade-in duration-200"
           aria-hidden="true"
         />
       )}
@@ -189,7 +189,7 @@ export default function MemberBottomTabs() {
       {/* Floating Navigation Dock Container */}
       <div
         ref={menuRef}
-        className="fixed bottom-[calc(14px+env(safe-area-inset-bottom,0px))] inset-x-0 z-50 flex flex-col items-center pointer-events-none px-4"
+        className="md:hidden fixed bottom-[calc(14px+env(safe-area-inset-bottom,0px))] inset-x-0 z-50 flex flex-col items-center pointer-events-none px-2.5 sm:px-4"
       >
         {/* Animated Expandable Side Options Tray */}
         {sideMenuOpen && (
@@ -246,7 +246,7 @@ export default function MemberBottomTabs() {
         {/* Floating Bubble Pill Dock */}
         <nav
           aria-label="Member Navigation"
-          className="pointer-events-auto h-[60px] px-2.5 rounded-full bg-[#0C0720]/90 backdrop-blur-2xl border border-[rgba(168,85,247,0.28)] shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(139,92,246,0.2)] flex items-center gap-1 select-none"
+          className="pointer-events-auto h-[58px] sm:h-[60px] px-2 sm:px-2.5 max-w-full rounded-full bg-[#0C0720]/90 backdrop-blur-2xl border border-[rgba(168,85,247,0.28)] shadow-[0_16px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(139,92,246,0.2)] flex items-center gap-0.5 sm:gap-1 select-none"
         >
           {/* Option 1: Home */}
           {(() => {
@@ -257,7 +257,7 @@ export default function MemberBottomTabs() {
                 key={tab.id}
                 href={tab.href}
                 className={cn(
-                  'h-[46px] px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[54px]',
+                  'h-[46px] px-2.5 sm:px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[46px] sm:min-w-[54px]',
                   isActive
                     ? 'text-white'
                     : 'text-[#94A3B8] hover:text-white active:scale-95'
@@ -292,7 +292,7 @@ export default function MemberBottomTabs() {
                 key={tab.id}
                 href={tab.href}
                 className={cn(
-                  'h-[46px] px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[54px]',
+                  'h-[46px] px-2.5 sm:px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[46px] sm:min-w-[54px]',
                   isActive
                     ? 'text-white'
                     : 'text-[#94A3B8] hover:text-white active:scale-95'
@@ -346,7 +346,7 @@ export default function MemberBottomTabs() {
                 key={tab.id}
                 href={tab.href}
                 className={cn(
-                  'h-[46px] px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[54px]',
+                  'h-[46px] px-2.5 sm:px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[46px] sm:min-w-[54px]',
                   isActive
                     ? 'text-white'
                     : 'text-[#94A3B8] hover:text-white active:scale-95'
@@ -381,7 +381,7 @@ export default function MemberBottomTabs() {
                 key={tab.id}
                 href={tab.href}
                 className={cn(
-                  'h-[46px] px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[54px]',
+                  'h-[46px] px-2.5 sm:px-3.5 rounded-full flex flex-col items-center justify-center transition-all duration-200 relative min-w-[46px] sm:min-w-[54px]',
                   isActive
                     ? 'text-white'
                     : 'text-[#94A3B8] hover:text-white active:scale-95'

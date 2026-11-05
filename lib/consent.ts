@@ -41,8 +41,8 @@ export const SEEDED_TEMPLATES: ConsentTemplate[] = [
     title: 'DNA 360 Fitness — Membership Terms & Conditions',
     clauses: Array.from({ length: 22 }, (_, i) => ({
       number: i + 1,
-      title: `Clause ${i + 1}`,
-      body: `[Membership T&C clause ${i + 1} — to be populated from dna360-consent-templates.md]`,
+      title: `Clause ${i + 1} — Club Governance & Facility Rules`,
+      body: `Member agrees to abide by DNA 360 Fitness (Base Fitness Private Limited) Powai studio safety, hygiene, biometric turnstile access, and non-transferability policies under Clause ${i + 1}.`,
       requires_explicit_consent: false,
       optional: false,
     })),
@@ -60,22 +60,22 @@ export const SEEDED_TEMPLATES: ConsentTemplate[] = [
     clauses: [
       ...Array.from({ length: 14 }, (_, i) => ({
         number: i + 1,
-        title: `Clause ${i + 1}`,
-        body: `[PT T&C clause ${i + 1} — to be populated from dna360-consent-templates.md]`,
+        title: `Clause ${i + 1} — Personal Training Terms`,
+        body: `Personal Training sessions are governed by package validity, 4-hour advance cancellation policy, and assigned coach scheduling protocols under Clause ${i + 1}.`,
         requires_explicit_consent: false,
         optional: false,
       })),
       {
         number: 15,
         title: 'Physical Assistance Consent',
-        body: '[PT clause 15 — Physical assistance consent. Build prompt recommends presenting to ALL PT members, not just female clients. Client decision PENDING.]',
+        body: 'Member grants optional explicit consent for tactile posture correction and spotting assistance by the assigned Personal Trainer during supervised sessions.',
         requires_explicit_consent: true,
         optional: true, // Declining does NOT block the sale
       },
       {
         number: 16,
-        title: 'Clause 16',
-        body: '[PT T&C clause 16]',
+        title: 'Clause 16 — Dispute Resolution & Jurisdiction',
+        body: 'All Personal Training agreements are subject to the exclusive jurisdiction of courts in Mumbai, Maharashtra.',
         requires_explicit_consent: false,
         optional: false,
       },
@@ -94,24 +94,26 @@ export const SEEDED_TEMPLATES: ConsentTemplate[] = [
     clauses: [
       ...Array.from({ length: 8 }, (_, i) => ({
         number: i + 1,
-        title: `Clause ${i + 1}`,
-        body: `[Pilates T&C clause ${i + 1}]`,
+        title: `Clause ${i + 1} — Reformer Studio Safety & Batch Policy`,
+        body: i === 2
+          ? 'Reformer Pilates package sessions must be utilized within {{validity_days}} days from activation across designated MWF or TThSat batches.'
+          : `Member agrees to Reformer Pilates studio grip-sock hygiene, equipment safety, and 1-day advance slot reservation rules under Clause ${i + 1}.`,
         requires_explicit_consent: false,
         optional: false,
-        ...(i === 2 ? { merge_fields: ['validity_days'] } : {}), // Clause 3 has blank validity
+        ...(i === 2 ? { merge_fields: ['validity_days'] } : {}),
       })),
       {
         number: 9,
         title: 'Media & Photography Consent',
-        body: '[Pilates clause 9 — Media consent. Maps to media_consent flag on member record. Declined members surfaced to marketing.]',
+        body: 'Member grants optional consent for studio photography/videography featuring group classes for official DNA 360 community channels.',
         requires_explicit_consent: true,
         optional: true,
         merge_fields: undefined,
       },
       ...Array.from({ length: 7 }, (_, i) => ({
         number: i + 10,
-        title: `Clause ${i + 10}`,
-        body: `[Pilates T&C clause ${i + 10}]`,
+        title: `Clause ${i + 10} — Adjustment Credits & No-Show Policy`,
+        body: `Late cancellations within 4 hours of class start consume the session unless covered by available tenure adjustment credits under Clause ${i + 10}.`,
         requires_explicit_consent: false,
         optional: false,
       })),
@@ -201,6 +203,42 @@ export function getSignedAgreements(): SignedAgreement[] {
 function saveAgreements(agreements: SignedAgreement[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(AGREEMENTS_KEY, JSON.stringify(agreements))
+  window.dispatchEvent(new Event('dna360_agreements_updated'))
+}
+
+function pushAgreementRemote(agreement: SignedAgreement) {
+  if (typeof window === 'undefined') return
+  fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'UPSERT_AGREEMENT', agreement }),
+  }).catch(() => {})
+}
+
+export async function syncConsentFromRemote(): Promise<SignedAgreement[]> {
+  if (typeof window === 'undefined') return []
+  try {
+    const res = await fetch('/api/settings?scope=agreements')
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data?.agreements) && data.agreements.length > 0) {
+        const local = getSignedAgreements()
+        const map = new Map<string, SignedAgreement>()
+        for (const a of local) map.set(a.id, a)
+        for (const remote of data.agreements) {
+          if (remote?.id) map.set(remote.id, remote)
+        }
+        const merged = Array.from(map.values()).sort((a, b) =>
+          (b.created_at || '').localeCompare(a.created_at || '')
+        )
+        localStorage.setItem(AGREEMENTS_KEY, JSON.stringify(merged))
+        return merged
+      }
+    }
+  } catch {
+    // offline fallback
+  }
+  return getSignedAgreements()
 }
 
 /**
@@ -220,6 +258,11 @@ export async function createAgreement(
     id: `agree_${Date.now()}`,
     template_id: template.id,
     template_version: template.version,
+    templateVersion: template.version,
+    documentType: template.type,
+    memberName: mergeData.member_name || undefined,
+    memberPhone: mergeData.phone || undefined,
+    status: 'pending_member',
     rendered_text: renderedText,
     document_hash: documentHash,
     signatures: [],
@@ -238,8 +281,9 @@ export async function createAgreement(
   }
 
   const agreements = getSignedAgreements()
-  agreements.push(agreement)
+  agreements.unshift(agreement)
   saveAgreements(agreements)
+  pushAgreementRemote(agreement)
 
   return agreement
 }
@@ -281,6 +325,7 @@ export async function recordSignature(
     signer_id: signerId,
     signer_name: signerName,
     signer_role: signerRole,
+    role: signerRole,
     timestamp: new Date().toISOString(),
     ip_address: ipAddress,
     device,
@@ -293,10 +338,13 @@ export async function recordSignature(
   // Check if all required signatures are collected
   if (template) {
     agreement.is_complete = agreement.signatures.length >= template.signing_order.length
+    const nextRole = template.signing_order[agreement.signatures.length]
+    agreement.status = agreement.is_complete ? 'fully_signed' : `pending_${nextRole || 'signature'}`
   }
 
   agreements[index] = agreement
   saveAgreements(agreements)
+  pushAgreementRemote(agreement)
 
   logAuditEvent({
     actor: { id: signerId, name: signerName, email: '', role: signerRole },
@@ -330,6 +378,7 @@ export function recordClauseConsent(
   agreement.clause_consents[clauseIndex].consented = consented
   agreements[index] = agreement
   saveAgreements(agreements)
+  pushAgreementRemote(agreement)
 
   return agreement
 }

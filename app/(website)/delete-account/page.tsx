@@ -131,7 +131,7 @@ export default function DeleteAccountPage() {
                 <span>Statutory Legal Retention</span>
               </div>
               <p className="text-xs text-[#bbb]">
-                Under Section 36 of the Indian Central Goods and Services Tax (CGST) Act, 2017, registered commercial establishments are legally obligated to maintain books of accounts and financial Tax Invoices for a minimum retention period of 6 years (72 months). Historical tax invoices issued under GSTIN 27AAACD1234F1Z5 are archived securely for tax audit compliance and cannot be expunged.
+                Under Section 36 of the Indian Central Goods and Services Tax (CGST) Act, 2017, registered commercial establishments are legally obligated to maintain books of accounts and financial Tax Invoices for a minimum retention period of 6 years (72 months). Historical tax invoices issued by Base Fitness Private Limited under GSTIN 27AAICB3300R1ZH are archived securely for tax audit compliance and cannot be expunged.
               </p>
             </div>
           </div>

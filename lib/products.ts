@@ -274,6 +274,30 @@ export function saveProducts(products: Product[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products))
   window.dispatchEvent(new Event('dna360_products_updated'))
+  fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'SAVE_CONFIG', key: 'products', payload: products }),
+  }).catch(() => {})
+}
+
+export async function syncProductsFromRemote(): Promise<Product[]> {
+  if (typeof window === 'undefined') return SEEDED_PRODUCTS
+  try {
+    const res = await fetch('/api/settings?scope=products')
+    if (res.ok) {
+      const data = await res.json()
+      const remoteProducts = data?.configs?.products
+      if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(remoteProducts))
+        window.dispatchEvent(new Event('dna360_products_updated'))
+        return remoteProducts
+      }
+    }
+  } catch {
+    // fallback to local
+  }
+  return getStoredProducts()
 }
 
 // ─── Queries ───

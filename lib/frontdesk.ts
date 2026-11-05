@@ -47,7 +47,7 @@ export const SEEDED_LEADS: WalkInLead[] = [
     status: 'trial_active',
     notes: 'Looking for Annual All-Access with 1-on-1 PT coaching.',
     createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    assignedTo: 'Amit Sharma (Fitness Consultant)',
+    assignedTo: 'Aftab Memon (Front Desk)',
   },
   {
     id: 'lead_002',
@@ -62,7 +62,7 @@ export const SEEDED_LEADS: WalkInLead[] = [
     status: 'inquiry',
     notes: 'Interested in Power Yoga and Reformer Pilates.',
     createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    assignedTo: 'Neha Kapoor (Fitness Consultant)',
+    assignedTo: 'Pallavi More (Fitness Consultant)',
   },
   {
     id: 'lead_003',
@@ -72,9 +72,9 @@ export const SEEDED_LEADS: WalkInLead[] = [
     source: 'Referral',
     trialPassIssued: false,
     status: 'inquiry',
-    notes: 'Referred by Arjun Mehta. Enquired about CrossFit sessions.',
+    notes: 'Referred by Aarav Mehta. Enquired about CrossFit sessions.',
     createdAt: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-    assignedTo: 'Amit Sharma (Fitness Consultant)',
+    assignedTo: 'Rajesh Poojary (Head Coach)',
   },
 ]
 
@@ -84,7 +84,7 @@ export const SEEDED_POS_SALES: PosSale[] = [
     receiptNumber: 'DNA/POS/2026-08/1042',
     customerType: 'member',
     customerId: 'mem_001',
-    customerName: 'Arjun Mehta',
+    customerName: 'Aarav Mehta',
     customerPhone: '+919820011111',
     items: [
       { productId: 'prod_01', productName: 'DNA 360 Triple Chocolate Whey Isolate Shake', quantity: 1, priceMinor: 25000, totalMinor: 25000 },
@@ -95,7 +95,7 @@ export const SEEDED_POS_SALES: PosSale[] = [
     totalMinor: 61000,
     paymentMode: 'UPI',
     transactionRef: 'UPI/POS/99120',
-    recordedBy: 'Amit Sharma',
+    recordedBy: 'Aftab Memon',
     timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
   },
 ]
@@ -108,7 +108,7 @@ function buildInitialLockers(): Locker[] {
     const num = 100 + i
     const id = `lck_m_${String(i).padStart(2, '0')}`
     if (num === 101) {
-      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_001', assignedMemberName: 'Arjun Mehta', assignedMemberPhone: '+919820011111', assignedAt: '2025-01-15T00:00:00Z', rentalExpiryDate: '2027-01-15', keyTag: 'KEY-M-01' })
+      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_001', assignedMemberName: 'Aarav Mehta', assignedMemberPhone: '+919820011111', assignedAt: '2025-01-15T00:00:00Z', rentalExpiryDate: '2027-01-15', keyTag: 'KEY-M-01' })
     } else if (num === 103) {
       list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_003', assignedMemberName: 'Vikram Singh', assignedMemberPhone: '+919820034567', assignedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), keyTag: 'KEY-M-03' })
     } else if (num === 105) {
@@ -164,7 +164,7 @@ export const SEEDED_SHIFTS: CashShiftHandover[] = [
     id: 'shift_001',
     shiftType: 'morning',
     staffId: 'usr_fc_01',
-    staffName: 'Amit Sharma',
+    staffName: 'Aftab Memon',
     openedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     closedAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
     openingFloatMinor: 500000, // ₹5,000
@@ -205,9 +205,51 @@ export function getStoredPosProducts(): PosProduct[] {
   try { return JSON.parse(stored) } catch { return SEEDED_POS_PRODUCTS }
 }
 
+function pushFrontDeskRemote(key: 'fd_pos_products' | 'fd_pos_sales' | 'fd_lockers' | 'fd_shifts', payload: unknown) {
+  if (typeof window === 'undefined') return
+  fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'SAVE_CONFIG', key, payload }),
+  }).catch(() => {})
+}
+
+export async function syncFrontDeskFromRemote(): Promise<void> {
+  if (typeof window === 'undefined') return
+  try {
+    const res = await fetch('/api/settings?scope=frontdesk')
+    if (!res.ok) return
+    const data = await res.json()
+    const cfg = data?.configs || {}
+    let changed = false
+    if (Array.isArray(cfg.fd_pos_products) && cfg.fd_pos_products.length > 0) {
+      localStorage.setItem(POS_PRODUCTS_KEY, JSON.stringify(cfg.fd_pos_products))
+      changed = true
+    }
+    if (Array.isArray(cfg.fd_pos_sales) && cfg.fd_pos_sales.length > 0) {
+      localStorage.setItem(POS_SALES_KEY, JSON.stringify(cfg.fd_pos_sales))
+      changed = true
+    }
+    if (Array.isArray(cfg.fd_lockers) && cfg.fd_lockers.length >= 48) {
+      localStorage.setItem(LOCKERS_KEY, JSON.stringify(cfg.fd_lockers))
+      changed = true
+    }
+    if (Array.isArray(cfg.fd_shifts) && cfg.fd_shifts.length > 0) {
+      localStorage.setItem(SHIFTS_KEY, JSON.stringify(cfg.fd_shifts))
+      changed = true
+    }
+    if (changed) {
+      window.dispatchEvent(new CustomEvent('dna360_frontdesk_updated'))
+    }
+  } catch {
+    // offline fallback
+  }
+}
+
 export function savePosProducts(prods: PosProduct[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(POS_PRODUCTS_KEY, JSON.stringify(prods))
+  pushFrontDeskRemote('fd_pos_products', prods)
 }
 
 export function getStoredPosSales(): PosSale[] {
@@ -223,6 +265,7 @@ export function getStoredPosSales(): PosSale[] {
 export function savePosSales(sales: PosSale[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(POS_SALES_KEY, JSON.stringify(sales))
+  pushFrontDeskRemote('fd_pos_sales', sales)
 }
 
 export function getStoredLockers(): Locker[] {
@@ -248,6 +291,7 @@ export function getStoredLockers(): Locker[] {
 export function saveLockers(lockers: Locker[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(LOCKERS_KEY, JSON.stringify(lockers))
+  pushFrontDeskRemote('fd_lockers', lockers)
   window.dispatchEvent(new CustomEvent('dna360_frontdesk_updated'))
 }
 
@@ -264,6 +308,7 @@ export function getStoredShifts(): CashShiftHandover[] {
 export function saveShifts(shifts: CashShiftHandover[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(SHIFTS_KEY, JSON.stringify(shifts))
+  pushFrontDeskRemote('fd_shifts', shifts)
 }
 
 // ─── Operations ───
@@ -367,6 +412,24 @@ export function createWalkInLead(data: Partial<WalkInLead> & Pick<WalkInLead, 'n
   }
   leads.unshift(newLead)
   saveLeads(leads)
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prospectName: newLead.name,
+        phone: newLead.phone,
+        email: newLead.email,
+        source: newLead.source || 'Walk-in',
+        interestArea: newLead.goal || 'General Gym',
+        assignedStaffName: newLead.assignedTo || 'Pallavi More',
+        trialDate: newLead.trialDate,
+        notes: newLead.notes,
+      }),
+    }).catch(() => {})
+  }
+
   return newLead
 }
 

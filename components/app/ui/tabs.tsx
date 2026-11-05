@@ -13,7 +13,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'inline-flex items-center gap-1 p-1 rounded-xl',
+      'inline-flex min-h-10 h-auto max-w-full items-center gap-1 p-1 rounded-xl overflow-x-auto',
       'glass-input',
       className
     )}
@@ -29,7 +29,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg',
+      'inline-flex shrink-0 items-center justify-center px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg',
       'text-[var(--app-text-muted)] whitespace-nowrap',
       'transition-all duration-150',
       'hover:text-[var(--app-text-secondary)]',

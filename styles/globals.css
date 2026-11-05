@@ -405,7 +405,7 @@ h1 em, h2 em, h3 em, .page-title em {
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
-@media (max-width: 900px) {
+@media (max-width: 1080px) {
   .console-strip {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -437,16 +437,16 @@ h1 em, h2 em, h3 em, .page-title em {
 /* Console Bento */
 .console-bento {
   display: grid;
-  grid-template-columns: 400px 1fr 250px;
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr) 250px;
   gap: 14px;
   align-items: start;
 }
-@media (max-width: 1200px) {
+@media (max-width: 1440px) {
   .console-bento {
     grid-template-columns: 1fr 1fr;
   }
 }
-@media (max-width: 840px) {
+@media (max-width: 1024px) {
   .console-bento {
     grid-template-columns: 1fr;
   }
@@ -685,6 +685,8 @@ h1 em, h2 em, h3 em, .page-title em {
   border-radius: 999px;
   padding: 5px 12px;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 .console-arow-go:hover {

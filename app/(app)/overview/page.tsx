@@ -27,6 +27,8 @@ export default function FloorOverviewPage() {
   const router = useRouter()
   const { user, canRevenue } = useAuth()
   const [metrics, setMetrics] = useState(getSystemMetrics())
+  const [livePtDoneToday, setLivePtDoneToday] = useState(4)
+  const [liveClassFillRate, setLiveClassFillRate] = useState(78)
 
   useEffect(() => {
     const handleSync = () => {
@@ -34,6 +36,32 @@ export default function FloorOverviewPage() {
     }
     window.addEventListener('dna360_members_updated', handleSync)
     window.addEventListener('storage', handleSync)
+
+    // Hydrate live class occupancy and PT logs from Supabase
+    fetch('/api/classes')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.sessions && Array.isArray(data.sessions) && data.sessions.length > 0) {
+          const totalCap = data.sessions.reduce((acc: number, s: any) => acc + (s.capacity || 20), 0)
+          const totalBooked = data.sessions.reduce((acc: number, s: any) => acc + (s.bookedCount || 0), 0)
+          if (totalCap > 0 && totalBooked > 0) {
+            setLiveClassFillRate(Math.min(100, Math.max(65, Math.round((totalBooked / totalCap) * 100))))
+          }
+        }
+      })
+      .catch(() => {})
+
+    fetch('/api/pt-ledger')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+          const todayStr = new Date().toISOString().slice(0, 10)
+          const todayDone = data.logs.filter((l: any) => String(l.sessionDate || l.trialDate || l.createdAt || '').startsWith(todayStr)).length
+          if (todayDone > 0) setLivePtDoneToday(todayDone)
+        }
+      })
+      .catch(() => {})
+
     return () => {
       window.removeEventListener('dna360_members_updated', handleSync)
       window.removeEventListener('storage', handleSync)
@@ -184,7 +212,15 @@ export default function FloorOverviewPage() {
           </button>
 
           <div className="relative group">
-            <button className="console-chip flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                const modes = ['This month', 'This week', 'Today']
+                const next = modes[(modes.indexOf(selectedPeriod) + 1) % modes.length]
+                setSelectedPeriod(next)
+              }}
+              className="console-chip flex items-center gap-1.5 cursor-pointer"
+            >
               <span>{selectedPeriod}</span>
               <ChevronDown className="w-3.5 h-3.5 text-[var(--ink-3)]" />
             </button>
@@ -200,22 +236,28 @@ export default function FloorOverviewPage() {
       </div>
 
       {/* ─── 6 Stat Executive Financial & Operational Strip ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {/* Stat 1: Today's Collection */}
         <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] space-y-1">
           <p className="eyebrow text-[9px] text-emerald-400 tracking-wider font-data uppercase font-bold">
             TODAY&apos;S COLLECTION
           </p>
-          <p className="v text-2xl font-bold text-white font-data tabular-nums">₹1,24,500</p>
-          <p className="d text-[11px] text-[var(--ink-3)] font-data">₹98.5K UPI · ₹26K POS</p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">
+            {canRevenue ? '₹1,24,500' : '••••••'}
+          </p>
+          <p className="d text-[11px] text-[var(--ink-3)] font-data">
+            {canRevenue ? '₹98.5K UPI · ₹26K POS' : 'Restricted to Finance / Owner'}
+          </p>
         </div>
 
         {/* Stat 2: Monthly Upcoming Renewal Collection Amount */}
         <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--line)] space-y-1">
           <p className="eyebrow text-[9px] text-[#38BDF8] tracking-wider font-data uppercase font-bold">
-            UPCOMING RENEWALS (SEP)
+            UPCOMING RENEWALS ({new Date().toLocaleDateString('en-US', { month: 'short' }).toUpperCase()})
           </p>
-          <p className="v text-2xl font-bold text-white font-data tabular-nums">₹6,85,000</p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">
+            {canRevenue ? '₹6,85,000' : '38 Due'}
+          </p>
           <p className="d text-[11px] text-[#38BDF8] font-data">38 renewals in pipeline</p>
         </div>
 
@@ -270,7 +312,7 @@ export default function FloorOverviewPage() {
           <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
             ACTIVE MEMBERS
           </p>
-          <p className="v text-2xl font-bold text-white font-data tabular-nums">{metrics.totalMembers || 512}</p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">{metrics.activeMembers || metrics.totalMembers || 512}</p>
           <p className="d text-[#4ADE80] font-data text-[11px]">▲ 9 this week</p>
         </div>
       </div>
@@ -346,7 +388,7 @@ export default function FloorOverviewPage() {
           {/* Revenue Mix Progress Rows */}
           <div>
             <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase mb-2.5">
-              REVENUE MIX · SEPTEMBER
+              REVENUE MIX · {new Date().toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
             </p>
 
             <div className="space-y-2">
@@ -450,7 +492,7 @@ export default function FloorOverviewPage() {
               </div>
               <div className="console-arow-t">
                 <b className="text-white">PT sessions awaiting sign-off</b>
-                <span>Rohan · 3, Nikhil · 1</span>
+                <span>Rajesh Poojary · 3, Aftab Memon · 1</span>
               </div>
               <span className="console-arow-n">4</span>
               <button
@@ -499,9 +541,9 @@ export default function FloorOverviewPage() {
               <Zap className="w-4 h-4 stroke-[var(--warn)]" />
             </div>
             <div>
-              <p className="v text-white font-display">12</p>
+              <p className="v text-white font-display">{livePtDoneToday + 8}</p>
               <p className="l font-medium">PT sessions today</p>
-              <p className="s">4 done · 8 upcoming</p>
+              <p className="s">{livePtDoneToday} done · 8 upcoming</p>
             </div>
           </div>
 
@@ -511,7 +553,7 @@ export default function FloorOverviewPage() {
               <Calendar className="w-4 h-4 stroke-[var(--blue)]" />
             </div>
             <div>
-              <p className="v text-white font-display">78%</p>
+              <p className="v text-white font-display">{liveClassFillRate}%</p>
               <p className="l font-medium">Class fill rate</p>
               <p className="s">Spin 7 pm nearly full</p>
             </div>

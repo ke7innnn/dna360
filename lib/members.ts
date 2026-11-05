@@ -214,7 +214,7 @@ export function generate659Members(): Member[] {
       invoice_id: `inv_${id}`,
       invoice_number: `DNA/2026-27/${String(i).padStart(4, '0')}`,
       sales_rep_id: 'usr_fc_01',
-      sales_rep_name: 'Amit Sharma',
+      sales_rep_name: 'Rajesh Poojary',
       sessions_total: pkg.totalSessions || null,
       sessions_consumed: pkg.totalSessions ? pkg.totalSessions - (remainingSessions || 0) : null,
       sessions_remaining: remainingSessions,
@@ -248,7 +248,7 @@ export function generate659Members(): Member[] {
         id_type: 'Aadhaar',
         id_last_four: String(1000 + (i * 13) % 9000),
         id_verified: i % 5 !== 0,
-        id_verifier: 'Amit Sharma',
+        id_verifier: 'Aftab Memon',
         id_verified_at: '2025-01-16T10:00:00Z',
         blood_group: bloodGroups[i % bloodGroups.length],
         emergency_contact_name: `${fn} Family`,
@@ -281,7 +281,7 @@ export function generate659Members(): Member[] {
       tags: isComplimentary ? ['Complimentary', 'VIP'] : (pkg.name.includes('Pilates') ? ['Pilates Studio'] : ['Gym Floor']),
       blacklisted: isBlacklisted,
       blacklist_reason: isBlacklisted ? 'Turnstile misconduct or unpaid dues' : null,
-      blacklisted_by: isBlacklisted ? 'Amit Sharma' : null,
+      blacklisted_by: isBlacklisted ? 'Rajesh Poojary' : null,
       blacklisted_at: isBlacklisted ? '2026-06-01T10:00:00Z' : null,
       complimentary: isComplimentary,
       special_inclusions: i % 15 === 0 ? 'Complimentary steam access + dedicated locker 14' : null,
@@ -525,6 +525,14 @@ export function createMember(data: Partial<Member> & Pick<Member, 'first_name' |
   members.unshift(newMember)
   saveMembers(members)
 
+  if (typeof window !== 'undefined') {
+    fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ member: newMember }),
+    }).catch(() => {})
+  }
+
   logAuditEvent({
     actor: { id: 'system', name: 'Front Desk', email: '', role: 'Staff' },
     action: 'CREATE',
@@ -554,6 +562,12 @@ export function updateMember(id: string, updates: Partial<Member>): Member | nul
       localStorage.removeItem(`dna360_member_portal_state_${id}`)
       localStorage.removeItem(`dna360_member_portal_state_${updated.member_code}`)
     } catch {}
+
+    fetch('/api/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ member: updated }),
+    }).catch(() => {})
   }
 
   logAuditEvent({
@@ -652,6 +666,10 @@ export function deleteMember(memberId: string): boolean {
       localStorage.removeItem(`dna360_member_portal_state_${member.member_code}`)
       localStorage.removeItem(`dna360_member_portal_bookings_${memberId}`)
     } catch {}
+
+    fetch(`/api/members?id=${encodeURIComponent(memberId)}`, {
+      method: 'DELETE',
+    }).catch(() => {})
   }
 
   logAuditEvent({

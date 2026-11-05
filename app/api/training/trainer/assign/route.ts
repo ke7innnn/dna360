@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateTrainingSession } from '@/lib/training/auth-guard'
 import { assignProgramToClient } from '@/lib/training/trainer-service'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +25,45 @@ export async function POST(req: NextRequest) {
       scheduleDays: body.scheduleDays,
       startDate: body.startDate,
     })
+
+    // Sync assigned trainer and MemberProgram to Supabase
+    try {
+      await prisma.member.update({
+        where: { id: body.memberId },
+        data: {
+          assignedTrainerId: user.id,
+          assignedTrainerName: user.name,
+        },
+      })
+
+      if (memberProgram) {
+        await prisma.memberProgram.upsert({
+          where: { id: memberProgram.id },
+          update: {
+            trainerId: user.id,
+            status: 'ACTIVE',
+            snapshot: (memberProgram.snapshot as any) || {},
+          },
+          create: {
+            id: memberProgram.id,
+            memberId: body.memberId,
+            trainerId: user.id,
+            coachingMode: 'TRAINER_LED',
+            sourceProgramId: memberProgram.sourceProgramId || body.programId,
+            currentVersion: memberProgram.currentVersion || 1,
+            snapshot: (memberProgram.snapshot as any) || {},
+            adaptationPolicy: (memberProgram.adaptationPolicy as any) || 'FLEXIBLE',
+            scheduleMode: (memberProgram.scheduleMode as any) || 'FLEXIBLE',
+            scheduleDays: memberProgram.scheduleDays || [1, 3, 5],
+            sessionsPerWeek: memberProgram.sessionsPerWeek || 3,
+            startDate: new Date(memberProgram.startDate || Date.now()),
+            status: 'ACTIVE',
+          },
+        })
+      }
+    } catch (dbErr) {
+      console.warn('Supabase trainer program assign sync notice:', dbErr)
+    }
 
     return NextResponse.json({ memberProgram }, { status: 201 })
   } catch (err: any) {

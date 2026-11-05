@@ -28,7 +28,7 @@ export default function FreezeMemberModal({
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   )
   const [reasonCategory, setReasonCategory] = useState('Medical Injury / Doctor Advised')
-  const [approverName, setApproverName] = useState('Vikramaditya Shinde (Asst. Sales Head)')
+  const [approverName, setApproverName] = useState('Monica Picholla (Asst. Sales Head)')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -39,6 +39,25 @@ export default function FreezeMemberModal({
     setLoading(true)
 
     const fullReason = `[MANAGER EXCEPTION FREEZE] ${reasonCategory}. Approved By: ${approverName}. Details: ${notes || 'None'}`
+    const days = Math.max(
+      1,
+      Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))
+    )
+
+    const updatedMemberships = (member.active_memberships || []).map((ms) => {
+      if (!ms.expiry_date) return ms
+      const exp = new Date(ms.expiry_date)
+      exp.setDate(exp.getDate() + days)
+      return {
+        ...ms,
+        expiry_date: exp.toISOString().slice(0, 10),
+      }
+    })
+
+    updateMember(member.id, {
+      active_memberships: updatedMemberships,
+      tags: Array.from(new Set([...(member.tags || []), 'Freeze Override'])),
+    })
 
     addStaffNote(member.id, {
       authorId: 'usr_mgr_sales_head',
@@ -48,11 +67,28 @@ export default function FreezeMemberModal({
       type: 'warning',
     })
 
+    if (typeof window !== 'undefined') {
+      fetch('/api/member/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: member.id,
+          action: 'FREEZE_REQUEST',
+          startDate,
+          endDate,
+          days,
+          daysCount: days,
+          reason: fullReason,
+        }),
+      }).catch(() => {})
+    }
+
     setLoading(false)
     toast.success(`Manager freeze override applied for ${member.name}`, {
       description: `Logged exception under ${approverName}`,
     })
     if (onUpdated) onUpdated()
+    if (onFrozen) onFrozen()
     onOpenChange(false)
   }
 
@@ -125,7 +161,7 @@ export default function FreezeMemberModal({
           required
         />
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--app-glass-border)]">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-[var(--app-glass-border)] pb-[max(0.25rem,env(safe-area-inset-bottom))]">
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

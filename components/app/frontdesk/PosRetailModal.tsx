@@ -12,6 +12,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { getStoredPosProducts, createPosSale } from '@/lib/frontdesk'
 import { getStoredMembers } from '@/lib/members'
 import { formatINR } from '@/lib/utils'
+import { backCalculateGst } from '@/lib/gst'
 import type { PosProduct, PosSaleItem, PosSale } from '@/types/frontdesk'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
@@ -66,9 +67,11 @@ export default function PosRetailModal({
     setCart(updated)
   }
 
-  const subtotalMinor = cart.reduce((acc, item) => acc + item.product.priceMinor * item.quantity, 0)
-  const gstMinor = Math.round(subtotalMinor * 0.18) // 18% GST standard retail
-  const grandTotalMinor = subtotalMinor + gstMinor
+  const inclusiveTotalMinor = cart.reduce((acc, item) => acc + item.product.priceMinor * item.quantity, 0)
+  const gst = backCalculateGst(inclusiveTotalMinor, 0.05)
+  const subtotalMinor = gst.taxable
+  const gstMinor = gst.totalTax
+  const grandTotalMinor = gst.inclusive
 
   const handleCheckout = (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,7 +97,7 @@ export default function PosRetailModal({
       gstMinor,
       totalMinor: grandTotalMinor,
       paymentMode,
-      recordedBy: 'Amit Sharma (Front Desk)',
+      recordedBy: 'Aftab Memon (Front Desk)',
     })
 
     setLoading(false)
@@ -242,7 +245,7 @@ export default function PosRetailModal({
                   <SelectContent>
                     {members.map((m) => (
                       <SelectItem key={m.id} value={m.id}>
-                        {m.name} ({m.memberCode})
+                        {m.name} ({m.member_code || m.memberCode})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -277,15 +280,15 @@ export default function PosRetailModal({
           <div className="space-y-3 pt-3 border-t border-[var(--app-glass-border)]">
             <div className="space-y-1 font-sans tabular-nums text-xs">
               <div className="flex justify-between text-[var(--app-text-muted)]">
-                <span>Subtotal:</span>
+                <span>Taxable Value (Ex-Tax):</span>
                 <span>{formatINR(subtotalMinor)}</span>
               </div>
               <div className="flex justify-between text-[var(--app-text-muted)]">
-                <span>GST (18%):</span>
+                <span>GST (5% — CGST 2.5% + SGST 2.5%):</span>
                 <span>{formatINR(gstMinor)}</span>
               </div>
               <div className="flex justify-between font-bold text-sm text-[var(--app-text-primary)] pt-1 border-t border-[var(--app-glass-border)]">
-                <span>Total:</span>
+                <span>Total (GST Inclusive):</span>
                 <span className="text-[var(--aurora-1)]">{formatINR(grandTotalMinor)}</span>
               </div>
             </div>

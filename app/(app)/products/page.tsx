@@ -14,7 +14,7 @@ import Modal from '@/components/app/ui/modal'
 import Input from '@/components/app/ui/input'
 import Card from '@/components/app/ui/glass-card'
 import PageHeader from '@/components/app/ui/PageHeader'
-import { getProducts, createProduct, CATEGORY_LABELS } from '@/lib/products'
+import { getProducts, createProduct, CATEGORY_LABELS, syncProductsFromRemote } from '@/lib/products'
 import { formatINR, backCalculateGst } from '@/lib/gst'
 import type { Product, ProductCategory } from '@/types/product'
 import { toast } from '@/components/app/ui/toast'
@@ -131,6 +131,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     refreshProducts()
+    syncProductsFromRemote().then(() => refreshProducts())
     const handleUpdate = () => refreshProducts()
     window.addEventListener('dna360_products_updated', handleUpdate)
     return () => window.removeEventListener('dna360_products_updated', handleUpdate)

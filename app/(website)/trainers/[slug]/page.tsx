@@ -34,9 +34,9 @@ export default function TrainerDetail({ params }: { params: { slug: string } }) 
   return (
     <>
       <Navbar />
-      <main className="bg-[#08080a] min-h-screen pt-[100px] text-white">
+      <main className="bg-[#08080a] min-h-screen pt-[96px] text-white">
         {/* Breadcrumb & Navigation Strip */}
-        <div className="border-b border-white/10 bg-[#0d0d10]/80 backdrop-blur-md sticky top-[80px] z-30">
+        <div className="border-b border-white/10 bg-[#0d0d10]/80 backdrop-blur-md sticky top-[96px] z-30">
           <div className="max-w-7xl mx-auto px-4 py-3.5 flex items-center justify-between">
             <Link
               href="/trainers"

@@ -2,18 +2,55 @@
 
 import React, { useState, useEffect } from 'react'
 import MemberBottomTabs from '@/components/app/member/MemberBottomTabs'
+import MemberTopNav from '@/components/app/member/MemberTopNav'
 import MemberQrModal from '@/components/app/member/MemberQrModal'
 import MemberProfileModal from '@/components/app/member/MemberProfileModal'
 import MemberUpgradeModal from '@/components/app/member/MemberUpgradeModal'
+import { useAuth } from '@/context/AuthContext'
+import { getMemberPortalState } from '@/lib/memberportal'
 
 export default function MemberTrainingLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { user } = useAuth()
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
+
+  const [memberCode, setMemberCode] = useState('')
+  const [memberName, setMemberName] = useState('')
+  const [planName, setPlanName] = useState('')
+
+  useEffect(() => {
+    const syncIdentity = async () => {
+      const local = getMemberPortalState(user?.id || user?.name)
+      setMemberCode(local.memberCode || '')
+      setMemberName(local.memberName || user?.name || 'Member')
+      setPlanName(local.planName || 'No active plan')
+
+      const userRef = user?.id || user?.name || ''
+      if (userRef && typeof window !== 'undefined') {
+        try {
+          const res = await fetch(`/api/member/profile?memberId=${encodeURIComponent(userRef)}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data.profile) {
+              setMemberCode(data.profile.memberCode || local.memberCode || '')
+              setMemberName(data.profile.memberName || local.memberName || 'Member')
+              setPlanName(data.profile.planName || local.planName || 'No active plan')
+            }
+          }
+        } catch {
+          // Offline fallback
+        }
+      }
+    }
+    syncIdentity()
+    window.addEventListener('dna360_memberportal_updated', syncIdentity)
+    return () => window.removeEventListener('dna360_memberportal_updated', syncIdentity)
+  }, [user?.id, user?.name])
 
   useEffect(() => {
     const handleOpenProfile = () => setProfileModalOpen(true)
@@ -45,24 +82,36 @@ export default function MemberTrainingLayout({
         }}
       />
 
-      {/* Main Screen Content - Centered Mobile App Container */}
-      <main className="flex-1 relative z-10 w-full max-w-lg mx-auto">
+      {/* Desktop / Tablet Top Navigation Bar */}
+      <MemberTopNav
+        onOpenQr={() => setQrModalOpen(true)}
+        onOpenProfile={() => setProfileModalOpen(true)}
+        planName={planName}
+      />
+
+      {/* Main Screen Content - Responsive Mobile-to-Desktop Container (no z-index trap!) */}
+      <main className="flex-1 relative w-full max-w-lg md:max-w-4xl lg:max-w-5xl mx-auto pt-[env(safe-area-inset-top,0px)] md:pt-0">
         {children}
       </main>
 
-      {/* Floating Bottom Tab Bar - Always Present on App */}
+      {/* Floating Bottom Tab Bar - Mobile Only */}
       <MemberBottomTabs />
 
       {/* Globally Accessible Check-in QR Modal */}
       <MemberQrModal
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
+        memberCode={memberCode}
+        memberName={memberName}
+        planName={planName}
       />
 
       {/* Member Profile & Settings Modal (Apple Guideline 5.1.1 compliant) */}
       <MemberProfileModal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
+        memberCode={memberCode}
+        planName={planName}
       />
 
       {/* Member Plan Upgrade & PT Buy Modal */}
@@ -71,7 +120,7 @@ export default function MemberTrainingLayout({
         onOpenChange={setUpgradeModalOpen}
         onUpgraded={() => {
           if (typeof window !== 'undefined') {
-            window.location.reload()
+            window.dispatchEvent(new Event('dna360_memberportal_updated'))
           }
         }}
       />

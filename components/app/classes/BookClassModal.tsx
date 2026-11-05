@@ -63,6 +63,7 @@ export default function BookClassModal({
         })
       }
       if (onBookingCreated) onBookingCreated()
+      if (onBooked) onBooked()
       onOpenChange(false)
     } else {
       toast.error(res.error || 'Failed to book class')

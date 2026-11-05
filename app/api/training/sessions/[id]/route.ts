@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { validateTrainingSession, canAccessMemberTraining } from '@/lib/training/auth-guard'
 import { getSessionById, getExerciseById } from '@/lib/training/db'
 import { finishWorkoutSession, getLastPerformance } from '@/lib/training/session-service'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(
   req: NextRequest,
@@ -58,6 +59,46 @@ export async function PUT(
       memberFeedback: body.memberFeedback,
       ptSessionId: body.ptSessionId,
     })
+
+    // Sync completed session & member streak/visits to Supabase
+    try {
+      await prisma.workoutSession.upsert({
+        where: { id: params.id },
+        update: {
+          status: 'COMPLETED',
+          completedAt: new Date(),
+          perceivedEffort: body.perceivedEffort || null,
+          memberFeedback: body.memberFeedback || null,
+          ptSessionId: body.ptSessionId || null,
+        },
+        create: {
+          id: params.id,
+          memberId: session.memberId,
+          title: session.title || 'Workout Session',
+          scheduledDate: session.scheduledDate ? new Date(session.scheduledDate) : new Date(),
+          startedAt: session.startedAt ? new Date(session.startedAt) : new Date(),
+          completedAt: new Date(),
+          status: 'COMPLETED',
+          perceivedEffort: body.perceivedEffort || null,
+          memberFeedback: body.memberFeedback || null,
+          ptSessionId: body.ptSessionId || null,
+        },
+      })
+
+      const dbMember = await prisma.member.findUnique({ where: { id: session.memberId } })
+      if (dbMember) {
+        await prisma.member.update({
+          where: { id: session.memberId },
+          data: {
+            attendanceStreak: (dbMember.attendanceStreak || 0) + 1,
+            totalCheckIns: (dbMember.totalCheckIns || 0) + 1,
+            lastVisitAt: new Date(),
+          },
+        })
+      }
+    } catch (dbErr) {
+      console.warn('Supabase finishWorkoutSession sync notice:', dbErr)
+    }
 
     return NextResponse.json({ session: completed, prs })
   } catch (err: any) {

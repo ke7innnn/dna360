@@ -28,11 +28,17 @@ export async function POST(req: NextRequest) {
     const reason = body?.reason || 'User-initiated account & personal data deletion request'
     const isPublicWebForm = !session && (memberEmail || memberPhone)
 
-    // For in-app confirmation, allow optional confirmationWord check if sent
-    if (session && body?.confirmationWord && body.confirmationWord.toUpperCase() !== 'DELETE') {
+    // Require explicit confirmation word DELETE for both in-app and public web form requests
+    if (body?.confirmationWord && body.confirmationWord.toUpperCase() !== 'DELETE') {
       return NextResponse.json(
         { error: 'Confirmation word must be DELETE to proceed with account deletion.' },
         { status: 400 }
+      )
+    }
+    if (!session && (!body?.confirmationWord || body.confirmationWord.toUpperCase() !== 'DELETE')) {
+      return NextResponse.json(
+        { error: 'Authentication or explicit DELETE confirmation is required to process account deletion.' },
+        { status: 401 }
       )
     }
 
@@ -54,14 +60,69 @@ export async function POST(req: NextRequest) {
 
     if (foundMember) {
       targetMemberId = foundMember.id
+      const anonEmail = `deleted_${Date.now()}_${foundMember.email || 'user@dna360.in'}`
+      const anonPhone = `+9100000${Math.floor(10000 + Math.random() * 90000)}`
       try {
         updateMember(targetMemberId, {
           status: 'inactive',
-          email: `deleted_${Date.now()}_${foundMember.email || 'user@dna360.in'}`,
-          phone: `+9100000${Math.floor(10000 + Math.random() * 90000)}`,
+          email: anonEmail,
+          phone: anonPhone,
         })
       } catch (err) {
         console.warn('Failed to anonymize member record:', err)
+      }
+
+      try {
+        const { prisma } = await import('@/lib/prisma')
+        await prisma.member.update({
+          where: { id: targetMemberId },
+          data: {
+            status: 'inactive',
+            email: anonEmail,
+            phone: anonPhone,
+          },
+        })
+
+        // Prevent Zombie Roster Appearances: cancel active/waitlisted class bookings & decrement bookedCount
+        const activeBookings = await prisma.classBooking.findMany({
+          where: {
+            memberId: targetMemberId,
+            status: { in: ['confirmed', 'waitlisted'] },
+          },
+        })
+        if (activeBookings.length > 0) {
+          await prisma.classBooking.updateMany({
+            where: {
+              memberId: targetMemberId,
+              status: { in: ['confirmed', 'waitlisted'] },
+            },
+            data: {
+              status: 'cancelled',
+              cancelledAt: new Date(),
+            },
+          })
+          for (const bk of activeBookings) {
+            if (bk.status === 'confirmed') {
+              await prisma.classSession.updateMany({
+                where: { id: bk.sessionId, bookedCount: { gt: 0 } },
+                data: { bookedCount: { decrement: 1 } },
+              })
+            } else if (bk.status === 'waitlisted') {
+              await prisma.classSession.updateMany({
+                where: { id: bk.sessionId, waitlistCount: { gt: 0 } },
+                data: { waitlistCount: { decrement: 1 } },
+              })
+            }
+          }
+        }
+
+        // Archive active coaching programs so deleted member disappears from trainer active roster
+        await prisma.memberProgram.updateMany({
+          where: { memberId: targetMemberId, status: 'ACTIVE' },
+          data: { status: 'ARCHIVED', endDate: new Date() },
+        })
+      } catch (dbErr) {
+        console.warn('Supabase member anonymization notice:', dbErr)
       }
     }
 

@@ -172,7 +172,7 @@ export default function ExpiryExplorerModal({
       <div className="space-y-4 font-sans text-xs">
         {/* ─── Mode Switcher Tabs ─── */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] max-w-full overflow-x-auto">
             {[
               { id: 'today', label: 'Same-Day (Today)' },
               { id: 'specific_date', label: 'Specific Date' },
@@ -183,7 +183,7 @@ export default function ExpiryExplorerModal({
                 key={tab.id}
                 onClick={() => setFilterMode(tab.id as ExpiryFilterPeriod)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
+                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0',
                   filterMode === tab.id
                     ? 'bg-[#38BDF8] text-[#05070E] font-bold shadow-sm'
                     : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
@@ -246,7 +246,7 @@ export default function ExpiryExplorerModal({
             )}
 
             {filterMode === 'range' && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-white/60">From:</span>
                 <input
                   type="date"
@@ -309,9 +309,9 @@ export default function ExpiryExplorerModal({
         </div>
 
         {/* ─── Table of Expiring Members ─── */}
-        <div className="max-h-96 overflow-y-auto rounded-xl border border-white/[0.08] bg-[#070A12]">
+        <div className="max-h-96 overflow-y-auto overflow-x-auto rounded-xl border border-white/[0.08] bg-[#070A12]">
           {filteredList.length > 0 ? (
-            <table className="w-full text-xs text-left">
+            <table className="min-w-[580px] w-full text-xs text-left">
               <thead className="sticky top-0 bg-[#0B0F19] text-[var(--ink-3)] uppercase text-[10px] font-semibold tracking-wider border-b border-white/[0.08] font-data">
                 <tr>
                   <th className="p-3">Member Details</th>

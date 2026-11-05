@@ -27,6 +27,7 @@ import { generateFutureSessions } from './revisions-service'
 import { auditTrainingEvent } from './auth-guard'
 import { getStoredMembers, updateMember } from '@/lib/members'
 import { getStoredPTSessions, savePTSessions } from '@/lib/trainers'
+import { SEEDED_USERS } from '@/lib/auth'
 import type { PTSessionLog } from '@/types/trainer'
 
 // ─── Trainer Client Roster (§6) ───
@@ -37,7 +38,13 @@ import type { PTSessionLog } from '@/types/trainer'
  */
 export function getTrainerClientRoster(trainerId: string): TrainerClientSummary[] {
   const members = getStoredMembers()
-  const isExecutive = trainerId === 'usr_owner_01' || trainerId === 'usr_staff_02' || trainerId === 'all'
+  const isExecutive =
+    trainerId === 'usr_owner_01' ||
+    trainerId === 'usr_staff_02' ||
+    trainerId === 'usr_staff_03' ||
+    trainerId === 'usr_staff_04' ||
+    trainerId === 'all'
+  const trainerUser = SEEDED_USERS.find((u) => u.id === trainerId)
 
   // Find members who have an active program assigned to this trainer OR are in assignedClientIds
   const clientSummaries: TrainerClientSummary[] = []
@@ -45,10 +52,11 @@ export function getTrainerClientRoster(trainerId: string): TrainerClientSummary[
   for (const m of members) {
     const activeProgram = getActiveMemberProgram(m.id)
     const isTrainerAssigned = activeProgram?.trainerId === trainerId
+    const isInAssignedClientIds = Boolean(trainerUser?.assignedClientIds?.includes(m.id))
 
     const shouldInclude = isExecutive
       ? Boolean(activeProgram || m.assigned_trainer_id || ['mem_001', 'mem_002', 'mem_003', 'mem_004', 'mem_005'].includes(m.id))
-      : (isTrainerAssigned || m.assigned_trainer_id === trainerId)
+      : (isTrainerAssigned || m.assigned_trainer_id === trainerId || isInAssignedClientIds)
 
     if (shouldInclude) {
       const sessions = getMemberSessions(m.id)
@@ -85,8 +93,8 @@ export function getTrainerClientRoster(trainerId: string): TrainerClientSummary[
         weekTotal: activeProgram?.snapshot?.weeks || 4,
         adherencePct: activeProgram ? adherencePct : (m.attendance_streak > 0 ? 85 : 45),
         lastLoggedSessionDate: lastLoggedSession?.completedAt || m.last_visit_at || null,
-        ptSessionsRemaining: ptMembership?.sessions_remaining ?? (m.id === 'mem_001' ? 8 : 12),
-        ptSessionsTotal: ptMembership?.sessions_total ?? 12,
+        ptSessionsRemaining: ptMembership?.sessions_remaining ?? (m.id === 'mem_001' ? 8 : 0),
+        ptSessionsTotal: ptMembership?.sessions_total ?? (m.id === 'mem_001' ? 12 : 0),
         ptTier: 'premium',
         deviationCount,
         hasUnreadNotes: false,
@@ -248,7 +256,7 @@ export function signOffPTSession(
     ms => ms.product_name?.toLowerCase().includes('pt') || ms.product_name?.toLowerCase().includes('personal')
   )
 
-  const currentRemaining = ptMembership?.sessions_remaining ?? (memberId === 'mem_001' ? 8 : 10)
+  const currentRemaining = ptMembership?.sessions_remaining ?? (memberId === 'mem_001' ? 8 : 0)
   if (currentRemaining <= 0) {
     return { success: false, remainingSessions: 0, error: 'No remaining PT sessions in member balance' }
   }
@@ -313,6 +321,18 @@ export function signOffPTSession(
         ptTier: 'premium',
       }
       savePTSessions([newLog, ...logs])
+
+      fetch('/api/pt-ledger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: member.id,
+          trainerId: trainer.id,
+          trainerName: trainer.name,
+          workoutFocus: note || '1-on-1 PT Session',
+          durationMinutes: 60,
+        }),
+      }).catch(err => console.warn('PT signoff DB sync note:', err))
     }
   } catch {}
 

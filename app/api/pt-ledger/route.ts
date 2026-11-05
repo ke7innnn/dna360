@@ -1,27 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from '@/lib/server-auth'
 import { toLocalDateStr } from '@/lib/dates'
 
 export async function GET(req: NextRequest) {
   try {
+    const { session } = await getServerSession(req)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const url = new URL(req.url)
     const memberId = url.searchParams.get('memberId')
     const trainerId = url.searchParams.get('trainerId')
 
-    if (!memberId && !trainerId) {
-      return NextResponse.json(
-        { error: 'memberId or trainerId is required' },
-        { status: 400 }
-      )
-    }
-
     const where: any = {}
     if (memberId) where.memberId = memberId
-    if (trainerId) where.trainerId = trainerId
+    if (trainerId) {
+      where.trainerId =
+        trainerId === 'usr_trainer_01' || trainerId === 'usr_tr_head_01'
+          ? { in: ['usr_trainer_01', 'usr_tr_head_01'] }
+          : trainerId
+    }
 
     const logs = await prisma.pTSessionLog.findMany({
       where,
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      take: 50,
     })
 
     // Also fetch PT membership balance if memberId is given
@@ -88,6 +93,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const { session } = await getServerSession(req)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
     const {
       memberId,

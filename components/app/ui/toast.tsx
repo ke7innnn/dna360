@@ -6,11 +6,12 @@ export function Toaster() {
   return (
     <SonnerToaster
       position="top-right"
+      className="!z-[90]"
       toastOptions={{
         unstyled: true,
         classNames: {
           toast: [
-            'flex items-start gap-3 p-4 rounded-[var(--r-md)] w-[360px]',
+            'flex items-start gap-3 p-4 rounded-[var(--r-md)] w-[calc(100vw-2rem)] sm:w-[360px] max-w-[360px]',
             'bg-[var(--bg-elev)] border border-[var(--line)] shadow-card backdrop-blur-[6px]',
             'text-sm font-ui font-medium text-[var(--ink)]',
           ].join(' '),

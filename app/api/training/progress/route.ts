@@ -7,6 +7,7 @@ import {
   getExerciseById,
 } from '@/lib/training/db'
 import { calculateEpley1RM } from '@/lib/training/session-service'
+import { prisma } from '@/lib/prisma'
 import type { PersonalRecord } from '@/types/training'
 
 export async function GET(req: NextRequest) {
@@ -20,7 +21,32 @@ export async function GET(req: NextRequest) {
 
     const memberId = resolved.memberId!
     const sessions = getMemberSessions(memberId).filter(s => s.status === 'COMPLETED')
-    const metrics = getMemberBodyMetrics(memberId)
+    let metrics = getMemberBodyMetrics(memberId)
+
+    // Query authoritative body metrics from Supabase
+    try {
+      const dbMetrics = await prisma.bodyMetric.findMany({
+        where: { memberId },
+        orderBy: { recordedAt: 'desc' },
+        take: 25,
+      })
+      if (dbMetrics.length > 0) {
+        const mapped = dbMetrics.map(m => ({
+          id: m.id,
+          memberId: m.memberId,
+          recordedAt: m.recordedAt.toISOString(),
+          weightKg: m.weightKg,
+          bodyFatPct: m.bodyFatPct,
+          measurements: (m.measurements as Record<string, number>) || null,
+          photoKeys: m.photoKeys || [],
+          recordedById: m.recordedById,
+        }))
+        const seenIds = new Set(mapped.map(x => x.id))
+        metrics = [...mapped, ...metrics.filter(x => !seenIds.has(x.id))]
+      }
+    } catch (dbErr) {
+      console.warn('Progress GET Supabase fallback:', dbErr)
+    }
 
     // Compute All-Time PRs & Exercise Timeline
     const prMap: Record<string, { maxWeight: number; best1RM: number; reps: number; achievedAt: string; exerciseName: string }> = {}
@@ -94,15 +120,37 @@ export async function POST(req: NextRequest) {
     if (resolved.errorResponse) return resolved.errorResponse
 
     const memberId = resolved.memberId!
+    const weightKg = body.weightKg ? parseFloat(body.weightKg) : null
+    const bodyFatPct = body.bodyFatPct ? parseFloat(body.bodyFatPct) : null
+    const recordedAt = body.recordedAt || new Date().toISOString()
+
     const metric = recordBodyMetric({
       memberId,
-      recordedAt: body.recordedAt || new Date().toISOString(),
-      weightKg: body.weightKg ? parseFloat(body.weightKg) : null,
-      bodyFatPct: body.bodyFatPct ? parseFloat(body.bodyFatPct) : null,
+      recordedAt,
+      weightKg,
+      bodyFatPct,
       measurements: body.measurements || null,
       photoKeys: body.photoKeys || [],
       recordedById: auth.user!.id,
     })
+
+    // Persist into Supabase BodyMetric table
+    try {
+      await prisma.bodyMetric.create({
+        data: {
+          id: metric.id,
+          memberId,
+          recordedAt: new Date(recordedAt),
+          weightKg,
+          bodyFatPct,
+          measurements: body.measurements || {},
+          photoKeys: body.photoKeys || [],
+          recordedById: auth.user!.id,
+        },
+      })
+    } catch (dbErr) {
+      console.warn('Supabase BodyMetric insert notice:', dbErr)
+    }
 
     return NextResponse.json({ bodyMetric: metric }, { status: 201 })
   } catch (err: any) {

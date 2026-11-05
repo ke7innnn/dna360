@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   CreditCard, Receipt, Plus, Search, Filter,
   Download, CheckCircle, Clock, AlertTriangle,
@@ -25,7 +26,8 @@ import type { TaxInvoice, InvoiceStatus } from '@/types/billing'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
 
-export default function BillingPage() {
+function BillingPageContent() {
+  const searchParams = useSearchParams()
   const [invoices, setInvoices] = useState<TaxInvoice[]>([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -34,8 +36,24 @@ export default function BillingPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<TaxInvoice | null>(null)
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
   const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false)
+  const [initialMemberId, setInitialMemberId] = useState<string | undefined>(undefined)
+  const [initialProductId, setInitialProductId] = useState<string | undefined>(undefined)
+  const [initialSearchQuery, setInitialSearchQuery] = useState<string | undefined>(undefined)
   const [creditNoteInvoice, setCreditNoteInvoice] = useState<TaxInvoice | null>(null)
   const [whatsAppTargetInvoice, setWhatsAppTargetInvoice] = useState<TaxInvoice | null>(null)
+
+  useEffect(() => {
+    const pName = searchParams?.get('prospectName') || searchParams?.get('q') || ''
+    const pPhone = searchParams?.get('prospectPhone') || ''
+    const prodId = searchParams?.get('preselectProductId') || searchParams?.get('productId') || ''
+    const memId = searchParams?.get('memberId') || ''
+    if (pName || pPhone || prodId || memId) {
+      if (memId) setInitialMemberId(memId)
+      if (prodId) setInitialProductId(prodId)
+      if (pName || pPhone) setInitialSearchQuery(pName || pPhone)
+      setCreateInvoiceOpen(true)
+    }
+  }, [searchParams])
 
   const [page, setPage] = useState(1)
   const pageSize = 12
@@ -47,6 +65,56 @@ export default function BillingPage() {
       paymentMode: paymentModeFilter as any,
     })
     setInvoices(list)
+    fetch('/api/members?includeInvoices=true')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.invoices) && data.invoices.length > 0) {
+          const allLocal = getInvoices({})
+          const map = new Map<string, TaxInvoice>()
+          for (const inv of allLocal) {
+            map.set(inv.id, inv)
+          }
+          for (const remote of data.invoices) {
+            if (remote?.id && remote?.invoiceNumber) {
+              const existing = map.get(remote.id)
+              map.set(remote.id, {
+                ...existing,
+                ...remote,
+                items: existing?.items || [
+                  {
+                    id: `li_${remote.id}`,
+                    productId: 'prod_membership',
+                    description: remote.notes || 'Gym Membership / Package',
+                    sacCode: '999723',
+                    quantity: 1,
+                    unitPriceInclusiveMinor: remote.grandTotalMinor,
+                    discountMinor: 0,
+                    taxableMinor: remote.taxableMinor,
+                    taxRate: 0.05,
+                    cgstMinor: remote.cgstMinor,
+                    sgstMinor: remote.sgstMinor,
+                    totalMinor: remote.grandTotalMinor,
+                  },
+                ],
+                totalDiscountMinor: existing?.totalDiscountMinor || 0,
+                salesRepId: existing?.salesRepId || 'usr_fc_01',
+                createdBy: existing?.createdBy || { id: 'system', name: remote.salesRepName || 'System', role: 'Staff' },
+              })
+            }
+          }
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('dna360_invoices', JSON.stringify(Array.from(map.values())))
+          }
+          setInvoices(
+            getInvoices({
+              search,
+              status: statusFilter as any,
+              paymentMode: paymentModeFilter as any,
+            })
+          )
+        }
+      })
+      .catch(() => null)
   }
 
   useEffect(() => {
@@ -77,7 +145,7 @@ export default function BillingPage() {
           <div className="flex items-center gap-1.5 text-[10.5px] text-[var(--muted)] mt-0.5 font-data">
             <span>{row.issueDate}</span>
             <span>·</span>
-            <span>Rep: {row.salesRepName || 'Swati'}</span>
+            <span>Rep: {row.salesRepName || 'Rajesh Poojary'}</span>
           </div>
         </div>
       ),
@@ -284,6 +352,9 @@ export default function BillingPage() {
         open={createInvoiceOpen}
         onOpenChange={setCreateInvoiceOpen}
         onInvoiceCreated={refreshInvoices}
+        initialMemberId={initialMemberId}
+        initialProductId={initialProductId}
+        initialSearchQuery={initialSearchQuery}
       />
 
       <CreditNoteModal
@@ -308,5 +379,13 @@ export default function BillingPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-xs text-[var(--muted)]">Loading billing console...</div>}>
+      <BillingPageContent />
+    </Suspense>
   )
 }

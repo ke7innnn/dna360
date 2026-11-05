@@ -145,7 +145,7 @@ export default function DynamicQuotes() {
         {/* Header Eyebrow */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-ui uppercase font-bold tracking-[0.14em] bg-[rgba(59,130,246,0.12)] text-[#60A5FA] border border-[rgba(59,130,246,0.30)] shadow-sm">
                 <Sparkles className="w-3 h-3 text-[#3B82F6] animate-pulse" />
                 DAILY MOTIVATIONAL PULSE
@@ -161,7 +161,7 @@ export default function DynamicQuotes() {
           </div>
 
           {/* Category Tabs */}
-          <div className="flex items-center flex-wrap gap-1.5 p-1 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] backdrop-blur-md">
+          <div className="flex items-center flex-wrap gap-2 p-1 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] backdrop-blur-md">
             {(['All', 'Mindset', 'Strength', 'Discipline', 'Philosophy'] as const).map((cat) => (
               <button
                 key={cat}
@@ -197,7 +197,7 @@ export default function DynamicQuotes() {
               className="space-y-6 relative z-10"
             >
               {/* Category Pill + Highlight Badge */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-ui font-bold uppercase tracking-wider bg-[rgba(59,130,246,0.15)] text-[#60A5FA] border border-[rgba(59,130,246,0.35)]">
                   {currentQuote.category}
                 </span>

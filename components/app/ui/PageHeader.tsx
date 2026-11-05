@@ -41,21 +41,21 @@ export function PageHeader({
               'before:absolute before:top-0 before:left-0 before:right-0 before:h-[2px] before:bg-gradient-to-r before:from-[#3B82F6] before:via-[rgba(59,130,246,0.5)] before:to-transparent',
             ]
           : [
-              'pb-2 relative',
+              'pb-2 relative overflow-x-clip',
             ],
         className
       )}
     >
       {/* Ambient Aurora Blue Light Bloom behind header */}
       <div
-        className="absolute -top-12 -left-8 w-[500px] h-[220px] rounded-full blur-[90px] pointer-events-none opacity-45 -z-10"
+        className="absolute -top-12 -left-8 w-[300px] sm:w-[500px] max-w-full h-[220px] rounded-full blur-[90px] pointer-events-none opacity-45 -z-10"
         style={{
           background: 'radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(99, 102, 241, 0.20) 50%, transparent 80%)',
         }}
       />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 min-w-0">
           {(eyebrow || badge) && (
             <div className="flex flex-wrap items-center gap-2.5">
               {eyebrow && (
@@ -89,7 +89,7 @@ export function PageHeader({
         </div>
 
         {actions && (
-          <div className="flex items-center gap-2.5 shrink-0 sm:self-center">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0 sm:self-center">
             {actions}
           </div>
         )}

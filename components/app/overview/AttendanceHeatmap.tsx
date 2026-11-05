@@ -37,7 +37,7 @@ export default function AttendanceHeatmap() {
             <span className="text-white font-bold">{hoveredSlot.checkIns} check-ins</span>
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-[11px] font-ui text-[var(--muted)]">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] font-ui text-[var(--muted)]">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded bg-[rgba(59,130,246,0.15)] border border-[rgba(59,130,246,0.3)]" />
               <span>Off-Peak</span>
@@ -58,7 +58,7 @@ export default function AttendanceHeatmap() {
       <div className="overflow-x-auto pb-2">
         <div className="min-w-[620px] space-y-2">
           {/* Hours Header Row */}
-          <div className="grid grid-cols-17 gap-1 text-[10px] font-ui font-semibold text-[var(--muted)] text-center">
+          <div className="grid grid-cols-[44px_repeat(16,minmax(0,1fr))] gap-1 text-[10px] font-ui font-semibold text-[var(--muted)] text-center">
             <div className="text-left pl-1">Day</div>
             {hours.map((h) => (
               <div key={h} className="truncate">
@@ -69,7 +69,7 @@ export default function AttendanceHeatmap() {
 
           {/* Days Rows */}
           {heatmapData.map((day) => (
-            <div key={day.dayName} className="grid grid-cols-17 gap-1 items-center">
+            <div key={day.dayName} className="grid grid-cols-[44px_repeat(16,minmax(0,1fr))] gap-1 items-center">
               {/* Day Label */}
               <div className="font-ui text-xs font-semibold text-[var(--ink)] pl-1 text-left">
                 {day.shortDay}

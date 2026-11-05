@@ -470,6 +470,7 @@ export function saveSessions(sessions: ClassSession[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions))
   window.dispatchEvent(new Event('dna360_sessions_updated'))
+  window.dispatchEvent(new Event('dna360_classes_updated'))
 }
 
 // ─── Queries ───
@@ -627,6 +628,24 @@ export function bookClassSession(params: {
     afterState: booking,
   })
 
+  if (typeof window !== 'undefined') {
+    fetch('/api/classes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: session.id,
+        memberId: member.id,
+        memberName: member.name,
+        memberPhone: member.phone,
+        memberCode: member.member_code,
+        memberEmail: member.email,
+        bookingId: booking.id,
+        useAdjustmentCredit: params.useAdjustmentCredit,
+        isAdminOverride: params.source !== 'member',
+      }),
+    }).catch(() => {})
+  }
+
   return { success: true, booking, isWaitlisted: isFull }
 }
 
@@ -715,6 +734,19 @@ export function cancelClassBooking(params: {
     afterState: booking,
   })
 
+  if (typeof window !== 'undefined') {
+    fetch('/api/classes', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: session.id,
+        memberId: booking.memberId,
+        bookingId: booking.id,
+        isAdminOverride: params.cancelledBy.role !== 'Member',
+      }),
+    }).catch(() => {})
+  }
+
   return { success: true, autoPromotedMemberName }
 }
 
@@ -756,6 +788,20 @@ export function recordSessionAttendance(params: {
     afterState: booking,
   })
 
+  if (typeof window !== 'undefined') {
+    fetch('/api/classes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'MARK_ATTENDANCE',
+        sessionId: session.id,
+        bookingId: booking.id,
+        memberId: booking.memberId,
+        status: params.status,
+      }),
+    }).catch(() => {})
+  }
+
   return true
 }
 
@@ -789,6 +835,18 @@ export function createSession(data: Partial<ClassSession> & Pick<ClassSession, '
   }
   sessions.push(newSession)
   saveSessions(sessions)
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/classes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'CREATE_SESSION',
+        session: newSession,
+      }),
+    }).catch(() => {})
+  }
+
   return newSession
 }
 

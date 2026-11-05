@@ -18,6 +18,7 @@ import {
   updateBookingStatus,
   getWhatsAppBookingLink,
   getTodayBookings,
+  syncBookingsFromRemote,
 } from '@/lib/bookings'
 import { BOOKING_SERVICES, type Booking, type BookingStatus, type BookingServiceType } from '@/types/booking'
 import { toast } from '@/components/app/ui/toast'
@@ -33,10 +34,16 @@ export default function BookingsManagementPage() {
 
   const loadData = () => {
     setBookings(getBookings())
+    syncBookingsFromRemote().then((merged) => {
+      if (merged) setBookings(merged)
+    })
   }
 
   useEffect(() => {
     loadData()
+    const handleUpdate = () => setBookings(getBookings())
+    window.addEventListener('dna360_bookings_updated', handleUpdate)
+    return () => window.removeEventListener('dna360_bookings_updated', handleUpdate)
   }, [])
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -274,7 +281,7 @@ export default function BookingsManagementPage() {
                           <Calendar className="w-3.5 h-3.5 text-[#38BDF8]" />
                           <span>{b.bookingDate}</span>
                           {isToday && (
-                            <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">
                               TODAY
                             </span>
                           )}

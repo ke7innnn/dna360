@@ -64,7 +64,7 @@ const testimonials = [
   },
   {
     name: 'Surbhi Chandna',
-    text: '“Hi, I\'m surbhi chandna and I\'m at Mumbai\'s one of the largest pilates studio and my personal favourite gym, DNA 360 at hiranandani powai. You know this beastly 13,000 sft facility is eqquiped with best in bio-mechanics Merrithew Pilates to Life Fitness and Hammer Strength. Ask me what I love the most, it\'s pilates you know it strengthens my core, tones my body and it also works on the tiniest of the muscles. If you really want to enjoy nice healthy regimen, then DNA 360 is your to fitness centre. They have some amazing facilities they have the ice bath, meditation centre also when have those cravings you can have tasty bites at their healthy cafe. So checkin at DNA 360 and book your session right away.”',
+    text: '“Hi, I\'m surbhi chandna and I\'m at Mumbai\'s one of the largest pilates studio and my personal favourite gym, DNA 360 at hiranandani powai. You know this beastly 13,000 sft facility is equipped with best in bio-mechanics Merrithew Pilates to Life Fitness and Hammer Strength. Ask me what I love the most, it\'s pilates you know it strengthens my core, tones my body and it also works on the tiniest of the muscles. If you really want to enjoy nice healthy regimen, then DNA 360 is your fitness centre. They have some amazing facilities they have the ice bath, meditation centre also when have those cravings you can have tasty bites at their healthy cafe. So checkin at DNA 360 and book your session right away.”',
     image: '/images/surbhi-chandna.png'
   }
 ]
@@ -168,7 +168,7 @@ export default function PartnerDNA360Page() {
                     <span className="text-[#00c8c8] mr-3 font-bold mt-1">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
                     </span>
-                    Converting your exiting facility to boost earnings
+                    Converting your existing facility to boost earnings
                   </li>
                 </ul>
               </motion.div>
@@ -395,7 +395,7 @@ export default function PartnerDNA360Page() {
 
             <div className="max-w-3xl mx-auto">
               <p className="text-white font-montserrat font-bold text-xl lg:text-2xl mb-12 leading-relaxed italic">
-                Get in touch with us and discover how we con support you in operating an admired and profitable Fitness Center franchise.
+                Get in touch with us and discover how we can support you in operating an admired and profitable Fitness Center franchise.
               </p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -433,7 +433,7 @@ function TestimonialSlider() {
   }, [])
 
   return (
-    <div className="relative h-[450px] md:h-[400px] flex flex-col items-center justify-center">
+    <div className="relative min-h-[450px] md:min-h-[400px] py-4 flex flex-col items-center justify-center">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}

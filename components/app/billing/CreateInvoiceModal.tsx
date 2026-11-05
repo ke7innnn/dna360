@@ -31,12 +31,12 @@ import { Button } from '@/components/app/ui/button'
 import { Input } from '@/components/app/ui/input'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
 import { formatINR, backCalculateGst } from '@/lib/gst'
-import { getStoredMembers } from '@/lib/members'
+import { getStoredMembers, updateMember } from '@/lib/members'
 import { getProducts } from '@/lib/products'
 import { issueInvoice, buildLineItem, validateDiscount, recordPayment } from '@/lib/billing'
 import { getSalesReps } from '@/lib/auth'
 import type { TaxInvoice, PaymentMode, InvoiceLineItem, PaymentSplit } from '@/types/billing'
-import type { Member } from '@/types/member'
+import type { Member, MembershipRecord } from '@/types/member'
 import type { Product } from '@/types/product'
 import { toast } from '@/components/app/ui/toast'
 import { cn, getInitials } from '@/lib/utils'
@@ -46,11 +46,15 @@ export default function CreateInvoiceModal({
   onOpenChange,
   onInvoiceCreated,
   initialMemberId,
+  initialProductId,
+  initialSearchQuery,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onInvoiceCreated?: (invoice: TaxInvoice) => void
   initialMemberId?: string
+  initialProductId?: string
+  initialSearchQuery?: string
 }) {
   const [members, setMembers] = useState<Member[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -109,12 +113,14 @@ export default function CreateInvoiceModal({
       } else {
         setSelectedMember(null)
         setIsSearchingMember(true)
-        setMemberSearchQuery('')
+        setMemberSearchQuery(initialSearchQuery || '')
       }
 
       const productList = getProducts({ active: true })
       setProducts(productList)
-      if (productList.length > 0 && !selectedProductId) {
+      if (initialProductId && productList.some((p) => p.id === initialProductId)) {
+        setSelectedProductId(initialProductId)
+      } else if (productList.length > 0 && !selectedProductId) {
         setSelectedProductId(productList[0].id)
       }
 
@@ -235,10 +241,10 @@ export default function CreateInvoiceModal({
       items: [lineItem],
       payments,
       salesRepId: selectedRep?.id || 'usr_fc_01',
-      salesRepName: selectedRep?.name || 'Amit Sharma',
+      salesRepName: selectedRep?.name || 'Rajesh Poojary',
       createdBy: {
         id: 'usr_fc_01',
-        name: 'Amit Sharma',
+        name: selectedRep?.name || 'Rajesh Poojary',
         role: 'Fitness Consultant',
       },
       activationDate,
@@ -248,6 +254,42 @@ export default function CreateInvoiceModal({
       discountReason: discountMinor > 0 ? discountReason : undefined,
       discountApprovedBy: discountMinor > 0 ? discountApprover : undefined,
       notes: comments || notes || undefined,
+    })
+
+    // Grant membership / package to the member record
+    const newMembership: MembershipRecord = {
+      id: `ms_inv_${Date.now()}`,
+      product_id: selectedProduct.id,
+      product_name: selectedProduct.name,
+      product_category: selectedProduct.category,
+      enrolment_date: todayStr,
+      activation_date: activationDate,
+      expiry_date: expiryDate,
+      amount_paid: netPayableMinor,
+      discount_amount: discountMinor,
+      discount_reason: discountMinor > 0 ? (discountReason || 'Approved Discount') : null,
+      discount_approved_by: discountMinor > 0 ? discountApprover : null,
+      tax_rate: selectedProduct.tax_rate,
+      status: 'active',
+      invoice_id: newInvoice.id,
+      invoice_number: newInvoice.invoiceNumber,
+      sales_rep_id: selectedRep?.id || 'usr_fc_01',
+      sales_rep_name: selectedRep?.name || 'Rajesh Poojary',
+      sessions_total: selectedProduct.session_count || null,
+      sessions_consumed: 0,
+      sessions_remaining: selectedProduct.session_count || null,
+      access_window: selectedProduct.name.includes('Happy Hours') ? { start: '12:00', end: '15:30' } : null,
+      void_reason: null,
+      voided_by: null,
+      voided_at: null,
+      transferred_from: null,
+      transferred_to: null,
+      transfer_fee_invoice_id: null,
+    }
+    updateMember(selectedMember.id, {
+      status: 'active',
+      active_memberships: [newMembership, ...(selectedMember.active_memberships || [])],
+      lifetime_value: (selectedMember.lifetime_value || 0) + netPayableMinor,
     })
 
     setLoading(false)
@@ -344,10 +386,10 @@ export default function CreateInvoiceModal({
         items: [lineItem],
         payments: [], // Empty payments -> status: 'pending'
         salesRepId: selectedRep?.id || 'usr_fc_01',
-        salesRepName: selectedRep?.name || 'Amit Sharma',
+        salesRepName: selectedRep?.name || 'Rajesh Poojary',
         createdBy: {
           id: 'usr_fc_01',
-          name: 'Amit Sharma',
+          name: selectedRep?.name || 'Rajesh Poojary',
           role: 'Fitness Consultant',
         },
         activationDate,
@@ -408,6 +450,42 @@ export default function CreateInvoiceModal({
             transactionRef: rzpRes.razorpay_payment_id,
           })
 
+          // Grant membership / package to the member record
+          const newMembership: MembershipRecord = {
+            id: `ms_rzp_${Date.now()}`,
+            product_id: selectedProduct.id,
+            product_name: selectedProduct.name,
+            product_category: selectedProduct.category,
+            enrolment_date: todayStr,
+            activation_date: activationDate,
+            expiry_date: expiryDate,
+            amount_paid: netPayableMinor,
+            discount_amount: discountMinor,
+            discount_reason: discountMinor > 0 ? (discountReason || 'Approved Discount') : null,
+            discount_approved_by: discountMinor > 0 ? discountApprover : null,
+            tax_rate: selectedProduct.tax_rate,
+            status: 'active',
+            invoice_id: pendingInvoice.id,
+            invoice_number: pendingInvoice.invoiceNumber,
+            sales_rep_id: selectedRep?.id || 'usr_fc_01',
+            sales_rep_name: selectedRep?.name || 'Rajesh Poojary',
+            sessions_total: selectedProduct.session_count || null,
+            sessions_consumed: 0,
+            sessions_remaining: selectedProduct.session_count || null,
+            access_window: selectedProduct.name.includes('Happy Hours') ? { start: '12:00', end: '15:30' } : null,
+            void_reason: null,
+            voided_by: null,
+            voided_at: null,
+            transferred_from: null,
+            transferred_to: null,
+            transfer_fee_invoice_id: null,
+          }
+          updateMember(selectedMember.id, {
+            status: 'active',
+            active_memberships: [newMembership, ...(selectedMember.active_memberships || [])],
+            lifetime_value: (selectedMember.lifetime_value || 0) + netPayableMinor,
+          })
+
           setLoading(false)
           toast.success(`Tax Invoice Settled: ${pendingInvoice.invoiceNumber}`, {
             description: `Paid via Razorpay Live · ${formatINR(netPayableMinor)} (Ref: ${rzpRes.razorpay_payment_id})`,
@@ -440,7 +518,7 @@ export default function CreateInvoiceModal({
       description="Base Fitness Private Limited · SAC 999723 Fitness Services Tariff"
       size="xl"
     >
-      <form onSubmit={handleCreate} className="space-y-4 max-h-[82vh] overflow-y-auto pr-1 font-sans">
+      <form onSubmit={handleCreate} className="space-y-4 pr-1 font-sans">
         {error && (
           <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 flex items-center gap-2.5 text-xs text-red-400 font-medium">
             <ShieldAlert className="w-4 h-4 shrink-0" />
@@ -900,7 +978,7 @@ export default function CreateInvoiceModal({
         </div>
 
         {/* ─── 6. ACTION BUTTONS ─── */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-white/[0.08]">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-white/[0.08]">
           <Button
             type="button"
             variant="secondary"
@@ -910,7 +988,7 @@ export default function CreateInvoiceModal({
             Cancel
           </Button>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
             <Button
               type="submit"
               variant="outline"

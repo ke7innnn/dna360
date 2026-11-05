@@ -54,7 +54,7 @@ export default function ServiceDetailPage() {
         </section>
 
         {/* Content Section */}
-        <section className="py-24 px-4 bg-[#1a1a1a]">
+        <section className="py-24 px-4 bg-[#1a1a1a] overflow-x-clip">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
  
@@ -209,38 +209,54 @@ export default function ServiceDetailPage() {
               <div className="w-16 h-1 bg-[#00c8c8] mx-auto" />
             </motion.div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {services
                 .filter((s) => s.slug !== slug)
                 .slice(0, 4)
                 .map((s, idx) => (
                   <motion.div
                     key={s.slug}
-                    className="service-card-wrap"
+                    className="w-full h-[360px] perspective-1000 group"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.1 }}
                   >
-                    <div className="service-flip-card">
-                      <div
-                        className="service-flip-front"
-                        style={{ backgroundImage: `url("${s.images && s.images.length > 1 ? s.images[1] : s.bannerImage}")` }}
-                      >
-                        <div className="service-flip-overlay" />
-                        <div className="service-flip-inner">
-                          <h3 className="service-flip-title">{s.title}</h3>
+                    <div className="relative w-full h-full transform-style-3d cursor-pointer">
+                      <div className="absolute inset-0 w-full h-full backface-hidden flip-front bg-[#151515] rounded-2xl overflow-hidden shadow-lg border border-white/10 flex flex-col">
+                        <div className="relative flex-1 w-full">
+                          <Image
+                            src={s.images && s.images.length > 1 ? s.images[1] : s.bannerImage}
+                            alt={s.title}
+                            fill
+                            unoptimized
+                            className="object-cover object-top"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                          <div className="absolute bottom-4 left-4 right-4">
+                            <h3 className="text-white font-black text-lg font-montserrat uppercase leading-tight">
+                              {s.title}
+                            </h3>
+                          </div>
                         </div>
                       </div>
-                      <div
-                        className="service-flip-back"
-                        style={{ backgroundImage: `url("${s.images && s.images.length > 1 ? s.images[1] : s.bannerImage}")` }}
-                      >
-                        <div className="service-flip-overlay service-flip-overlay-dark" />
-                        <div className="service-flip-inner">
-                          <h3 className="service-flip-title">{s.title}</h3>
-                          <Link href={`/services/${s.slug}`} className="service-flip-btn">
-                            Read More
+                      <div className="absolute inset-0 w-full h-full backface-hidden flip-back overflow-hidden rounded-2xl">
+                        <Image
+                          src={s.images && s.images.length > 1 ? s.images[1] : s.bannerImage}
+                          alt={s.title}
+                          fill
+                          unoptimized
+                          className="object-cover scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center border-2 border-[#00c8c8] rounded-2xl">
+                          <h3 className="text-white font-black font-montserrat uppercase text-lg mb-4">
+                            {s.title}
+                          </h3>
+                          <Link
+                            href={`/services/${s.slug}`}
+                            className="bg-transparent border border-white text-white font-bold font-montserrat text-xs uppercase tracking-widest px-6 py-2.5 hover:bg-[#00c8c8] hover:border-[#00c8c8] hover:text-black transition-all duration-300 rounded-lg"
+                          >
+                            Explore Service
                           </Link>
                         </div>
                       </div>

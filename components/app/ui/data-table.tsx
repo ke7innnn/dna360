@@ -217,7 +217,7 @@ export function DataTable<T>({
                     'px-5 py-2.5 font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] select-none whitespace-nowrap',
                     col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
                     col.sortable && 'cursor-pointer hover:text-[var(--ink)] transition-colors',
-                    colIdx === 0 && !selectable && 'sticky left-0 bg-[var(--bg-elev)] z-20 shadow-[1px_0_0_var(--line)]'
+                    colIdx === 0 && !selectable && 'sm:sticky sm:left-0 bg-[var(--bg-elev)] z-20 sm:shadow-[1px_0_0_var(--line)]'
                   )}
                   style={{ width: col.width }}
                   onClick={() => col.sortable && onSort?.(col.id)}
@@ -278,7 +278,7 @@ export function DataTable<T>({
                           'px-5 py-3 text-[13.5px] leading-[20px] text-[var(--ink)] whitespace-nowrap',
                           col.isData || col.align === 'right' ? 'font-data tabular-nums' : 'font-ui',
                           col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
-                          colIdx === 0 && !selectable && 'sticky left-0 bg-[var(--bg)] group-hover:bg-[var(--bg-elev)] z-10 shadow-[1px_0_0_var(--line)] transition-colors duration-140'
+                          colIdx === 0 && !selectable && 'sm:sticky sm:left-0 bg-[var(--bg)] group-hover:bg-[var(--bg-elev)] z-10 sm:shadow-[1px_0_0_var(--line)] transition-colors duration-140'
                         )}
                       >
                         {rendered}
@@ -293,8 +293,8 @@ export function DataTable<T>({
       </div>
 
       {/* Pagination & Page Size Control Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-3 bg-[var(--bg-elev)] border-t border-[var(--line)] text-xs font-ui text-[var(--muted)] gap-3 select-none">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-5 py-3 bg-[var(--bg-elev)] border-t border-[var(--line)] text-xs font-ui text-[var(--muted)] gap-3 select-none">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <div className="font-data text-[11px] tabular-nums font-medium text-[var(--muted)]">
             Showing <span className="text-[var(--ink)]">{total === 0 ? 0 : ((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, total)}</span> of <span className="text-[var(--ink)]">{total}</span> records
           </div>

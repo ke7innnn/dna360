@@ -25,6 +25,7 @@ import {
   getNotificationsConfig,
   saveNotificationsConfig,
   getGoLiveBlockers,
+  syncSettingsFromRemote,
 } from '@/lib/settings'
 import { executeGymexMigration, type GymexRawRow } from '@/lib/migration'
 import { openRazorpayCheckout } from '@/lib/razorpay'
@@ -61,6 +62,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     refreshData()
+    syncSettingsFromRemote().then(() => refreshData())
+    const handleUpdate = () => refreshData()
+    window.addEventListener('dna360_settings_updated', handleUpdate)
+    return () => window.removeEventListener('dna360_settings_updated', handleUpdate)
   }, [])
 
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -84,16 +89,16 @@ export default function SettingsPage() {
     refreshData()
   }
 
-  const handleRunMigration = () => {
+  const handleRunMigration = (dryRunMode: boolean = isDryRun) => {
     try {
       const parsed: GymexRawRow[] = migrationJson ? JSON.parse(migrationJson) : [
-        { first_name: 'Rohit', last_name: 'Verma', mobile: '9820088111', package_name: 'Annual Gym Membership Package 1', base_cost: 41428.57, sales_rep: 'Swati', gender: 'male', dob: '1990-04-12' },
-        { first_name: 'Anjali', last_name: 'Desai', mobile: '9820088222', package_name: 'Reformer Pilates — 36 Sessions', base_cost: 42511.43, sales_rep: 'Krrish Rawat', gender: 'female', dob: '1994-08-20' },
+        { first_name: 'Rohit', last_name: 'Verma', mobile: '9820088111', package_name: 'Annual Gym Membership Package 1', base_cost: 41428.57, sales_rep: 'Pallavi More', gender: 'male', dob: '1990-04-12' },
+        { first_name: 'Anjali', last_name: 'Desai', mobile: '9820088222', package_name: 'Reformer Pilates — 36 Sessions', base_cost: 42511.43, sales_rep: 'Krish Rawat', gender: 'female', dob: '1994-08-20' },
       ]
 
-      const rep = executeGymexMigration(parsed, isDryRun)
+      const rep = executeGymexMigration(parsed, dryRunMode)
       setMigrationReport(rep)
-      if (isDryRun) {
+      if (dryRunMode) {
         toast.info(`Dry Run Completed: ${rep.validRows} valid rows evaluated.`)
       } else {
         toast.success(`Migration Committed: ${rep.membersCreated} members imported.`)
@@ -115,7 +120,7 @@ export default function SettingsPage() {
           receipt: `rcpt_live_test_${Date.now()}`,
           notes: {
             description: 'Live Gateway ₹1 Verification Test',
-            tester: profile.legalName,
+            tester: profile.legalEntityName,
           },
         }),
       })
@@ -132,7 +137,7 @@ export default function SettingsPage() {
         name: 'DNA 360 Fitness',
         description: 'Gateway Live ₹1 Connectivity Verification',
         prefill: {
-          name: profile.legalName,
+          name: profile.legalEntityName,
           email: profile.email,
           contact: profile.phone,
         },
@@ -167,12 +172,12 @@ export default function SettingsPage() {
 
       {/* 2. Settings Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-sm)] p-1">
-          <TabsTrigger value="profile">Business & GSTIN</TabsTrigger>
-          <TabsTrigger value="policies">Rules & Lifecycles</TabsTrigger>
-          <TabsTrigger value="bank">Bank Accounts</TabsTrigger>
-          <TabsTrigger value="gateways">API & Gateways</TabsTrigger>
-          <TabsTrigger value="migration">Data Migration</TabsTrigger>
+        <TabsList className="flex flex-wrap sm:flex-nowrap w-full overflow-x-auto h-auto min-h-10 bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-sm)] p-1">
+          <TabsTrigger value="profile" className="shrink-0">Business & GSTIN</TabsTrigger>
+          <TabsTrigger value="policies" className="shrink-0">Rules & Lifecycles</TabsTrigger>
+          <TabsTrigger value="bank" className="shrink-0">Bank Accounts</TabsTrigger>
+          <TabsTrigger value="gateways" className="shrink-0">API & Gateways</TabsTrigger>
+          <TabsTrigger value="migration" className="shrink-0">Data Migration</TabsTrigger>
         </TabsList>
 
         {/* TAB 1: Business Profile & GSTIN */}
@@ -430,13 +435,13 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 variant="secondary"
                 size="md"
                 onClick={() => {
                   setIsDryRun(true)
-                  handleRunMigration()
+                  handleRunMigration(true)
                 }}
               >
                 Run dry-run simulation
@@ -446,7 +451,7 @@ export default function SettingsPage() {
                 size="md"
                 onClick={() => {
                   setIsDryRun(false)
-                  handleRunMigration()
+                  handleRunMigration(false)
                 }}
               >
                 Commit data migration

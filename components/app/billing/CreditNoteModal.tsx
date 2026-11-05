@@ -87,7 +87,7 @@ export default function CreditNoteModal({
             <span>{formatINR(invoice.taxableMinor)}</span>
           </div>
           <div className="flex justify-between text-[var(--app-text-muted)]">
-            <span>GST Reversal (5%):</span>
+            <span>GST Reversal ({Math.round((invoice.items?.[0]?.taxRate ?? 0.05) * 100)}%):</span>
             <span>{formatINR(invoice.cgstMinor + invoice.sgstMinor)}</span>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function CreditNoteModal({
           required
         />
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--app-glass-border)]">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-[var(--app-glass-border)]">
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

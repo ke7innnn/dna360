@@ -14,7 +14,7 @@ import Modal from '@/components/app/ui/modal'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
 import PageHeader from '@/components/app/ui/PageHeader'
 import Breadcrumbs from '@/components/app/ui/Breadcrumbs'
-import { getStoredProducts, createProduct, CATEGORY_LABELS, saveProducts } from '@/lib/products'
+import { getStoredProducts, createProduct, CATEGORY_LABELS, saveProducts, syncProductsFromRemote } from '@/lib/products'
 import { formatINR, backCalculateGst } from '@/lib/gst'
 import type { Product, ProductCategory } from '@/types/product'
 import { toast } from '@/components/app/ui/toast'
@@ -46,6 +46,10 @@ export default function MembershipPackagesPage() {
 
   useEffect(() => {
     loadData()
+    syncProductsFromRemote().then(() => loadData())
+    const handleUpdate = () => loadData()
+    window.addEventListener('dna360_products_updated', handleUpdate)
+    return () => window.removeEventListener('dna360_products_updated', handleUpdate)
   }, [])
 
   const handleCreatePackage = (e: React.FormEvent) => {

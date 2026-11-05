@@ -121,7 +121,7 @@ export default function ProgramBuilderModal({
       description={`Custom programming for ${client.name} (${client.primaryGoal})`}
       size="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+      <form onSubmit={handleSubmit} className="space-y-4 pr-1">
         <Input
           label="Program Title"
           value={title}
@@ -190,7 +190,7 @@ export default function ProgramBuilderModal({
               {/* Exercises */}
               <div className="space-y-2">
                 {day.exercises.map((ex, eIdx) => (
-                  <div key={ex.id} className="grid grid-cols-12 gap-2 items-center text-xs">
+                  <div key={ex.id} className="grid grid-cols-12 gap-1.5 sm:gap-2 items-center text-xs">
                     <input
                       type="text"
                       placeholder="Exercise Name"
@@ -200,7 +200,7 @@ export default function ProgramBuilderModal({
                         updated[dIdx].exercises[eIdx].name = e.target.value
                         setDays(updated)
                       }}
-                      className="col-span-5 h-8 px-2 rounded-lg glass-input text-[var(--app-text-primary)]"
+                      className="col-span-5 min-w-0 h-8 px-2 rounded-lg glass-input text-[var(--app-text-primary)]"
                     />
                     <input
                       type="number"
@@ -211,7 +211,7 @@ export default function ProgramBuilderModal({
                         updated[dIdx].exercises[eIdx].sets = Number(e.target.value)
                         setDays(updated)
                       }}
-                      className="col-span-2 h-8 px-2 rounded-lg glass-input text-center font-sans tabular-nums text-[var(--app-text-primary)]"
+                      className="col-span-2 min-w-0 h-8 px-1.5 sm:px-2 rounded-lg glass-input text-center font-sans tabular-nums text-[var(--app-text-primary)]"
                     />
                     <input
                       type="text"
@@ -222,7 +222,7 @@ export default function ProgramBuilderModal({
                         updated[dIdx].exercises[eIdx].reps = e.target.value
                         setDays(updated)
                       }}
-                      className="col-span-2 h-8 px-2 rounded-lg glass-input text-center font-sans tabular-nums text-[var(--app-text-primary)]"
+                      className="col-span-2 min-w-0 h-8 px-1.5 sm:px-2 rounded-lg glass-input text-center font-sans tabular-nums text-[var(--app-text-primary)]"
                     />
                     <input
                       type="number"
@@ -233,7 +233,7 @@ export default function ProgramBuilderModal({
                         updated[dIdx].exercises[eIdx].weightKg = Number(e.target.value)
                         setDays(updated)
                       }}
-                      className="col-span-2 h-8 px-2 rounded-lg glass-input text-center font-sans tabular-nums font-bold text-[var(--aurora-1)]"
+                      className="col-span-2 min-w-0 h-8 px-1.5 sm:px-2 rounded-lg glass-input text-center font-sans tabular-nums font-bold text-[var(--aurora-1)]"
                     />
                     <button
                       type="button"

@@ -22,6 +22,7 @@ import {
   recordSignature,
   recordClauseConsent,
   getCurrentTemplate,
+  syncConsentFromRemote,
 } from '@/lib/consent'
 import { getStoredMembers } from '@/lib/members'
 import type { ConsentTemplate, SignedAgreement, ConsentDocumentType, SignerRole } from '@/types/consent'
@@ -57,21 +58,25 @@ export default function ConsentPage() {
 
   useEffect(() => {
     refreshData()
+    syncConsentFromRemote().then((merged) => {
+      if (merged) setAgreements(merged)
+    })
+    const handleUpdate = () => refreshData()
+    window.addEventListener('dna360_agreements_updated', handleUpdate)
+    return () => window.removeEventListener('dna360_agreements_updated', handleUpdate)
   }, [])
 
   const handleSendOtp = () => {
     setOtpSent(true)
-    toast.info('OTP Sent to registered mobile (+91•••• ••••)', {
-      description: 'Use code 360360 to verify electronic signature.',
-    })
+    toast.info('Verification OTP dispatched to registered mobile number.')
   }
 
   const handleCompleteSign = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!signingAgreement) return
 
-    if (otpCode !== '360360' && otpCode.length < 4) {
-      toast.error('Invalid OTP code. Enter 360360 to verify.')
+    if (otpCode.trim().length < 6) {
+      toast.error('Please enter the 6-digit SMS verification code.')
       return
     }
 
@@ -209,7 +214,7 @@ export default function ConsentPage() {
                     </Badge>
                   </td>
                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-1.5 font-data text-[11px] text-[var(--muted)]">
+                    <div className="flex flex-wrap items-center gap-1.5 font-data text-[11px] text-[var(--muted)]">
                       {agr.signatures.map((sig, i) => (
                         <span key={i} className="px-2 py-0.5 rounded bg-[var(--surface-2)] text-[var(--ink)] border border-[var(--line)]">
                           {(sig.role || sig.signer_role || 'member').toUpperCase()} ✓
@@ -262,10 +267,9 @@ export default function ConsentPage() {
               onChange={(e) => setSignerRole(e.target.value as SignerRole)}
               className="w-full h-[38px] px-3.5 font-ui text-[13.5px] rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] outline-none"
             >
-              <option value="member">Member Prospect</option>
-              <option value="trainer">Assigned Coach / Personal Trainer</option>
-              <option value="fitness_consultant">Fitness Consultant / Witness</option>
-              <option value="general_manager">Club General Manager</option>
+              <option value="member">Member / Client</option>
+              <option value="trainer">Assigned Personal Trainer</option>
+              <option value="head_coach">Head Coach / Studio Lead</option>
             </select>
           </div>
 
@@ -278,8 +282,8 @@ export default function ConsentPage() {
             </div>
             {otpSent && (
               <Input
-                label="Enter 6-Digit OTP (Hint: 360360)"
-                placeholder="360360"
+                label="Enter 6-Digit SMS Verification Code"
+                placeholder="6-digit OTP"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
                 required
@@ -316,10 +320,9 @@ export default function ConsentPage() {
               onChange={(e) => setSelectedDocType(e.target.value as ConsentDocumentType)}
               className="w-full h-[38px] px-3.5 font-ui text-[13.5px] rounded-[var(--r-sm)] bg-[var(--bg-elev)] border border-[var(--line)] text-[var(--ink)] outline-none"
             >
-              <option value="membership_tc">Membership Terms & General Rules</option>
-              <option value="health_waiver">PAR-Q Medical Health & Liability Waiver</option>
-              <option value="pt_agreement">Personal Training Service Agreement</option>
-              <option value="pilates_waiver">Reformer Pilates Safety Consent</option>
+              <option value="membership_tc">Membership Terms & Conditions (22 Clauses)</option>
+              <option value="personal_training_tc">Personal Training 3-Party Agreement (16 Clauses)</option>
+              <option value="pilates_tc">Reformer Pilates Studio Terms & Consent (16 Clauses)</option>
             </select>
           </div>
 

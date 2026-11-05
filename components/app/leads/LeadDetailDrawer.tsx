@@ -42,6 +42,7 @@ export default function LeadDetailDrawer({
     updateLeadStage(lead.id, newStage)
     toast.success(`Pipeline Stage Updated: ${newStage.toUpperCase()}`)
     if (onUpdated) onUpdated()
+    if (onLeadUpdated) onLeadUpdated()
   }
 
   const handleAddActivity = (e: React.FormEvent) => {
@@ -52,6 +53,7 @@ export default function LeadDetailDrawer({
     toast.success('Activity Note Logged')
     setNewNote('')
     if (onUpdated) onUpdated()
+    if (onLeadUpdated) onLeadUpdated()
   }
 
   const stageOrder: { stage: LeadStage; label: string }[] = [
@@ -100,6 +102,7 @@ export default function LeadDetailDrawer({
               size="sm"
               onClick={() => {
                 if (onConvertToMember) onConvertToMember(lead)
+                if (onConvert) onConvert()
                 onOpenChange(false)
               }}
               icon={<UserCheck className="w-3.5 h-3.5" />}
@@ -120,7 +123,7 @@ export default function LeadDetailDrawer({
             </span>
           </div>
 
-          <div className="grid grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
             {stageOrder.map((step, idx) => {
               const isPast = currentStageIndex > idx
               const isCurrent = currentStageIndex === idx
@@ -146,7 +149,7 @@ export default function LeadDetailDrawer({
         </div>
 
         {/* Quick Communication Simulator */}
-        <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <a
             href={`tel:${lead.phone}`}
             className="p-3 rounded-xl glass-card flex items-center justify-center gap-2 text-[var(--app-text-primary)] hover:border-[var(--aurora-1)] transition-colors"
@@ -171,8 +174,8 @@ export default function LeadDetailDrawer({
             Log Sales Interaction Note
           </h4>
 
-          <div className="flex gap-2">
-            <div className="w-36">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="w-full sm:w-36 shrink-0">
               <Select value={noteType} onValueChange={(val: any) => setNoteType(val)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>

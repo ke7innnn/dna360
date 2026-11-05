@@ -21,11 +21,22 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
+import { resolveMember } from '@/lib/memberportal'
 import type { Program, MemberProgram } from '@/types/training'
 
 export default function MemberProgramsPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const member = React.useMemo(() => resolveMember(user?.id || user?.name), [user?.id, user?.name])
+  const [remoteTrainerName, setRemoteTrainerName] = useState<string | null>(null)
+  const trainerName = remoteTrainerName || member?.assigned_trainer_name || 'Assigned Coach'
+  const trainerInitials = trainerName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'TR'
 
   const [activeTab, setActiveTab] = useState<'my_routine' | 'gym_library'>('my_routine')
   const [gymPrograms, setGymPrograms] = useState<Program[]>([])
@@ -39,16 +50,32 @@ export default function MemberProgramsPage() {
 
   const loadPrograms = async () => {
     try {
+      const userRef = member?.id || user?.id || user?.name || ''
+      if (userRef) {
+        fetch(`/api/member/profile?memberId=${encodeURIComponent(userRef)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (d?.profile?.assignedTrainer) setRemoteTrainerName(d.profile.assignedTrainer)
+            if (d?.profile?.activeProgram) setActiveProgram(d.profile.activeProgram)
+          })
+          .catch(() => {})
+      }
+
       const res = await fetch('/api/training/programs')
       if (res.ok) {
         const data = await res.json()
         setGymPrograms(data.gymPrograms || [])
+        if (data.memberPrograms?.[0]) {
+          setActiveProgram(data.memberPrograms[0])
+        }
       }
 
       const sessRes = await fetch('/api/training/sessions')
       if (sessRes.ok) {
         const sessData = await sessRes.json()
-        setActiveProgram(sessData.activeProgram || null)
+        if (sessData.activeProgram) {
+          setActiveProgram(sessData.activeProgram)
+        }
       }
     } catch (e) {
       console.error('Failed to load programs', e)
@@ -70,7 +97,7 @@ export default function MemberProgramsPage() {
     icon: React.ComponentType<{ className?: string }>
   }
 
-  const exercises: RoutineExercise[] = [
+  const defaultExercises: RoutineExercise[] = [
     { name: 'Barbell bench press', sets: 4, reps: 8, load: '60', unit: 'kg', icon: Dumbbell },
     { name: 'Incline dumbbell press', sets: 3, reps: 10, load: '22.5', unit: 'kg', icon: Dumbbell },
     { name: 'Cable fly', sets: 3, reps: 12, load: '8', unit: 'rpe', icon: Activity },
@@ -78,6 +105,21 @@ export default function MemberProgramsPage() {
     { name: 'Dumbbell lateral raise', sets: 4, reps: 12, load: '10', unit: 'kg', icon: Dumbbell },
     { name: 'Tricep rope pushdown', sets: 3, reps: 12, load: '25', unit: 'kg', icon: Activity },
   ]
+
+  const sourceProgram: Program | undefined =
+    (activeProgram?.snapshot as Program | undefined) || gymPrograms[0]
+  const currentDay = sourceProgram?.days?.[0]
+  const exercises: RoutineExercise[] =
+    currentDay?.exercises && currentDay.exercises.length > 0
+      ? currentDay.exercises.map((pe) => ({
+          name: pe.exercise?.name || pe.exerciseId.replace(/^ex_/, '').replace(/_/g, ' '),
+          sets: pe.sets || 3,
+          reps: pe.repsMax || pe.repsMin || 10,
+          load: String(pe.targetWeight ?? pe.rpe ?? 20),
+          unit: pe.targetWeight ? 'kg' : 'rpe',
+          icon: pe.exercise?.equipment === 'CABLE' ? Activity : Dumbbell,
+        }))
+      : defaultExercises
 
   return (
     <div className="max-w-4xl mx-auto py-2 sm:py-6 px-3 sm:px-6 space-y-6 select-none pb-28 relative">
@@ -108,17 +150,10 @@ export default function MemberProgramsPage() {
         {/* Routine Title */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => toast.info('Custom exercise addition available in session')}
+            onClick={() => router.push('/m/session')}
             className="px-3.5 py-1.5 rounded-full bg-[#111726]/90 backdrop-blur-md border border-white/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] text-white text-xs font-semibold hover:border-[#3B82F6] transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" /> Add
-          </button>
-          <button
-            onClick={() => setShiftModalOpen(true)}
-            className="w-10 h-10 rounded-full bg-[#111726]/90 backdrop-blur-md border border-white/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center text-white hover:border-[#3B82F6] transition-colors cursor-pointer"
-            aria-label="Routine Options"
-          >
-            <MoreVertical className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -126,10 +161,10 @@ export default function MemberProgramsPage() {
       {/* Routine Title & Subtitle */}
       <div>
         <h1 className="font-serif text-3xl sm:text-4xl text-white font-normal tracking-tight">
-          Push Day
+          {currentDay?.label || sourceProgram?.name || 'Push Day'}
         </h1>
         <p className="font-ui text-xs sm:text-[13px] text-[var(--ink-2)] mt-1">
-          Chest, shoulders and triceps. Swap anything that&apos;s occupied.
+          {sourceProgram?.notes || "Chest, shoulders and triceps. Swap anything that's occupied."}
         </p>
       </div>
 
@@ -137,14 +172,14 @@ export default function MemberProgramsPage() {
       <div className="p-5 rounded-[24px] bg-[#0E131F]/90 border border-white/[0.09] shadow-[0_12px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl space-y-4">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] border border-[#60A5FA]/60 flex items-center justify-center text-white font-ui text-xs font-bold shadow-[0_0_14px_rgba(59,130,246,0.35)]">
-            RK
+            {trainerInitials}
           </div>
           <div>
             <h3 className="font-ui text-sm font-bold text-white">
-              Rohan Kulkarni
+              {trainerName}
             </h3>
             <p className="font-ui text-xs text-[var(--ink-3)]">
-              Elite trainer · assigned 12 Aug
+              Assigned Coach · DNA 360
             </p>
           </div>
         </div>
@@ -278,86 +313,6 @@ export default function MemberProgramsPage() {
           Start workout
         </button>
       </div>
-
-      {/* ─── Routine Options / Shift Schedule Modal ─── */}
-      {shiftModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm rounded-[28px] bg-[#0B0F1A] border border-white/10 p-6 shadow-2xl text-left space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <FastForward className="w-4 h-4 text-[#60A5FA]" />
-                <h3 className="font-ui text-base font-bold text-white">Shift Schedule</h3>
-              </div>
-              <button
-                onClick={() => setShiftModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-[var(--ink-2)] leading-relaxed">
-              Traveling, recovering, or missed sessions? Shift all upcoming workouts forward without damaging your adherence or completion records.
-            </p>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">
-                Days to shift forward
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[3, 7, 14].map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setShiftDays(d)}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all ${
-                      shiftDays === d
-                        ? 'bg-[#2563EB] text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                        : 'bg-white/5 hover:bg-white/10 text-white/80 border border-white/5'
-                    }`}
-                  >
-                    +{d} Days
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-2">
-              <button
-                type="button"
-                disabled={isShifting}
-                onClick={async () => {
-                  setIsShifting(true)
-                  try {
-                    const progId = activeProgram?.id || 'prog_push_01'
-                    await fetch(`/api/training/programs/${progId}/shift`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ days: shiftDays }),
-                    }).catch(() => {})
-                    toast.success(`Schedule shifted forward by ${shiftDays} days!`, {
-                      description: 'Future workout slots have been successfully adjusted.',
-                    })
-                    setShiftModalOpen(false)
-                  } finally {
-                    setIsShifting(false)
-                  }
-                }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-blue-900/30"
-              >
-                {isShifting ? 'Shifting...' : `Confirm +${shiftDays} Days Shift`}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShiftModalOpen(false)}
-                className="w-full py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-[var(--ink-3)] text-xs font-medium transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

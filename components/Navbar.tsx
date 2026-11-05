@@ -114,17 +114,23 @@ export default function Navbar() {
               <AnimatePresence>
                 {partnerOpen && (
                   <motion.div
-                    className="dropdown-menu"
+                    className="absolute left-0 top-full pt-3 w-64 z-50"
                     variants={dropdownVariants}
                     initial="hidden"
                     animate="visible"
                     exit="exit"
                   >
-                    {partnerLinks.map((link) => (
-                      <Link key={link.href} href={link.href}>
-                        {link.label}
-                      </Link>
-                    ))}
+                    <div className="rounded-xl bg-[#0B0D14]/95 backdrop-blur-xl border border-white/10 shadow-2xl py-2 flex flex-col overflow-hidden">
+                      {partnerLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-200 hover:text-[#3B82F6] hover:bg-white/5 transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -142,6 +148,12 @@ export default function Navbar() {
             </Link>
             <Link href="/contact" className={navLinkClass('/contact')}>
               Contact Us
+            </Link>
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-lg bg-[#00c8c8] hover:bg-[#00b4b4] text-black font-bold text-xs uppercase tracking-wider transition-colors"
+            >
+              Member Portal
             </Link>
           </div>
 
@@ -169,7 +181,7 @@ export default function Navbar() {
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
-              className="lg:hidden border-t border-white/10 bg-[#08080A] overflow-hidden"
+              className="lg:hidden border-t border-white/10 bg-[#08080A] max-h-[calc(100dvh-96px)] overflow-y-auto"
               variants={mobileMenuVariants}
               initial="hidden"
               animate="visible"
@@ -190,6 +202,23 @@ export default function Navbar() {
                 >
                   About
                 </Link>
+                <Link
+                  href="/partner-dna-360"
+                  className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Partner DNA 360
+                </Link>
+                {partnerLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="pl-8 pr-4 py-2.5 text-gray-300 text-xs uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
                 <Link
                   href="/services"
                   className="px-4 py-3 text-white text-sm uppercase tracking-wider border-b border-white/5 hover:text-[#3B82F6]"
@@ -218,6 +247,15 @@ export default function Navbar() {
                 >
                   Contact Us
                 </Link>
+                <div className="p-4">
+                  <Link
+                    href="/login"
+                    className="block w-full text-center px-4 py-3 rounded-lg bg-[#00c8c8] hover:bg-[#00b4b4] text-black font-bold text-sm uppercase tracking-wider transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Member Portal / Login
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}

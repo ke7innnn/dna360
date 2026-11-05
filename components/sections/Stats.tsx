@@ -97,7 +97,7 @@ export default function Stats() {
   return (
     <section
       id="stats"
-      className="py-20 px-4"
+      className="py-20 px-4 overflow-hidden"
       style={{
         background: 'linear-gradient(135deg, #0a3d3d 0%, #005555 50%, #007070 100%)',
       }}
@@ -151,8 +151,8 @@ export default function Stats() {
           className="flex flex-col items-center text-center"
           id="stat-equipment"
         >
-          <div className="relative w-full h-[72px] flex items-center justify-center">
-            <div className="absolute w-[280px] sm:w-[350px] md:w-[450px] h-[200px] pointer-events-none z-0">
+          <div className="relative w-full h-[80px] flex items-center justify-center overflow-hidden">
+            <div className="absolute w-full max-w-[240px] h-[80px] pointer-events-none z-0">
               <RotatingLogos />
             </div>
           </div>

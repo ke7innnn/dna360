@@ -38,6 +38,8 @@ export default function InvoiceDetailPage() {
 
   const profile = getProfile()
   const bank = getBankDetails()
+  const effectiveTaxRate = invoice?.items?.[0]?.taxRate ?? 0.05
+  const halfRatePct = ((effectiveTaxRate * 100) / 2).toFixed(1).replace(/\.0$/, '')
 
   if (!invoice) {
     return (
@@ -81,8 +83,8 @@ export default function InvoiceDetailPage() {
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl font-bold text-[var(--app-text-primary)]">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-[var(--app-text-primary)]">
               Tax Invoice {invoice.invoiceNumber}
             </h1>
             <StatusPill status={statusMap[invoice.status] || 'neutral'} dot>
@@ -91,7 +93,7 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="primary" onClick={handlePrint} icon={<Printer className="w-4 h-4" />}>
             Print / Export PDF
           </Button>
@@ -99,7 +101,7 @@ export default function InvoiceDetailPage() {
       </div>
 
       {/* Printable Sheet */}
-      <div id="printable-gst-invoice" className="p-8 rounded-2xl glass-input space-y-6 border border-[var(--app-glass-border)] text-xs text-[var(--app-text-primary)]">
+      <div id="printable-gst-invoice" className="p-4 sm:p-8 rounded-2xl glass-input space-y-6 border border-[var(--app-glass-border)] text-xs text-[var(--app-text-primary)]">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-[var(--app-glass-border)]">
           <div>
@@ -147,26 +149,26 @@ export default function InvoiceDetailPage() {
             <p className="text-[var(--app-text-secondary)] text-xs">{invoice.memberPhone} {invoice.memberEmail ? `· ${invoice.memberEmail}` : ''}</p>
           </div>
 
-          <div className="text-right space-y-1 text-xs">
+          <div className="sm:text-right space-y-1 text-xs">
             <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-[var(--app-text-muted)] block mb-1">
               Commercial Details
             </span>
-            <p>Sales Consultant: <strong>{invoice.salesRepName || 'Amit Sharma'}</strong></p>
+            <p>Sales Consultant: <strong>{invoice.salesRepName || 'Rajesh Poojary'}</strong></p>
             <p>Reverse Charge Applicable: <strong>No</strong></p>
           </div>
         </div>
 
         {/* Table */}
-        <div className="border border-[var(--app-glass-border)] rounded-xl overflow-hidden">
-          <table className="w-full text-xs text-left">
+        <div className="border border-[var(--app-glass-border)] rounded-xl overflow-hidden overflow-x-auto">
+          <table className="min-w-[600px] w-full text-xs text-left">
             <thead className="bg-[var(--app-glass-bg)] text-[var(--app-text-muted)] uppercase text-[0.625rem] font-semibold tracking-wider">
               <tr>
                 <th className="p-3">#</th>
                 <th className="p-3">Service Description</th>
                 <th className="p-3">SAC</th>
                 <th className="p-3 text-right">Taxable Val</th>
-                <th className="p-3 text-right">CGST (2.5%)</th>
-                <th className="p-3 text-right">SGST (2.5%)</th>
+                <th className="p-3 text-right">CGST ({halfRatePct}%)</th>
+                <th className="p-3 text-right">SGST ({halfRatePct}%)</th>
                 <th className="p-3 text-right">Total (Inc)</th>
               </tr>
             </thead>
@@ -214,11 +216,11 @@ export default function InvoiceDetailPage() {
               <span>{formatINR(invoice.taxableMinor)}</span>
             </div>
             <div className="flex justify-between text-[var(--app-text-muted)]">
-              <span>CGST (2.5%):</span>
+              <span>CGST ({halfRatePct}%):</span>
               <span>{formatINR(invoice.cgstMinor)}</span>
             </div>
             <div className="flex justify-between text-[var(--app-text-muted)]">
-              <span>SGST (2.5%):</span>
+              <span>SGST ({halfRatePct}%):</span>
               <span>{formatINR(invoice.sgstMinor)}</span>
             </div>
             <div className="flex justify-between font-bold text-sm text-[var(--app-text-primary)] pt-2 border-t border-[var(--app-glass-border)]">

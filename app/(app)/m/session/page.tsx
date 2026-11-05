@@ -32,7 +32,8 @@ import {
 } from 'lucide-react'
 import { toast } from '@/components/app/ui/toast'
 import { cn } from '@/lib/utils'
-import { getMemberPortalState, saveMemberPortalState } from '@/lib/memberportal'
+import { getMemberPortalState, saveMemberPortalState, resolveMember } from '@/lib/memberportal'
+import { updateMember } from '@/lib/members'
 import { useAuth } from '@/context/AuthContext'
 
 // Types
@@ -147,6 +148,7 @@ const ALTERNATIVE_EXERCISES = [
 export default function ActiveWorkoutSessionPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const member = React.useMemo(() => resolveMember(user?.id || user?.name), [user?.id, user?.name])
 
   // Exercise plan state
   const [exercises, setExercises] = useState<PlannedExercise[]>(INITIAL_EXERCISES)
@@ -409,7 +411,8 @@ export default function ActiveWorkoutSessionPage() {
     setFinishModalOpen(false)
 
     try {
-      const userRef = user?.id || user?.name || 'mem_001'
+      const member = resolveMember(user?.id || user?.name)
+      const userRef = member?.id || user?.id || user?.name || ''
       const currentPortal = getMemberPortalState(userRef)
       const updatedPortal = {
         ...currentPortal,
@@ -417,6 +420,14 @@ export default function ActiveWorkoutSessionPage() {
         totalVisits: (currentPortal.totalVisits || 0) + 1,
       }
       saveMemberPortalState(updatedPortal, userRef)
+
+      if (member) {
+        updateMember(member.id, {
+          attendance_streak: (member.attendance_streak || 0) + 1,
+          total_check_ins: (member.total_check_ins || 0) + 1,
+          last_visit_at: new Date().toISOString(),
+        })
+      }
 
       if (typeof window !== 'undefined') {
         const workoutLog = {
@@ -431,6 +442,18 @@ export default function ActiveWorkoutSessionPage() {
           })),
         }
         localStorage.setItem('dna360_last_workout_log', JSON.stringify(workoutLog))
+
+        fetch('/api/member/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'COMPLETE_WORKOUT',
+            memberId: userRef,
+            title: 'Push & Core Hypertrophy',
+            durationSeconds: elapsedSeconds,
+            totalVolumeKg: totalVolumeAcrossWorkout,
+          }),
+        }).catch(() => {})
       }
     } catch (e) {
       console.warn('Failed to save workout completion state:', e)
@@ -465,7 +488,7 @@ export default function ActiveWorkoutSessionPage() {
                 </h1>
               </div>
               <p className="text-[10px] text-white/50 tracking-wider uppercase truncate">
-                Studio 1 · Rohan K.
+                Studio 1 · {member?.assigned_trainer_name || 'Floor Coach'}
               </p>
             </div>
 
@@ -614,11 +637,11 @@ export default function ActiveWorkoutSessionPage() {
         </section>
 
         {/* ─── 3. THE SET LOGGER TABLE (PERFECTLY ALIGNED & USER-FRIENDLY) ─── */}
-        <section className="rounded-2xl bg-[#0B0F1A]/90 border border-white/[0.08] p-3 shadow-xl space-y-2.5">
+        <section className="rounded-2xl bg-[#0B0F1A]/90 border border-white/[0.08] p-2.5 sm:p-3 shadow-xl space-y-2.5">
           {/* Table Header Columns */}
-          <div className="grid grid-cols-[38px_1fr_94px_74px_44px] gap-2 items-center text-center text-[10px] font-bold text-white/45 uppercase tracking-wider px-1">
-            <span className="text-left pl-1">SET</span>
-            <span className="text-left pl-1.5">PREV</span>
+          <div className="grid grid-cols-[30px_minmax(56px,1fr)_76px_62px_38px] sm:grid-cols-[38px_1fr_94px_74px_44px] gap-1.5 sm:gap-2 items-center text-center text-[10px] font-bold text-white/45 uppercase tracking-wider px-1">
+            <span className="text-left pl-0.5">SET</span>
+            <span className="text-left pl-1 min-w-0 truncate">PREV</span>
             <span className="text-center">KG</span>
             <span className="text-center">REPS</span>
             <span className="text-center">DONE</span>
@@ -640,7 +663,7 @@ export default function ActiveWorkoutSessionPage() {
                 <div
                   key={set.id}
                   className={cn(
-                    'grid grid-cols-[38px_1fr_94px_74px_44px] gap-2 items-center p-2 rounded-xl border transition-all duration-200',
+                    'grid grid-cols-[30px_minmax(56px,1fr)_76px_62px_38px] sm:grid-cols-[38px_1fr_94px_74px_44px] gap-1.5 sm:gap-2 items-center p-1.5 sm:p-2 rounded-xl border transition-all duration-200',
                     set.isDone
                       ? 'bg-[#10B981]/[0.09] border-[#10B981]/35 shadow-[0_0_16px_rgba(16,185,129,0.08)]'
                       : 'bg-white/[0.025] border-white/[0.06] hover:border-white/[0.12]'
@@ -652,7 +675,7 @@ export default function ActiveWorkoutSessionPage() {
                       onClick={() => handleCycleSetType(set.id)}
                       title="Tap to cycle: Normal / Warmup / Dropset / Failure"
                       className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border transition-all active:scale-95 shrink-0',
+                        'w-7 h-8 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs font-bold border transition-all active:scale-95 shrink-0',
                         set.isDone
                           ? 'bg-[#10B981] text-black font-black border-[#10B981]'
                           : typeBadge.bg
@@ -663,12 +686,12 @@ export default function ActiveWorkoutSessionPage() {
                   </div>
 
                   {/* 2. Previous Performance Telemetry */}
-                  <div className="min-w-0 pl-1 text-left">
-                    <p className="text-xs font-medium text-white/75 truncate tabular-nums">
+                  <div className="min-w-0 pl-0.5 sm:pl-1 text-left">
+                    <p className="text-[11px] sm:text-xs font-medium text-white/75 truncate tabular-nums">
                       {set.lastKg}kg × {set.lastReps}
                     </p>
-                    <span className="text-[9.5px] uppercase tracking-wider text-white/40 block">
-                      {set.type === 'WARMUP' ? 'Warm-up' : set.isDone ? 'Completed' : 'Last Session'}
+                    <span className="text-[9px] sm:text-[9.5px] uppercase tracking-wider text-white/40 truncate block">
+                      {set.type === 'WARMUP' ? 'Warm-up' : set.isDone ? 'Done' : 'Last'}
                     </span>
                   </div>
 
@@ -676,10 +699,10 @@ export default function ActiveWorkoutSessionPage() {
                   <div className="relative flex items-center justify-between rounded-xl bg-[#121726] border border-white/[0.12] p-0.5 focus-within:border-[#3B82F6] focus-within:ring-1 focus-within:ring-[#3B82F6]/30">
                     <button
                       onClick={() => handleNudgeSet(set.id, 'kg', -2.5)}
-                      className="w-6 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
+                      className="w-5 sm:w-6 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
                       aria-label="Decrease 2.5 kg"
                     >
-                      <Minus className="w-3 h-3" />
+                      <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     </button>
 
                     <input
@@ -689,15 +712,15 @@ export default function ActiveWorkoutSessionPage() {
                       value={set.kg}
                       onChange={(e) => handleUpdateSetValue(set.id, 'kg', e.target.value)}
                       onFocus={() => setCustomPlateWeight(set.kg)}
-                      className="w-full h-8 text-center bg-transparent text-white font-bold text-xs outline-none tabular-nums px-0.5"
+                      className="w-full min-w-0 h-8 text-center bg-transparent text-white font-bold text-xs outline-none tabular-nums px-0.5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
 
                     <button
                       onClick={() => handleNudgeSet(set.id, 'kg', 2.5)}
-                      className="w-6 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
+                      className="w-5 sm:w-6 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
                       aria-label="Increase 2.5 kg"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     </button>
                   </div>
 
@@ -705,7 +728,7 @@ export default function ActiveWorkoutSessionPage() {
                   <div className="relative flex items-center justify-between rounded-xl bg-[#121726] border border-white/[0.12] p-0.5 focus-within:border-[#3B82F6] focus-within:ring-1 focus-within:ring-[#3B82F6]/30">
                     <button
                       onClick={() => handleNudgeSet(set.id, 'reps', -1)}
-                      className="w-5 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
+                      className="w-4 sm:w-5 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
                       aria-label="Decrease 1 rep"
                     >
                       <Minus className="w-2.5 h-2.5" />
@@ -717,12 +740,12 @@ export default function ActiveWorkoutSessionPage() {
                       step="1"
                       value={set.reps}
                       onChange={(e) => handleUpdateSetValue(set.id, 'reps', e.target.value)}
-                      className="w-full h-8 text-center bg-transparent text-white font-bold text-xs outline-none tabular-nums px-0.5"
+                      className="w-full min-w-0 h-8 text-center bg-transparent text-white font-bold text-xs outline-none tabular-nums px-0.5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
 
                     <button
                       onClick={() => handleNudgeSet(set.id, 'reps', 1)}
-                      className="w-5 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
+                      className="w-4 sm:w-5 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] active:scale-90 flex items-center justify-center text-white/60 hover:text-white transition-all shrink-0"
                       aria-label="Increase 1 rep"
                     >
                       <Plus className="w-2.5 h-2.5" />
@@ -815,7 +838,7 @@ export default function ActiveWorkoutSessionPage() {
             {/* Huge Tabular Countdown */}
             <div className="text-right">
               <span className="text-2xl font-bold text-[#60A5FA] tabular-nums tracking-wider">
-                0:{String(restRemaining).padStart(2, '0')}
+                {formatTime(restRemaining)}
               </span>
             </div>
           </div>
@@ -934,8 +957,8 @@ export default function ActiveWorkoutSessionPage() {
 
       {/* ─── MODAL 1: OLYMPIC BAR PLATE CALCULATOR ─── */}
       {plateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-[#34D399]" />
@@ -1036,8 +1059,8 @@ export default function ActiveWorkoutSessionPage() {
 
       {/* ─── MODAL 2: SWAP EXERCISE MODAL ─── */}
       {swapModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 max-h-[85dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
               <div>
                 <h3 className="text-sm font-bold text-white">Substitute Movement</h3>
@@ -1086,8 +1109,8 @@ export default function ActiveWorkoutSessionPage() {
 
       {/* ─── MODAL 3: EXERCISE TECHNIQUE NOTES ─── */}
       {notesModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 max-h-[85dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
                 <Info className="w-4 h-4 text-amber-400" />
@@ -1134,8 +1157,8 @@ export default function ActiveWorkoutSessionPage() {
 
       {/* ─── MODAL 4: FINISH WORKOUT CONFIRMATION / SUMMARY ─── */}
       {finishModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 space-y-4">
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-[#0D1220] border border-white/[0.12] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-400" />

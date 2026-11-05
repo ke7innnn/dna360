@@ -38,6 +38,64 @@ export default function LeadsPage() {
 
   const refreshData = () => {
     setLeads(getLeads({ search }))
+    fetch('/api/inquiries')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.inquiries && Array.isArray(data.inquiries) && data.inquiries.length > 0) {
+          const currentLeads = getLeads({})
+          const map = new Map<string, CrmLead>()
+          for (const l of currentLeads) {
+            map.set(l.id, l)
+          }
+          for (const remote of data.inquiries) {
+            if (remote?.id && remote?.name) {
+              const stageMap: Record<string, LeadStage> = {
+                new: 'inquiry',
+                inquiry: 'inquiry',
+                trial_booked: 'trial_scheduled',
+                trial_scheduled: 'trial_scheduled',
+                trial_attended: 'trial_attended',
+                negotiating: 'negotiating',
+                converted: 'converted',
+                lost: 'lost',
+              }
+              const mappedStage: LeadStage = stageMap[remote.stage] || 'inquiry'
+              map.set(remote.id, {
+                id: remote.id,
+                name: remote.name,
+                phone: remote.phone || '+919820000000',
+                email: remote.email || undefined,
+                type: remote.type || 'Website',
+                source: remote.source || 'Website',
+                stage: mappedStage,
+                goal: remote.goal || remote.interestType || 'General Fitness',
+                expectedDealValueMinor: Number(remote.expectedDealValueMinor || 4350000),
+                assignedRepId: remote.assignedRepId || remote.assignedTo || 'usr_fc_01',
+                assignedRepName: remote.assignedRepName || remote.assignedToName || 'Rajesh Poojary',
+                notes: remote.notes || '',
+                activityLog: Array.isArray(remote.activityLog)
+                  ? remote.activityLog
+                  : [
+                      {
+                        id: `act_${remote.id}`,
+                        timestamp: remote.createdAt || new Date().toISOString(),
+                        type: 'note',
+                        text: remote.notes || 'Inbound inquiry synced from Supabase',
+                        actor: remote.assignedRepName || 'System',
+                      },
+                    ],
+                createdAt: remote.createdAt || new Date().toISOString(),
+              })
+            }
+          }
+          const merged = Array.from(map.values())
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('dna360_crm_leads', JSON.stringify(merged))
+          }
+          setLeads(getLeads({ search }))
+        }
+      })
+      .catch(() => null)
   }
 
   useEffect(() => {

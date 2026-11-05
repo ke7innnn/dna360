@@ -53,6 +53,7 @@ export default function MemberClassesPage() {
   const selectedDateStr = days[selectedDayIndex]?.dateStr || toLocalDateStr()
 
   const [sessions, setSessions] = useState<ClassSession[]>([])
+  const [weekBookedDates, setWeekBookedDates] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 
   // Clean up legacy dummy storage key from previous iterations
@@ -69,23 +70,42 @@ export default function MemberClassesPage() {
     const daySessions = getSessions({ date: selectedDateStr })
     setSessions(daySessions)
 
-    // 2. Fetch authoritative state from central Supabase database
+    // 2. Fetch authoritative state from central Supabase database across the 7-day rolling window
     if (typeof window !== 'undefined') {
       try {
+        const startStr = days[0]?.dateStr || selectedDateStr
+        const endStr = days[days.length - 1]?.dateStr || selectedDateStr
         const res = await fetch(
-          `/api/classes?startDate=${selectedDateStr}&endDate=${selectedDateStr}&memberId=${member?.id || ''}`
+          `/api/classes?startDate=${startStr}&endDate=${endStr}&memberId=${member?.id || ''}`
         )
         if (res.ok) {
           const data = await res.json()
           if (data.sessions && Array.isArray(data.sessions)) {
-            setSessions(data.sessions)
+            const allWeek: ClassSession[] = data.sessions
+            setSessions(allWeek.filter((s) => s.date === selectedDateStr))
+
+            if (member) {
+              const bDates = new Set<string>()
+              for (const s of allWeek) {
+                if (
+                  s.bookings?.some(
+                    (b) =>
+                      b.memberId === member.id &&
+                      (b.status === 'confirmed' || b.status === 'waitlisted')
+                  )
+                ) {
+                  bDates.add(s.date)
+                }
+              }
+              setWeekBookedDates(Array.from(bDates))
+            }
           }
         }
       } catch {
         // Fallback to local state if offline
       }
     }
-  }, [selectedDateStr, member?.id])
+  }, [selectedDateStr, member, days])
 
   useEffect(() => {
     reloadSessions()
@@ -100,9 +120,9 @@ export default function MemberClassesPage() {
 
   // Days with at least one active confirmed/waitlisted booking for the logged-in member
   const daysWithBookings = useMemo(() => {
-    if (!member) return new Set<string>()
+    const bookedDates = new Set<string>(weekBookedDates)
+    if (!member) return bookedDates
     const allSessions = getSessions()
-    const bookedDates = new Set<string>()
     for (const s of allSessions) {
       if (
         s.bookings.some(
@@ -115,7 +135,7 @@ export default function MemberClassesPage() {
       }
     }
     return bookedDates
-  }, [member, sessions])
+  }, [member, sessions, weekBookedDates])
 
   const handleBook = async (session: ClassSession) => {
     if (!member) {
@@ -124,22 +144,17 @@ export default function MemberClassesPage() {
     }
 
     setLoading(true)
-    // 1. Optimistic local update
-    const res = bookClassSession({
+    // 1. Local cache update
+    const localRes = bookClassSession({
       sessionId: session.id,
       memberId: member.id,
       source: 'member',
     })
 
-    if (!res.success) {
-      setLoading(false)
-      toast.error('Booking failed', { description: res.error || 'Unable to book session.' })
-      return
-    }
-
-    // 2. Sync to Supabase central database
+    // 2. Authoritative sync to Supabase central database
+    let dbResData: any = null
     try {
-      await fetch('/api/classes', {
+      const apiRes = await fetch('/api/classes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,15 +162,29 @@ export default function MemberClassesPage() {
           memberId: member.id,
         }),
       })
+      dbResData = await apiRes.json()
+      if (!apiRes.ok && !localRes.success) {
+        setLoading(false)
+        toast.error('Booking failed', {
+          description: dbResData?.error || localRes.error || 'Unable to book session.',
+        })
+        return
+      }
     } catch {
-      // Offline fallback
+      if (!localRes.success) {
+        setLoading(false)
+        toast.error('Booking failed', { description: localRes.error || 'Unable to book session.' })
+        return
+      }
     }
 
     setLoading(false)
+    const isWaitlisted = dbResData?.isWaitlisted ?? localRes.isWaitlisted
+    const waitPos = dbResData?.booking?.waitlistPosition ?? localRes.booking?.waitlistPosition ?? 1
 
-    if (res.isWaitlisted) {
+    if (isWaitlisted) {
       toast.info(`Added to waitlist for ${session.title}`, {
-        description: `Position #${res.booking?.waitlistPosition ?? 1}. You'll be auto-promoted if a spot opens up.`,
+        description: `Position #${waitPos}. You'll be auto-promoted if a spot opens up.`,
       })
     } else {
       toast.success(`Booked ${session.title}!`, {
@@ -168,21 +197,15 @@ export default function MemberClassesPage() {
   const handleCancel = async (session: ClassSession, bookingId: string) => {
     if (!member) return
     setLoading(true)
-    const res = cancelClassBooking({
+    const localRes = cancelClassBooking({
       sessionId: session.id,
       bookingId,
       cancelledBy: { id: member.id, name: member.name, role: 'Member' },
     })
 
-    if (!res.success) {
-      setLoading(false)
-      toast.error('Cancellation failed', { description: res.error || 'Cannot cancel booking.' })
-      return
-    }
-
     // Central Supabase database cancellation sync
     try {
-      await fetch('/api/classes', {
+      const apiRes = await fetch('/api/classes', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -190,8 +213,20 @@ export default function MemberClassesPage() {
           memberId: member.id,
         }),
       })
+      if (!apiRes.ok && !localRes.success) {
+        const errData = await apiRes.json().catch(() => ({}))
+        setLoading(false)
+        toast.error('Cancellation failed', {
+          description: errData?.error || localRes.error || 'Cannot cancel booking.',
+        })
+        return
+      }
     } catch {
-      // Offline fallback
+      if (!localRes.success) {
+        setLoading(false)
+        toast.error('Cancellation failed', { description: localRes.error || 'Cannot cancel booking.' })
+        return
+      }
     }
 
     setLoading(false)

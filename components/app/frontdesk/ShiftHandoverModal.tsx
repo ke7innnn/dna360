@@ -22,7 +22,7 @@ export default function ShiftHandoverModal({
   onShiftClosed?: (shift: CashShiftHandover) => void
 }) {
   const [shiftType, setShiftType] = useState<CashShiftHandover['shiftType']>('evening')
-  const [staffName, setStaffName] = useState('Amit Sharma')
+  const [staffName, setStaffName] = useState('Aftab Memon')
   const [openingFloat, setOpeningFloat] = useState(5000) // ₹5,000
   const [cashSales, setCashSales] = useState(18200) // ₹18,200
   const [pettyCash, setPettyCash] = useState(400) // ₹400

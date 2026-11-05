@@ -351,7 +351,7 @@ export default function LockerModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search locker number (e.g. 104), member name, phone, or key..."
-              className="w-full bg-[#080B12] border border-white/[0.12] focus:border-[#38BDF8] text-white text-xs rounded-xl pl-8.5 pr-8 py-2 focus:outline-none transition-all shadow-inner"
+              className="w-full bg-[#080B12] border border-white/[0.12] focus:border-[#38BDF8] text-white text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none transition-all shadow-inner"
             />
             {searchQuery && (
               <button
@@ -377,7 +377,7 @@ export default function LockerModal({
                 type="button"
                 onClick={() => setSelectedZone(zone.id)}
                 className={cn(
-                  'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer',
+                  'px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 whitespace-nowrap transition-all cursor-pointer',
                   selectedZone === zone.id
                     ? 'bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/30 shadow-xs'
                     : 'text-white/50 hover:text-white border border-transparent'
@@ -695,8 +695,8 @@ export default function LockerModal({
               </div>
             ) : (
               /* ACTIVE KEY REGISTRY TABLE */
-              <div className="rounded-xl border border-white/[0.08] bg-[#080B12] overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="rounded-xl border border-white/[0.08] bg-[#080B12] overflow-hidden overflow-x-auto">
+                <table className="min-w-[580px] w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-white/[0.08] bg-white/[0.02] text-white/50 font-semibold text-[11px]">
                       <th className="py-2 px-3">Locker #</th>
@@ -907,7 +907,7 @@ export default function LockerModal({
                               value={memberSearchQuery}
                               onChange={(e) => setMemberSearchQuery(e.target.value)}
                               placeholder="Name, phone, or code (e.g. Kabir)..."
-                              className="w-full bg-[#080B12] border border-white/[0.15] focus:border-[#38BDF8] text-white text-xs rounded-xl pl-8.5 pr-2.5 py-2 focus:outline-none"
+                              className="w-full bg-[#080B12] border border-white/[0.15] focus:border-[#38BDF8] text-white text-xs rounded-xl pl-9 pr-2.5 py-2 focus:outline-none"
                               autoFocus
                             />
                           </div>
@@ -948,7 +948,7 @@ export default function LockerModal({
                         placeholder="e.g. Rohan Verma"
                         value={guestName}
                         onChange={(e) => setGuestName(e.target.value)}
-                        className="h-8.5 text-xs"
+                        className="h-9 text-xs"
                         required
                       />
                       <Input
@@ -956,7 +956,7 @@ export default function LockerModal({
                         placeholder="+91 98200 00000"
                         value={guestPhone}
                         onChange={(e) => setGuestPhone(e.target.value)}
-                        className="h-8.5 text-xs"
+                        className="h-9 text-xs"
                       />
                     </div>
                   )}

@@ -44,10 +44,10 @@ export const SEEDED_TRAINERS = [
 export const SEEDED_PT_CLIENTS: PTClient[] = [
   {
     id: 'mem_001',
-    name: 'Arjun Mehta',
+    name: 'Aarav Mehta',
     phone: '+919820011111',
-    email: 'arjun.mehta@gmail.com',
-    memberCode: 'DNA-2025-0892',
+    email: 'aarav.mehta@gmail.com',
+    memberCode: 'DNA-2025-0001',
     planName: 'Premium PT — 12 Sessions',
     ptSessionsRemaining: 8,
     ptSessionsTotal: 12,
@@ -56,7 +56,7 @@ export const SEEDED_PT_CLIENTS: PTClient[] = [
     currentWeightKg: 78.5,
     targetWeightKg: 82.0,
     bodyFatPct: 14.8,
-    lastSessionDate: '2026-08-22',
+    lastSessionDate: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
     consentComplete: true,
   },
   {
@@ -64,7 +64,7 @@ export const SEEDED_PT_CLIENTS: PTClient[] = [
     name: 'Priya Sharma',
     phone: '+919820022222',
     email: 'priya.s@outlook.com',
-    memberCode: 'DNA-2025-1043',
+    memberCode: 'DNA-2025-0002',
     planName: 'Reformer Pilates — 36 Sessions',
     ptSessionsRemaining: 22,
     ptSessionsTotal: 36,
@@ -73,7 +73,7 @@ export const SEEDED_PT_CLIENTS: PTClient[] = [
     currentWeightKg: 62.0,
     targetWeightKg: 57.0,
     bodyFatPct: 24.2,
-    lastSessionDate: '2026-08-20',
+    lastSessionDate: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10),
     consentComplete: true,
   },
 ]
@@ -82,12 +82,12 @@ export const SEEDED_WORKOUT_PROGRAMS: WorkoutProgram[] = [
   {
     id: 'wp_001',
     clientId: 'mem_001',
-    clientName: 'Arjun Mehta',
+    clientName: 'Aarav Mehta',
     trainerId: 'usr_tr_head_01',
     trainerName: 'Rajesh Poojary',
     title: 'Hypertrophy & Posterior Chain Strength Block',
     splitType: 'PPL',
-    startDate: '2026-08-01',
+    startDate: new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10),
     weeksCount: 6,
     days: [
       {
@@ -118,7 +118,7 @@ export const SEEDED_NUTRITION_PLANS: NutritionPlan[] = [
   {
     id: 'np_001',
     clientId: 'mem_001',
-    clientName: 'Arjun Mehta',
+    clientName: 'Aarav Mehta',
     dailyCalories: 2750,
     proteinGrams: 175,
     carbsGrams: 320,
@@ -141,7 +141,7 @@ export const SEEDED_PT_APPOINTMENTS: PTAppointment[] = [
     trainerId: 'usr_tr_head_01',
     trainerName: 'Rajesh Poojary',
     clientId: 'mem_001',
-    clientName: 'Arjun Mehta',
+    clientName: 'Aarav Mehta',
     clientPhone: '+919820011111',
     date: new Date().toISOString().slice(0, 10),
     startTime: '07:00',
@@ -154,7 +154,7 @@ export const SEEDED_PT_APPOINTMENTS: PTAppointment[] = [
   {
     id: 'pta_002',
     trainerId: 'usr_tr_03',
-    trainerName: 'Sneha Rao',
+    trainerName: 'Hemant Shirke',
     clientId: 'mem_002',
     clientName: 'Priya Sharma',
     clientPhone: '+919820022222',
@@ -243,10 +243,28 @@ export function saveAppointments(apps: PTAppointment[]) {
 
 // ─── Queries & Operations ───
 
+function matchesTrainerId(recordTrainerId?: string | null, filterTrainerId?: string): boolean {
+  if (!filterTrainerId || filterTrainerId === 'all') return true
+  if (recordTrainerId === filterTrainerId) return true
+  const rajeshIds = ['usr_tr_head_01', 'usr_trainer_01', 'usr_staff_03']
+  if (rajeshIds.includes(filterTrainerId) && recordTrainerId && rajeshIds.includes(recordTrainerId)) {
+    return true
+  }
+  const aftabIds = ['usr_tr_02', 'usr_staff_04']
+  if (aftabIds.includes(filterTrainerId) && recordTrainerId && aftabIds.includes(recordTrainerId)) {
+    return true
+  }
+  const pramodIds = ['usr_tr_09', 'usr_staff_05']
+  if (pramodIds.includes(filterTrainerId) && recordTrainerId && pramodIds.includes(recordTrainerId)) {
+    return true
+  }
+  return false
+}
+
 export function getTrainerClients(trainerId?: string): PTClient[] {
   const members = getStoredMembers()
   const matchingMembers = members.filter(
-    m => (!trainerId || m.assigned_trainer_id === trainerId) &&
+    m => matchesTrainerId(m.assigned_trainer_id, trainerId) &&
          m.active_memberships.some(ms => ms.product_category.includes('pt') || ms.product_category.includes('pilates') || ms.sessions_remaining !== null)
   )
 
@@ -386,13 +404,13 @@ export function logPTSession(data: {
 export function getTrainerAppointments(trainerId?: string): PTAppointment[] {
   const apps = getStoredAppointments()
   if (!trainerId) return apps
-  return apps.filter(a => a.trainerId === trainerId)
+  return apps.filter(a => matchesTrainerId(a.trainerId, trainerId))
 }
 
 export function getCommissionLedger(trainerId?: string): TrainerCommission[] {
   const comms = getStoredCommissions()
   if (!trainerId) return comms
-  return comms.filter(c => c.trainerId === trainerId)
+  return comms.filter(c => matchesTrainerId(c.trainerId, trainerId))
 }
 
 export function getClientProgram(clientId: string): WorkoutProgram | null {
@@ -417,6 +435,23 @@ export function saveWorkoutProgram(program: Omit<WorkoutProgram, 'id'> & { id?: 
     programs.push(fullProgram)
   }
   saveWorkoutPrograms(programs)
+
+  // Sync to Supabase training programs API
+  if (typeof window !== 'undefined') {
+    fetch('/api/training/programs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: fullProgram.title,
+        goal: 'MUSCLE_GAIN',
+        weeks: fullProgram.weeksCount || 6,
+        daysPerWeek: fullProgram.days?.length || 3,
+        notes: fullProgram.notes || `Assigned to ${fullProgram.clientName}`,
+        visibility: 'ASSIGNED_ONLY',
+      }),
+    }).catch(() => null)
+  }
+
   return fullProgram
 }
 

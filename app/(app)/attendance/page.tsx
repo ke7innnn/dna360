@@ -26,6 +26,7 @@ import {
   getStoredGates,
   evaluateAccess,
   getFloorOccupancy,
+  syncAccessLogsFromRemote,
 } from '@/lib/attendance'
 import { formatDateTime, getInitials } from '@/lib/utils'
 import type { AccessLogEntry, GateDevice, AccessDecision } from '@/types/attendance'
@@ -65,9 +66,14 @@ export default function AttendancePage() {
 
   useEffect(() => {
     refreshData()
+    syncAccessLogsFromRemote().then(() => refreshData())
     const handleUpdate = () => refreshData()
     window.addEventListener('dna360_attendance_updated', handleUpdate)
-    return () => window.removeEventListener('dna360_attendance_updated', handleUpdate)
+    window.addEventListener('dna360_access_logs_updated', handleUpdate)
+    return () => {
+      window.removeEventListener('dna360_attendance_updated', handleUpdate)
+      window.removeEventListener('dna360_access_logs_updated', handleUpdate)
+    }
   }, [search, decisionFilter, branchFilter])
 
   const occupancy = getFloorOccupancy(branchFilter)
@@ -184,7 +190,15 @@ export default function AttendancePage() {
         title="Turnstile & Gate Access"
         description="Real-time optical turnstile monitoring, rolling OTP verification, access policies, and automated emergency overrides."
         actions={
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setOverrideModalOpen(true)}
+              icon={<KeyRound className="w-4 h-4 text-[#38BDF8]" />}
+            >
+              Manual Gate Override
+            </Button>
             <Button
               variant={isEmergencyUnlocked ? 'danger' : 'secondary'}
               size="md"
@@ -263,7 +277,7 @@ export default function AttendancePage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Button
               variant="secondary"
               size="md"
@@ -297,6 +311,9 @@ export default function AttendancePage() {
           </div>
         </div>
       </Card>
+
+      {/* 3b. Occupancy & Footfall Heatmap */}
+      <OccupancyHeatmap />
 
       {/* 4. Logs DataTable */}
       <Card className="p-6 space-y-4">
@@ -354,7 +371,7 @@ export default function AttendancePage() {
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
         memberCode="DNA-2025-0001"
-        memberName="Arjun Mehta"
+        memberName="Aarav Mehta"
         planName="Annual Gym Package 1"
         onSimulateScan={(code) => handleSimulateScan(code)}
       />

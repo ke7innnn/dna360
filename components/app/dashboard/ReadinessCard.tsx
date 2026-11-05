@@ -145,7 +145,7 @@ export default function ReadinessCard({
             </div>
 
             {/* 5 Energy Tap Targets */}
-            <div className="grid grid-cols-5 gap-2 sm:gap-2.5 pt-1">
+            <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5 pt-1">
               {[
                 { val: 1, label: 'Drained' },
                 { val: 2, label: 'Low' },
@@ -157,12 +157,12 @@ export default function ReadinessCard({
                   key={item.val}
                   onClick={() => handleSelectEnergy(item.val)}
                   className={cn(
-                    'py-3.5 px-2 rounded-xl border text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center gap-1',
+                    'py-3 px-1 sm:py-3.5 sm:px-2 rounded-xl border text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center gap-1 min-w-0',
                     'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] hover:bg-[#3B82F6]/15 hover:border-[#3B82F6]/40 hover:scale-[1.02] active:scale-95',
                     selectedEnergy === item.val && 'bg-[#2563EB]/25 border-[#3B82F6] text-white shadow-[0_0_15px_rgba(37,99,235,0.35)]'
                   )}
                 >
-                  <span className="font-ui text-xs sm:text-[13px] font-semibold text-white">
+                  <span className="font-ui text-[10.5px] sm:text-[13px] font-semibold text-white truncate max-w-full">
                     {item.label}
                   </span>
                 </button>

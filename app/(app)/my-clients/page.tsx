@@ -21,15 +21,25 @@ import { getStoredMembers } from '@/lib/members'
 
 // ─── Real Member Client Roster (§6) ───
 // Derived directly from the real gym member database (0 fake dummy clients or duplicate IDs)
-function buildRealInitialRoster(): TrainerClientSummary[] {
+function buildRealInitialRoster(currentUser?: any): TrainerClientSummary[] {
   if (typeof window === 'undefined') return []
   const members = getStoredMembers()
-  const ptClients = members.filter(
-    (m) =>
+  const isScopedTrainer =
+    currentUser &&
+    Array.isArray(currentUser.assignedClientIds) &&
+    currentUser.assignedClientIds.length > 0 &&
+    !['owner_admin', 'owner', 'head_trainer'].includes(String(currentUser.role?.slug || '').toLowerCase())
+
+  const ptClients = members.filter((m) => {
+    if (isScopedTrainer) {
+      return currentUser.assignedClientIds.includes(m.id) || m.assigned_trainer_id === currentUser.id
+    }
+    return (
       ['mem_001', 'mem_002', 'mem_003', 'mem_004', 'mem_005'].includes(m.id) ||
       m.assigned_trainer_id ||
       m.active_memberships.some((ms) => ms.product_name?.toLowerCase().includes('pt') || ms.product_name?.toLowerCase().includes('pilates'))
-  )
+    )
+  })
 
   return ptClients.slice(0, 10).map((m, idx) => {
     const ptMs = m.active_memberships.find(
@@ -81,14 +91,14 @@ export default function TrainerClientsPage() {
           setClients(data.clients)
           setAdherenceAlerts(data.adherenceAlerts || [])
         } else {
-          setClients(buildRealInitialRoster())
+          setClients(buildRealInitialRoster(user))
         }
       } else {
-        setClients(buildRealInitialRoster())
+        setClients(buildRealInitialRoster(user))
       }
     } catch (e) {
       console.error('Failed to load trainer clients', e)
-      setClients(buildRealInitialRoster())
+      setClients(buildRealInitialRoster(user))
     } finally {
       setLoading(false)
     }
@@ -96,7 +106,7 @@ export default function TrainerClientsPage() {
 
   useEffect(() => {
     const handleSync = () => {
-      setClients(buildRealInitialRoster())
+      setClients(buildRealInitialRoster(user))
       loadTrainerData()
     }
     handleSync()

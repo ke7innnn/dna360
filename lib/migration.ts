@@ -90,7 +90,7 @@ export function normalizeStaffName(name: string): string {
  * Resolves a sales rep name to a staff ID and canonical name.
  */
 export function resolveSalesRep(rawName: string | undefined): { id: string; name: string } {
-  if (!rawName) return { id: 'usr_fc_01', name: 'Amit Sharma' }
+  if (!rawName) return { id: 'usr_fc_01', name: 'Rajesh Poojary' }
   const normalized = normalizeStaffName(rawName).toLowerCase()
   if (HISTORICAL_SALES_REPS[normalized]) {
     return HISTORICAL_SALES_REPS[normalized]
