@@ -186,6 +186,10 @@ export async function syncSettingsFromRemote(): Promise<void> {
       localStorage.setItem(PAYMENTS_CONFIG_KEY, JSON.stringify(cfg.payments_config))
       changed = true
     }
+    if (cfg.essl_config) {
+      localStorage.setItem('dna360_essl_config', JSON.stringify(cfg.essl_config))
+      changed = true
+    }
     if (changed) {
       window.dispatchEvent(new Event('dna360_settings_updated'))
     }

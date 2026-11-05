@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         where: { authorId: 'CLUB_CONFIG' },
       })
       const configs: Record<string, any> = {}
-      const sensitiveMemberKeys = new Set(['bank', 'fd_pos_sales', 'fd_shifts', 'fd_lockers'])
+      const sensitiveMemberKeys = new Set(['bank', 'fd_pos_sales', 'fd_shifts', 'fd_lockers', 'essl_config'])
       for (const row of cfgRows) {
         try {
           const cleanKey = row.id.replace(/^cfg_/, '')
@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
         delete configs.fd_pos_sales
         delete configs.fd_shifts
         delete configs.fd_lockers
+        delete configs.essl_config
       }
       result.configs = configs
     }
@@ -302,13 +303,18 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'LOG_ACCESS') {
+      const { entry } = body
+      const isSelfLog =
+        requireCapability(session.user, 'portal.access') &&
+        entry?.memberId &&
+        entry.memberId === session.user.id
       if (
         !requireCapability(session.user, 'checkin.operate') &&
-        !requireCapability(session.user, 'checkin.view')
+        !requireCapability(session.user, 'checkin.view') &&
+        !isSelfLog
       ) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
-      const { entry } = body
       if (!entry?.id) return NextResponse.json({ error: 'Missing entry.id' }, { status: 400 })
       const serialized = JSON.stringify(entry)
       await prisma.coachNote.upsert({

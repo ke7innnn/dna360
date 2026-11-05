@@ -531,6 +531,20 @@ export function createMember(data: Partial<Member> & Pick<Member, 'first_name' |
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ member: newMember }),
     }).catch(() => {})
+
+    const primaryMs = newMember.active_memberships?.[0]
+    fetch('/api/essl', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'SYNC_MEMBER',
+        memberCode: newMember.member_code,
+        name: newMember.name,
+        expiryFrom: primaryMs?.activation_date || newMember.joined_date,
+        expiryTo: primaryMs?.expiry_date || '2026-12-31',
+        status: newMember.status,
+      }),
+    }).catch(() => {})
   }
 
   logAuditEvent({
@@ -568,6 +582,22 @@ export function updateMember(id: string, updates: Partial<Member>): Member | nul
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ member: updated }),
     }).catch(() => {})
+
+    if (updates.active_memberships || updates.status !== undefined || updates.blacklisted !== undefined) {
+      const primaryMs = updated.active_memberships?.[0]
+      fetch('/api/essl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SYNC_MEMBER',
+          memberCode: updated.member_code,
+          name: updated.name,
+          expiryFrom: primaryMs?.activation_date || updated.joined_date,
+          expiryTo: primaryMs?.expiry_date || '2026-12-31',
+          status: updated.blacklisted ? 'blacklisted' : updated.status,
+        }),
+      }).catch(() => {})
+    }
   }
 
   logAuditEvent({

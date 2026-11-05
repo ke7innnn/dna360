@@ -294,6 +294,17 @@ export function scanTurnstilePass(query: string, gateId = 'gate_pow_01', scanTyp
             action: 'COMPLETE_WORKOUT',
           }),
         }).catch(() => {})
+        // Trigger physical eSSL eBioServer-New Door Unlock (`DeviceCommand_UnlockDoor`)
+        fetch('/api/essl', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'UNLOCK_DOOR',
+            memberId: member.id,
+            memberCode: member.member_code,
+            gateId,
+          }),
+        }).catch(() => {})
       }
     }
   }
@@ -347,6 +358,19 @@ export function triggerManualOverride(
     total_check_ins: member.total_check_ins + 1,
     last_visit_at: new Date().toISOString(),
   })
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/essl', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'UNLOCK_DOOR',
+        memberId: member.id,
+        memberCode: member.member_code,
+        gateId,
+      }),
+    }).catch(() => {})
+  }
 
   const logEntry: AccessLogEntry = {
     id: `acc_${Date.now()}`,

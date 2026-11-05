@@ -6,7 +6,7 @@ import {
   ShieldCheck, Download, Save, Plus, Edit2,
   CheckCircle, RadioTower, Wifi, Server, Sparkles,
   Phone, Mail, Globe, MapPin, KeyRound, AlertTriangle,
-  Upload, Clock, FileCheck, CheckCircle2,
+  Upload, Clock, FileCheck, CheckCircle2, DoorOpen, RefreshCw, Copy, Lock,
 } from 'lucide-react'
 import Card from '@/components/app/ui/glass-card'
 import StatTile from '@/components/app/ui/StatTile'
@@ -29,6 +29,7 @@ import {
 } from '@/lib/settings'
 import { executeGymexMigration, type GymexRawRow } from '@/lib/migration'
 import { openRazorpayCheckout } from '@/lib/razorpay'
+import { getEsslConfig, saveEsslConfig, type EsslConfig } from '@/lib/essl'
 import type {
   BusinessProfile,
   PendingConfig,
@@ -44,6 +45,9 @@ export default function SettingsPage() {
   const [pendingConfig, setPendingConfig] = useState<PendingConfig>(getPendingConfig())
   const [bankDetails, setBankDetails] = useState<BankDetails>(getBankDetails())
   const [notifications, setNotifications] = useState<NotificationGatewayConfig>(getNotificationsConfig())
+  const [esslConfig, setEsslConfig] = useState<EsslConfig>(getEsslConfig())
+  const [esslTestingDoor, setEsslTestingDoor] = useState(false)
+  const [esslSyncingMembers, setEsslSyncingMembers] = useState(false)
   const [blockers, setBlockers] = useState<string[]>([])
 
   // Migration state
@@ -57,6 +61,7 @@ export default function SettingsPage() {
     setPendingConfig(getPendingConfig())
     setBankDetails(getBankDetails())
     setNotifications(getNotificationsConfig())
+    setEsslConfig(getEsslConfig())
     setBlockers(getGoLiveBlockers())
   }
 
@@ -87,6 +92,79 @@ export default function SettingsPage() {
     saveBankDetails(bankDetails)
     toast.success('Bank Details for Invoice Footer Saved')
     refreshData()
+  }
+
+  const handleSaveEsslConfig = (e: React.FormEvent) => {
+    e.preventDefault()
+    saveEsslConfig(esslConfig)
+    toast.success('eSSL eBioServer-New Door Configuration Saved', {
+      description: `Primary Device: ${esslConfig.deviceCode} (${esslConfig.locationCode})`,
+    })
+    refreshData()
+  }
+
+  const handleTestEsslDoorUnlock = async () => {
+    setEsslTestingDoor(true)
+    try {
+      saveEsslConfig(esslConfig)
+      const res = await fetch('/api/essl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UNLOCK_DOOR',
+          deviceCode: esslConfig.deviceCode,
+          configOverride: esslConfig,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        toast.success(`Door Unlock Pulse Sent (${esslConfig.deviceCode})`, {
+          description: data.soap?.resultText || 'DeviceCommand_UnlockDoor dispatched to eBioServer.',
+        })
+      } else {
+        toast.error('Door Unlock Command Returned Warning', {
+          description: data.soap?.error || data.error || 'Verify eBioServer IP & credentials.',
+        })
+      }
+    } catch (err: any) {
+      toast.error('Failed to contact eSSL controller', {
+        description: err?.message,
+      })
+    } finally {
+      setEsslTestingDoor(false)
+    }
+  }
+
+  const handleSyncAllMembersToEssl = async () => {
+    setEsslSyncingMembers(true)
+    try {
+      saveEsslConfig(esslConfig)
+      const res = await fetch('/api/essl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SYNC_ALL_MEMBERS',
+          configOverride: esslConfig,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        const updated = { ...esslConfig, lastSyncAt: data.lastSyncAt }
+        saveEsslConfig(updated)
+        setEsslConfig(updated)
+        toast.success(`Synced ${data.syncedCount} Active Members to eSSL Door`, {
+          description: 'UpdateEmployeewithExpiryDates provisioned for Powai active & grace-period roster.',
+        })
+      } else {
+        toast.error('Member Sync Error', {
+          description: data.error || 'Could not sync member expiry dates.',
+        })
+      }
+    } catch (err: any) {
+      toast.error('Sync request failed', { description: err?.message })
+    } finally {
+      setEsslSyncingMembers(false)
+    }
   }
 
   const handleRunMigration = (dryRunMode: boolean = isDryRun) => {
@@ -399,14 +477,150 @@ export default function SettingsPage() {
                 <p className="font-ui text-xs text-[var(--muted)]">Transactional SMS template approved on TRAI DLT portal.</p>
               </div>
 
-              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--line)] space-y-2">
+              <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--aurora-1)]/40 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">Turnstile Optical Gate</span>
-                  <Badge status="ok" size="sm">Online</Badge>
+                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">eSSL eBioServer-New Door</span>
+                  <Badge status="ok" size="sm">SOAP + Webhook</Badge>
                 </div>
-                <p className="font-ui text-xs text-[var(--muted)]">ZKTeco / Hikvision optical turnstile controllers on LAN.</p>
+                <p className="font-ui text-xs text-[var(--muted)]">
+                  Device: <code className="text-[10px] font-mono text-[var(--aurora-1)]">{esslConfig.deviceCode}</code>. Biometric, RFID & Dynamic QR door unlock.
+                </p>
               </div>
             </div>
+
+            {/* Dedicated eSSL eBioServer-New Configuration & Live Control Panel */}
+            <form onSubmit={handleSaveEsslConfig} className="mt-6 pt-6 border-t border-[var(--line)] space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-display text-sm font-semibold text-[var(--ink)]">
+                      eSSL eBioServer-New Door Access Controller (SOAP 1.1 & Real-Time Webhook)
+                    </h4>
+                    <Badge status="ok" size="sm">Production Ready</Badge>
+                  </div>
+                  <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
+                    Connects DNA 360 Powai directly to <code className="text-[11px] font-mono text-[var(--ink-2)]">Webservice.asmx</code> (<code className="text-[11px] font-mono">DeviceCommand_UnlockDoor</code>, <code className="text-[11px] font-mono">UpdateEmployeewithExpiryDates</code>, <code className="text-[11px] font-mono">DeviceCommand_BlockUnBlockUser</code>).
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    loading={esslTestingDoor}
+                    onClick={handleTestEsslDoorUnlock}
+                    icon={<DoorOpen className="w-3.5 h-3.5" />}
+                  >
+                    Test Door Unlock Pulse
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    loading={esslSyncingMembers}
+                    onClick={handleSyncAllMembersToEssl}
+                    icon={<RefreshCw className="w-3.5 h-3.5" />}
+                  >
+                    Sync Active Members to Door
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Input
+                  label="eBioServer Webservice.asmx URL"
+                  value={esslConfig.serverUrl}
+                  onChange={(e) => setEsslConfig({ ...esslConfig, serverUrl: e.target.value })}
+                  placeholder="http://203.192.x.x:80/eBioserverNew/Webservice.asmx"
+                  hint="Public IP/Domain of Windows IIS running eSSL eBioServer-New"
+                />
+                <Input
+                  label="eBioServer API UserName"
+                  value={esslConfig.username}
+                  onChange={(e) => setEsslConfig({ ...esslConfig, username: e.target.value })}
+                  placeholder="admin"
+                />
+                <Input
+                  label="eBioServer API Password"
+                  type="password"
+                  value={esslConfig.password}
+                  onChange={(e) => setEsslConfig({ ...esslConfig, password: e.target.value })}
+                  placeholder="Enter eBioServer Webservice Password"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input
+                  label="Main Door Device Serial (DeviceCode)"
+                  value={esslConfig.deviceCode}
+                  onChange={(e) => setEsslConfig({ ...esslConfig, deviceCode: e.target.value })}
+                  placeholder="ESSL_POWAI_MAIN_01"
+                  hint="Serial number from eBioServer Device List"
+                />
+                <Input
+                  label="Secondary Gate Serial (Optional)"
+                  value={esslConfig.secondaryDeviceCode || ''}
+                  onChange={(e) => setEsslConfig({ ...esslConfig, secondaryDeviceCode: e.target.value })}
+                  placeholder="ESSL_POWAI_STEAM_02"
+                  hint="Steam / Locker room controller serial"
+                />
+                <Input
+                  label="eBioServer Location Code"
+                  value={esslConfig.locationCode}
+                  onChange={(e) => setEsslConfig({ ...esslConfig, locationCode: e.target.value })}
+                  placeholder="POWAI"
+                  hint="Matches EmployeeLocation in eBioServer"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-[var(--r-md)] bg-[var(--bg-elev)] border border-[var(--line)]">
+                <div>
+                  <label className="font-data text-[10.5px] uppercase tracking-[0.16em] font-medium text-[var(--muted)] block mb-1.5">
+                    Inbound Real-Time Webhook URL (Give this to eSSL Engineer)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 px-3 py-2 rounded-[var(--r-sm)] bg-[var(--surface)] border border-[var(--line)] font-mono text-xs text-[var(--aurora-1)] select-all overflow-x-auto">
+                      https://www.dna360.in/api/webhooks/essl
+                    </code>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard?.writeText('https://www.dna360.in/api/webhooks/essl')
+                        toast.success('eSSL Webhook URL copied to clipboard')
+                      }}
+                      icon={<Copy className="w-3.5 h-3.5" />}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                  <p className="font-ui text-[11px] text-[var(--muted)] mt-1.5">
+                    Paste this URL in eBioServer-New → Webhook Settings. Every door scan pushes here in real time, verifies the member, logs attendance, and fires <code className="font-mono">DeviceCommand_UnlockDoor</code>.
+                  </p>
+                </div>
+
+                <div>
+                  <Input
+                    label="Webhook Shared Secret / AES-256 Key"
+                    value={esslConfig.webhookSecret}
+                    onChange={(e) => setEsslConfig({ ...esslConfig, webhookSecret: e.target.value })}
+                    hint="Pass via header x-essl-secret, ?secret= query param, or AES-256 encryption key."
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <span className="font-data text-[11px] text-[var(--muted)]">
+                  {esslConfig.lastSyncAt
+                    ? `Last Member Roster Sync: ${new Date(esslConfig.lastSyncAt).toLocaleString('en-IN')}`
+                    : 'Auto-Sync enabled on Member Onboarding, Renewal, Freeze & QR Check-In'}
+                </span>
+                <Button type="submit" variant="primary" size="md" icon={<Save className="w-3.5 h-3.5" />}>
+                  Save eSSL Door Config
+                </Button>
+              </div>
+            </form>
           </Card>
         </TabsContent>
 

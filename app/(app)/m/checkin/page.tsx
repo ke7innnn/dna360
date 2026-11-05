@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, UserPlus } from 'lucide-react'
+import { ArrowLeft, UserPlus, DoorOpen, CheckCircle2, ShieldAlert } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
 import { QRCodeSVG } from 'qrcode.react'
 import { getMemberPortalState } from '@/lib/memberportal'
+import { scanTurnstilePass } from '@/lib/attendance'
 
 export default function MemberCheckinPage() {
   const { user } = useAuth()
@@ -34,6 +35,39 @@ export default function MemberCheckinPage() {
 
   const [secondsRemaining, setSecondsRemaining] = useState(18)
   const [tokenSeed, setTokenSeed] = useState(Date.now())
+  const [isUnlockingDoor, setIsUnlockingDoor] = useState(false)
+  const [doorUnlockStatus, setDoorUnlockStatus] = useState<'idle' | 'granted' | 'denied'>('idle')
+
+  const handleSelfVerifyAndUnlockDoor = async () => {
+    if (isUnlockingDoor) return
+    setIsUnlockingDoor(true)
+    try {
+      const qrPayload = `DNA360:${memberCode || user?.id || 'DNA-2025-0001'}:${tokenSeed}`
+      const { entry } = scanTurnstilePass(qrPayload, 'gate_pow_01', 'QR')
+      const granted =
+        entry.decision === 'GRANTED' || entry.decision === 'GRANTED_GRACE_PERIOD'
+
+      if (granted) {
+        setDoorUnlockStatus('granted')
+        toast.success('Door Unlocked · Check-In Verified', {
+          description: `${entry.reason} (eSSL Gate 1 Relay Activated)`,
+        })
+        setTokenSeed(Date.now())
+        setSecondsRemaining(30)
+        setTimeout(() => setDoorUnlockStatus('idle'), 5000)
+      } else {
+        setDoorUnlockStatus('denied')
+        toast.error('Access Denied at Turnstile', {
+          description: entry.reason,
+        })
+        setTimeout(() => setDoorUnlockStatus('idle'), 5000)
+      }
+    } catch {
+      toast.error('Unable to reach door controller')
+    } finally {
+      setIsUnlockingDoor(false)
+    }
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -88,7 +122,36 @@ export default function MemberCheckinPage() {
           This code changes every 30 seconds. Screenshots won&apos;t work — that&apos;s deliberate.
         </p>
 
-        <div className="w-full mt-8 max-w-[320px]">
+        <div className="w-full mt-6 max-w-[320px] space-y-2.5">
+          <button
+            onClick={handleSelfVerifyAndUnlockDoor}
+            disabled={isUnlockingDoor}
+            className={`w-full py-3.5 px-4 rounded-full font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
+              doorUnlockStatus === 'granted'
+                ? 'bg-emerald-500 text-slate-950'
+                : doorUnlockStatus === 'denied'
+                  ? 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
+                  : 'bg-[#38BDF8] hover:bg-[#0EA5E9] text-slate-950'
+            }`}
+          >
+            {doorUnlockStatus === 'granted' ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Door Unlocked · Checked In!</span>
+              </>
+            ) : doorUnlockStatus === 'denied' ? (
+              <>
+                <ShieldAlert className="w-4 h-4" />
+                <span>Access Denied · Contact Front Desk</span>
+              </>
+            ) : (
+              <>
+                <DoorOpen className="w-4 h-4" />
+                <span>{isUnlockingDoor ? 'Verifying with eSSL Door...' : 'Verify & Unlock Entry Door'}</span>
+              </>
+            )}
+          </button>
+
           <button
             onClick={() => {
               toast.success('Guest day pass link copied to clipboard', {
