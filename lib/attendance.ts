@@ -410,13 +410,31 @@ export const evaluateAccess = scanTurnstilePass
 export const getFloorOccupancy = getLiveOccupancy
 
 export function triggerEmergencyEvacuation(staffName = 'Duty Manager'): void {
+  if (typeof window !== 'undefined') {
+    fetch('/api/essl', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'UNLOCK_DOOR',
+        gateId: 'gate_pow_01',
+      }),
+    }).catch(() => {})
+    fetch('/api/essl', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'UNLOCK_DOOR',
+        gateId: 'gate_pow_02',
+      }),
+    }).catch(() => {})
+  }
   logAuditEvent({
     actor: { id: 'system', name: staffName, email: '', role: 'Manager' },
     action: 'CHECKIN_OVERRIDE',
     entity: 'TurnstileAccess',
     entityId: `emerg_${Date.now()}`,
     branchId: 'pow',
-    description: 'Emergency Evacuation Triggered — All turnstiles unlocked open.',
+    description: 'Emergency Evacuation / Power Override Triggered — All turnstiles unlocked open.',
   })
 }
 

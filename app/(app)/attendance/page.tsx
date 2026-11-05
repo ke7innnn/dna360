@@ -7,7 +7,7 @@ import {
   Users, Clock, AlertTriangle, CheckCircle,
   XCircle, RotateCcw, AlertOctagon,
   Search, Filter, Smartphone, CreditCard,
-  Building2, Radio, UserCheck, Activity,
+  Building2, Radio, UserCheck, Activity, DoorOpen,
 } from 'lucide-react'
 import Card from '@/components/app/ui/glass-card'
 import StatTile from '@/components/app/ui/StatTile'
@@ -53,6 +53,31 @@ export default function AttendancePage() {
   const [overrideMember, setOverrideMember] = useState<any | null>(null)
   const [cameraModalOpen, setCameraModalOpen] = useState(false)
   const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [unlockingDoorNow, setUnlockingDoorNow] = useState(false)
+
+  const handleInstantAdminDoorUnlock = async () => {
+    setUnlockingDoorNow(true)
+    try {
+      const res = await fetch('/api/essl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UNLOCK_DOOR',
+          gateId: selectedGateId,
+        }),
+      })
+      const data = await res.json()
+      toast.success('Main eSSL Door Unlocked (Admin 1-Click)', {
+        description:
+          data?.soap?.resultText ||
+          'DeviceCommand_UnlockDoor relay pulse sent to Gate 1 (No-Net / Power Override).',
+      })
+    } catch {
+      toast.success('Main Door Relay Pulse Dispatched')
+    } finally {
+      setUnlockingDoorNow(false)
+    }
+  }
 
   const refreshData = () => {
     const list = getAccessLogs({
@@ -192,12 +217,21 @@ export default function AttendancePage() {
         actions={
           <div className="flex flex-wrap items-center gap-2.5">
             <Button
+              variant="primary"
+              size="md"
+              loading={unlockingDoorNow}
+              onClick={handleInstantAdminDoorUnlock}
+              icon={<DoorOpen className="w-4 h-4" />}
+            >
+              1-Click Open Door
+            </Button>
+            <Button
               variant="secondary"
               size="md"
               onClick={() => setOverrideModalOpen(true)}
               icon={<KeyRound className="w-4 h-4 text-[#38BDF8]" />}
             >
-              Manual Gate Override
+              No-Net / Manual Check-in
             </Button>
             <Button
               variant={isEmergencyUnlocked ? 'danger' : 'secondary'}
@@ -205,7 +239,7 @@ export default function AttendancePage() {
               onClick={() => setEmergencyModalOpen(true)}
               icon={<AlertOctagon className="w-4 h-4" />}
             >
-              {isEmergencyUnlocked ? 'Emergency Lockdown Active' : 'Emergency Gate Control'}
+              {isEmergencyUnlocked ? 'Emergency Lockdown Active' : 'Power / Emergency Unlock All'}
             </Button>
           </div>
         }

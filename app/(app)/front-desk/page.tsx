@@ -5,7 +5,7 @@ import {
   UserPlus, ShoppingBag, KeyRound, Calculator,
   Sparkles, Receipt, CheckCircle, Clock,
   Users, ArrowUpRight, Search, QrCode, Camera,
-  ShieldCheck, AlertTriangle, XCircle, Wifi, WifiOff,
+  ShieldCheck, AlertTriangle, XCircle, Wifi, WifiOff, DoorOpen,
 } from 'lucide-react'
 import Card from '@/components/app/ui/glass-card'
 import Button from '@/components/app/ui/button'
@@ -299,6 +299,16 @@ export default function FrontDeskPage() {
             action: 'COMPLETE_WORKOUT',
           }),
         }).catch(() => {})
+        fetch('/api/essl', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'UNLOCK_DOOR',
+            memberId: member.id,
+            memberCode: member.member_code,
+            gateId: 'gate_pow_01',
+          }),
+        }).catch(() => {})
       } catch (e) {
         console.error('Failed to update member attendance statistics:', e)
       }
@@ -503,6 +513,23 @@ export default function FrontDeskPage() {
                 <span>Offline Mode ({offlineQueueCount} queued)</span>
               </div>
             )}
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                fetch('/api/essl', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'UNLOCK_DOOR', gateId: 'gate_pow_01' }),
+                }).catch(() => {})
+                toast.success('Main eSSL Door Unlocked (1-Click Override)', {
+                  description: 'Gate 1 relay opened for member (No-Net / Power Override).',
+                })
+              }}
+              icon={<DoorOpen className="w-4 h-4 text-emerald-400" />}
+            >
+              1-Click Open Door
+            </Button>
             <Button
               variant="primary"
               size="md"

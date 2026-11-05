@@ -25,9 +25,19 @@ export default function ManualOverrideModal({
   onOverridden?: () => void
 }) {
   const members = getStoredMembers()
+  const [memberSearch, setMemberSearch] = useState('')
+  const filteredMembers = members.filter((m) => {
+    if (!memberSearch.trim()) return true
+    const q = memberSearch.toLowerCase().trim()
+    return (
+      m.name.toLowerCase().includes(q) ||
+      (m.member_code || m.memberCode || '').toLowerCase().includes(q) ||
+      m.phone.includes(q)
+    )
+  })
   const [selectedMemberId, setSelectedMemberId] = useState(initialMember?.id || (members[0]?.id ?? ''))
   const [gateId, setGateId] = useState('gate_pow_01')
-  const [reason, setReason] = useState('Member promise to clear pending dues after workout')
+  const [reason, setReason] = useState('Member has no mobile internet / dead phone battery')
   const [customNote, setCustomNote] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -61,11 +71,33 @@ export default function ManualOverrideModal({
     >
       <form onSubmit={handleOverride} className="space-y-4">
         <div className="space-y-1.5">
+          <Input
+            label="Quick Search Member (No Internet / Offline Check-in)"
+            placeholder="Type member name, phone, or DNA-2025-XXXX..."
+            value={memberSearch}
+            onChange={(e) => {
+              const val = e.target.value
+              setMemberSearch(val)
+              const q = val.toLowerCase().trim()
+              if (q) {
+                const firstMatch = members.find(
+                  (m) =>
+                    m.name.toLowerCase().includes(q) ||
+                    (m.member_code || m.memberCode || '').toLowerCase().includes(q) ||
+                    m.phone.includes(q)
+                )
+                if (firstMatch) setSelectedMemberId(firstMatch.id)
+              }
+            }}
+          />
+        </div>
+
+        <div className="space-y-1.5">
           <label className="text-sm font-medium text-[var(--app-text-secondary)]">Member</label>
           <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
             <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
             <SelectContent>
-              {members.map((m) => (
+              {filteredMembers.slice(0, 100).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name} ({m.memberCode}) · {m.status.toUpperCase()}
                 </SelectItem>
@@ -79,8 +111,8 @@ export default function ManualOverrideModal({
           <Select value={gateId} onValueChange={setGateId}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="gate_pow_01">Gate 1 - Main Entrance Turnstile</SelectItem>
-              <SelectItem value="gate_pow_02">Gate 2 - Steam & Locker Zone Turnstile</SelectItem>
+              <SelectItem value="gate_pow_01">Gate 1 - Main Entrance eSSL Door</SelectItem>
+              <SelectItem value="gate_pow_02">Gate 2 - Steam & Locker Zone Door</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -90,6 +122,12 @@ export default function ManualOverrideModal({
           <Select value={reason} onValueChange={setReason}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="Member has no mobile internet / dead phone battery">
+                Member has no mobile internet / dead phone battery
+              </SelectItem>
+              <SelectItem value="Electricity / Wi-Fi outage — manual front desk verification">
+                Electricity / Wi-Fi outage — manual front desk verification
+              </SelectItem>
               <SelectItem value="Member promise to clear pending dues after workout">
                 Pending dues — Member clearing post-session
               </SelectItem>
