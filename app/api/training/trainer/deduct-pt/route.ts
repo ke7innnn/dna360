@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
               attendanceStreak: (dbMember.attendanceStreak || 0) + 1,
               totalCheckIns: (dbMember.totalCheckIns || 0) + 1,
               lastVisitAt: new Date(),
+              assignedTrainerId: user.id,
+              assignedTrainerName: user.name,
             },
           })
         })

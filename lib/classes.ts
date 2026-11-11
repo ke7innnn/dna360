@@ -529,8 +529,91 @@ export function isBookingWindowOpen(sessionDate: string): boolean {
 }
 
 /**
+ * Evaluate whether a member's active package entitles them to book a specific class session.
+ */
+export function evaluateClassPackageEntitlement(
+  member: ReturnType<typeof getStoredMembers>[number] | null | undefined,
+  session: Pick<ClassSession, 'title' | 'category' | 'startTime'>
+): { allowed: boolean; reason?: string; badge?: string } {
+  if (!member) {
+    return { allowed: false, reason: 'Member account not found.', badge: 'Sign in required' }
+  }
+  if (member.status === 'inactive' || member.status === 'blacklisted') {
+    return {
+      allowed: false,
+      reason: 'Your membership is expired or restricted. Please renew your package to book classes.',
+      badge: 'Membership Expired',
+    }
+  }
+
+  const activeMemberships = (member.active_memberships || []).filter((ms) => ms && ms.status !== 'void')
+  if (activeMemberships.length === 0) {
+    return {
+      allowed: false,
+      reason: 'No active membership package on your account.',
+      badge: 'No Active Package',
+    }
+  }
+
+  // Check Happy Hours time window restriction if the member ONLY holds a Happy Hours package
+  const allHaveWindow = activeMemberships.every((ms) => !!ms.access_window)
+  if (allHaveWindow && activeMemberships[0]?.access_window) {
+    const win = activeMemberships[0].access_window
+    if (session.startTime < win.start || session.startTime > win.end) {
+      return {
+        allowed: false,
+        reason: `Your Happy Hours package covers classes between ${win.start} and ${win.end} only.`,
+        badge: `Happy Hours (${win.start}–${win.end})`,
+      }
+    }
+  }
+
+  // Reformer Pilates studio classes require a Reformer Pilates or All-Activities package (unless it's a Trial session)
+  const isTrialSession = session.title.toLowerCase().includes('trial')
+  if (session.category === 'reformer_pilates' && !isTrialSession) {
+    const pilatesMs = activeMemberships.find((ms) => {
+      const name = (ms.product_name || '').toLowerCase()
+      const cat = (ms.product_category || ms.category || '').toLowerCase()
+      return name.includes('pilates') || cat.includes('pilates') || name.includes('all activities')
+    })
+
+    if (!pilatesMs) {
+      if ((member.adjustment_credits_remaining || 0) > 0) {
+        return { allowed: true, badge: 'Uses Adjustment Credit' }
+      }
+      return {
+        allowed: false,
+        reason: 'Reformer Pilates studio classes require an active Reformer Pilates or All-Activities package.',
+        badge: 'Pilates Package Required',
+      }
+    }
+
+    if (pilatesMs.sessions_remaining !== null && pilatesMs.sessions_remaining <= 0) {
+      if ((member.adjustment_credits_remaining || 0) > 0) {
+        return { allowed: true, badge: 'Uses Adjustment Credit' }
+      }
+      return {
+        allowed: false,
+        reason: '0 Reformer Pilates sessions remaining in your package. Please top up or renew.',
+        badge: '0 Sessions Left',
+      }
+    }
+
+    return {
+      allowed: true,
+      badge:
+        pilatesMs.sessions_remaining !== null
+          ? `${pilatesMs.sessions_remaining} Pilates sessions left`
+          : 'Included in Plan',
+    }
+  }
+
+  return { allowed: true, badge: 'Included in Plan' }
+}
+
+/**
  * Book a class session.
- * Handles capacity checks, waitlisting, adjustment credit application.
+ * Handles capacity checks, waitlisting, package entitlement, and session deduction.
  */
 export function bookClassSession(params: {
   sessionId: string
@@ -552,8 +635,12 @@ export function bookClassSession(params: {
   }
 
   if (params.source === 'member') {
-    if (member.status === 'inactive' || member.status === 'blacklisted') {
-      return { success: false, error: 'Your membership is not active. Please renew to book classes.' }
+    const entitlement = evaluateClassPackageEntitlement(member, session)
+    if (!entitlement.allowed) {
+      return {
+        success: false,
+        error: entitlement.reason || 'Your current package does not cover this class.',
+      }
     }
     if (sessionStartDate(session.date, session.startTime).getTime() <= Date.now()) {
       return { success: false, error: 'This class has already started.' }
@@ -615,6 +702,24 @@ export function bookClassSession(params: {
     updateMember(member.id, {
       adjustment_credits_remaining: member.adjustment_credits_remaining - 1,
     })
+  } else if (
+    bookingStatus === 'confirmed' &&
+    session.category === 'reformer_pilates' &&
+    !session.title.toLowerCase().includes('trial')
+  ) {
+    const updatedMs = (member.active_memberships || []).map((ms) => {
+      const name = (ms.product_name || '').toLowerCase()
+      const cat = (ms.product_category || ms.category || '').toLowerCase()
+      if ((name.includes('pilates') || cat.includes('pilates')) && ms.sessions_remaining !== null && ms.sessions_remaining > 0) {
+        return {
+          ...ms,
+          sessions_consumed: (ms.sessions_consumed || 0) + 1,
+          sessions_remaining: ms.sessions_remaining - 1,
+        }
+      }
+      return ms
+    })
+    updateMember(member.id, { active_memberships: updatedMs })
   }
   saveSessions(sessions)
 

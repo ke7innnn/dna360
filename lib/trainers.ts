@@ -24,7 +24,7 @@ const WORKOUT_PROGRAMS_KEY = 'dna360_workout_programs'
 const NUTRITION_PLANS_KEY = 'dna360_nutrition_plans'
 const PT_SESSIONS_LOG_KEY = 'dna360_pt_session_logs'
 const COMMISSION_LEDGER_KEY = 'dna360_trainer_commission'
-const APPOINTMENTS_KEY = 'dna360_pt_appointments'
+const APPOINTMENTS_KEY = 'dna360_pt_appointments_v2'
 
 export const SEEDED_TRAINERS = [
   { id: 'usr_tr_head_01', name: 'Rajesh Poojary', role: 'Head Coach & Performance Specialist', phone: '+919820041001', pt_tier: 'super_elite' },
@@ -135,38 +135,43 @@ export const SEEDED_NUTRITION_PLANS: NutritionPlan[] = [
   },
 ]
 
-export const SEEDED_PT_APPOINTMENTS: PTAppointment[] = [
-  {
-    id: 'pta_001',
-    trainerId: 'usr_tr_head_01',
-    trainerName: 'Rajesh Poojary',
-    clientId: 'mem_001',
-    clientName: 'Aarav Mehta',
-    clientPhone: '+919820011111',
-    date: new Date().toISOString().slice(0, 10),
-    startTime: '07:00',
-    endTime: '08:00',
-    type: '1on1_pt',
-    status: 'scheduled',
-    ptTier: 'premium',
-    consentComplete: true,
-  },
-  {
-    id: 'pta_002',
-    trainerId: 'usr_tr_03',
-    trainerName: 'Hemant Shirke',
-    clientId: 'mem_002',
-    clientName: 'Priya Sharma',
-    clientPhone: '+919820022222',
-    date: new Date().toISOString().slice(0, 10),
-    startTime: '09:30',
-    endTime: '10:30',
-    type: '1on1_pt',
-    status: 'scheduled',
-    ptTier: 'premium',
-    consentComplete: true,
-  },
-]
+export const SEEDED_PT_APPOINTMENTS: PTAppointment[] = []
+
+export function getTrainerContactForMember(
+  trainerNameOrId?: string | null,
+  memberId?: string | null
+): { id: string; name: string; phone: string; role: string } | null {
+  if (memberId) {
+    const ptLogs = getStoredPTSessions()
+    const latestLog = ptLogs.find((l) => l.clientId === memberId && l.trainerName)
+    if (latestLog) {
+      const byLog = SEEDED_TRAINERS.find(
+        (t) =>
+          t.id === latestLog.trainerId ||
+          t.name.toLowerCase() === latestLog.trainerName.toLowerCase()
+      )
+      if (byLog) return byLog
+    }
+    const member = getStoredMembers().find((m) => m.id === memberId)
+    if (member?.assigned_trainer_id || member?.assigned_trainer_name) {
+      const byMem = SEEDED_TRAINERS.find(
+        (t) =>
+          t.id === member.assigned_trainer_id ||
+          (member.assigned_trainer_name &&
+            t.name.toLowerCase() === member.assigned_trainer_name.toLowerCase())
+      )
+      if (byMem) return byMem
+    }
+  }
+  if (trainerNameOrId && trainerNameOrId !== 'Not Assigned') {
+    const q = trainerNameOrId.trim().toLowerCase()
+    const match = SEEDED_TRAINERS.find(
+      (t) => t.id.toLowerCase() === q || t.name.toLowerCase() === q || t.name.toLowerCase().includes(q)
+    )
+    if (match) return match
+  }
+  return null
+}
 
 // ─── Storage Helpers ───
 
@@ -263,10 +268,23 @@ function matchesTrainerId(recordTrainerId?: string | null, filterTrainerId?: str
 
 export function getTrainerClients(trainerId?: string): PTClient[] {
   const members = getStoredMembers()
-  const matchingMembers = members.filter(
-    m => matchesTrainerId(m.assigned_trainer_id, trainerId) &&
-         m.active_memberships.some(ms => ms.product_category.includes('pt') || ms.product_category.includes('pilates') || ms.sessions_remaining !== null)
-  )
+  const ptLogs = getStoredPTSessions()
+  const matchingMembers = members.filter(m => {
+    const trainedByCoach = ptLogs.some(
+      l => l.clientId === m.id && matchesTrainerId(l.trainerId, trainerId)
+    )
+    const assignedToCoach = matchesTrainerId(m.assigned_trainer_id, trainerId)
+    if (!trainedByCoach && !assignedToCoach) return false
+    return (
+      trainedByCoach ||
+      m.active_memberships.some(
+        ms =>
+          ms.product_category.includes('pt') ||
+          ms.product_category.includes('pilates') ||
+          ms.sessions_remaining !== null
+      )
+    )
+  })
 
   return matchingMembers.map(m => {
     const ptMembership = m.active_memberships.find(ms => ms.sessions_remaining !== null)
@@ -366,6 +384,8 @@ export function logPTSession(data: {
 
     updateMember(member.id, {
       active_memberships: updatedMemberships,
+      assigned_trainer_id: data.trainerId || member.assigned_trainer_id,
+      assigned_trainer_name: data.trainerName || member.assigned_trainer_name,
     })
   }
 

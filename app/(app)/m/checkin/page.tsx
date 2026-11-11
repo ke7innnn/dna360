@@ -6,12 +6,15 @@ import { ArrowLeft, UserPlus, DoorOpen, CheckCircle2, ShieldAlert } from 'lucide
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
 import { QRCodeSVG } from 'qrcode.react'
-import { getMemberPortalState } from '@/lib/memberportal'
+import { getMemberPortalState, resolveMember } from '@/lib/memberportal'
 import { scanTurnstilePass } from '@/lib/attendance'
 
 export default function MemberCheckinPage() {
   const { user } = useAuth()
   const [portalState, setPortalState] = useState(() => getMemberPortalState(user?.id || user?.name))
+  const member = React.useMemo(() => resolveMember(user?.id || user?.name), [user?.id, user?.name])
+  const isExpiredOrBlocked =
+    member?.status === 'inactive' || member?.status === 'blacklisted'
 
   useEffect(() => {
     const local = getMemberPortalState(user?.id || user?.name)
@@ -98,17 +101,35 @@ export default function MemberCheckinPage() {
           Scan at the front desk or the optical entry turnstile
         </p>
 
-        {/* Optical QR Code Box */}
-        <div className="member-qrbox flex items-center justify-center overflow-hidden bg-white">
-          <QRCodeSVG
-            value={`DNA360:${memberCode}:${tokenSeed}`}
-            size={204}
-            level="H"
-            includeMargin={false}
-            bgColor="#FFFFFF"
-            fgColor="#000000"
-          />
-        </div>
+        {/* Optical QR Code Box (Locked when Membership Expired / Blacklisted) */}
+        {isExpiredOrBlocked ? (
+          <div className="w-[232px] h-[232px] rounded-3xl bg-rose-500/10 border-2 border-rose-500/40 flex flex-col items-center justify-center p-5 text-center space-y-2 my-3">
+            <ShieldAlert className="w-10 h-10 text-rose-400" />
+            <p className="text-sm font-bold text-rose-200">
+              {member?.status === 'blacklisted' ? 'Account Restricted' : 'Membership Expired'}
+            </p>
+            <p className="text-[11px] text-rose-300/80 leading-relaxed">
+              Entry QR generation and door access are disabled until your package is renewed.
+            </p>
+            <Link
+              href="/m"
+              className="mt-1 px-4 py-1.5 rounded-full bg-rose-500 text-white text-[11px] font-bold"
+            >
+              Renew Membership
+            </Link>
+          </div>
+        ) : (
+          <div className="member-qrbox flex items-center justify-center overflow-hidden bg-white">
+            <QRCodeSVG
+              value={`DNA360:${memberCode}:${tokenSeed}`}
+              size={204}
+              level="H"
+              includeMargin={false}
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+            />
+          </div>
+        )}
 
         <p className="member-qrname max-w-[280px] truncate">{userName}</p>
         <p className="member-qrid max-w-[280px] truncate">{memberCode} · {planName.toUpperCase()}</p>

@@ -12,10 +12,11 @@ import {
   ChevronLeft,
   Clock,
   Dumbbell,
+  MessageCircle,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getMemberPortalState, resolveMember, MemberPortalState } from '@/lib/memberportal'
-import { getStoredPTSessions } from '@/lib/trainers'
+import { getStoredPTSessions, getTrainerContactForMember } from '@/lib/trainers'
 import type { PTSessionLog } from '@/types/trainer'
 
 export default function MemberPTLedgerPage() {
@@ -96,7 +97,28 @@ export default function MemberPTLedgerPage() {
 
   const ptRemaining = portalState?.ptSessionsRemaining ?? 0
   const ptTotal = portalState?.ptSessionsTotal ?? 0
-  const trainerName = portalState?.assignedTrainer || member?.assigned_trainer_name || 'Not Assigned'
+  const rawTrainerName =
+    sessionLogs[0]?.trainerName ||
+    portalState?.assignedTrainer ||
+    member?.assigned_trainer_name ||
+    'Not Assigned'
+  const trainerContact = useMemo(
+    () => getTrainerContactForMember(rawTrainerName, member?.id),
+    [rawTrainerName, member?.id]
+  )
+  const trainerName = trainerContact?.name || rawTrainerName
+  const trainerPhone = trainerContact?.phone || null
+
+  const openTrainerWhatsApp = (customTrainerName?: string) => {
+    const contact = customTrainerName
+      ? getTrainerContactForMember(customTrainerName, member?.id) || trainerContact
+      : trainerContact
+    const digits = (contact?.phone || '+919820041001').replace(/\D/g, '')
+    const msg = encodeURIComponent(
+      `Hi Coach ${contact?.name || trainerName}, this is ${member?.name || user?.name || 'Member'} (${member?.member_code || ''}) from DNA 360.`
+    )
+    window.open(`https://wa.me/${digits}?text=${msg}`, '_blank', 'noopener,noreferrer')
+  }
 
   // Determine active PT tier
   const ptPlan = member?.active_memberships?.find(
@@ -207,19 +229,35 @@ export default function MemberPTLedgerPage() {
       {/* ─── Compact Trainer & Tier Grid ─── */}
       <div className="grid grid-cols-2 gap-3">
         {/* Trainer Tile */}
-        <div className="p-4 rounded-[22px] bg-[#0E131F]/90 border border-white/[0.08] backdrop-blur-xl shadow-[0_8px_20px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)] space-y-2">
-          <div className="flex items-center gap-1.5 text-[10.5px] font-sans font-semibold tracking-wider text-[var(--ink-3)] uppercase">
-            <User className="w-3.5 h-3.5 text-[#60A5FA]" />
-            Trainer
+        <div className="p-4 rounded-[22px] bg-[#0E131F]/90 border border-white/[0.08] backdrop-blur-xl shadow-[0_8px_20px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)] space-y-2 flex flex-col justify-between">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[10.5px] font-sans font-semibold tracking-wider text-[var(--ink-3)] uppercase">
+              <User className="w-3.5 h-3.5 text-[#60A5FA]" />
+              Trainer
+            </div>
+            <div>
+              <h4 className="font-ui text-sm font-bold text-white truncate">
+                {trainerName}
+              </h4>
+              <p className="font-ui text-[11px] text-[var(--ink-3)] truncate mt-0.5">
+                {trainerPhone
+                  ? trainerPhone
+                  : trainerName !== 'Not Assigned'
+                    ? 'Personal Coach'
+                    : 'Front desk can assign'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-ui text-sm font-bold text-white truncate">
-              {trainerName}
-            </h4>
-            <p className="font-ui text-[11px] text-[var(--ink-3)] truncate mt-0.5">
-              {trainerName !== 'Not Assigned' ? 'Personal Coach' : 'Front desk can assign'}
-            </p>
-          </div>
+          {trainerName !== 'Not Assigned' && (
+            <button
+              type="button"
+              onClick={() => openTrainerWhatsApp()}
+              className="mt-1.5 w-full py-1.5 px-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-emerald-400 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">WhatsApp PT</span>
+            </button>
+          )}
         </div>
 
         {/* Tier Tile */}

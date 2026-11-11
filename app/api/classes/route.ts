@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from '@/lib/server-auth'
+import { requireCapability } from '@/lib/auth'
 import { withRollingSchedule } from '@/lib/classes'
 import { toLocalDateStr, localDateOffset, parseLocalDate, sessionStartDate } from '@/lib/dates'
 
@@ -10,6 +11,21 @@ export async function GET(req: NextRequest) {
     const startDate = url.searchParams.get('startDate') || toLocalDateStr()
     const endDate = url.searchParams.get('endDate') || localDateOffset(14)
     const memberId = url.searchParams.get('memberId')
+
+    // Viewer identity: only staff may see other members' names / phone numbers
+    let viewerId: string | null = null
+    let viewerIsStaff = false
+    try {
+      const { session: viewer } = await getServerSession(req)
+      if (viewer?.user) {
+        viewerId = viewer.user.id
+        const isMemberViewer =
+          viewer.user.type === 'MEMBER' || String(viewer.user.role?.slug || '').toUpperCase() === 'MEMBER'
+        viewerIsStaff = !isMemberViewer
+      }
+    } catch {
+      // unauthenticated viewers see anonymised attendee data
+    }
 
     // 1. Fetch sessions from Supabase
     let sessions = await prisma.classSession.findMany({
@@ -115,17 +131,20 @@ export async function GET(req: NextRequest) {
         pilatesDayGroup: s.pilatesDayGroup,
         userBookingStatus: userBooking ? userBooking.status : null,
         userWaitlistPosition: userBooking ? userBooking.waitlistPosition : null,
-        bookings: s.bookings.map(b => ({
+        bookings: s.bookings.map(b => {
+          const canSee = viewerIsStaff || (viewerId !== null && b.memberId === viewerId)
+          return {
           id: b.id,
           sessionId: b.sessionId,
-          memberId: b.memberId,
-          memberName: b.memberName,
-          memberPhone: b.memberPhone,
-          memberCode: b.memberCode,
+          memberId: canSee ? b.memberId : '',
+          memberName: canSee ? b.memberName : 'Member',
+          memberPhone: canSee ? b.memberPhone : '',
+          memberCode: canSee ? b.memberCode : '',
           status: b.status,
           waitlistPosition: b.waitlistPosition,
           bookedAt: b.bookedAt ? b.bookedAt.toISOString() : new Date().toISOString(),
-        })),
+          }
+        }),
       }
     })
 
@@ -198,7 +217,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, session: created })
     }
 
-    const { sessionId, memberId, isAdminOverride, useAdjustmentCredit } = body
+    const { sessionId, memberId, useAdjustmentCredit } = body
+    const caller = authSession.user as any
+    const callerIsMember =
+      caller.type === 'MEMBER' || String(caller.role?.slug || '').toUpperCase() === 'MEMBER'
+    // Members can only book for themselves and can never use admin override
+    if (callerIsMember && memberId !== caller.id) {
+      return NextResponse.json({ error: 'You can only book classes for your own account.' }, { status: 403 })
+    }
+    const isAdminOverride = !callerIsMember && !!body.isAdminOverride
 
     if (!sessionId || !memberId) {
       return NextResponse.json(
@@ -212,7 +239,7 @@ export async function POST(req: NextRequest) {
       where: { id: memberId },
     })
 
-    if (!member && body.memberName) {
+    if (!member && body.memberName && body.memberPhone) {
       const nameParts = String(body.memberName).trim().split(' ')
       member = await prisma.member.upsert({
         where: { id: memberId },
@@ -222,7 +249,7 @@ export async function POST(req: NextRequest) {
           name: body.memberName,
           firstName: nameParts[0] || body.memberName,
           lastName: nameParts.slice(1).join(' ') || '',
-          phone: body.memberPhone || '+91 98200 00000',
+          phone: body.memberPhone,
           email: body.memberEmail || `${memberId}@dna360.in`,
           joinedDate: toLocalDateStr(),
           status: 'active',
@@ -240,6 +267,22 @@ export async function POST(req: NextRequest) {
         { error: `Account is ${member.status}. Bookings are disabled.` },
         { status: 403 }
       )
+    }
+
+    // 1b. Server-side membership validity (expiry + 7-day grace). Enforced whenever the
+    // member has membership records in the database.
+    const dbMemberships = await prisma.membership.findMany({
+      where: { memberId: member.id, status: 'active' },
+    })
+    if (dbMemberships.length > 0 && !isAdminOverride) {
+      const graceCutoff = localDateOffset(-7)
+      const hasValid = dbMemberships.some((m) => !m.expiryDate || m.expiryDate >= graceCutoff)
+      if (!hasValid) {
+        return NextResponse.json(
+          { error: 'Your membership has expired. Please renew at the front desk to book classes.' },
+          { status: 403 }
+        )
+      }
     }
 
     // 2. Fetch session
@@ -438,7 +481,23 @@ export async function DELETE(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { sessionId, memberId, bookingId, isAdminOverride } = body
+    const { sessionId, memberId, bookingId } = body
+    const caller = authSession.user as any
+    const callerIsMember =
+      caller.type === 'MEMBER' || String(caller.role?.slug || '').toUpperCase() === 'MEMBER'
+    // Members can only cancel their own bookings and never use admin override
+    const isAdminOverride = !callerIsMember && !!body.isAdminOverride
+    if (callerIsMember) {
+      if (memberId && memberId !== caller.id) {
+        return NextResponse.json({ error: 'You can only cancel your own bookings.' }, { status: 403 })
+      }
+      if (bookingId) {
+        const own = await prisma.classBooking.findUnique({ where: { id: bookingId } })
+        if (!own || own.memberId !== caller.id) {
+          return NextResponse.json({ error: 'You can only cancel your own bookings.' }, { status: 403 })
+        }
+      }
+    }
 
     if (!sessionId || (!memberId && !bookingId)) {
       return NextResponse.json(

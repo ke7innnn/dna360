@@ -14,11 +14,13 @@ import {
   Bell,
   ChevronRight,
   ShieldCheck,
+  MessageCircle,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from '@/components/app/ui/toast'
 import { getInitials, cn } from '@/lib/utils'
-import { getMemberPortalState, MemberPortalState } from '@/lib/memberportal'
+import { getMemberPortalState, resolveMember, MemberPortalState } from '@/lib/memberportal'
+import { getTrainerContactForMember } from '@/lib/trainers'
 
 type MoodType = 'heavy' | 'calm' | 'fresh' | 'wired'
 
@@ -77,11 +79,25 @@ export default function MemberAppHomePage() {
     }
   }, [user?.id, user?.name])
 
+  const member = useMemo(() => resolveMember(user?.id || user?.name), [user?.id, user?.name])
   const planName = portalState?.planName || 'No Active Plan'
   const memberCode = portalState?.memberCode || (user as any)?.member_code || ''
   const ptRemaining = portalState?.ptSessionsRemaining ?? 0
   const ptTotal = portalState?.ptSessionsTotal ?? 0
   const streak = portalState?.attendanceStreak ?? 0
+  const memberStatus = member?.status || 'active'
+  const isExpiredOrBlocked = memberStatus === 'inactive' || memberStatus === 'blacklisted'
+  const activeMs = member?.active_memberships?.[0]
+  const activationDateStr = activeMs?.activation_date || member?.joined_date || ''
+  const expiryDateStr = (portalState as any)?.expiryDate || activeMs?.expiry_date || ''
+  const trainerContact = useMemo(
+    () =>
+      getTrainerContactForMember(
+        portalState?.assignedTrainer || member?.assigned_trainer_name,
+        member?.id
+      ),
+    [portalState?.assignedTrainer, member?.assigned_trainer_name, member?.id]
+  )
 
   // Dynamic time-based greeting prefix (e.g. Gm, Alex)
   const greetingPrefix = useMemo(() => {
@@ -375,7 +391,7 @@ export default function MemberAppHomePage() {
       </div>
 
       {/* ─── Plan Status & Quick Buy / Upgrade Banner ─── */}
-      <div className="w-full max-w-md mt-2 px-0.5">
+      <div className="w-full max-w-md mt-2 px-0.5 space-y-2">
         <button
           type="button"
           onClick={handleOpenUpgrade}
@@ -390,20 +406,64 @@ export default function MemberAppHomePage() {
                 <span className="text-xs font-bold text-white tracking-tight truncate group-hover:text-[#C084FC] transition-colors">
                   {planName}
                 </span>
-                <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-[9px] font-bold text-emerald-400 uppercase tracking-wider shrink-0">
-                  Active
-                </span>
+                {isExpiredOrBlocked ? (
+                  <span className="px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-[9px] font-bold text-rose-300 uppercase tracking-wider shrink-0">
+                    Expired
+                  </span>
+                ) : memberStatus === 'grace_period' ? (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-[9px] font-bold text-amber-300 uppercase tracking-wider shrink-0">
+                    Grace
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-[9px] font-bold text-emerald-400 uppercase tracking-wider shrink-0">
+                    Active
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-[#A78BFA] mt-0.5 truncate">
-                Tap to upgrade membership or purchase PT sessions
+                {expiryDateStr
+                  ? `${isExpiredOrBlocked ? 'Expired' : 'Valid'}: ${activationDateStr ? `${activationDateStr} → ` : ''}${expiryDateStr}`
+                  : 'Tap to upgrade membership or purchase PT sessions'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 group-hover:bg-white/20 text-[11px] font-bold text-white shrink-0">
-            <span>Upgrade</span>
+            <span>{isExpiredOrBlocked ? 'Renew' : 'Upgrade'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </button>
+
+        {/* Direct Personal Trainer WhatsApp Quick Connect */}
+        {trainerContact && (
+          <button
+            type="button"
+            onClick={() => {
+              const digits = trainerContact.phone.replace(/\D/g, '')
+              const msg = encodeURIComponent(
+                `Hi Coach ${trainerContact.name}, this is ${userFullName} (${memberCode}) from DNA 360.`
+              )
+              window.open(`https://wa.me/${digits}?text=${msg}`, '_blank', 'noopener,noreferrer')
+            }}
+            className="w-full px-3 py-2.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-between gap-2 transition-all cursor-pointer text-left"
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                <MessageCircle className="w-4 h-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-white truncate">
+                  Coach {trainerContact.name}
+                </p>
+                <p className="text-[10.5px] text-emerald-300/80 font-mono truncate">
+                  {trainerContact.phone} · Tap to open WhatsApp
+                </p>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 text-[11px] font-bold shrink-0">
+              WhatsApp PT
+            </span>
+          </button>
+        )}
       </div>
 
       {/* ─── Mood & Energy Check-In (Screenshot 2 Levels 2 & 3) ─── */}

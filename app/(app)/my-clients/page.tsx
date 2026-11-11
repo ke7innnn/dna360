@@ -17,7 +17,27 @@ import { toast } from '@/components/app/ui/toast'
 import type { TrainerClientSummary, AdaptationPolicy } from '@/types/training'
 import { cn } from '@/lib/utils'
 
-import { getStoredMembers } from '@/lib/members'
+import { getStoredMembers, updateMember } from '@/lib/members'
+import { getStoredPTSessions, logPTSession } from '@/lib/trainers'
+
+/** Real programme progress from package activation/expiry dates. */
+function weekProgress(start?: string | null, end?: string | null) {
+  if (!start || !end) return { current: 1, total: 1 }
+  const s = new Date(start).getTime()
+  const e = new Date(end).getTime()
+  if (isNaN(s) || isNaN(e) || e <= s) return { current: 1, total: 1 }
+  const total = Math.max(1, Math.ceil((e - s) / (7 * 86400000)))
+  const current = Math.min(total, Math.max(1, Math.ceil((Date.now() - s) / (7 * 86400000))))
+  return { current, total }
+}
+
+/** Opens a WhatsApp chat with the client (trainer → client). */
+function openClientWhatsApp(phone: string, name: string, trainerName?: string) {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (!digits) return
+  const text = encodeURIComponent('Hi ' + name.split(' ')[0] + ', this is ' + (trainerName || 'your trainer') + ' from DNA 360.')
+  window.open('https://wa.me/' + (digits.length === 10 ? '91' + digits : digits) + '?text=' + text, '_blank', 'noopener')
+}
 
 // ─── Real Member Client Roster (§6) ───
 // Derived directly from the real gym member database (0 fake dummy clients or duplicate IDs)
@@ -30,18 +50,32 @@ function buildRealInitialRoster(currentUser?: any): TrainerClientSummary[] {
     currentUser.assignedClientIds.length > 0 &&
     !['owner_admin', 'owner', 'head_trainer'].includes(String(currentUser.role?.slug || '').toLowerCase())
 
+  const ptLogs = getStoredPTSessions()
   const ptClients = members.filter((m) => {
+    const trainedByCurrent =
+      currentUser?.id &&
+      ptLogs.some(
+        (l) =>
+          l.clientId === m.id &&
+          (l.trainerId === currentUser.id ||
+            (currentUser.name && l.trainerName?.toLowerCase() === currentUser.name.toLowerCase()))
+      )
     if (isScopedTrainer) {
-      return currentUser.assignedClientIds.includes(m.id) || m.assigned_trainer_id === currentUser.id
+      return (
+        currentUser.assignedClientIds.includes(m.id) ||
+        m.assigned_trainer_id === currentUser.id ||
+        (currentUser.name && m.assigned_trainer_name?.toLowerCase() === currentUser.name.toLowerCase()) ||
+        trainedByCurrent
+      )
     }
     return (
-      ['mem_001', 'mem_002', 'mem_003', 'mem_004', 'mem_005'].includes(m.id) ||
       m.assigned_trainer_id ||
+      trainedByCurrent ||
       m.active_memberships.some((ms) => ms.product_name?.toLowerCase().includes('pt') || ms.product_name?.toLowerCase().includes('pilates'))
     )
   })
 
-  return ptClients.slice(0, 10).map((m, idx) => {
+  return ptClients.slice(0, 100).map((m) => {
     const ptMs = m.active_memberships.find(
       (ms) => ms.product_name?.toLowerCase().includes('pt') || ms.product_name?.toLowerCase().includes('pilates')
     )
@@ -50,16 +84,16 @@ function buildRealInitialRoster(currentUser?: any): TrainerClientSummary[] {
       memberName: m.name,
       memberCode: m.member_code,
       phone: m.phone,
-      programName: ptMs?.product_name || 'Strength & Conditioning Tier 2',
-      coachingMode: idx % 2 === 0 ? 'TRAINER_LED' : 'SELF_COACHED',
-      weekCurrent: (idx % 4) + 1,
-      weekTotal: 8,
+      programName: ptMs?.product_name || 'No active PT package',
+      coachingMode: m.assigned_trainer_id ? 'TRAINER_LED' : 'SELF_COACHED',
+      weekCurrent: weekProgress(ptMs?.activation_date, ptMs?.expiry_date).current,
+      weekTotal: weekProgress(ptMs?.activation_date, ptMs?.expiry_date).total,
       adherencePct: m.attendance_streak > 0 ? Math.min(95, 55 + m.attendance_streak * 8) : 42,
-      lastLoggedSessionDate: m.last_visit_at || new Date().toISOString(),
-      ptSessionsRemaining: ptMs?.sessions_remaining ?? (m.id === 'mem_001' ? 8 : 12),
-      ptSessionsTotal: ptMs?.sessions_total ?? 12,
+      lastLoggedSessionDate: m.last_visit_at || '',
+      ptSessionsRemaining: ptMs?.sessions_remaining ?? 0,
+      ptSessionsTotal: ptMs?.sessions_total ?? 0,
       ptTier: ptMs?.product_name?.toLowerCase().includes('elite') ? 'Elite PT' : 'Premium PT',
-      deviationCount: idx === 0 ? 1 : 0,
+      deviationCount: 0,
       hasUnreadNotes: false,
       pendingFormChecks: 0,
     }
@@ -121,13 +155,28 @@ export default function TrainerClientsPage() {
   // Sign off PT Session (§8.7)
   const handleSignOffPT = async (memberId: string) => {
     setIsSigningOff(true)
+    const targetClient = clients.find((c) => c.memberId === memberId) || selectedClient
+    const note = coachNoteText || 'Standard 1-on-1 PT Session Delivered'
     try {
+      // 1. Update local PT ledger & link trainer to member immediately
+      if (targetClient && user) {
+        logPTSession({
+          clientId: memberId,
+          clientName: targetClient.memberName,
+          trainerId: user.id,
+          trainerName: user.name,
+          workoutFocus: note,
+          rating: 5,
+          durationMinutes: 60,
+        })
+      }
+
       const res = await fetch('/api/training/trainer/deduct-pt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           memberId,
-          note: coachNoteText || 'Standard 1-on-1 PT Session Delivered',
+          note,
         }),
       })
 
@@ -357,6 +406,17 @@ export default function TrainerClientsPage() {
                             variant="secondary"
                             onClick={(e) => {
                               e.stopPropagation()
+                              openClientWhatsApp(client.phone, client.memberName, user?.name)
+                            }}
+                            className="text-xs h-7 px-2.5 text-emerald-400"
+                          >
+                            WhatsApp
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setSelectedClient(client)
                             }}
                             className="text-xs h-7 px-2.5"
@@ -465,6 +525,14 @@ export default function TrainerClientsPage() {
               </div>
 
               <div className="pt-6 border-t border-[var(--line)] flex gap-3">
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => openClientWhatsApp(selectedClient.phone, selectedClient.memberName, user?.name)}
+                  className="flex-1 justify-center bg-emerald-600 hover:bg-emerald-500"
+                >
+                  WhatsApp Client
+                </Button>
                 <Button
                   variant="secondary"
                   size="md"

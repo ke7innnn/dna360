@@ -175,6 +175,15 @@ export async function POST(req: NextRequest) {
         },
       })
 
+      await tx.member.update({
+        where: { id: member.id },
+        data: {
+          assignedTrainerId: trainerId,
+          assignedTrainerName: trainerName || 'Trainer',
+          lastVisitAt: new Date(),
+        },
+      })
+
       return {
         log,
         remaining: newRemaining,

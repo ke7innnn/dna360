@@ -30,7 +30,11 @@ export async function GET(req: NextRequest) {
           : {
               OR: [
                 { assignedTrainerId: user.id },
-                { id: { in: ['mem_001', 'mem_002', 'mem_003', 'mem_004', 'mem_005'] } },
+                { assignedTrainerName: user.name },
+                { ptSessionLogs: { some: { trainerId: user.id } } },
+                ...(Array.isArray((user as any).assignedClientIds) && (user as any).assignedClientIds.length > 0
+                  ? [{ id: { in: (user as any).assignedClientIds } }]
+                  : []),
               ],
             },
         include: {

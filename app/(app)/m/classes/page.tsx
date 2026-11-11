@@ -11,6 +11,7 @@ import {
   bookClassSession,
   cancelClassBooking,
   isBookingWindowOpen,
+  evaluateClassPackageEntitlement,
 } from '@/lib/classes'
 import type { ClassSession } from '@/types/class'
 import {
@@ -247,6 +248,39 @@ export default function MemberClassesPage() {
         </div>
       </div>
 
+      {/* Active Package Entitlement Banner */}
+      {member && (
+        <div className="mb-3 px-3.5 py-2.5 rounded-2xl bg-[#0E131F]/90 border border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="min-w-0">
+            <span className="text-[10.5px] uppercase tracking-wider text-[#94A3B8] font-bold block">
+              Your Package Entitlement
+            </span>
+            <span className="font-bold text-white truncate block">
+              {member.active_memberships?.[0]?.product_name || 'No Active Package'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {member.active_memberships?.[0]?.expiry_date && (
+              <span className="text-[11px] font-mono text-[#94A3B8]">
+                Valid till {member.active_memberships[0].expiry_date}
+              </span>
+            )}
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border',
+                member.status === 'inactive' || member.status === 'blacklisted'
+                  ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                  : member.status === 'grace_period'
+                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+              )}
+            >
+              {member.status === 'inactive' ? 'Expired' : member.status.replace('_', ' ')}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Week Day Pill Selector (Live, Dynamic Dates) */}
       <div className="member-week max-w-md mx-auto sm:max-w-none">
         {days.map((d, idx) => (
@@ -293,6 +327,7 @@ export default function MemberClassesPage() {
             const isPast =
               sessionStartDate(session.date, session.startTime).getTime() <= Date.now()
             const windowOpen = isBookingWindowOpen(session.date)
+            const entitlement = evaluateClassPackageEntitlement(member, session)
 
             return (
               <div
@@ -311,6 +346,18 @@ export default function MemberClassesPage() {
                     <p className="member-cls-s truncate">
                       {session.instructorName} · {session.studioName} · {session.durationMinutes} min
                     </p>
+                    {entitlement.badge && (
+                      <span
+                        className={cn(
+                          'inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide',
+                          entitlement.allowed
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                            : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                        )}
+                      >
+                        {entitlement.badge}
+                      </span>
+                    )}
                   </div>
                   <span className="member-cls-time shrink-0">
                     {formatTime12h(session.startTime)}
@@ -324,6 +371,10 @@ export default function MemberClassesPage() {
                     ) : isWaitlisted ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
                         WAITLIST #{myBooking.waitlistPosition ?? 1}
+                      </span>
+                    ) : !entitlement.allowed ? (
+                      <span className="member-spots text-rose-300/90 truncate block">
+                        {entitlement.reason}
                       </span>
                     ) : isPast ? (
                       <span className="member-spots text-[var(--ink-3)] truncate block">
@@ -352,6 +403,13 @@ export default function MemberClassesPage() {
                         className="member-bk ghost"
                       >
                         Cancel
+                      </button>
+                    ) : !entitlement.allowed ? (
+                      <button
+                        onClick={() => toast.error('Package Upgrade Required', { description: entitlement.reason })}
+                        className="member-bk opacity-60"
+                      >
+                        Upgrade
                       </button>
                     ) : isPast ? (
                       <button disabled className="member-bk opacity-40 cursor-not-allowed">
