@@ -112,9 +112,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // If JSON contains an encrypted inner field (`EncryptedData` or `data`)
-    if (typeof payload.EncryptedData === 'string' && cfg.webhookSecret) {
-      const decrypted = tryDecryptEsslPayload(payload.EncryptedData, cfg.webhookSecret)
+    // If JSON contains an encrypted inner field (`{"data": "<encrypted_string>"}` per eBioServer Web Hook Manual, or `EncryptedData`)
+    const encryptedField =
+      typeof payload.data === 'string'
+        ? payload.data
+        : typeof payload.EncryptedData === 'string'
+          ? payload.EncryptedData
+          : null
+    if (encryptedField && cfg.webhookSecret) {
+      const decrypted = tryDecryptEsslPayload(encryptedField, cfg.webhookSecret)
       if (decrypted && typeof decrypted === 'object') {
         payload = { ...payload, ...decrypted }
       }
@@ -175,7 +181,11 @@ export async function POST(req: NextRequest) {
     ).trim()
 
     const rawVerifyMode = String(
-      payload.VerificationType || payload.verifyMode || payload.ScanType || 'Biometric'
+      payload.TransactionMode ||
+        payload.VerificationType ||
+        payload.verifyMode ||
+        payload.ScanType ||
+        'Biometric'
     ).toLowerCase()
 
     const scanType: ScanType =
@@ -216,6 +226,8 @@ export async function POST(req: NextRequest) {
           .catch(() => {})
 
         return NextResponse.json({
+          StatusCode: '200',
+          Message: 'Success',
           status: 'denied',
           decision: 'DENIED_EXPIRED',
           doorUnlocked: false,
@@ -234,11 +246,13 @@ export async function POST(req: NextRequest) {
     const numericSuffix = q.replace(/\D/g, '')
 
     // 1. Resolve member from seeded deterministic cohort or live Prisma DB
+    // Supports full code (`DNA-2025-0001`), numeric `UserId` (`1`, `0001`, `462`), `mem_001`, or 10-digit phone
     let matchedMember = SEEDED_MEMBERS.find(
       (m) =>
         m.id.toLowerCase() === q ||
         m.member_code.toLowerCase() === q ||
-        (numericSuffix.length >= 3 &&
+        (numericSuffix.length >= 1 &&
+          numericSuffix.length <= 4 &&
           m.member_code.toLowerCase().endsWith(`-${numericSuffix.padStart(4, '0')}`)) ||
         m.phone.replace(/\D/g, '').endsWith(numericSuffix && numericSuffix.length >= 10 ? numericSuffix.slice(-10) : '___none___')
     )
@@ -356,6 +370,8 @@ export async function POST(req: NextRequest) {
         .catch(() => {})
 
       return NextResponse.json({
+        StatusCode: '200',
+        Message: 'Success',
         status: 'denied',
         decision: 'DENIED_EXPIRED',
         doorUnlocked: false,
@@ -430,6 +446,8 @@ export async function POST(req: NextRequest) {
     const primaryPlan = matchedMember.active_memberships?.[0]
 
     return NextResponse.json({
+      StatusCode: '200',
+      Message: 'Success',
       status: isGranted ? 'granted' : 'denied',
       decision: evalResult.decision,
       doorUnlocked: isGranted,

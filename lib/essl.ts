@@ -366,18 +366,26 @@ export async function esslGetPunchLogs(
 }
 
 /**
- * Decrypts AES-256-CBC / AES-256-ECB encrypted payload if eBioServer-New Webhook Encryption is enabled
+ * Decrypts AES-256-CBC encrypted payload if eBioServer-New Webhook Encryption (`{"data": "..."}`) is enabled.
+ * Supports both raw 32-char UTF-8 key (per eBioServer Web Hook Manual) and SHA-256 derived 32-byte key.
  */
 export function tryDecryptEsslPayload(encryptedBase64: string, keySecret: string): any | null {
-  try {
-    const keyBuf = crypto.createHash('sha256').update(keySecret).digest()
-    const iv = Buffer.alloc(16, 0)
-    const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuf, iv)
-    let decrypted = decipher.update(encryptedBase64, 'base64', 'utf8')
-    decrypted += decipher.final('utf8')
-    return JSON.parse(decrypted)
-  } catch {
-    return null
+  const candidateKeys: Buffer[] = []
+  const padded32 = keySecret.padEnd(32, '0').slice(0, 32)
+  candidateKeys.push(Buffer.from(padded32, 'utf8'))
+  candidateKeys.push(crypto.createHash('sha256').update(keySecret).digest())
+
+  for (const keyBuf of candidateKeys) {
+    try {
+      const iv = Buffer.alloc(16, 0)
+      const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuf, iv)
+      let decrypted = decipher.update(encryptedBase64, 'base64', 'utf8')
+      decrypted += decipher.final('utf8')
+      return JSON.parse(decrypted)
+    } catch {
+      // try next key derivation
+    }
   }
+  return null
 }
 
