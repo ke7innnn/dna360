@@ -21,90 +21,9 @@ import { logAuditEvent } from '@/lib/audit'
 import { createMember } from '@/lib/members'
 import { createInAppNotification } from '@/lib/notifications'
 
-const LEADS_CRM_STORAGE_KEY = 'dna360_crm_leads'
+const LEADS_CRM_STORAGE_KEY = 'dna360_crm_leads_v2'
 
-export const SEEDED_CRM_LEADS: CrmLead[] = [
-  {
-    id: 'crm_001',
-    name: 'Siddharth Rao',
-    phone: '+919820099444',
-    email: 'sid.rao@gmail.com',
-    type: 'Website',
-    source: 'Instagram',
-    stage: 'inquiry',
-    goal: 'Muscle Gain / Hypertrophy',
-    expectedDealValueMinor: 4350000, // ₹43,500
-    assignedRepId: 'usr_fc_01',
-    assignedRepName: 'Rajesh Poojary',
-    notes: 'Clicked Instagram reel ad on CrossFit turf. Wants morning workout slot.',
-    activityLog: [
-      {
-        id: 'act_01',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-        type: 'note',
-        text: 'Inbound lead captured via Meta Ads campaign.',
-        actor: 'System',
-      },
-    ],
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-  },
-  {
-    id: 'crm_002',
-    name: 'Gaurav Kripalani',
-    phone: '+919820099666',
-    email: 'gaurav.k@outlook.com',
-    type: 'Referral',
-    source: 'Word Of Mouth',
-    stage: 'trial_scheduled',
-    goal: 'Athletic Conditioning',
-    expectedDealValueMinor: 4350000,
-    assignedRepId: 'usr_fc_01',
-    assignedRepName: 'Rajesh Poojary',
-    trialPassCode: 'TRIAL-POW-2026-0881',
-    trialDate: new Date().toISOString().slice(0, 10),
-    nextFollowUpDate: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-    isOverdue: true,
-    notes: 'Referred by Aarav Mehta (DNA-2025-0001). 1-Day Trial QR pass issued for CrossFit session.',
-    activityLog: [
-      {
-        id: 'act_02',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        type: 'sms',
-        text: 'Sent welcome SMS with trial pass details.',
-        actor: 'Rajesh Poojary',
-      },
-    ],
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-  {
-    id: 'crm_003',
-    name: 'Meera Nambiar',
-    phone: '+919820099555',
-    email: 'meera.n@gmail.com',
-    type: 'Walk In',
-    source: 'Passing By',
-    stage: 'negotiating',
-    goal: 'Reformer Pilates & Yoga',
-    expectedDealValueMinor: 4463700, // ₹44,637
-    assignedRepId: 'usr_fc_02',
-    assignedRepName: 'Pallavi More',
-    trialPassCode: 'TRIAL-POW-2026-0882',
-    trialDate: new Date().toISOString().slice(0, 10),
-    nextFollowUpDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10),
-    isOverdue: false,
-    notes: 'Visited Powai studio in person. Interested in 36-session Reformer package.',
-    activityLog: [
-      {
-        id: 'act_03',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        type: 'call',
-        text: 'Followed up after Reformer trial. Member loved the session with Hemant Shirke.',
-        actor: 'Pallavi More',
-      },
-    ],
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
-  },
-]
+export const SEEDED_CRM_LEADS: CrmLead[] = []
 
 // ─── Storage Helpers ───
 

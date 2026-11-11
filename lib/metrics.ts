@@ -9,6 +9,9 @@
  */
 
 import { getStoredMembers } from '@/lib/members'
+import { getStoredInvoices } from '@/lib/billing'
+import { getStoredPosSales } from '@/lib/frontdesk'
+import { getStoredAccessLogs } from '@/lib/attendance'
 
 export interface SystemMetrics {
   // Member Counts (Ties out 100% across Overview, Dashboard, and Members Directory)
@@ -37,7 +40,17 @@ export interface SystemMetrics {
   churnRatePct: number               // 2.8%
 }
 
-export const CANONICAL_COLLECTIONS_MTD_MINOR = 184000000 // ₹18,40,000
+/** Real month-to-date collections: paid invoice amounts + POS retail sales issued this calendar month. */
+export function computeCollectionsMtdMinor(): number {
+  const monthPrefix = new Date().toISOString().slice(0, 7)
+  const invoicePaid = getStoredInvoices()
+    .filter((inv) => inv.status !== 'void' && String(inv.issueDate).startsWith(monthPrefix))
+    .reduce((acc, inv) => acc + (inv.paidAmountMinor || 0), 0)
+  const posPaid = getStoredPosSales()
+    .filter((sale) => String(sale.timestamp).startsWith(monthPrefix))
+    .reduce((acc, sale) => acc + (sale.totalMinor || 0), 0)
+  return invoicePaid + posPaid
+}
 
 /**
  * Derives platform metrics from live stored records
@@ -54,7 +67,7 @@ export function getSystemMetrics(): SystemMetrics {
   const complimentaryMembers = members.filter(m => m.complimentary).length
 
   // Canonical upfront collections MTD
-  const collectionsMtdMinor = CANONICAL_COLLECTIONS_MTD_MINOR // ₹18,40,000
+  const collectionsMtdMinor = computeCollectionsMtdMinor()
 
   // Accurate 5% GST Back-Calculation on inclusive price: GST = Amount × 5 / 105
   const gstLiabilityMinor = Math.round((collectionsMtdMinor * 5) / 105) // ₹87,619.05 (8761905 paise)
@@ -65,6 +78,13 @@ export function getSystemMetrics(): SystemMetrics {
   // Recognised vs Deferred revenue (Annual upfront divided across 12-month delivery)
   const recognisedRevenueMtdMinor = Math.round(collectionsMtdMinor / 12) // ₹1,53,333 (15333333 paise)
   const deferredRevenueBalanceMinor = collectionsMtdMinor - recognisedRevenueMtdMinor // ₹16,86,667 (168666667 paise)
+
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const turnstileEntriesToday = getStoredAccessLogs().filter(
+    (l) =>
+      l.timestamp.startsWith(todayStr) &&
+      (l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD' || l.decision === 'MANUAL_OVERRIDE')
+  ).length
 
   return {
     totalMembers,
@@ -83,8 +103,8 @@ export function getSystemMetrics(): SystemMetrics {
     sgstMinor,
     gstSacCode: '999723',
     gstRatePct: 5.0,
-    turnstileEntriesToday: 342,
-    classesScheduledToday: 14,
-    churnRatePct: 2.8,
+    turnstileEntriesToday,
+    classesScheduledToday: 0,
+    churnRatePct: totalMembers > 0 ? Math.round((inactiveMembers / totalMembers) * 1000) / 10 : 0,
   }
 }

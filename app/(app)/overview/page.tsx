@@ -13,13 +13,20 @@ import {
 import Button from '@/components/app/ui/button'
 import MemberOnboardingModal from '@/components/app/members/MemberOnboardingModal'
 import MembershipStatusReportGraph from '@/components/app/overview/MembershipStatusReportGraph'
-import BirthdayReminderModal from '@/components/app/overview/BirthdayReminderModal'
+import BirthdayReminderModal, { getTodaysBirthdays } from '@/components/app/overview/BirthdayReminderModal'
 import ExpiryExplorerModal, { type ExpiryFilterPeriod } from '@/components/app/overview/ExpiryExplorerModal'
 import TodayPendingFollowups from '@/components/app/overview/TodayPendingFollowups'
 import TargetAchievementChart from '@/components/app/analytics/TargetAchievementChart'
 import CreateInvoiceModal from '@/components/app/billing/CreateInvoiceModal'
 import { useAuth } from '@/context/AuthContext'
 import { getSystemMetrics } from '@/lib/metrics'
+import { getStoredMembers } from '@/lib/members'
+import { getAccessLogs, syncAccessLogsFromRemote } from '@/lib/attendance'
+import { getStoredInvoices } from '@/lib/billing'
+import { getStoredPosSales } from '@/lib/frontdesk'
+import { getRevenueMix } from '@/lib/analytics'
+import { formatINR } from '@/lib/gst'
+import { SEEDED_USERS } from '@/lib/auth'
 import { logAuditEvent } from '@/lib/audit'
 import { toast } from '@/components/app/ui/toast'
 
@@ -27,14 +34,20 @@ export default function FloorOverviewPage() {
   const router = useRouter()
   const { user, canRevenue } = useAuth()
   const [metrics, setMetrics] = useState(getSystemMetrics())
-  const [livePtDoneToday, setLivePtDoneToday] = useState(4)
-  const [liveClassFillRate, setLiveClassFillRate] = useState(78)
+  const [livePtDoneToday, setLivePtDoneToday] = useState(0)
+  const [liveClassFillRate, setLiveClassFillRate] = useState(0)
+  const [refreshTick, setRefreshTick] = useState(0)
 
   useEffect(() => {
     const handleSync = () => {
       setMetrics(getSystemMetrics())
+      setRefreshTick((t) => t + 1)
     }
+    syncAccessLogsFromRemote().then(handleSync).catch(() => {})
     window.addEventListener('dna360_members_updated', handleSync)
+    window.addEventListener('dna360_access_logs_updated', handleSync)
+    window.addEventListener('dna360_attendance_updated', handleSync)
+    window.addEventListener('dna360_frontdesk_updated', handleSync)
     window.addEventListener('storage', handleSync)
 
     // Hydrate live class occupancy and PT logs from Supabase
@@ -44,8 +57,8 @@ export default function FloorOverviewPage() {
         if (data?.sessions && Array.isArray(data.sessions) && data.sessions.length > 0) {
           const totalCap = data.sessions.reduce((acc: number, s: any) => acc + (s.capacity || 20), 0)
           const totalBooked = data.sessions.reduce((acc: number, s: any) => acc + (s.bookedCount || 0), 0)
-          if (totalCap > 0 && totalBooked > 0) {
-            setLiveClassFillRate(Math.min(100, Math.max(65, Math.round((totalBooked / totalCap) * 100))))
+          if (totalCap > 0) {
+            setLiveClassFillRate(Math.min(100, Math.round((totalBooked / totalCap) * 100)))
           }
         }
       })
@@ -54,19 +67,173 @@ export default function FloorOverviewPage() {
     fetch('/api/pt-ledger')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+        if (data?.logs && Array.isArray(data.logs)) {
           const todayStr = new Date().toISOString().slice(0, 10)
-          const todayDone = data.logs.filter((l: any) => String(l.sessionDate || l.trialDate || l.createdAt || '').startsWith(todayStr)).length
-          if (todayDone > 0) setLivePtDoneToday(todayDone)
+          const todayDone = data.logs.filter((l: any) => String(l.date || l.sessionDate || l.trialDate || l.createdAt || '').startsWith(todayStr)).length
+          setLivePtDoneToday(todayDone)
         }
       })
       .catch(() => {})
 
     return () => {
       window.removeEventListener('dna360_members_updated', handleSync)
+      window.removeEventListener('dna360_access_logs_updated', handleSync)
+      window.removeEventListener('dna360_attendance_updated', handleSync)
+      window.removeEventListener('dna360_frontdesk_updated', handleSync)
       window.removeEventListener('storage', handleSync)
     }
   }, [])
+
+  // Live computed operational & financial figures (zero dummy values)
+  const liveOverviewStats = React.useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const members = getStoredMembers()
+    const logs = getAccessLogs()
+    const invoices = getStoredInvoices()
+    const posSales = getStoredPosSales()
+    const revMix = getRevenueMix()
+
+    // 1. Birthdays today (exact DOB month & day match)
+    const todayBirthdays = getTodaysBirthdays(members)
+
+    // 2. Today's Collection (Invoices issued today + POS sales today)
+    const todaysInvoices = invoices.filter((inv) => inv.issueDate === todayStr && inv.status !== 'void')
+    const todaysInvoicePaidMinor = todaysInvoices.reduce((acc, inv) => acc + (inv.paidAmountMinor || 0), 0)
+    const todaysPosMinor = posSales
+      .filter((s) => s.timestamp.startsWith(todayStr))
+      .reduce((acc, s) => acc + (s.totalMinor || 0), 0)
+    const todayCollectionMinor = todaysInvoicePaidMinor + todaysPosMinor
+
+    // 3. Upcoming Renewals (Expiring Soon + Grace Period members)
+    const upcomingRenewalMembers = members.filter(
+      (m) => m.status === 'expiring_soon' || m.status === 'grace_period'
+    )
+    const upcomingRenewalsMinor = upcomingRenewalMembers.reduce(
+      (acc, m) => acc + (m.active_memberships?.[0]?.amount_paid || 0),
+      0
+    )
+
+    // 4. Expiring Today (exact expiry_date === todayStr)
+    const expiringTodayMembers = members.filter(
+      (m) => m.active_memberships?.[0]?.expiry_date === todayStr
+    )
+    const expiringTodayMinor = expiringTodayMembers.reduce(
+      (acc, m) => acc + (m.active_memberships?.[0]?.amount_paid || 0),
+      0
+    )
+
+    // 5. Door Access / Check-ins Today (Granted vs Denied)
+    const todaysLogs = logs.filter((l) => l.timestamp.startsWith(todayStr))
+    const grantedTodayCount = todaysLogs.filter(
+      (l) => l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD' || l.decision === 'MANUAL_OVERRIDE'
+    ).length
+    const deniedTodayCount = todaysLogs.filter((l) => l.decision.startsWith('DENIED')).length
+
+    // 6. Needs Attention counts
+    const nowMs = Date.now()
+    const sevenDaysFromNowStr = new Date(nowMs + 7 * 86400000).toISOString().slice(0, 10)
+    const expiringThisWeekCount = members.filter((m) => {
+      const exp = m.active_memberships?.[0]?.expiry_date
+      return exp && exp >= todayStr && exp <= sevenDaysFromNowStr
+    }).length
+
+    const graceMembers = members.filter((m) => m.status === 'grace_period')
+    const unpaidInvoices = invoices.filter((inv) => inv.dueAmountMinor > 0 && inv.status !== 'void')
+    const unpaidCount = unpaidInvoices.length + graceMembers.length
+    const unpaidAmountMinor =
+      unpaidInvoices.reduce((acc, inv) => acc + inv.dueAmountMinor, 0) +
+      graceMembers.reduce((acc, m) => acc + (m.active_memberships?.[0]?.amount_paid || 0), 0)
+
+    const fourteenDaysAgoMs = nowMs - 14 * 86400000
+    const noCheckin14DaysCount = members.filter((m) => {
+      if (m.status !== 'active') return false
+      if (!m.last_visit_at) return true
+      return new Date(m.last_visit_at).getTime() < fourteenDaysAgoMs
+    }).length
+
+    const membershipRevMinor = Math.round((metrics.collectionsMtdMinor * revMix.membershipPct) / 100)
+    const ptRevMinor = Math.round((metrics.collectionsMtdMinor * revMix.ptPct) / 100)
+
+    const activePtClientsCount = members.filter((m) =>
+      m.active_memberships?.some(
+        (ms) =>
+          ms.product_category === 'personal_training' ||
+          (ms.sessions_total && ms.sessions_total > 0 && (ms.sessions_remaining ?? 0) > 0)
+      )
+    ).length
+
+    // 7. Real activity analytics from door logs (month calendar, weekly bars, peak hour)
+    const granted = logs.filter(
+      (l) => l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD' || l.decision === 'MANUAL_OVERRIDE'
+    )
+    const monthPrefix = todayStr.slice(0, 7)
+    const checkinDates = new Set(granted.map((l) => l.timestamp.slice(0, 10)).filter((d) => d.startsWith(monthPrefix)))
+    const hourBuckets: Record<number, number> = {}
+    const dowBuckets: Record<number, number> = {}
+    const perDay: Record<string, number> = {}
+    for (const l of granted) {
+      const dt = new Date(l.timestamp)
+      hourBuckets[dt.getHours()] = (hourBuckets[dt.getHours()] || 0) + 1
+      dowBuckets[dt.getDay()] = (dowBuckets[dt.getDay()] || 0) + 1
+      const k = l.timestamp.slice(0, 10)
+      perDay[k] = (perDay[k] || 0) + 1
+    }
+    const topHourEntry = Object.entries(hourBuckets).sort((a, b) => b[1] - a[1])[0]
+    const topDowEntry = Object.entries(dowBuckets).sort((a, b) => b[1] - a[1])[0]
+    const fmtHour = (h: number) => {
+      const ap = h >= 12 ? 'pm' : 'am'
+      const hh = h % 12 === 0 ? 12 : h % 12
+      return hh + '-' + (((h + 1) % 12) === 0 ? 12 : (h + 1) % 12) + ' ' + ap
+    }
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const activeDays = Object.keys(perDay).length
+    const avgDaily = activeDays > 0 ? Math.round(granted.length / activeDays) : 0
+    // Mon..Sun counts for this week and last week
+    const jsToday = new Date()
+    const mondayOffset = (jsToday.getDay() + 6) % 7
+    const weekCounts = (weeksBack: number) =>
+      [0, 1, 2, 3, 4, 5, 6].map((i) => {
+        const d = new Date(jsToday.getFullYear(), jsToday.getMonth(), jsToday.getDate() - mondayOffset - weeksBack * 7 + i)
+        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+        return perDay[key] || 0
+      })
+    const thisWeek = weekCounts(0)
+    const lastWeek = weekCounts(1)
+
+    return {
+      checkinDates,
+      peakHourLabel: topHourEntry ? fmtHour(Number(topHourEntry[0])) : '—',
+      busiestDayLabel: topDowEntry ? dayNames[Number(topDowEntry[0])] : '—',
+      avgDaily,
+      thisWeek,
+      lastWeek,
+      todayBirthdaysCount: todayBirthdays.length,
+      todayCollectionMinor,
+      todaysInvoicePaidMinor,
+      todaysPosMinor,
+      upcomingRenewalsCount: upcomingRenewalMembers.length,
+      upcomingRenewalsMinor,
+      expiringTodayCount: expiringTodayMembers.length,
+      expiringTodayMinor,
+      grantedTodayCount,
+      deniedTodayCount,
+      expiringThisWeekCount,
+      unpaidCount,
+      unpaidAmountMinor,
+      noCheckin14DaysCount,
+      membershipRevMinor,
+      membershipPct: revMix.membershipPct,
+      ptRevMinor,
+      ptPct: revMix.ptPct,
+      activePtClientsCount,
+      staffCount: SEEDED_USERS.filter((u) => u.type === 'STAFF').length,
+    }
+  }, [metrics, refreshTick])
+
+  const attentionTotal =
+    liveOverviewStats.expiringThisWeekCount +
+    liveOverviewStats.unpaidCount +
+    liveOverviewStats.noCheckin14DaysCount
 
   const isMember = user?.type === 'MEMBER' || String(user?.role?.slug).toLowerCase() === 'member'
 
@@ -132,20 +299,20 @@ export default function FloorOverviewPage() {
       days.push({
         day: daysInPrevMonth - i,
         isMute: true,
-        hasCheckin: true,
+        hasCheckin: false,
         hasPT: false,
       })
     }
 
     // Current month days
     for (let d = 1; d <= daysInCurrMonth; d++) {
-      const isPastOrToday = d <= todayNum
+      const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0')
       const isToday = d === todayNum
       days.push({
         day: d,
         isToday,
-        hasCheckin: isPastOrToday && d % 2 === 1,
-        hasPT: isPastOrToday && (d % 4 === 1 || isToday),
+        hasCheckin: liveOverviewStats.checkinDates.has(dateKey),
+        hasPT: false,
       })
     }
 
@@ -161,18 +328,15 @@ export default function FloorOverviewPage() {
     }
 
     return days
-  }, [])
+  }, [liveOverviewStats])
 
   // Weekly bar comparison: This week vs Last week
-  const weeklyData = [
-    { day: 'Mon', ghostHeight: 88, fillHeight: 74 },
-    { day: 'Tue', ghostHeight: 70, fillHeight: 81 },
-    { day: 'Wed', ghostHeight: 62, fillHeight: 66 },
-    { day: 'Thu', ghostHeight: 74, fillHeight: 59 },
-    { day: 'Fri', ghostHeight: 80, fillHeight: 71 },
-    { day: 'Sat', ghostHeight: 52, fillHeight: 44 },
-    { day: 'Sun', ghostHeight: 34, fillHeight: 28 },
-  ]
+  const weekMax = Math.max(1, ...liveOverviewStats.thisWeek, ...liveOverviewStats.lastWeek)
+  const weeklyData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => ({
+    day,
+    ghostHeight: Math.round((liveOverviewStats.lastWeek[i] / weekMax) * 90),
+    fillHeight: Math.round((liveOverviewStats.thisWeek[i] / weekMax) * 90),
+  }))
 
   return (
     <div className="space-y-4 max-w-[1340px] mx-auto pb-14">
@@ -195,7 +359,7 @@ export default function FloorOverviewPage() {
             title="Today's Birthday Reminders"
           >
             <Cake className="w-3.5 h-3.5 text-rose-400" />
-            <span className="font-semibold">Birthdays (3)</span>
+            <span className="font-semibold">Birthdays ({liveOverviewStats.todayBirthdaysCount})</span>
           </button>
 
           {/* Expiry Explorer Quick Chip */}
@@ -243,10 +407,10 @@ export default function FloorOverviewPage() {
             TODAY&apos;S COLLECTION
           </p>
           <p className="v text-2xl font-bold text-white font-data tabular-nums">
-            {canRevenue ? '₹1,24,500' : '••••••'}
+            {canRevenue ? formatINR(liveOverviewStats.todayCollectionMinor) : '••••••'}
           </p>
           <p className="d text-[11px] text-[var(--ink-3)] font-data">
-            {canRevenue ? '₹98.5K UPI · ₹26K POS' : 'Restricted to Finance / Owner'}
+            {canRevenue ? formatINR(liveOverviewStats.todaysInvoicePaidMinor) + ' invoices · ' + formatINR(liveOverviewStats.todaysPosMinor) + ' POS' : 'Restricted to Finance / Owner'}
           </p>
         </div>
 
@@ -256,9 +420,9 @@ export default function FloorOverviewPage() {
             UPCOMING RENEWALS ({new Date().toLocaleDateString('en-US', { month: 'short' }).toUpperCase()})
           </p>
           <p className="v text-2xl font-bold text-white font-data tabular-nums">
-            {canRevenue ? '₹6,85,000' : '38 Due'}
+            {canRevenue ? formatINR(liveOverviewStats.upcomingRenewalsMinor) : liveOverviewStats.upcomingRenewalsCount + ' Due'}
           </p>
-          <p className="d text-[11px] text-[#38BDF8] font-data">38 renewals in pipeline</p>
+          <p className="d text-[11px] text-[#38BDF8] font-data">{liveOverviewStats.upcomingRenewalsCount} renewals in pipeline</p>
         </div>
 
         {/* Stat 3: Same-Day Expiries */}
@@ -275,9 +439,9 @@ export default function FloorOverviewPage() {
             </p>
             <Clock className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
           </div>
-          <p className="v text-2xl font-bold text-amber-200 font-data tabular-nums">4 Members</p>
+          <p className="v text-2xl font-bold text-amber-200 font-data tabular-nums">{liveOverviewStats.expiringTodayCount} Members</p>
           <p className="d text-[11px] text-amber-300/80 font-data underline decoration-dotted">
-            ₹1.74L at risk · View list &rarr;
+            {canRevenue ? formatINR(liveOverviewStats.expiringTodayMinor) + ' at risk · ' : ''}View list &rarr;
           </p>
         </div>
 
@@ -292,7 +456,7 @@ export default function FloorOverviewPage() {
             </p>
             <Cake className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform" />
           </div>
-          <p className="v text-2xl font-bold text-rose-200 font-data tabular-nums">3 Celebrants</p>
+          <p className="v text-2xl font-bold text-rose-200 font-data tabular-nums">{liveOverviewStats.todayBirthdaysCount} Celebrants</p>
           <p className="d text-[11px] text-rose-300/80 font-data underline decoration-dotted">
             Send WhatsApp wishes &rarr;
           </p>
@@ -303,8 +467,8 @@ export default function FloorOverviewPage() {
           <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
             CHECKED IN TODAY
           </p>
-          <p className="v text-2xl font-bold text-white font-data tabular-nums">184</p>
-          <p className="d text-[#4ADE80] font-data text-[11px]">▲ 12% vs last Tue</p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">{liveOverviewStats.grantedTodayCount}</p>
+          <p className="d text-[var(--ink-3)] font-data text-[11px]">{liveOverviewStats.deniedTodayCount} denied today</p>
         </div>
 
         {/* Stat 6: Active Members */}
@@ -312,8 +476,8 @@ export default function FloorOverviewPage() {
           <p className="eyebrow text-[9px] text-[var(--ink-3)] tracking-wider font-data uppercase">
             ACTIVE MEMBERS
           </p>
-          <p className="v text-2xl font-bold text-white font-data tabular-nums">{metrics.activeMembers || metrics.totalMembers || 512}</p>
-          <p className="d text-[#4ADE80] font-data text-[11px]">▲ 9 this week</p>
+          <p className="v text-2xl font-bold text-white font-data tabular-nums">{metrics.activeMembers}</p>
+          <p className="d text-[var(--ink-3)] font-data text-[11px]">of {metrics.totalMembers} total members</p>
         </div>
       </div>
 
@@ -373,15 +537,15 @@ export default function FloorOverviewPage() {
           <div className="console-tri">
             <div>
               <p className="l">Peak hour</p>
-              <p className="v text-white font-display">7–8 pm</p>
+              <p className="v text-white font-display">{liveOverviewStats.peakHourLabel}</p>
             </div>
             <div>
               <p className="l">Avg. daily</p>
-              <p className="v text-white font-display">171</p>
+              <p className="v text-white font-display">{liveOverviewStats.avgDaily}</p>
             </div>
             <div>
               <p className="l">Busiest day</p>
-              <p className="v text-white font-display">Monday</p>
+              <p className="v text-white font-display">{liveOverviewStats.busiestDayLabel}</p>
             </div>
           </div>
 
@@ -398,9 +562,9 @@ export default function FloorOverviewPage() {
                 </div>
                 <div className="console-grow-t">
                   <b>Memberships</b>
-                  <span className="text-white">₹5.2L</span>
+                  <span className="text-white">{canRevenue ? formatINR(liveOverviewStats.membershipRevMinor) : '••••'}</span>
                 </div>
-                <span className="console-grow-p font-data text-white">62%</span>
+                <span className="console-grow-p font-data text-white">{liveOverviewStats.membershipPct}%</span>
               </div>
 
               <div className="console-grow g2">
@@ -409,9 +573,9 @@ export default function FloorOverviewPage() {
                 </div>
                 <div className="console-grow-t">
                   <b>Personal training</b>
-                  <span className="text-white">₹2.4L</span>
+                  <span className="text-white">{canRevenue ? formatINR(liveOverviewStats.ptRevMinor) : '••••'}</span>
                 </div>
-                <span className="console-grow-p font-data text-white">29%</span>
+                <span className="console-grow-p font-data text-white">{liveOverviewStats.ptPct}%</span>
               </div>
             </div>
           </div>
@@ -425,10 +589,10 @@ export default function FloorOverviewPage() {
               <div>
                 <h3 className="text-white">Needs attention</h3>
                 <p>
-                  Nine things are waiting on someone today. Cleared items drop off this list automatically.
+                  {attentionTotal} items are waiting on someone today. Cleared items drop off this list automatically.
                 </p>
               </div>
-              <span className="console-att-count">9</span>
+              <span className="console-att-count">{attentionTotal}</span>
             </div>
 
             {/* Row 1: Memberships Expiring */}
@@ -438,9 +602,9 @@ export default function FloorOverviewPage() {
               </div>
               <div className="console-arow-t">
                 <b className="text-white">Memberships expiring this week</b>
-                <span>None contacted yet</span>
+                <span>Review and contact before they lapse</span>
               </div>
-              <span className="console-arow-n">11</span>
+              <span className="console-arow-n">{liveOverviewStats.expiringThisWeekCount}</span>
               <button
                 onClick={() => router.push('/members?filter=expiring_soon')}
                 className="console-arow-go"
@@ -455,10 +619,10 @@ export default function FloorOverviewPage() {
                 <AlertTriangle className="w-3.5 h-3.5 stroke-[var(--warn)]" />
               </div>
               <div className="console-arow-t">
-                <b className="text-white">Unpaid dues over 15 days</b>
-                <span>₹1,42,000 outstanding</span>
+                <b className="text-white">Unpaid dues &amp; grace-period members</b>
+                <span>{canRevenue ? formatINR(liveOverviewStats.unpaidAmountMinor) + ' outstanding' : 'Restricted to Finance / Owner'}</span>
               </div>
-              <span className="console-arow-n">6</span>
+              <span className="console-arow-n">{liveOverviewStats.unpaidCount}</span>
               <button
                 onClick={() => router.push('/billing')}
                 className="console-arow-go"
@@ -476,7 +640,7 @@ export default function FloorOverviewPage() {
                 <b className="text-white">No check-in in 14 days</b>
                 <span>Churn risk · assign a call</span>
               </div>
-              <span className="console-arow-n">23</span>
+              <span className="console-arow-n">{liveOverviewStats.noCheckin14DaysCount}</span>
               <button
                 onClick={() => router.push('/attendance')}
                 className="console-arow-go"
@@ -491,10 +655,10 @@ export default function FloorOverviewPage() {
                 <Check className="w-3.5 h-3.5 stroke-[var(--blue)]" />
               </div>
               <div className="console-arow-t">
-                <b className="text-white">PT sessions awaiting sign-off</b>
-                <span>Rajesh Poojary · 3, Aftab Memon · 1</span>
+                <b className="text-white">PT sessions logged today</b>
+                <span>Logged by trainers in PT ledger</span>
               </div>
-              <span className="console-arow-n">4</span>
+              <span className="console-arow-n">{livePtDoneToday}</span>
               <button
                 onClick={() => router.push('/my-clients')}
                 className="console-arow-go"
@@ -541,9 +705,9 @@ export default function FloorOverviewPage() {
               <Zap className="w-4 h-4 stroke-[var(--warn)]" />
             </div>
             <div>
-              <p className="v text-white font-display">{livePtDoneToday + 8}</p>
+              <p className="v text-white font-display">{livePtDoneToday}</p>
               <p className="l font-medium">PT sessions today</p>
-              <p className="s">{livePtDoneToday} done · 8 upcoming</p>
+              <p className="s">{liveOverviewStats.activePtClientsCount} active PT clients</p>
             </div>
           </div>
 
@@ -555,7 +719,7 @@ export default function FloorOverviewPage() {
             <div>
               <p className="v text-white font-display">{liveClassFillRate}%</p>
               <p className="l font-medium">Class fill rate</p>
-              <p className="s">Spin 7 pm nearly full</p>
+              <p className="s">Booked seats vs capacity</p>
             </div>
             <div className="console-wave" />
           </div>
@@ -566,9 +730,9 @@ export default function FloorOverviewPage() {
               <ActivityIcon className="w-4 h-4 stroke-[var(--ok)]" />
             </div>
             <div>
-              <p className="v text-white font-display">34</p>
+              <p className="v text-white font-display">{liveOverviewStats.staffCount}</p>
               <p className="l font-medium">Staff on roster</p>
-              <p className="s">9 on floor now</p>
+              <p className="s">Active staff accounts</p>
             </div>
           </div>
         </div>

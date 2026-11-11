@@ -7,8 +7,9 @@ import type { Booking, BookingServiceType, BookingStatus } from '@/types/booking
 import { BOOKING_SERVICES } from '@/types/booking'
 import { logAuditEvent } from '@/lib/audit'
 
-const STORAGE_KEY = 'dna360_bookings_v1'
+const STORAGE_KEY = 'dna360_bookings_v2'
 const DELETED_BOOKINGS_KEY = 'dna360_bookings_deleted_v1'
+const LEGACY_DUMMY_BOOKING_IDS = new Set(['bk_001', 'bk_002', 'bk_003', 'bk_004', 'bk_005', 'bk_006', 'bk_007'])
 
 function getDeletedBookingIds(): Set<string> {
   if (typeof window === 'undefined') return new Set()
@@ -29,129 +30,7 @@ function addDeletedBookingId(id: string) {
   localStorage.setItem(DELETED_BOOKINGS_KEY, JSON.stringify(Array.from(set)))
 }
 
-const SEEDED_BOOKINGS: Booking[] = [
-  {
-    id: 'bk_001',
-    bookingNumber: 'DNA-BK-1001',
-    clientName: 'Siddharth Rao',
-    clientPhone: '+919820011223',
-    clientEmail: 'siddharth.rao@gmail.com',
-    serviceType: 'gym_trial',
-    serviceName: 'Gym Trial',
-    bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: '07:30 AM',
-    assignedStaffId: 'usr_trainer_01',
-    assignedStaffName: 'Rajesh Poojary',
-    status: 'scheduled',
-    notes: 'Interested in annual membership and strength training.',
-    source: 'Walk-in',
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    whatsappReminderSent: true,
-  },
-  {
-    id: 'bk_002',
-    bookingNumber: 'DNA-BK-1002',
-    clientName: 'Meenakshi Iyer',
-    clientPhone: '+919833044556',
-    clientEmail: 'meenakshi.i@outlook.com',
-    serviceType: 'reformer_pilates_trial',
-    serviceName: 'Reformer Pilates Trial',
-    bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: '11:00 AM',
-    assignedStaffId: 'usr_trainer_03',
-    assignedStaffName: 'Hemant Shirke',
-    status: 'scheduled',
-    notes: 'Looking for posture correction and core mobility.',
-    source: 'WhatsApp',
-    createdAt: new Date(Date.now() - 3600000 * 18).toISOString(),
-    whatsappReminderSent: true,
-  },
-  {
-    id: 'bk_003',
-    bookingNumber: 'DNA-BK-1003',
-    clientName: 'Rahul Malhotra',
-    clientPhone: '+919819077889',
-    serviceType: 'pt_trial',
-    serviceName: 'Personal Training Trial',
-    bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: '06:00 PM',
-    assignedStaffId: 'usr_trainer_02',
-    assignedStaffName: 'Aftab Memon',
-    status: 'scheduled',
-    notes: 'Wants body recomposition & high-intensity strength trial.',
-    source: 'Telephonic',
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    whatsappReminderSent: false,
-  },
-  {
-    id: 'bk_004',
-    bookingNumber: 'DNA-BK-1004',
-    clientName: 'Tanvi Deshmukh',
-    clientPhone: '+919769012399',
-    serviceType: 'body_assessment',
-    serviceName: 'Body Assessment',
-    bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: '04:30 PM',
-    assignedStaffId: 'usr_trainer_06',
-    assignedStaffName: 'Kunal Chavan',
-    status: 'scheduled',
-    notes: 'InBody composition analysis before joining gym.',
-    source: 'Social Media',
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    whatsappReminderSent: false,
-  },
-  {
-    id: 'bk_005',
-    bookingNumber: 'DNA-BK-1005',
-    clientName: 'Aditya Singhania',
-    clientPhone: '+919820066778',
-    serviceType: 'ice_bath',
-    serviceName: 'Ice Bath',
-    bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: '05:30 PM',
-    assignedStaffId: 'usr_trainer_01',
-    assignedStaffName: 'Rajesh Poojary',
-    status: 'scheduled',
-    notes: 'Recovery session trial after marathon run.',
-    source: 'Reference',
-    createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-    whatsappReminderSent: true,
-  },
-  {
-    id: 'bk_006',
-    bookingNumber: 'DNA-BK-1006',
-    clientName: 'Kunal Kapoor',
-    clientPhone: '+919833088990',
-    serviceType: 'massage',
-    serviceName: 'Massage',
-    bookingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    timeSlot: '03:00 PM',
-    assignedStaffId: 'usr_trainer_02',
-    assignedStaffName: 'Aftab Memon',
-    status: 'scheduled',
-    notes: 'Sports recovery back massage.',
-    source: 'Walk-in',
-    createdAt: new Date().toISOString(),
-    whatsappReminderSent: false,
-  },
-  {
-    id: 'bk_007',
-    bookingNumber: 'DNA-BK-1007',
-    clientName: 'Pooja Agarwal',
-    clientPhone: '+919819033445',
-    serviceType: 'group_activity_trial',
-    serviceName: 'Group Activity Trial',
-    bookingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    timeSlot: '08:00 AM',
-    assignedStaffId: 'usr_trainer_04',
-    assignedStaffName: 'Zeebran Shaikh',
-    status: 'scheduled',
-    notes: 'Spinning & HIIT morning group trial.',
-    source: 'Social Media',
-    createdAt: new Date().toISOString(),
-    whatsappReminderSent: false,
-  },
-]
+const SEEDED_BOOKINGS: Booking[] = []
 
 export function getBookings(): Booking[] {
   if (typeof window === 'undefined') return SEEDED_BOOKINGS
@@ -164,7 +43,9 @@ export function getBookings(): Booking[] {
   }
   try {
     const parsed: Booking[] = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed.filter((b) => !deleted.has(b.id)) : SEEDED_BOOKINGS
+    return Array.isArray(parsed)
+      ? parsed.filter((b) => !deleted.has(b.id) && !LEGACY_DUMMY_BOOKING_IDS.has(b.id))
+      : SEEDED_BOOKINGS
   } catch {
     return SEEDED_BOOKINGS
   }

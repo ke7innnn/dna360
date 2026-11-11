@@ -63,68 +63,29 @@ async function runTests() {
     `Members page expiring filter (${members.filter(m => m.status === 'expiring_soon').length}) matches metrics (${metrics.expiringIn30Days})`
   )
 
-  // ─── 3. Accurate 5% GST Back-Calculation Arithmetic ───
-  console.log('\n--- 3. GST SAC 999723 Back-Calculation Arithmetic ---')
-  // Amount = ₹18,40,000 (184000000 paise)
-  // GST = 184000000 * 5 / 105 = 8761904.76 -> 8761905 paise (₹87,619.05)
-  const expectedGst = Math.round((184000000 * 5) / 105)
-  assert(
-    metrics.gstLiabilityMinor === expectedGst,
-    `GST liability is exactly Amount × 5 / 105: ₹${(metrics.gstLiabilityMinor / 100).toFixed(2)} (expected ₹${(expectedGst / 100).toFixed(2)})`
-  )
-  assert(
-    metrics.taxableRevenueMinor === 184000000 - expectedGst,
-    `Taxable value is Collections - GST: ₹${(metrics.taxableRevenueMinor / 100).toFixed(2)}`
-  )
-  assert(
-    metrics.cgstMinor + metrics.sgstMinor === metrics.gstLiabilityMinor,
-    `CGST (₹${(metrics.cgstMinor / 100).toFixed(2)}) + SGST (₹${(metrics.sgstMinor / 100).toFixed(2)}) equals total GST liability`
-  )
-  assert(
-    gst.sacCode === '999723',
-    `SAC Code is correctly set to 999723 for Fitness Services`
-  )
+  // ─── 3. GST back-calculation on REAL collections (no hardcoded revenue) ───
+  console.log('\n--- 3. GST SAC 999723 Back-Calculation Arithmetic (live collections) ---')
+  const collections = metrics.collectionsMtdMinor
+  const expectedGst = Math.round((collections * 5) / 105)
+  assert(metrics.gstLiabilityMinor === expectedGst, 'GST liability is exactly Amount x 5 / 105 of real collections')
+  assert(metrics.taxableRevenueMinor === collections - expectedGst, 'Taxable value is Collections - GST')
+  assert(metrics.cgstMinor + metrics.sgstMinor === metrics.gstLiabilityMinor, 'CGST + SGST equals total GST liability')
+  assert(gst.sacCode === '999723', 'SAC Code is correctly set to 999723 for Fitness Services')
 
-  // ─── 4. Separation of Collections from Recognised & Deferred Revenue ───
+  // ─── 4. Recognised vs Deferred ───
   console.log('\n--- 4. Upfront Collections vs. Recognised & Deferred Revenue ---')
+  assert(metrics.recognisedRevenueMtdMinor === Math.round(collections / 12), 'Recognised revenue is 1/12th of upfront collections')
   assert(
-    metrics.collectionsMtdMinor === 184000000,
-    `Collections MTD is ₹18,40,000`
-  )
-  assert(
-    metrics.recognisedRevenueMtdMinor === Math.round(184000000 / 12),
-    `Recognised revenue for 1 month of annual upfront is ₹1,53,333`
-  )
-  assert(
-    metrics.deferredRevenueBalanceMinor === metrics.collectionsMtdMinor - metrics.recognisedRevenueMtdMinor,
-    `Deferred revenue balance is ₹16,86,667`
-  )
-  assert(
-    metrics.recognisedRevenueMtdMinor + metrics.deferredRevenueBalanceMinor === metrics.collectionsMtdMinor,
-    `Recognised + Deferred equals Total Collections MTD (₹18.4L)`
+    metrics.recognisedRevenueMtdMinor + metrics.deferredRevenueBalanceMinor === collections,
+    'Recognised + Deferred equals Total Collections MTD'
   )
 
-  // ─── 5. Cohort Table Elapsed Horizon Rules ───
-  console.log('\n--- 5. Cohort Retention Elapsed Horizons (As of Aug 2026) ---')
-  const janCohort = cohorts.find(c => c.cohort === 'Jan 2026')!
-  const junCohort = cohorts.find(c => c.cohort === 'Jun 2026')!
-
-  assert(
-    janCohort.month1 === 96 && janCohort.month3 === 88 && janCohort.month6 === 81,
-    `Jan 2026 has valid elapsed horizons for M+1, M+3, M+6`
-  )
-  assert(
-    janCohort.month12 === null || janCohort.month12 === undefined,
-    `Jan 2026 leaves unreached future horizon M+12 null (no fake data)`
-  )
-  assert(
-    junCohort.month1 === 95,
-    `Jun 2026 has valid M+1 elapsed horizon`
-  )
-  assert(
-    junCohort.month3 === null || junCohort.month3 === undefined,
-    `Jun 2026 leaves unreached M+3 horizon null`
-  )
+  // ─── 5. Cohorts built from real join dates; unreached horizons stay null ───
+  console.log('\n--- 5. Cohort Retention Elapsed Horizons ---')
+  const newest = cohorts[cohorts.length - 1]
+  assert(cohorts.length === 6, 'Cohort table covers the last 6 calendar months')
+  assert(newest.month1 === null || newest.month1 === undefined, 'Current-month cohort leaves unreached M+1 horizon null (no fake data)')
+  assert(newest.month12 === null || newest.month12 === undefined, 'Unreached M+12 horizon is null')
 
   // ─── 6. Seed Data Plausibility & Realism ───
   console.log('\n--- 6. Seed Data Realism & Variation ---')

@@ -82,12 +82,7 @@ export default function ExpiryExplorerModal({
     return allExpiringList.filter((item) => {
       // 1. Period filter
       if (filterMode === 'today') {
-        const isToday = item.expiryDate === todayStr || item.expiryDate.endsWith(todayStr.slice(5))
-        if (!isToday) {
-          // If none match exactly in seed, include a couple of close items for rich UI testability
-          const isSameDaySeed = item.memberCode.endsWith('12') || item.memberCode.endsWith('45') || item.memberCode.endsWith('88')
-          if (!isSameDaySeed) return false
-        }
+        if (item.expiryDate !== todayStr) return false
       } else if (filterMode === 'specific_date') {
         if (selectedDate && item.expiryDate !== selectedDate) {
           return false

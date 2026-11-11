@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
             {formatINR(metrics.gstLiabilityMinor)}
           </span>
           <span className="text-[11px] font-ui text-[var(--muted)]">
-            CGST ₹43.8K + SGST ₹43.8K
+            CGST {formatINR(metrics.cgstMinor)} + SGST {formatINR(metrics.sgstMinor)}
           </span>
         </Card>
       </div>
@@ -162,7 +162,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
           <Badge status="ok" size="sm">
-            412 Invoices MTD
+            {gst.invoiceCount} Invoices MTD
           </Badge>
         </div>
 

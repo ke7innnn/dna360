@@ -25,11 +25,11 @@ import { backCalculateGst, getFinancialYear, formatINR } from '@/lib/gst'
 import { getPendingConfig } from '@/lib/settings'
 import { logAuditEvent } from '@/lib/audit'
 
-const INVOICE_STORAGE_KEY = 'dna360_invoices'
-const CREDIT_NOTE_STORAGE_KEY = 'dna360_credit_notes'
+const INVOICE_STORAGE_KEY = 'dna360_invoices_v2'
+const CREDIT_NOTE_STORAGE_KEY = 'dna360_credit_notes_v2'
 const PLANS_STORAGE_KEY = 'dna360_plans'
 const PROMOTIONS_STORAGE_KEY = 'dna360_promotions'
-const INVOICE_SEQ_KEY = 'dna360_invoice_seq'
+const INVOICE_SEQ_KEY = 'dna360_invoice_seq_v2'
 
 // ─── Legacy Plan Bridge (All prices GST-inclusive with 5% back-calculation) ───
 
@@ -180,124 +180,9 @@ const SEEDED_LINE_ITEM_3: InvoiceLineItem = {
   totalMinor: 2500000,
 }
 
-export const SEEDED_INVOICES: TaxInvoice[] = [
-  {
-    id: 'inv_001',
-    invoiceNumber: 'DNA/2026-27/0001',
-    memberId: 'mem_001',
-    memberName: 'Arjun Mehta',
-    memberPhone: '+919820011111',
-    memberEmail: 'arjun.mehta@gmail.com',
-    issueDate: '2026-04-02',
-    dueDate: '2026-04-02',
-    status: 'paid',
-    items: [SEEDED_LINE_ITEM_1],
-    subtotalMinor: 4350000,
-    totalDiscountMinor: 0,
-    taxableMinor: 4142857,
-    cgstMinor: 103571,
-    sgstMinor: 103572,
-    grandTotalMinor: 4350000,
-    paidAmountMinor: 4350000,
-    dueAmountMinor: 0,
-    payments: [
-      {
-        id: 'pay_001',
-        mode: 'UPI',
-        amountMinor: 4350000,
-        transactionRef: 'UPI/20260402/DNA98762',
-        recordedAt: '2026-04-02T10:15:00Z',
-      },
-    ],
-    createdBy: { id: 'usr_fc_01', name: 'Rajesh Poojary', role: 'Fitness Consultant' },
-    salesRepId: 'usr_fc_01',
-    salesRepName: 'Rajesh Poojary',
-  },
-  {
-    id: 'inv_002',
-    invoiceNumber: 'DNA/2026-27/0002',
-    memberId: 'mem_002',
-    memberName: 'Priya Sharma',
-    memberPhone: '+919820022222',
-    memberEmail: 'priya.s@outlook.com',
-    issueDate: '2026-04-05',
-    dueDate: '2026-04-05',
-    status: 'paid',
-    items: [SEEDED_LINE_ITEM_2],
-    subtotalMinor: 4463700,
-    totalDiscountMinor: 0,
-    taxableMinor: 4251143,
-    cgstMinor: 106278,
-    sgstMinor: 106279,
-    grandTotalMinor: 4463700,
-    paidAmountMinor: 4463700,
-    dueAmountMinor: 0,
-    payments: [
-      {
-        id: 'pay_002',
-        mode: 'Credit Card',
-        amountMinor: 4463700,
-        transactionRef: 'HDFC_CC_20260405_9921',
-        recordedAt: '2026-04-05T14:30:00Z',
-      },
-    ],
-    createdBy: { id: 'usr_fc_02', name: 'Pallavi More', role: 'Fitness Consultant' },
-    salesRepId: 'usr_fc_02',
-    salesRepName: 'Pallavi More',
-  },
-  {
-    id: 'inv_003',
-    invoiceNumber: 'DNA/2026-27/0003',
-    memberId: 'mem_corp_01',
-    memberName: 'Red Bull India Pvt Ltd',
-    memberPhone: '+919820099888',
-    memberEmail: 'events@redbull.in',
-    issueDate: '2026-04-10',
-    dueDate: '2026-04-10',
-    status: 'paid',
-    items: [SEEDED_LINE_ITEM_3],
-    subtotalMinor: 2500000,
-    totalDiscountMinor: 0,
-    taxableMinor: 2118644,
-    cgstMinor: 190678,
-    sgstMinor: 190678,
-    grandTotalMinor: 2500000,
-    paidAmountMinor: 2500000,
-    dueAmountMinor: 0,
-    payments: [
-      {
-        id: 'pay_003',
-        mode: 'Net Banking',
-        amountMinor: 2500000,
-        transactionRef: 'NEFT_AXIS_20260410_1189',
-        recordedAt: '2026-04-10T16:00:00Z',
-      },
-    ],
-    createdBy: { id: 'usr_mgr_sales_head', name: 'Vikramaditya Shinde', role: 'Asst. Sales Head' },
-    salesRepId: 'usr_mgr_sales_head',
-    salesRepName: 'Vikramaditya Shinde',
-  },
-]
+export const SEEDED_INVOICES: TaxInvoice[] = []
 
-export const SEEDED_CREDIT_NOTES: CreditNote[] = [
-  {
-    id: 'cn_001',
-    creditNoteNumber: 'CN/2026-27/0001',
-    originalInvoiceId: 'inv_legacy_void_01',
-    originalInvoiceNumber: 'DNA/2025-26/0678',
-    memberId: 'mem_003',
-    memberName: 'Vikram Singhania',
-    taxableRefundMinor: 4142857,
-    cgstMinor: 103571,
-    sgstMinor: 103572,
-    totalRefundMinor: 4350000,
-    reason: 'Billing Error',
-    notes: 'Duplicate invoice recorded due to network timeout at POS desk.',
-    issuedBy: { id: 'usr_fc_01', name: 'Rajesh Poojary', role: 'Fitness Consultant' },
-    approvedBy: { id: 'usr_mgr_sales_head', name: 'Vikramaditya Shinde' },
-    timestamp: '2026-03-30T11:00:00Z',
-  },
-]
+export const SEEDED_CREDIT_NOTES: CreditNote[] = []
 
 export const SEEDED_PROMOTIONS: Promotion[] = [
   {
@@ -334,7 +219,7 @@ export function getNextInvoiceNumber(): string {
   const startingNumber = config.starting_invoice_number ?? 1
 
   if (typeof window === 'undefined') {
-    return `DNA/${fy}/${String(startingNumber + 3).padStart(4, '0')}`
+    return `DNA/${fy}/${String(startingNumber).padStart(4, '0')}`
   }
 
   const storedSeq = localStorage.getItem(`${INVOICE_SEQ_KEY}_${fy}`)

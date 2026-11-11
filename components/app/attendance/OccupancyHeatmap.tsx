@@ -5,39 +5,43 @@ import { motion } from 'framer-motion'
 import { Flame, Clock, Users, Calendar, TrendingUp } from 'lucide-react'
 import GlassCard from '@/components/app/ui/glass-card'
 import { cn } from '@/lib/utils'
+import { getStoredAccessLogs } from '@/lib/attendance'
 
 export default function OccupancyHeatmap() {
-  // Hourly distribution data (06:00 to 22:00)
-  const hourlyData = [
-    { hour: '06:00', count: 24, isPeak: false },
-    { hour: '07:00', count: 58, isPeak: true, label: 'Morning Peak' },
-    { hour: '08:00', count: 64, isPeak: true, label: 'Morning Peak' },
-    { hour: '09:00', count: 46, isPeak: false },
-    { hour: '10:00', count: 28, isPeak: false },
-    { hour: '11:00', count: 18, isPeak: false },
-    { hour: '12:00', count: 14, isPeak: false },
-    { hour: '13:00', count: 12, isPeak: false },
-    { hour: '14:00', count: 15, isPeak: false },
-    { hour: '15:00', count: 19, isPeak: false },
-    { hour: '16:00', count: 32, isPeak: false },
-    { hour: '17:00', count: 52, isPeak: false },
-    { hour: '18:00', count: 72, isPeak: true, label: 'Evening Peak' },
-    { hour: '19:00', count: 78, isPeak: true, label: 'Max Rush' },
-    { hour: '20:00', count: 60, isPeak: true, label: 'Evening Peak' },
-    { hour: '21:00', count: 35, isPeak: false },
-  ]
+  const [logs, setLogs] = React.useState(() => getStoredAccessLogs())
+  React.useEffect(() => {
+    const refresh = () => setLogs(getStoredAccessLogs())
+    refresh()
+    window.addEventListener('dna360_access_logs_updated', refresh)
+    return () => window.removeEventListener('dna360_access_logs_updated', refresh)
+  }, [])
 
-  const maxCount = 80
+  const granted = logs.filter(
+    (l) => l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD' || l.decision === 'MANUAL_OVERRIDE'
+  )
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const todays = granted.filter((l) => l.timestamp.startsWith(todayStr))
 
-  const dayData = [
-    { day: 'Mon', count: 248, pct: 92 },
-    { day: 'Tue', count: 265, pct: 98 },
-    { day: 'Wed', count: 252, pct: 94 },
-    { day: 'Thu', count: 238, pct: 88 },
-    { day: 'Fri', count: 215, pct: 80 },
-    { day: 'Sat', count: 190, pct: 70 },
-    { day: 'Sun', count: 145, pct: 54 },
-  ]
+  // Real hourly distribution for today (06:00 to 21:00)
+  const hourCounts: number[] = new Array(24).fill(0)
+  for (const l of todays) hourCounts[new Date(l.timestamp).getHours()]++
+  const maxCount = Math.max(1, ...hourCounts.slice(6, 22))
+  const hourlyData = Array.from({ length: 16 }, (_, i) => {
+    const h = i + 6
+    const count = hourCounts[h]
+    return { hour: String(h).padStart(2, '0') + ':00', count, isPeak: count > 0 && count / maxCount >= 0.7 }
+  })
+
+  // Real weekday distribution (all recorded entries)
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const dayCounts: number[] = new Array(7).fill(0)
+  for (const l of granted) dayCounts[(new Date(l.timestamp).getDay() + 6) % 7]++
+  const dayMax = Math.max(1, ...dayCounts)
+  const dayData = dayNames.map((day, i) => ({
+    day,
+    count: dayCounts[i],
+    pct: Math.round((dayCounts[i] / dayMax) * 100),
+  }))
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -109,7 +113,7 @@ export default function OccupancyHeatmap() {
             <span>Weekly Rush Distribution</span>
           </h3>
           <p className="text-xs text-[var(--app-text-muted)] mt-0.5">
-            Average check-ins by day of the week.
+            Total recorded check-ins by day of the week.
           </p>
         </div>
 
@@ -130,14 +134,7 @@ export default function OccupancyHeatmap() {
           ))}
         </div>
 
-        <div className="pt-3 border-t border-[var(--app-glass-border)] flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 text-[var(--app-text-muted)]">
-            <Clock className="w-3.5 h-3.5" />
-            <span>Average Dwell Time:</span>
-          </div>
-          <span className="font-sans tabular-nums font-bold text-[var(--aurora-1)]">74 minutes</span>
-        </div>
-      </GlassCard>
+        </GlassCard>
     </div>
   )
 }

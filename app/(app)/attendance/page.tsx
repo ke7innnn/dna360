@@ -259,13 +259,13 @@ export default function AttendancePage() {
         />
         <StatTile
           label="GRANTED TODAY"
-          value={logs.filter((l) => l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD').length}
+          value={logs.filter((l) => l.timestamp.startsWith(new Date().toISOString().slice(0, 10)) && (l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD' || l.decision === 'MANUAL_OVERRIDE')).length}
           icon={<ShieldCheck className="w-4 h-4 text-[var(--green)]" />}
           delta={{ text: 'Optical turnstile normal', type: 'ok' }}
         />
         <StatTile
           label="DENIED / EXCEPTIONS"
-          value={logs.filter((l) => l.decision.startsWith('DENIED')).length}
+          value={logs.filter((l) => l.timestamp.startsWith(new Date().toISOString().slice(0, 10)) && l.decision.startsWith('DENIED')).length}
           icon={<ShieldAlert className="w-4 h-4 text-[var(--accent)]" />}
           delta={{ text: 'Expired or blacklisted', type: 'danger' }}
         />

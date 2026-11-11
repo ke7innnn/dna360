@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
@@ -81,7 +82,7 @@ export default function CreateInvoiceModal({
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('UPI')
   const [transactionRef, setPrimaryRef] = useState('')
   const [notes, setNotes] = useState('')
-  
+
   // Membership Dates & Comments/Benefits
   const todayStr = new Date().toISOString().slice(0, 10)
   const [activationDate, setActivationDate] = useState(todayStr)
@@ -320,9 +321,9 @@ export default function CreateInvoiceModal({
       managerApproval:
         discountMinor > 0
           ? {
-              approvedBy: discountApprover,
-              reason: discountReason || 'Promotional Override',
-            }
+            approvedBy: discountApprover,
+            reason: discountReason || 'Promotional Override',
+          }
           : undefined,
     })
 
@@ -352,9 +353,9 @@ export default function CreateInvoiceModal({
       managerApproval:
         discountMinor > 0
           ? {
-              approvedBy: discountApprover,
-              reason: discountReason || 'Promotional Override',
-            }
+            approvedBy: discountApprover,
+            reason: discountReason || 'Promotional Override',
+          }
           : undefined,
     })
 
@@ -571,8 +572,8 @@ export default function CreateInvoiceModal({
                         selectedMember.status === 'active'
                           ? 'bg-[#10B981]/15 text-[#34D399] border-[#10B981]/30'
                           : selectedMember.status === 'expiring_soon'
-                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                          : 'bg-white/[0.06] text-white/70 border-white/[0.1]'
+                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                            : 'bg-white/[0.06] text-white/70 border-white/[0.1]'
                       )}
                     >
                       {selectedMember.status.replace('_', ' ')}
@@ -691,8 +692,8 @@ export default function CreateInvoiceModal({
                             m.status === 'active'
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                               : m.status === 'expiring_soon'
-                              ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                              : 'bg-white/[0.05] text-white/60 border-white/[0.08]'
+                                ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                                : 'bg-white/[0.05] text-white/60 border-white/[0.08]'
                           )}
                         >
                           {m.status.replace('_', ' ')}

@@ -379,14 +379,14 @@ export default function MemberAppHomePage() {
         <button
           type="button"
           onClick={handleOpenUpgrade}
-          className="w-full p-3 rounded-2xl bg-gradient-to-r from-[#17122B]/90 via-[#271038]/90 to-[#17122B]/90 hover:from-[#261D47] hover:to-[#261D47] border border-[rgba(168,85,247,0.35)] hover:border-[rgba(168,85,247,0.6)] shadow-[0_4px_20px_rgba(147,51,234,0.15)] active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer text-left"
+          className="w-full p-3 rounded-2xl bg-gradient-to-r from-[#17122B]/90 via-[#271038]/90 to-[#17122B]/90 hover:from-[#261D47] hover:to-[#261D47] border border-[rgba(168,85,247,0.35)] hover:border-[rgba(168,85,247,0.6)] shadow-[0_4px_20px_rgba(147,51,234,0.15)] active:scale-[0.99] transition-all flex items-center justify-between gap-2 overflow-hidden group cursor-pointer text-left"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#8B5CF6] to-[#EC4899] flex items-center justify-center text-white shadow-[0_0_12px_rgba(236,72,153,0.4)] shrink-0">
               <Sparkles className="w-4 h-4 text-[#FDE047]" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-xs font-bold text-white tracking-tight truncate group-hover:text-[#C084FC] transition-colors">
                   {planName}
                 </span>
@@ -399,7 +399,7 @@ export default function MemberAppHomePage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 group-hover:bg-white/20 text-xs font-bold text-white shrink-0 ml-2">
+          <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 group-hover:bg-white/20 text-[11px] font-bold text-white shrink-0">
             <span>Upgrade</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </div>

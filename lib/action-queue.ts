@@ -121,25 +121,47 @@ export function generateDailyActionQueue(): ActionQueueItem[] {
     })
   })
 
-  // 4. New Uncontacted Leads
+  // 4. New Uncontacted Leads (or Lapsed Member Re-Activation Outreach from real member cohort)
   const uncontactedLeads = leads.filter((l) => l.stage === 'inquiry').slice(0, 3)
-  uncontactedLeads.forEach((l) => {
-    queue.push({
-      id: `act_lead_${l.id}`,
-      category: 'LEAD_OUTREACH',
-      title: `Trial Inquiry: ${l.name}`,
-      description: `Inquiry via ${l.source} (${l.planInterest || 'Gym Floor'}) · Schedule 1-on-1 club walkthrough`,
-      memberName: l.name,
-      phone: l.phone,
-      assignedTo: 'Pallavi More',
-      assignedRole: 'Fitness Consultant',
-      priority: 'MEDIUM',
-      status: 'pending',
-      dueDate: '2026-08-31',
-      dueCountdown: 'Today',
-      planName: l.planInterest || 'General Membership',
+  if (uncontactedLeads.length > 0) {
+    uncontactedLeads.forEach((l) => {
+      queue.push({
+        id: `act_lead_${l.id}`,
+        category: 'LEAD_OUTREACH',
+        title: `Trial Inquiry: ${l.name}`,
+        description: `Inquiry via ${l.source} (${l.planInterest || 'Gym Floor'}) · Schedule 1-on-1 club walkthrough`,
+        memberName: l.name,
+        phone: l.phone,
+        assignedTo: 'Pallavi More',
+        assignedRole: 'Fitness Consultant',
+        priority: 'MEDIUM',
+        status: 'pending',
+        dueDate: new Date().toISOString().slice(0, 10),
+        dueCountdown: 'Today',
+        planName: l.planInterest || 'General Membership',
+      })
     })
-  })
+  } else {
+    const lapsedMembers = members.filter((m) => m.status === 'inactive').slice(0, 2)
+    lapsedMembers.forEach((m) => {
+      queue.push({
+        id: `act_lead_winback_${m.id}`,
+        category: 'LEAD_OUTREACH',
+        title: `Win-Back Outreach: ${m.name}`,
+        description: `Lapsed member (${m.member_code}) · Invite for complimentary assessment & reactivation offer`,
+        memberId: m.id,
+        memberName: m.name,
+        phone: m.phone,
+        assignedTo: 'Pallavi More',
+        assignedRole: 'Fitness Consultant',
+        priority: 'MEDIUM',
+        status: 'pending',
+        dueDate: new Date().toISOString().slice(0, 10),
+        dueCountdown: 'Today',
+        planName: m.active_memberships[0]?.product_name || 'Annual Gym Membership',
+      })
+    })
+  }
 
   return queue
 }

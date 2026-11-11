@@ -58,57 +58,9 @@ export const SEEDED_GATES: GateDevice[] = [
   },
 ]
 
-export const SEEDED_ACCESS_LOGS: AccessLogEntry[] = [
-  {
-    id: 'acc_000',
-    timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-    memberId: 'mem_462',
-    memberName: 'Tara Rane',
-    memberCode: 'DNA-2025-0462',
-    memberPhone: '+919819092394',
-    scanType: 'QR',
-    gateId: 'gate_pow_01',
-    gateName: 'Gate 1 - Main Turnstile',
-    decision: 'GRANTED',
-    reason: 'Turnstile Gate 1 Unlocked · Welcome to DNA 360 Powai',
-  },
-  {
-    id: 'acc_001',
-    timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-    memberId: 'mem_001',
-    memberName: 'Aarav Mehta',
-    memberCode: 'DNA-2025-0001',
-    memberPhone: '+919820011111',
-    scanType: 'QR',
-    gateId: 'gate_pow_01',
-    gateName: 'Gate 1 - Main Turnstile',
-    decision: 'GRANTED',
-    reason: 'Access granted via Annual Gym Membership Package 1',
-    specialInclusions: 'Complimentary locker access & valet parking on weekends',
-  },
-  {
-    id: 'acc_002',
-    timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-    memberId: 'mem_002',
-    memberName: 'Priya Sharma',
-    memberPhone: '+919820022222',
-    scanType: 'QR',
-    decision: 'GRANTED',
-    reason: 'Access granted via Reformer Pilates — 36 Sessions (3 Months)',
-    adjustmentCreditsRemaining: 2,
-  },
-  {
-    id: 'acc_003',
-    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    memberId: 'mem_003',
-    memberName: 'Vikram Singhania',
-    memberPhone: '+919820033333',
-    scanType: 'QR',
-    decision: 'GRANTED_GRACE_PERIOD',
-    reason: 'Granted (grace period — 5 days remaining). Renew membership to continue access.',
-    graceDaysRemaining: 5,
-  },
-]
+const LEGACY_DUMMY_LOG_IDS = new Set(['acc_000', 'acc_001', 'acc_002', 'acc_003'])
+
+export const SEEDED_ACCESS_LOGS: AccessLogEntry[] = []
 
 export function getStoredAccessLogs(): AccessLogEntry[] {
   if (typeof window === 'undefined') return SEEDED_ACCESS_LOGS
@@ -120,13 +72,11 @@ export function getStoredAccessLogs(): AccessLogEntry[] {
   try {
     const parsed = JSON.parse(stored)
     if (Array.isArray(parsed)) {
-      const hasTara = parsed.some(l => l.memberName === 'Tara Rane' || l.memberCode === 'DNA-2025-0462')
-      if (!hasTara && SEEDED_ACCESS_LOGS[0]) {
-        const merged = [SEEDED_ACCESS_LOGS[0], ...parsed]
-        localStorage.setItem(ACCESS_LOGS_STORAGE_KEY, JSON.stringify(merged))
-        return merged
+      const cleaned = parsed.filter(l => l && !LEGACY_DUMMY_LOG_IDS.has(l.id))
+      if (cleaned.length !== parsed.length) {
+        localStorage.setItem(ACCESS_LOGS_STORAGE_KEY, JSON.stringify(cleaned))
       }
-      return parsed
+      return cleaned
     }
     return SEEDED_ACCESS_LOGS
   } catch {
@@ -207,11 +157,15 @@ export function getLiveOccupancy(_branchId?: string): FloorOccupancy {
   const todayStr = new Date().toISOString().slice(0, 10)
   const todaysLogs = logs.filter(l => l.timestamp.startsWith(todayStr))
 
-  const entriesToday = todaysLogs.filter(l => l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD' || l.decision === 'MANUAL_OVERRIDE').length
-  const currentEst = Math.max(12, Math.min(65, Math.round(entriesToday * 0.45)))
+  const ninetyMinsAgo = Date.now() - 90 * 60 * 1000
+  const activeOnFloor = todaysLogs.filter(
+    l =>
+      (l.decision === 'GRANTED' || l.decision === 'GRANTED_GRACE_PERIOD' || l.decision === 'MANUAL_OVERRIDE') &&
+      new Date(l.timestamp).getTime() >= ninetyMinsAgo
+  ).length
 
   return {
-    currentCount: currentEst,
+    currentCount: Math.min(200, activeOnFloor),
     maxCapacity: 200,
     peakTimeToday: '07:30 - 09:30 AM',
     avgDwellMinutes: 68,

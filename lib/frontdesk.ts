@@ -18,11 +18,11 @@ import { logAuditEvent } from '@/lib/audit'
 import { backCalculateGst } from '@/lib/gst'
 import { issueInvoice, buildLineItem } from '@/lib/billing'
 
-const LEADS_STORAGE_KEY = 'dna360_walkin_leads'
+const LEADS_STORAGE_KEY = 'dna360_walkin_leads_v2'
 const POS_PRODUCTS_KEY = 'dna360_pos_products'
-const POS_SALES_KEY = 'dna360_pos_sales'
-const LOCKERS_KEY = 'dna360_lockers'
-const SHIFTS_KEY = 'dna360_cash_shifts'
+const POS_SALES_KEY = 'dna360_pos_sales_v2'
+const LOCKERS_KEY = 'dna360_lockers_v2'
+const SHIFTS_KEY = 'dna360_cash_shifts_v2'
 
 export const SEEDED_POS_PRODUCTS: PosProduct[] = [
   { id: 'prod_01', name: 'DNA 360 Triple Chocolate Whey Isolate Shake', category: 'shake', priceMinor: 25000, costMinor: 11000, stockCount: 140, sku: 'DNA-SHK-01', taxRate: 0.05 },
@@ -33,72 +33,9 @@ export const SEEDED_POS_PRODUCTS: PosProduct[] = [
   { id: 'prod_06', name: 'DNA 360 Oversized Acid-Wash Training Tee', category: 'apparel', priceMinor: 140000, costMinor: 60000, stockCount: 25, sku: 'DNA-APP-06', taxRate: 0.05 },
 ]
 
-export const SEEDED_LEADS: WalkInLead[] = [
-  {
-    id: 'lead_001',
-    name: 'Siddharth Rao',
-    phone: '+919820099444',
-    email: 'sid.rao@gmail.com',
-    goal: 'Muscle Gain',
-    source: 'Walk In',
-    trialPassIssued: true,
-    trialPassCode: 'TRIAL-POW-2026-0881',
-    trialDate: new Date().toISOString().slice(0, 10),
-    status: 'trial_active',
-    notes: 'Looking for Annual All-Access with 1-on-1 PT coaching.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    assignedTo: 'Aftab Memon (Front Desk)',
-  },
-  {
-    id: 'lead_002',
-    name: 'Meera Nambiar',
-    phone: '+919820099555',
-    email: 'meera.n@gmail.com',
-    goal: 'Fat Loss',
-    source: 'Website',
-    trialPassIssued: true,
-    trialPassCode: 'TRIAL-POW-2026-0882',
-    trialDate: new Date().toISOString().slice(0, 10),
-    status: 'inquiry',
-    notes: 'Interested in Power Yoga and Reformer Pilates.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    assignedTo: 'Pallavi More (Fitness Consultant)',
-  },
-  {
-    id: 'lead_003',
-    name: 'Gaurav Kripalani',
-    phone: '+919820099666',
-    goal: 'Athletic Conditioning',
-    source: 'Referral',
-    trialPassIssued: false,
-    status: 'inquiry',
-    notes: 'Referred by Aarav Mehta. Enquired about CrossFit sessions.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-    assignedTo: 'Rajesh Poojary (Head Coach)',
-  },
-]
+export const SEEDED_LEADS: WalkInLead[] = []
 
-export const SEEDED_POS_SALES: PosSale[] = [
-  {
-    id: 'pos_001',
-    receiptNumber: 'DNA/POS/2026-08/1042',
-    customerType: 'member',
-    customerId: 'mem_001',
-    customerName: 'Aarav Mehta',
-    customerPhone: '+919820011111',
-    items: [
-      { productId: 'prod_01', productName: 'DNA 360 Triple Chocolate Whey Isolate Shake', quantity: 1, priceMinor: 25000, totalMinor: 25000 },
-      { productId: 'prod_03', productName: 'High-Protein Crunch Bar (20g Protein)', quantity: 2, priceMinor: 18000, totalMinor: 36000 },
-    ],
-    subtotalMinor: 61000,
-    gstMinor: 2905, // 5% back-calculated
-    totalMinor: 61000,
-    paymentMode: 'UPI',
-    transactionRef: 'UPI/POS/99120',
-    recordedBy: 'Aftab Memon',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-]
+export const SEEDED_POS_SALES: PosSale[] = []
 
 function buildInitialLockers(): Locker[] {
   const list: Locker[] = []
@@ -107,51 +44,21 @@ function buildInitialLockers(): Locker[] {
   for (let i = 1; i <= 20; i++) {
     const num = 100 + i
     const id = `lck_m_${String(i).padStart(2, '0')}`
-    if (num === 101) {
-      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_001', assignedMemberName: 'Aarav Mehta', assignedMemberPhone: '+919820011111', assignedAt: '2025-01-15T00:00:00Z', rentalExpiryDate: '2027-01-15', keyTag: 'KEY-M-01' })
-    } else if (num === 103) {
-      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_003', assignedMemberName: 'Vikram Singh', assignedMemberPhone: '+919820034567', assignedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), keyTag: 'KEY-M-03' })
-    } else if (num === 105) {
-      list.push({ id, number: num, zone: 'Male', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_007', assignedMemberName: 'Siddharth Deshmukh', assignedMemberPhone: '+919820033333', assignedAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(), keyTag: 'KEY-M-05' })
-    } else if (num === 107) {
-      list.push({ id, number: num, zone: 'Male', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_005', assignedMemberName: 'Rohan Verma', assignedMemberPhone: '+919820056789', assignedAt: '2026-01-01T00:00:00Z', rentalExpiryDate: '2027-12-31', keyTag: 'KEY-M-07' })
-    } else if (num === 109) {
-      list.push({ id, number: num, zone: 'Male', status: 'maintenance', notes: 'Digital keypad battery replacement scheduled' })
-    } else {
-      list.push({ id, number: num, zone: 'Male', status: 'available' })
-    }
+    list.push({ id, number: num, zone: 'Male', status: 'available' })
   }
 
   // Female Floor: 201-220 (20 lockers)
   for (let i = 1; i <= 20; i++) {
     const num = 200 + i
     const id = `lck_f_${String(i).padStart(2, '0')}`
-    if (num === 201) {
-      list.push({ id, number: num, zone: 'Female', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_002', assignedMemberName: 'Priya Sharma', assignedMemberPhone: '+919820022222', assignedAt: '2025-03-01T00:00:00Z', rentalExpiryDate: '2026-07-06', keyTag: 'KEY-F-01' })
-    } else if (num === 203) {
-      list.push({ id, number: num, zone: 'Female', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_006', assignedMemberName: 'Meera Nambiar', assignedMemberPhone: '+919820099555', assignedAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(), keyTag: 'KEY-F-03' })
-    } else if (num === 205) {
-      list.push({ id, number: num, zone: 'Female', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_007', assignedMemberName: 'Ananya Desai', assignedMemberPhone: '+919820055555', assignedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), keyTag: 'KEY-F-05' })
-    } else if (num === 206) {
-      list.push({ id, number: num, zone: 'Female', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_008', assignedMemberName: 'Dr. Sunita Rao', assignedMemberPhone: '+919820066666', assignedAt: '2025-11-15T00:00:00Z', rentalExpiryDate: '2026-11-15', keyTag: 'KEY-F-06' })
-    } else {
-      list.push({ id, number: num, zone: 'Female', status: 'available' })
-    }
+    list.push({ id, number: num, zone: 'Female', status: 'available' })
   }
 
   // Executive VIP: 301-308 (8 lockers)
   for (let i = 1; i <= 8; i++) {
     const num = 300 + i
     const id = `lck_vip_${String(i).padStart(2, '0')}`
-    if (num === 301) {
-      list.push({ id, number: num, zone: 'VIP', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_009', assignedMemberName: 'Vikram Singhania', assignedMemberPhone: '+919820077777', assignedAt: '2026-04-01T00:00:00Z', rentalExpiryDate: '2027-04-30', keyTag: 'VIP-GOLD-01' })
-    } else if (num === 303) {
-      list.push({ id, number: num, zone: 'VIP', status: 'occupied', assignmentType: 'daily', assignedMemberId: 'mem_010', assignedMemberName: 'Natasha Oberoi', assignedMemberPhone: '+919820088888', assignedAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(), keyTag: 'VIP-GOLD-03' })
-    } else if (num === 304) {
-      list.push({ id, number: num, zone: 'VIP', status: 'dedicated_rental', assignmentType: 'rental', assignedMemberId: 'mem_011', assignedMemberName: 'Devang Modi', assignedMemberPhone: '+919820099999', assignedAt: '2025-10-31T00:00:00Z', rentalExpiryDate: '2026-10-31', keyTag: 'VIP-GOLD-04' })
-    } else {
-      list.push({ id, number: num, zone: 'VIP', status: 'available' })
-    }
+    list.push({ id, number: num, zone: 'VIP', status: 'available' })
   }
 
   return list
@@ -159,24 +66,7 @@ function buildInitialLockers(): Locker[] {
 
 export const SEEDED_LOCKERS: Locker[] = buildInitialLockers()
 
-export const SEEDED_SHIFTS: CashShiftHandover[] = [
-  {
-    id: 'shift_001',
-    shiftType: 'morning',
-    staffId: 'usr_fc_01',
-    staffName: 'Aftab Memon',
-    openedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    closedAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
-    openingFloatMinor: 500000, // ₹5,000
-    cashSalesMinor: 145000,   // ₹1,450 (Day Pass)
-    pettyCashOutflowsMinor: 0,
-    expectedCashMinor: 645000,
-    actualCashCountedMinor: 645000,
-    discrepancyMinor: 0,
-    notes: 'Morning shift drawer balanced perfectly. 1 Day Pass sold in cash.',
-    status: 'closed',
-  },
-]
+export const SEEDED_SHIFTS: CashShiftHandover[] = []
 
 // ─── Storage Helpers ───
 

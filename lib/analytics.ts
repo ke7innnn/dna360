@@ -9,107 +9,73 @@ import type {
 import { logAuditEvent } from '@/lib/audit'
 
 import { getSystemMetrics } from '@/lib/metrics'
+import { getStoredMembers } from '@/lib/members'
+import { getStoredInvoices } from '@/lib/billing'
+import { getStoredPosSales } from '@/lib/frontdesk'
+import { getLiveOccupancy } from '@/lib/attendance'
 
-const CHURN_RADAR_KEY = 'dna360_churn_radar_members'
+const CHURN_CONTACTED_KEY = 'dna360_churn_contacted_v2'
 
-export const SEEDED_KPIS: ExecutiveKpis = {
-  mrrMinor: 184000000, // ₹18,40,000 (Collections MTD)
-  arrMinor: 2208000000, // ₹2,20,80,000
-  totalActiveMembers: 512, // 512 Active (out of 659 Total registered)
-  arpmMinor: 279210, // ₹2,792.10 per member
-  churnRatePct: 2.8,
-  gstCollectedMinor: 8761905, // ₹87,619.05 (5% GST back-calculated: 18,40,000 * 5 / 105)
-  mrrGrowthPct: 14.2,
-}
-
-export const SEEDED_BRANCHES: BranchPerformance[] = [
-  {
-    branchId: 'pow',
-    branchName: 'Powai Studio & Flagship',
-    monthlyRevenueMinor: 184000000, // ₹18,40,000
-    memberCount: 659,
-    occupancyPct: 68,
-    ptSessionsDelivered: 296,
-    growthPct: 14.2,
-  },
-]
-
-export const SEEDED_REVENUE_MIX: RevenueStreamMix = {
-  membershipPct: 74,
-  ptPct: 22,
-  retailPct: 0,
-  lockersPct: 4,
-}
-
-// Current date: August 2026. Only elapsed horizons M+1 to M+N are rendered; unreached future horizons are null.
-export const SEEDED_COHORTS: CohortRetentionData[] = [
-  { cohort: 'Jan 2026', size: 112, month1: 96, month3: 88, month6: 81, month12: null as any },
-  { cohort: 'Feb 2026', size: 98, month1: 95, month3: 86, month6: 80, month12: null as any },
-  { cohort: 'Mar 2026', size: 125, month1: 98, month3: 91, month6: null as any, month12: null as any },
-  { cohort: 'Apr 2026', size: 104, month1: 94, month3: 85, month6: null as any, month12: null as any },
-  { cohort: 'May 2026', size: 118, month1: 97, month3: 89, month6: null as any, month12: null as any },
-  { cohort: 'Jun 2026', size: 122, month1: 95, month3: null as any, month6: null as any, month12: null as any },
-]
-
-export const SEEDED_CHURN_MEMBERS: ChurnRiskMember[] = [
-  {
-    memberId: 'mem_004',
-    memberName: 'Rohan Deshmukh',
-    memberCode: 'DNA-2025-0004',
-    phone: '+919820044444',
-    planName: 'Annual Happy Hours Gym Membership',
-    riskScore: 88,
-    riskLevel: 'High',
-    primaryRiskFactor: 'Overdue locker dues + No check-in in 18 days',
-    lastVisitDaysAgo: 18,
-    recommendedAction: 'Send WhatsApp Dues Reminder + Free 1-on-1 Session Invite',
-    retentionStatus: 'uncontacted',
-  },
-  {
-    memberId: 'mem_018',
-    memberName: 'Priya Sharma',
-    memberCode: 'DNA-2025-0018',
-    phone: '+919833022222',
-    planName: '6-Month Fitness Plus',
-    riskScore: 64,
-    riskLevel: 'Medium',
-    primaryRiskFactor: 'Plan expired 3 days ago (in 7-day grace window)',
-    lastVisitDaysAgo: 4,
-    recommendedAction: '1-Click Renewal Discount Call (10% Loyalty Incentive)',
-    retentionStatus: 'uncontacted',
-  },
-  {
-    memberId: 'mem_072',
-    memberName: 'Neha Kulkarni',
-    memberCode: 'DNA-2025-0072',
-    phone: '+919819055555',
-    planName: 'Reformer Pilates — 36 Sessions (3 Months)',
-    riskScore: 48,
-    riskLevel: 'Medium',
-    primaryRiskFactor: 'Tenure expires in 10 days with 6 sessions remaining',
-    lastVisitDaysAgo: 2,
-    recommendedAction: 'Tenure Extension Call or Batch Top-up Offer',
-    retentionStatus: 'uncontacted',
-  },
-]
-
-export function getStoredChurnRadar(): ChurnRiskMember[] {
-  if (typeof window === 'undefined') return SEEDED_CHURN_MEMBERS
-  const stored = localStorage.getItem(CHURN_RADAR_KEY)
-  if (!stored) {
-    localStorage.setItem(CHURN_RADAR_KEY, JSON.stringify(SEEDED_CHURN_MEMBERS))
-    return SEEDED_CHURN_MEMBERS
-  }
+function getContactedIds(): string[] {
+  if (typeof window === 'undefined') return []
   try {
-    return JSON.parse(stored)
+    const raw = localStorage.getItem(CHURN_CONTACTED_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
   } catch {
-    return SEEDED_CHURN_MEMBERS
+    return []
   }
+}
+
+/**
+ * Churn radar derived 100% from real member records:
+ * active/expiring members with no visit for 14+ days, and members in the grace window.
+ */
+export function getStoredChurnRadar(): ChurnRiskMember[] {
+  const contacted = new Set(getContactedIds())
+  const nowMs = Date.now()
+  const list: ChurnRiskMember[] = []
+
+  for (const m of getStoredMembers()) {
+    if (m.status === 'blacklisted' || m.blacklisted) continue
+    if (m.status === 'inactive') continue
+    const lastVisitMs = m.last_visit_at ? new Date(m.last_visit_at).getTime() : null
+    const daysAgo = lastVisitMs ? Math.floor((nowMs - lastVisitMs) / 86400000) : null
+    const isGrace = m.status === 'grace_period'
+    const isLapsing = daysAgo === null || daysAgo >= 14
+    if (!isGrace && !isLapsing) continue
+
+    const visitScore = daysAgo === null ? 40 : Math.min(60, Math.round(daysAgo * 1.5))
+    const riskScore = Math.min(99, visitScore + (isGrace ? 30 : 0) + (m.status === 'expiring_soon' ? 15 : 0))
+    const factors: string[] = []
+    if (isGrace) factors.push('Plan expired (in 7-day grace window)')
+    if (m.status === 'expiring_soon') factors.push('Plan expiring soon')
+    factors.push(daysAgo === null ? 'No check-in recorded yet' : `No check-in in ${daysAgo} days`)
+
+    list.push({
+      memberId: m.id,
+      memberName: m.name,
+      memberCode: m.member_code,
+      phone: m.phone,
+      planName: m.active_memberships?.[0]?.product_name || 'Membership',
+      riskScore,
+      riskLevel: riskScore >= 75 ? 'High' : riskScore >= 45 ? 'Medium' : 'Low',
+      primaryRiskFactor: factors.join(' + '),
+      lastVisitDaysAgo: daysAgo ?? 0,
+      recommendedAction: isGrace
+        ? 'Call to settle dues and renew before turnstile lockout'
+        : 'WhatsApp check-in + invite for a complimentary 1-on-1 session',
+      retentionStatus: contacted.has(m.id) ? 'contacted' : 'uncontacted',
+    } as ChurnRiskMember)
+  }
+
+  return list.sort((x, y) => y.riskScore - x.riskScore).slice(0, 25)
 }
 
 export function saveChurnRadar(members: ChurnRiskMember[]) {
   if (typeof window === 'undefined') return
-  localStorage.setItem(CHURN_RADAR_KEY, JSON.stringify(members))
+  const ids = members.filter((m) => m.retentionStatus === 'contacted').map((m) => m.memberId)
+  localStorage.setItem(CHURN_CONTACTED_KEY, JSON.stringify(Array.from(new Set([...getContactedIds(), ...ids]))))
   window.dispatchEvent(new Event('dna360_analytics_updated'))
 }
 
@@ -119,38 +85,82 @@ export function getExecutiveKpis(): ExecutiveKpis {
     mrrMinor: metrics.collectionsMtdMinor,
     arrMinor: metrics.collectionsMtdMinor * 12,
     totalActiveMembers: metrics.activeMembers,
-    arpmMinor: Math.round(metrics.collectionsMtdMinor / metrics.totalMembers),
+    arpmMinor: metrics.totalMembers > 0 ? Math.round(metrics.collectionsMtdMinor / metrics.totalMembers) : 0,
     churnRatePct: metrics.churnRatePct,
     gstCollectedMinor: metrics.gstLiabilityMinor,
-    mrrGrowthPct: 14.2,
+    mrrGrowthPct: 0,
   }
 }
 
 export function getBranchPerformance(): BranchPerformance[] {
   const metrics = getSystemMetrics()
+  const floor = getLiveOccupancy()
   return [
     {
       branchId: 'pow',
       branchName: 'Powai Studio & Flagship',
       monthlyRevenueMinor: metrics.collectionsMtdMinor,
       memberCount: metrics.totalMembers,
-      occupancyPct: 68,
-      ptSessionsDelivered: 296,
-      growthPct: 14.2,
+      occupancyPct: Math.round((floor.currentCount / floor.maxCapacity) * 100),
+      ptSessionsDelivered: 0,
+      growthPct: 0,
     },
   ]
 }
 
+/** Revenue mix computed from real invoice line items + POS retail sales issued this month. */
 export function getRevenueMix(): RevenueStreamMix {
-  return SEEDED_REVENUE_MIX
+  const monthPrefix = new Date().toISOString().slice(0, 7)
+  let membership = 0
+  let pt = 0
+  let lockers = 0
+  for (const inv of getStoredInvoices()) {
+    if (inv.status === 'void' || !String(inv.issueDate).startsWith(monthPrefix)) continue
+    for (const item of inv.items || []) {
+      const d = (item.description || '').toLowerCase()
+      const amt = item.totalMinor || 0
+      if (d.includes('personal training') || /\bpt\b/.test(d)) pt += amt
+      else if (d.includes('locker')) lockers += amt
+      else membership += amt
+    }
+  }
+  const retail = getStoredPosSales()
+    .filter((s) => String(s.timestamp).startsWith(monthPrefix))
+    .reduce((acc, s) => acc + (s.totalMinor || 0), 0)
+  const total = membership + pt + lockers + retail
+  const pct = (v: number) => (total > 0 ? Math.round((v / total) * 100) : 0)
+  return { membershipPct: pct(membership), ptPct: pct(pt), retailPct: pct(retail), lockersPct: pct(lockers) }
 }
 
+/** Cohort retention computed from real member join dates (only elapsed horizons are filled). */
 export function getCohortData(): CohortRetentionData[] {
-  return SEEDED_COHORTS
+  const members = getStoredMembers()
+  const now = new Date()
+  const rows: CohortRetentionData[] = []
+  for (let back = 5; back >= 0; back--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - back, 1)
+    const prefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const cohort = members.filter((m) => String(m.joined_date || '').startsWith(prefix))
+    const retained = cohort.filter((m) => m.status !== 'inactive' && m.status !== 'blacklisted').length
+    const pct = cohort.length > 0 ? Math.round((retained / cohort.length) * 100) : (null as any)
+    rows.push({
+      cohort: d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+      size: cohort.length,
+      month1: back >= 1 ? pct : (null as any),
+      month3: back >= 3 ? pct : (null as any),
+      month6: back >= 6 ? pct : (null as any),
+      month12: null as any,
+    })
+  }
+  return rows
 }
 
 export function getGstTaxReport(): GstSummaryReport {
   const metrics = getSystemMetrics()
+  const monthPrefix = new Date().toISOString().slice(0, 7)
+  const invoiceCount = getStoredInvoices().filter(
+    (inv) => inv.status !== 'void' && String(inv.issueDate).startsWith(monthPrefix)
+  ).length
   return {
     sacCode: metrics.gstSacCode,
     taxRate: metrics.gstRatePct / 100,
@@ -158,7 +168,7 @@ export function getGstTaxReport(): GstSummaryReport {
     cgstMinor: metrics.cgstMinor,
     sgstMinor: metrics.sgstMinor,
     totalTaxMinor: metrics.gstLiabilityMinor,
-    invoiceCount: 412,
+    invoiceCount,
   }
 }
 
