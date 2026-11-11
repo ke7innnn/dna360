@@ -64,12 +64,16 @@ export function getEsslConfig(): EsslConfig {
 
 export function saveEsslConfig(config: EsslConfig): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(ESSL_CONFIG_STORAGE_KEY, JSON.stringify(config))
+  const normalized: EsslConfig = {
+    ...config,
+    serverUrl: normalizeEsslServerUrl(config.serverUrl),
+  }
+  localStorage.setItem(ESSL_CONFIG_STORAGE_KEY, JSON.stringify(normalized))
   window.dispatchEvent(new Event('dna360_settings_updated'))
   fetch('/api/settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'SAVE_CONFIG', key: 'essl_config', payload: config }),
+    body: JSON.stringify({ action: 'SAVE_CONFIG', key: 'essl_config', payload: normalized }),
   }).catch(() => {})
 }
 
@@ -128,6 +132,18 @@ export interface EsslSoapCallResult {
 }
 
 /**
+ * Ensures any URL pasted by the user (e.g. `http://192.168.1.201/eBioserverNew` or `http://192.168.1.201`)
+ * automatically resolves to the exact SOAP endpoint `.../eBioserverNew/Webservice.asmx`.
+ */
+export function normalizeEsslServerUrl(rawUrl: string): string {
+  const trimmed = (rawUrl || '').trim().replace(/\/+$/, '')
+  if (!trimmed) return DEFAULT_ESSL_CONFIG.serverUrl
+  if (/\.asmx$/i.test(trimmed)) return trimmed
+  if (/\/ebioservernew$/i.test(trimmed)) return `${trimmed}/Webservice.asmx`
+  return `${trimmed}/eBioserverNew/Webservice.asmx`
+}
+
+/**
  * Dispatches a SOAP 1.1 POST request to eSSL eBioServer-New (`Webservice.asmx`)
  */
 export async function callEbioServerSoap(
@@ -137,6 +153,7 @@ export async function callEbioServerSoap(
 ): Promise<EsslSoapCallResult> {
   const start = Date.now()
   const cfg: EsslConfig = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
+  const targetEndpoint = normalizeEsslServerUrl(cfg.serverUrl)
 
   const fullParams: Record<string, string | number | undefined> = {
     UserName: cfg.username,
@@ -173,7 +190,7 @@ export async function callEbioServerSoap(
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 4500)
 
-    const response = await fetch(cfg.serverUrl, {
+    const response = await fetch(targetEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/xml; charset=utf-8',
@@ -234,10 +251,12 @@ export async function esslUnlockDoor(
   customConfig?: Partial<EsslConfig>
 ): Promise<EsslSoapCallResult> {
   const cfg = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
+  const targetSerial = deviceCode || cfg.deviceCode
   return callEbioServerSoap(
     'DeviceCommand_UnlockDoor',
     {
-      DeviceCode: deviceCode || cfg.deviceCode,
+      DeviceSerialNumber: targetSerial,
+      DeviceCode: targetSerial,
     },
     cfg
   )
@@ -260,6 +279,8 @@ export async function esslSyncMemberWithExpiry(
   customConfig?: Partial<EsslConfig>
 ): Promise<EsslSoapCallResult> {
   const cfg = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
+  const fromDate = member.expiryFrom.slice(0, 10)
+  const toDate = member.expiryTo.slice(0, 10)
   return callEbioServerSoap(
     'UpdateEmployeewithExpiryDates',
     {
@@ -268,8 +289,11 @@ export async function esslSyncMemberWithExpiry(
       EmployeeLocation: cfg.locationCode,
       EmployeeRole: 'User',
       EmployeeVerificationType: member.verificationType || '0',
-      EmployeeExpiryFrom: member.expiryFrom.slice(0, 10),
-      EmployeeExpiryTo: member.expiryTo.slice(0, 10),
+      CardNumber: member.cardNumber || '',
+      EmployeeExpiryFrom: fromDate,
+      EmployeeExpiryTo: toDate,
+      ExpiryFrom: fromDate,
+      ExpiryTo: toDate,
     },
     cfg
   )
@@ -287,12 +311,15 @@ export async function esslBlockUnblockMember(
   customConfig?: Partial<EsslConfig>
 ): Promise<EsslSoapCallResult> {
   const cfg = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
+  const targetSerial = deviceCode || cfg.deviceCode
   return callEbioServerSoap(
     'DeviceCommand_BlockUnBlockUser',
     {
-      DeviceCode: deviceCode || cfg.deviceCode,
+      DeviceSerialNumber: targetSerial,
+      DeviceCode: targetSerial,
       EmployeeCode: employeeCode,
       CommandType: action,
+      BlockStatus: action === 'Block' ? '1' : '0',
     },
     cfg
   )
@@ -307,10 +334,12 @@ export async function esslCheckDeviceHeartbeat(
   customConfig?: Partial<EsslConfig>
 ): Promise<EsslSoapCallResult> {
   const cfg = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
+  const targetSerial = deviceCode || cfg.deviceCode
   return callEbioServerSoap(
     'GetDeviceLastPing',
     {
-      DeviceCode: deviceCode || cfg.deviceCode,
+      DeviceSerialNumber: targetSerial,
+      DeviceCode: targetSerial,
     },
     cfg
   )
@@ -351,3 +380,4 @@ export function tryDecryptEsslPayload(encryptedBase64: string, keySecret: string
     return null
   }
 }
+
