@@ -6,7 +6,7 @@
 
 import crypto from 'crypto'
 
-export const ESSL_CONFIG_STORAGE_KEY = 'dna360_essl_config'
+export const ESSL_CONFIG_STORAGE_KEY = 'dna360_essl_config_v2'
 
 export interface EsslConfig {
   enabled: boolean
@@ -39,7 +39,7 @@ export const DEFAULT_ESSL_CONFIG: EsslConfig = {
   serverUrl: process.env.ESSL_EBIOSERVER_URL || 'http://192.168.1.201/eBioserverNew/Webservice.asmx',
   username: process.env.ESSL_API_USERNAME || 'admin',
   password: process.env.ESSL_API_PASSWORD || '',
-  deviceCode: process.env.ESSL_DEVICE_CODE || 'ESSL_POWAI_MAIN_01',
+  deviceCode: process.env.ESSL_DEVICE_CODE || 'SDE7261100390',
   secondaryDeviceCode: process.env.ESSL_SECONDARY_DEVICE_CODE || 'ESSL_POWAI_STEAM_02',
   locationCode: process.env.ESSL_LOCATION_CODE || 'POWAI',
   webhookSecret: process.env.ESSL_WEBHOOK_SECRET || 'dna360_essl_powai_webhook_key_2026',

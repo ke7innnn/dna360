@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const sn = searchParams.get('SN') || searchParams.get('sn') || 'ESSL_POWAI_MAIN_01'
+  const sn = searchParams.get('SN') || searchParams.get('sn') || 'SDE7261100390'
   const ip = req.headers.get('x-forwarded-for') || undefined
 
   recordAdmsHeartbeat(sn, ip)
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const sn = searchParams.get('SN') || searchParams.get('sn') || 'ESSL_POWAI_MAIN_01'
+  const sn = searchParams.get('SN') || searchParams.get('sn') || 'SDE7261100390'
   const table = (searchParams.get('table') || 'ATTLOG').toUpperCase()
   const ip = req.headers.get('x-forwarded-for') || undefined
 
@@ -119,3 +119,4 @@ export async function POST(req: NextRequest) {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   })
 }
+

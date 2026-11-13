@@ -551,11 +551,11 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Input
-                  label="Main Door Device Serial (DeviceCode)"
+                  label="Main Door Device Serial (eSSL x 2008)"
                   value={esslConfig.deviceCode}
                   onChange={(e) => setEsslConfig({ ...esslConfig, deviceCode: e.target.value })}
-                  placeholder="ESSL_POWAI_MAIN_01"
-                  hint="Serial number from eBioServer Device List"
+                  placeholder="SDE7261100390"
+                  hint="eSSL x 2008 · Push Ver 3.1.6S · MAC 00:17:61:06:e0:56"
                 />
                 <Input
                   label="Secondary Gate Serial (Optional)"
