@@ -45,6 +45,7 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/member/delete-account',
   '/api/webhooks/',
   '/api/health',
+  '/iclock/',
 ]
 
 /**

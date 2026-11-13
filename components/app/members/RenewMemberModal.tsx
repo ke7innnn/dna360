@@ -7,17 +7,11 @@ import { Button } from '@/components/app/ui/button'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/app/ui/select'
 import { formatINR, backCalculateGst } from '@/lib/gst'
 import { updateMember } from '@/lib/members'
+import { getProducts } from '@/lib/products'
+import { SEEDED_TRAINERS } from '@/lib/trainers'
 import { getNextInvoiceNumber, recordMembershipInvoice } from '@/lib/billing'
 import type { Member, MembershipRecord } from '@/types/member'
 import { toast } from '@/components/app/ui/toast'
-
-const RENEWAL_PLANS = [
-  { id: 'prod_001', name: 'Annual Gym Membership Package 1', durationMonths: 12, validityDays: 365, priceInclusiveMinor: 4350000, category: 'gym_membership' },
-  { id: 'prod_002', name: 'Annual Gym — Ice Bath Included', durationMonths: 12, validityDays: 365, priceInclusiveMinor: 5500000, category: 'gym_membership' },
-  { id: 'prod_003', name: 'Annual Gym — All Activities', durationMonths: 12, validityDays: 365, priceInclusiveMinor: 6549900, category: 'gym_membership' },
-  { id: 'prod_004', name: 'Annual Happy Hours Gym Membership', durationMonths: 12, validityDays: 365, priceInclusiveMinor: 2999900, category: 'gym_membership' },
-  { id: 'prod_029', name: 'Reformer Pilates — 36 Sessions (3 Months)', durationMonths: 3, validityDays: 90, priceInclusiveMinor: 4463700, category: 'reformer_pilates' },
-]
 
 export default function RenewMemberModal({
   member,
@@ -32,28 +26,53 @@ export default function RenewMemberModal({
   onUpdated?: () => void
   onRenewed?: () => void
 }) {
-  const [selectedPlanId, setSelectedPlanId] = useState('prod_001')
-  const [discountMinor, setDiscountMinor] = useState(200000) // ₹2,000 renewal loyalty discount
+  const allProducts = React.useMemo(
+    () => getProducts({ active: true }),
+    []
+  )
+  const trainers = SEEDED_TRAINERS
+
+  const [selectedPlanId, setSelectedPlanId] = useState(allProducts[0]?.id || 'prod_001')
+  const [discountMinor, setDiscountMinor] = useState(0)
   const [paymentMode, setPaymentMode] = useState<'UPI' | 'Card' | 'Cash' | 'NetBanking'>('UPI')
+  const [customSessions, setCustomSessions] = useState<string>('')
+  const [selectedTrainerId, setSelectedTrainerId] = useState<string>(member?.assigned_trainer_id || '')
+  const [customStartDate, setCustomStartDate] = useState<string>(() => new Date().toISOString().slice(0, 10))
+  const [customExpiryDate, setCustomExpiryDate] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  if (!member) return null
+  const selectedPlan = allProducts.find((p) => p.id === selectedPlanId) || allProducts[0]
 
-  const selectedPlan = RENEWAL_PLANS.find((p) => p.id === selectedPlanId) || RENEWAL_PLANS[0]
-  const grossInclusiveMinor = selectedPlan.priceInclusiveMinor
+  React.useEffect(() => {
+    if (!selectedPlan) return
+    setCustomSessions(selectedPlan.session_count ? String(selectedPlan.session_count) : '')
+    const startObj = customStartDate ? new Date(customStartDate) : new Date()
+    const endObj = new Date(startObj)
+    endObj.setDate(endObj.getDate() + (selectedPlan.validity_days || 365))
+    setCustomExpiryDate(endObj.toISOString().slice(0, 10))
+  }, [selectedPlanId, customStartDate])
+
+  React.useEffect(() => {
+    if (member?.assigned_trainer_id) {
+      setSelectedTrainerId(member.assigned_trainer_id)
+    }
+  }, [member?.assigned_trainer_id])
+
+  if (!member || !selectedPlan) return null
+
+  const grossInclusiveMinor = selectedPlan.list_price
   const netInclusiveMinor = Math.max(0, grossInclusiveMinor - discountMinor)
-  const gst = backCalculateGst(netInclusiveMinor, 0.05)
+  const gst = backCalculateGst(netInclusiveMinor, selectedPlan.tax_rate || 0.05)
+  const parsedSessions = customSessions.trim() !== '' ? Math.max(0, parseInt(customSessions, 10) || 0) : (selectedPlan.session_count || null)
+  const chosenTrainer = trainers.find((t) => t.id === selectedTrainerId)
 
   const processRenewal = (paymentRef?: string, chosenMode?: string) => {
     const todayStr = new Date().toISOString().slice(0, 10)
-    const primaryMembership = member.active_memberships[0]
-    const currentEnd = primaryMembership?.expiry_date ? new Date(primaryMembership.expiry_date) : new Date()
-    const startDateObj = currentEnd > new Date() ? currentEnd : new Date()
-    const activationDate = startDateObj.toISOString().slice(0, 10)
+    const activationDate = customStartDate || todayStr
 
-    const endDateObj = new Date(startDateObj)
-    endDateObj.setDate(endDateObj.getDate() + selectedPlan.validityDays)
-    const expiryDate = endDateObj.toISOString().slice(0, 10)
+    const endDateObj = new Date(activationDate)
+    endDateObj.setDate(endDateObj.getDate() + (selectedPlan.validity_days || 365))
+    const expiryDate = customExpiryDate || endDateObj.toISOString().slice(0, 10)
 
     const invoiceNumber = getNextInvoiceNumber()
 
@@ -69,15 +88,15 @@ export default function RenewMemberModal({
       discount_amount: discountMinor,
       discount_reason: discountMinor > 0 ? 'Member Renewal Privilege' : null,
       discount_approved_by: null,
-      tax_rate: 0.05,
+      tax_rate: selectedPlan.tax_rate || 0.05,
       status: 'active',
       invoice_id: `inv_rnw_${Date.now()}`,
       invoice_number: invoiceNumber,
       sales_rep_id: 'usr_fc_01',
       sales_rep_name: 'Rajesh Poojary',
-      sessions_total: selectedPlan.category === 'reformer_pilates' ? 36 : null,
+      sessions_total: parsedSessions,
       sessions_consumed: 0,
-      sessions_remaining: selectedPlan.category === 'reformer_pilates' ? 36 : null,
+      sessions_remaining: parsedSessions,
       access_window: selectedPlan.name.includes('Happy Hours') ? { start: '12:00', end: '15:30' } : null,
       void_reason: null,
       voided_by: null,
@@ -87,12 +106,28 @@ export default function RenewMemberModal({
       transfer_fee_invoice_id: null,
     }
 
-    const past = [...member.active_memberships, ...member.past_memberships]
+    const isAddOnPack =
+      selectedPlan.category.includes('pt') ||
+      selectedPlan.category.includes('pilates') ||
+      Boolean(parsedSessions && parsedSessions > 0)
+
+    const updatedActiveMemberships = isAddOnPack
+      ? [newMembership, ...(member.active_memberships || [])]
+      : [newMembership]
+    const past = isAddOnPack
+      ? member.past_memberships
+      : [...(member.active_memberships || []), ...(member.past_memberships || [])]
 
     updateMember(member.id, {
       status: 'active',
-      active_memberships: [newMembership],
+      active_memberships: updatedActiveMemberships,
       past_memberships: past,
+      ...(chosenTrainer
+        ? {
+            assigned_trainer_id: chosenTrainer.id,
+            assigned_trainer_name: chosenTrainer.name,
+          }
+        : {}),
       lifetime_value: member.lifetime_value + netInclusiveMinor,
       staff_notes: [
         {
@@ -101,7 +136,7 @@ export default function RenewMemberModal({
           authorName: 'Rajesh Poojary',
           authorRole: 'Fitness Consultant',
           timestamp: new Date().toISOString(),
-          content: `Renewed with ${selectedPlan.name}. Valid until ${expiryDate}. Mode: ${chosenMode || paymentMode}${paymentRef ? ` (Ref: ${paymentRef})` : ''}. Invoice: ${newMembership.invoice_number}`,
+          content: `Added/Renewed ${selectedPlan.name}${parsedSessions ? ` (${parsedSessions} sessions)` : ''}. Valid ${activationDate} to ${expiryDate}. Mode: ${chosenMode || paymentMode}${paymentRef ? ` (Ref: ${paymentRef})` : ''}. Invoice: ${newMembership.invoice_number}`,
           type: 'followup',
         },
         ...member.staff_notes,
@@ -157,11 +192,11 @@ export default function RenewMemberModal({
       const lineItem = buildLineItem({
         productId: selectedPlan.id,
         description: selectedPlan.name,
-        sacCode: '999723',
-        unitPriceInclusiveMinor: selectedPlan.priceInclusiveMinor,
+        sacCode: selectedPlan.sac_code || '999723',
+        unitPriceInclusiveMinor: selectedPlan.list_price,
         quantity: 1,
         discountMinor: discountMinor,
-        taxRate: 0.05,
+        taxRate: selectedPlan.tax_rate || 0.05,
       })
 
       const res = await fetch('/api/razorpay/create-order', {
@@ -232,21 +267,78 @@ export default function RenewMemberModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Renew Membership Plan"
+      title="Add / Renew Package & Session Slots"
       description={`Member: ${member.name} (${member.member_code})`}
       size="md"
     >
       <form onSubmit={handleRenewManual} className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-[var(--app-text-secondary)]">
-            Select Renewal Package (GST Inclusive)
+            Select Membership or Session Package (All 43 Official Plans)
           </label>
           <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {RENEWAL_PLANS.map((plan) => (
+              {allProducts.map((plan) => (
                 <SelectItem key={plan.id} value={plan.id}>
-                  {plan.name} — {formatINR(plan.priceInclusiveMinor)}
+                  {plan.name} — {formatINR(plan.list_price)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--app-text-secondary)]">
+              Start Date
+            </label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl glass-input text-xs text-[var(--app-text-primary)]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--app-text-secondary)]">
+              Expiry Date
+            </label>
+            <input
+              type="date"
+              value={customExpiryDate}
+              onChange={(e) => setCustomExpiryDate(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl glass-input text-xs text-[var(--app-text-primary)]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--app-text-secondary)]">
+              Session Slots (Optional)
+            </label>
+            <input
+              type="number"
+              min="0"
+              placeholder="Unlimited"
+              value={customSessions}
+              onChange={(e) => setCustomSessions(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl glass-input text-xs text-[var(--app-text-primary)]"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-[var(--app-text-secondary)]">
+            Assign Personal / Pilates Trainer (Optional)
+          </label>
+          <Select value={selectedTrainerId || 'none'} onValueChange={(v) => setSelectedTrainerId(v === 'none' ? '' : v)}>
+            <SelectTrigger><SelectValue placeholder="No trainer assigned" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No trainer assigned</SelectItem>
+              {trainers.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.name} ({t.role})
                 </SelectItem>
               ))}
             </SelectContent>

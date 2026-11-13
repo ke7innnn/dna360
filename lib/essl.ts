@@ -252,6 +252,7 @@ export async function esslUnlockDoor(
 ): Promise<EsslSoapCallResult> {
   const cfg = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
   const targetSerial = deviceCode || cfg.deviceCode
+  queueAdmsCommand(targetSerial, 'AC_UNLOCK')
   return callEbioServerSoap(
     'DeviceCommand_UnlockDoor',
     {
@@ -281,6 +282,13 @@ export async function esslSyncMemberWithExpiry(
   const cfg = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
   const fromDate = member.expiryFrom.slice(0, 10)
   const toDate = member.expiryTo.slice(0, 10)
+  const numericPin = member.memberCode.replace(/\D/g, '').replace(/^202\d/, '').replace(/^0+/, '') || member.memberCode
+  const startCompact = fromDate.replace(/-/g, '')
+  const endCompact = toDate.replace(/-/g, '')
+  queueAdmsCommand(
+    cfg.deviceCode,
+    `DATA UPDATE USERINFO PIN=${numericPin}\tName=${member.name.slice(0, 24)}\tPri=0\tPasswd=\tCard=${member.cardNumber || ''}\tGrp=1\tTZ=0000000100000000\tStartDatetime=${startCompact}\tEndDatetime=${endCompact}`
+  )
   return callEbioServerSoap(
     'UpdateEmployeewithExpiryDates',
     {
@@ -312,6 +320,18 @@ export async function esslBlockUnblockMember(
 ): Promise<EsslSoapCallResult> {
   const cfg = { ...DEFAULT_ESSL_CONFIG, ...customConfig }
   const targetSerial = deviceCode || cfg.deviceCode
+  const numericPin = employeeCode.replace(/\D/g, '').replace(/^202\d/, '').replace(/^0+/, '') || employeeCode
+  if (action === 'Block') {
+    queueAdmsCommand(
+      targetSerial,
+      `DATA UPDATE USERINFO PIN=${numericPin}\tGrp=99\tTZ=0000000000000000\tEndDatetime=20200101`
+    )
+  } else {
+    queueAdmsCommand(
+      targetSerial,
+      `DATA UPDATE USERINFO PIN=${numericPin}\tGrp=1\tTZ=0000000100000000`
+    )
+  }
   return callEbioServerSoap(
     'DeviceCommand_BlockUnBlockUser',
     {
@@ -388,4 +408,72 @@ export function tryDecryptEsslPayload(encryptedBase64: string, keySecret: string
   }
   return null
 }
+
+// ─── Native Zero-PC Cloud ADMS / iClock Command Queue ───
+export interface AdmsQueuedCommand {
+  id: number
+  serialNumber: string
+  command: string
+  createdAt: string
+}
+
+const globalForAdms = globalThis as unknown as {
+  __dna360AdmsQueue?: AdmsQueuedCommand[]
+  __dna360AdmsCounter?: number
+  __dna360AdmsHeartbeats?: Record<string, { lastSeenAt: string; ip?: string }>
+}
+
+if (!globalForAdms.__dna360AdmsQueue) globalForAdms.__dna360AdmsQueue = []
+if (!globalForAdms.__dna360AdmsCounter) globalForAdms.__dna360AdmsCounter = 100
+if (!globalForAdms.__dna360AdmsHeartbeats) globalForAdms.__dna360AdmsHeartbeats = {}
+
+export function recordAdmsHeartbeat(serialNumber: string, ip?: string): void {
+  if (!serialNumber) return
+  globalForAdms.__dna360AdmsHeartbeats![serialNumber] = {
+    lastSeenAt: new Date().toISOString(),
+    ip,
+  }
+}
+
+export function getAdmsHeartbeats(): Record<string, { lastSeenAt: string; ip?: string }> {
+  return globalForAdms.__dna360AdmsHeartbeats || {}
+}
+
+export function queueAdmsCommand(serialNumber: string, command: string): AdmsQueuedCommand {
+  const id = ++globalForAdms.__dna360AdmsCounter!
+  const entry: AdmsQueuedCommand = {
+    id,
+    serialNumber: serialNumber || '*',
+    command,
+    createdAt: new Date().toISOString(),
+  }
+  globalForAdms.__dna360AdmsQueue!.push(entry)
+  if (globalForAdms.__dna360AdmsQueue!.length > 500) {
+    globalForAdms.__dna360AdmsQueue!.splice(0, globalForAdms.__dna360AdmsQueue!.length - 500)
+  }
+  return entry
+}
+
+export function dequeueAdmsCommands(serialNumber: string, maxBatch = 5): AdmsQueuedCommand[] {
+  const queue = globalForAdms.__dna360AdmsQueue || []
+  const matched: AdmsQueuedCommand[] = []
+  const remaining: AdmsQueuedCommand[] = []
+
+  for (const item of queue) {
+    const isMatch =
+      matched.length < maxBatch &&
+      (item.serialNumber === '*' ||
+        item.serialNumber === DEFAULT_ESSL_CONFIG.deviceCode ||
+        item.serialNumber.toLowerCase() === serialNumber.toLowerCase())
+    if (isMatch) {
+      matched.push(item)
+    } else {
+      remaining.push(item)
+    }
+  }
+
+  globalForAdms.__dna360AdmsQueue = remaining
+  return matched
+}
+
 
