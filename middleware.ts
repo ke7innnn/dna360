@@ -258,6 +258,12 @@ function getStaffRedirect(roleSlug?: string): string {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // 0. Embedded eSSL / ZKTeco ADMS hardware endpoints: bypass browser CSP/cookie overhead
+  // so small-buffer door controller HTTP stacks receive clean minimal text/plain responses.
+  if (pathname.startsWith('/iclock/')) {
+    return NextResponse.next()
+  }
+
   // 1. Static and public route bypass
   const isPublic = isPublicPath(pathname)
 

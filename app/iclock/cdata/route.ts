@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { recordAdmsHeartbeat } from '@/lib/essl'
+import {
+  recordAdmsHeartbeatPersistent,
+  queueAdmsCommandPersistent,
+} from '@/lib/essl-adms-store'
 import { POST as handleEsslWebhook } from '@/app/api/webhooks/essl/route'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +18,13 @@ export async function GET(req: NextRequest) {
   const sn = searchParams.get('SN') || searchParams.get('sn') || 'SDE7261100390'
   const ip = req.headers.get('x-forwarded-for') || undefined
 
-  recordAdmsHeartbeat(sn, ip)
+  const { isFirstConnect } = await recordAdmsHeartbeatPersistent(sn, ip, 'GET /iclock/cdata')
+  console.log(`[eSSL ADMS] Handshake from SN=${sn} IP=${ip || 'direct'} firstConnect=${isFirstConnect}`)
+
+  // Automatically trigger a 1-time confirmation door unlock ONLY on the very first DB-recorded connection
+  if (isFirstConnect) {
+    await queueAdmsCommandPersistent(sn, 'AC_UNLOCK')
+  }
 
   const handshakeResponse = [
     `GET OPTION FROM: ${sn}`,
@@ -49,7 +58,7 @@ export async function POST(req: NextRequest) {
   const table = (searchParams.get('table') || 'ATTLOG').toUpperCase()
   const ip = req.headers.get('x-forwarded-for') || undefined
 
-  recordAdmsHeartbeat(sn, ip)
+  await recordAdmsHeartbeatPersistent(sn, ip, `POST /iclock/cdata (${table})`)
 
   const rawBody = await req.text()
   if (!rawBody.trim() || table !== 'ATTLOG') {

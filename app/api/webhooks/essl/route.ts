@@ -10,6 +10,11 @@ import {
   esslBlockUnblockMember,
   tryDecryptEsslPayload,
 } from '@/lib/essl'
+import {
+  getAdmsDeviceStatus,
+  queueAdmsCommandPersistent,
+  buildAdmsBlockCommand,
+} from '@/lib/essl-adms-store'
 import type { AccessLogEntry, ScanType } from '@/types/attendance'
 
 export const dynamic = 'force-dynamic'
@@ -52,13 +57,15 @@ export async function GET(req: NextRequest) {
   }
 
   const cfg = await loadServerEsslConfig()
+  const admsStatus = await getAdmsDeviceStatus(cfg.deviceCode)
   return NextResponse.json({
     status: 'ok',
-    service: 'DNA 360 eSSL eBioServer-New Real-Time Door Webhook',
-    protocol: 'SOAP 1.1 Webservice.asmx + Real-Time JSON/XML Push',
+    service: 'DNA 360 eSSL Direct Cloud ADMS + eBioServer-New Door Webhook',
+    protocol: 'Zero-PC ADMS (/iclock) + SOAP 1.1 Webservice.asmx + Real-Time JSON/XML Push',
     deviceCode: cfg.deviceCode,
     locationCode: cfg.locationCode,
     autoUnlockOnQrVerify: cfg.autoUnlockOnQrVerify,
+    admsStatus,
     timestamp: new Date().toISOString(),
   })
 }
@@ -385,9 +392,10 @@ export async function POST(req: NextRequest) {
     const isGranted =
       evalResult.decision === 'GRANTED' || evalResult.decision === 'GRANTED_GRACE_PERIOD'
 
-    // 3. Trigger physical eSSL Door Unlock (`DeviceCommand_UnlockDoor`) or Block
+    // 3. Trigger physical eSSL Door Unlock (`AC_UNLOCK` + `DeviceCommand_UnlockDoor`) or Block
     let soapResult = null
     if (isGranted) {
+      await queueAdmsCommandPersistent(deviceCode, 'AC_UNLOCK')
       soapResult = await esslUnlockDoor(deviceCode, cfg)
       // Update attendance streak & check-in count in Prisma
       await prisma.member
@@ -403,6 +411,7 @@ export async function POST(req: NextRequest) {
         })
         .catch(() => {})
     } else {
+      await queueAdmsCommandPersistent(deviceCode, buildAdmsBlockCommand(matchedMember.member_code, 'Block'))
       soapResult = await esslBlockUnblockMember(matchedMember.member_code, 'Block', deviceCode, cfg)
     }
 

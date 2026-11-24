@@ -48,6 +48,15 @@ export default function SettingsPage() {
   const [esslConfig, setEsslConfig] = useState<EsslConfig>(getEsslConfig())
   const [esslTestingDoor, setEsslTestingDoor] = useState(false)
   const [esslSyncingMembers, setEsslSyncingMembers] = useState(false)
+  const [esslCheckingStatus, setEsslCheckingStatus] = useState(false)
+  const [admsStatus, setAdmsStatus] = useState<{
+    online: boolean
+    lastSeenAt: string | null
+    secondsAgo: number | null
+    ip: string | null
+    totalPings: number
+    pendingCommandsCount: number
+  } | null>(null)
   const [blockers, setBlockers] = useState<string[]>([])
 
   // Migration state
@@ -65,9 +74,40 @@ export default function SettingsPage() {
     setBlockers(getGoLiveBlockers())
   }
 
+  const fetchLiveAdmsStatus = async (showToast = false) => {
+    setEsslCheckingStatus(true)
+    try {
+      const res = await fetch('/api/essl', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.admsStatus) {
+          setAdmsStatus(data.admsStatus)
+          if (showToast) {
+            if (data.admsStatus.online) {
+              toast.success(`eSSL Door Online (${data.admsStatus.serialNumber})`, {
+                description: `Last ping ${data.admsStatus.secondsAgo ?? 0}s ago · ${data.admsStatus.totalPings} total heartbeats`,
+              })
+            } else {
+              toast.info(`Awaiting Door Ping (${data.admsStatus.serialNumber})`, {
+                description: data.admsStatus.lastSeenAt
+                  ? `Last seen ${new Date(data.admsStatus.lastSeenAt).toLocaleString('en-IN')}`
+                  : 'Ensure Enable Domain Name = ON, Server Address = dna360.in, Enable Proxy Server = OFF on the door terminal.',
+              })
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore network error on background poll
+    } finally {
+      setEsslCheckingStatus(false)
+    }
+  }
+
   useEffect(() => {
     refreshData()
     syncSettingsFromRemote().then(() => refreshData())
+    fetchLiveAdmsStatus(false)
     const handleUpdate = () => refreshData()
     window.addEventListener('dna360_settings_updated', handleUpdate)
     return () => window.removeEventListener('dna360_settings_updated', handleUpdate)
@@ -479,11 +519,16 @@ export default function SettingsPage() {
 
               <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-2)] border border-[var(--aurora-1)]/40 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">eSSL eBioServer-New Door</span>
-                  <Badge status="ok" size="sm">SOAP + Webhook</Badge>
+                  <span className="font-ui font-semibold text-xs text-[var(--ink)]">eSSL x 2008 ADMS Door</span>
+                  <Badge status={admsStatus?.online ? 'ok' : 'warn'} size="sm">
+                    {admsStatus?.online ? 'Live Online' : 'Awaiting Ping'}
+                  </Badge>
                 </div>
                 <p className="font-ui text-xs text-[var(--muted)]">
-                  Device: <code className="text-[10px] font-mono text-[var(--aurora-1)]">{esslConfig.deviceCode}</code>. Biometric, RFID & Dynamic QR door unlock.
+                  SN: <code className="text-[10px] font-mono text-[var(--aurora-1)]">{esslConfig.deviceCode}</code>
+                  {admsStatus?.lastSeenAt
+                    ? ` · Last ping ${admsStatus.secondsAgo ?? 0}s ago (${admsStatus.pendingCommandsCount} queued)`
+                    : ' · Direct Cloud ADMS (dna360.in) · Turn Proxy OFF on terminal.'}
                 </p>
               </div>
             </div>
@@ -492,17 +537,29 @@ export default function SettingsPage() {
             <form onSubmit={handleSaveEsslConfig} className="mt-6 pt-6 border-t border-[var(--line)] space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="font-display text-sm font-semibold text-[var(--ink)]">
-                      eSSL eBioServer-New Door Access Controller (SOAP 1.1 & Real-Time Webhook)
+                      eSSL x 2008 Direct Cloud ADMS &amp; eBioServer Door Controller
                     </h4>
-                    <Badge status="ok" size="sm">Production Ready</Badge>
+                    <Badge status={admsStatus?.online ? 'ok' : 'warn'} size="sm">
+                      {admsStatus?.online ? `ADMS Online (${admsStatus.secondsAgo ?? 0}s ago)` : 'ADMS Ready'}
+                    </Badge>
                   </div>
                   <p className="font-ui text-xs text-[var(--muted)] mt-0.5">
-                    Connects DNA 360 Powai directly to <code className="text-[11px] font-mono text-[var(--ink-2)]">Webservice.asmx</code> (<code className="text-[11px] font-mono">DeviceCommand_UnlockDoor</code>, <code className="text-[11px] font-mono">UpdateEmployeewithExpiryDates</code>, <code className="text-[11px] font-mono">DeviceCommand_BlockUnBlockUser</code>).
+                    Zero-PC Cloud ADMS (<code className="text-[11px] font-mono text-[var(--ink-2)]">dna360.in/iclock/*</code>) + SOAP fallback. Door commands persist in PostgreSQL for guaranteed delivery.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    loading={esslCheckingStatus}
+                    onClick={() => fetchLiveAdmsStatus(true)}
+                    icon={<RefreshCw className="w-3.5 h-3.5" />}
+                  >
+                    Check Door Ping
+                  </Button>
                   <Button
                     type="button"
                     variant="secondary"

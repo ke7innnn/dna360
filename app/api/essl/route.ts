@@ -13,6 +13,12 @@ import {
   esslCheckDeviceHeartbeat,
   esslGetPunchLogs,
 } from '@/lib/essl'
+import {
+  getAdmsDeviceStatus,
+  queueAdmsCommandPersistent,
+  buildAdmsUserSyncCommand,
+  buildAdmsBlockCommand,
+} from '@/lib/essl-adms-store'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +53,10 @@ export async function GET(req: NextRequest) {
   }
 
   const cfg = await getPersistedEsslConfig()
-  const pingResult = await esslCheckDeviceHeartbeat(cfg.deviceCode, cfg)
+  const [pingResult, admsStatus] = await Promise.all([
+    esslCheckDeviceHeartbeat(cfg.deviceCode, cfg),
+    getAdmsDeviceStatus(cfg.deviceCode),
+  ])
 
   return NextResponse.json({
     config: {
@@ -55,6 +64,7 @@ export async function GET(req: NextRequest) {
       password: cfg.password ? '••••••••' : '',
     },
     heartbeat: pingResult,
+    admsStatus,
   })
 }
 
@@ -87,11 +97,52 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      // If triggered by a member on mobile check-in, verify their membership is active first
+      // If triggered by a member on mobile check-in, verify their live membership status first (DB + fallback)
       if (!isStaffGateOperator && isMemberSelfCheckin) {
-        const memberRecord = SEEDED_MEMBERS.find(
-          (m) => m.id === session.user.id || m.phone === session.user.phone
+        let memberRecord = SEEDED_MEMBERS.find(
+          (m) => m.id === session.user.id || (session.user.phone && m.phone === session.user.phone)
         )
+        try {
+          const dbMember = await prisma.member.findFirst({
+            where: {
+              OR: [
+                { id: session.user.id },
+                ...(session.user.phone ? [{ phone: { contains: session.user.phone.slice(-10) } }] : []),
+              ],
+            },
+            include: { memberships: { where: { status: 'active' } } },
+          })
+          if (dbMember) {
+            const dbStatus = String(dbMember.status || '').toLowerCase()
+            if (dbStatus === 'inactive' || dbStatus === 'blacklisted' || dbStatus === 'expired' || dbMember.blacklisted) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  error:
+                    dbMember.blacklisted || dbStatus === 'blacklisted'
+                      ? 'Account restricted. Please contact the front desk.'
+                      : 'Membership expired. Please renew your package to unlock the turnstile.',
+                  decision: dbMember.blacklisted || dbStatus === 'blacklisted' ? 'DENIED_BLACKLISTED' : 'DENIED_EXPIRED',
+                },
+                { status: 403 }
+              )
+            }
+            if (memberRecord) {
+              const activeDbMs = dbMember.memberships?.[0]
+              memberRecord = {
+                ...memberRecord,
+                status: (dbStatus as any) || memberRecord.status,
+                active_memberships: activeDbMs?.expiryDate
+                  ? memberRecord.active_memberships.map((ms, idx) =>
+                      idx === 0 ? { ...ms, expiry_date: activeDbMs.expiryDate! } : ms
+                    )
+                  : memberRecord.active_memberships,
+              }
+            }
+          }
+        } catch {
+          // fallback to local check
+        }
         if (memberRecord) {
           const check = evaluateCheckIn(memberRecord)
           if (check.decision !== 'GRANTED' && check.decision !== 'GRANTED_GRACE_PERIOD') {
@@ -112,11 +163,15 @@ export async function POST(req: NextRequest) {
           ? cfg.secondaryDeviceCode
           : body.deviceCode || cfg.deviceCode
 
-      const result = await esslUnlockDoor(targetDevice, cfg)
+      const [admsQueued, result] = await Promise.all([
+        queueAdmsCommandPersistent(targetDevice, 'AC_UNLOCK'),
+        esslUnlockDoor(targetDevice, cfg),
+      ])
       return NextResponse.json({
         success: result.success,
         action: 'UNLOCK_DOOR',
         deviceCode: targetDevice,
+        admsCommandId: admsQueued.id,
         soap: result,
       })
     }
@@ -136,19 +191,34 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing memberCode or name' }, { status: 400 })
       }
 
+      const effectiveFrom = expiryFrom || new Date().toISOString().slice(0, 10)
+      const effectiveTo = expiryTo || '2026-12-31'
+
+      await queueAdmsCommandPersistent(
+        cfg.deviceCode,
+        buildAdmsUserSyncCommand({
+          memberCode,
+          name,
+          expiryFrom: effectiveFrom,
+          expiryTo: effectiveTo,
+        })
+      )
+
       const syncRes = await esslSyncMemberWithExpiry(
         {
           memberCode,
           name,
-          expiryFrom: expiryFrom || new Date().toISOString().slice(0, 10),
-          expiryTo: expiryTo || '2026-12-31',
+          expiryFrom: effectiveFrom,
+          expiryTo: effectiveTo,
         },
         cfg
       )
 
       if (status === 'frozen' || status === 'blacklisted' || status === 'expired') {
+        await queueAdmsCommandPersistent(cfg.deviceCode, buildAdmsBlockCommand(memberCode, 'Block'))
         await esslBlockUnblockMember(memberCode, 'Block', cfg.deviceCode, cfg)
       } else {
+        await queueAdmsCommandPersistent(cfg.deviceCode, buildAdmsBlockCommand(memberCode, 'Unblock'))
         await esslBlockUnblockMember(memberCode, 'Unblock', cfg.deviceCode, cfg)
       }
 
@@ -167,7 +237,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing memberCode' }, { status: 400 })
       }
       const cmd: 'Block' | 'Unblock' = commandType === 'Block' ? 'Block' : 'Unblock'
-      const res = await esslBlockUnblockMember(memberCode, cmd, deviceCode || cfg.deviceCode, cfg)
+      const targetDevice = deviceCode || cfg.deviceCode
+      await queueAdmsCommandPersistent(targetDevice, buildAdmsBlockCommand(memberCode, cmd))
+      const res = await esslBlockUnblockMember(memberCode, cmd, targetDevice, cfg)
       return NextResponse.json({
         success: res.success,
         action: 'BLOCK_UNBLOCK',
@@ -177,13 +249,18 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // 4. PING_DEVICE — Check `GetDeviceLastPing`
+    // 4. PING_DEVICE — Check live ADMS heartbeat + `GetDeviceLastPing`
     if (action === 'PING_DEVICE') {
-      const res = await esslCheckDeviceHeartbeat(body.deviceCode || cfg.deviceCode, cfg)
+      const targetDevice = body.deviceCode || cfg.deviceCode
+      const [res, admsStatus] = await Promise.all([
+        esslCheckDeviceHeartbeat(targetDevice, cfg),
+        getAdmsDeviceStatus(targetDevice),
+      ])
       return NextResponse.json({
-        success: res.success,
+        success: res.success || admsStatus.online,
         action: 'PING_DEVICE',
-        deviceCode: body.deviceCode || cfg.deviceCode,
+        deviceCode: targetDevice,
+        admsStatus,
         soap: res,
       })
     }
@@ -209,12 +286,23 @@ export async function POST(req: NextRequest) {
       let lastSoap = null
       for (const m of sampleBatch) {
         const primaryMs = m.active_memberships?.[0]
+        const expiryFrom = primaryMs?.activation_date || m.joined_date
+        const expiryTo = primaryMs?.expiry_date || '2026-12-31'
+        await queueAdmsCommandPersistent(
+          cfg.deviceCode,
+          buildAdmsUserSyncCommand({
+            memberCode: m.member_code,
+            name: m.name,
+            expiryFrom,
+            expiryTo,
+          })
+        )
         lastSoap = await esslSyncMemberWithExpiry(
           {
             memberCode: m.member_code,
             name: m.name,
-            expiryFrom: primaryMs?.activation_date || m.joined_date,
-            expiryTo: primaryMs?.expiry_date || '2026-12-31',
+            expiryFrom,
+            expiryTo,
           },
           cfg
         )

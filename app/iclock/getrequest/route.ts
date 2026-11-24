@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { dequeueAdmsCommands, recordAdmsHeartbeat } from '@/lib/essl'
+import {
+  dequeueAdmsCommandsPersistent,
+  recordAdmsHeartbeatPersistent,
+} from '@/lib/essl-adms-store'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,9 +16,9 @@ export async function GET(req: NextRequest) {
   const sn = searchParams.get('SN') || searchParams.get('sn') || 'SDE7261100390'
   const ip = req.headers.get('x-forwarded-for') || undefined
 
-  recordAdmsHeartbeat(sn, ip)
+  await recordAdmsHeartbeatPersistent(sn, ip, 'GET /iclock/getrequest')
 
-  const commands = dequeueAdmsCommands(sn, 5)
+  const commands = await dequeueAdmsCommandsPersistent(sn, 5)
   if (commands.length === 0) {
     return new NextResponse('OK\n', {
       status: 200,
