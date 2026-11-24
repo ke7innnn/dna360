@@ -10,6 +10,11 @@ const config: CapacitorConfig = {
     url: process.env.CAPACITOR_LIVE_URL || 'https://dna360.in/m',
     cleartext: false,
     androidScheme: 'https',
+    allowNavigation: [
+      'dna360.in',
+      '*.dna360.in',
+      '*.razorpay.com',
+    ],
   },
   plugins: {
     SplashScreen: {

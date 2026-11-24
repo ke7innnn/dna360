@@ -214,7 +214,7 @@ export default function MemberProfileModal({
         <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-[var(--ink-3)]">
           <span>DNA 360 Mobile App</span>
           <span className="font-data text-[10px] bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
-            v1.0.2 (Build 3)
+            v1.0.3 (Build 4)
           </span>
         </div>
 
